@@ -5,6 +5,7 @@ sitemaps:
     origin: https://business.adobe.com
     lastmod: YYYY-MM-DD
     default: en-US
+    extension: .html
     languages:
       us:
         source: /query-index.json
