@@ -4,7 +4,7 @@
   "plugins": [
     {
       "id": "sidekick-edit-env",
-      "environments": ["sidekick-env"],
+      "environments": ["sidekick-env-switcher"],
       "name": "Document Authoring",
       "format": "https://da.live/edit#/da-sites/da-tutorial{{pathname}}",
     },
