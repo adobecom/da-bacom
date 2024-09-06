@@ -1,11 +1,13 @@
 {
   "project": "BACOM",
   "host": "business.adobe.com",
-  "sourceFormat": {
-    "name": "Document Authoring",
-    "format": "https://da.live/edit#/da-sites/da-tutorial{{pathname}}",
-  },
   "plugins": [
+    {
+      "id": "sidekick-edit-env",
+      "environments": ["sidekick-env"],
+      "name": "Document Authoring",
+      "format": "https://da.live/edit#/da-sites/da-tutorial{{pathname}}",
+    },
     {
       "id": "library",
       "title": "Library",
