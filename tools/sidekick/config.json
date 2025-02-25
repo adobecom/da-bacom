@@ -56,6 +56,12 @@
         "title": "Bulk Operations",
         "description": "Bulk Operations",
         "url": "https://da.live/app/adobecom/da-bacom/tools/ms-apps/bulkops" 
+      },
+      {
+        "title": "Graybox",
+        "description": "Admin tools for Milo Graybox",
+        "image": "https://publish-p133406-e1301188.adobeaemcloud.com/content/dam/milo/app-icons/graybox.jpg",
+        "url": "https://da.live/app/adobecom/milo/tools/graybox"
       }
     ]
 }
