@@ -13,15 +13,15 @@ const MOCK_PAGE = `
   const { context, token } = await DA_SDK;
   const { org, repo } = context;
 
-  // const blob = new Blob([MOCK_PAGE], { type: 'text/html' });
-  // const body = new FormData();
-  // body.append('data', blob);
+  const blob = new Blob([MOCK_PAGE], { type: 'text/html' });
+  const body = new FormData();
+  body.append('data', blob);
   const opts = {
     headers: { Authorization: `Bearer ${token}` },
-    method: 'GET',
+    method: 'POST',
+    body,
   };
   const fullpath = `https://admin.da.live/source/${org}/${repo}/drafts/slavin/nobu/nobu.html`;
   const resp = await fetch(fullpath, opts);
-  const body = await resp.body();
-  console.log(resp.status, body);
+  console.log(resp.status);
 }());
