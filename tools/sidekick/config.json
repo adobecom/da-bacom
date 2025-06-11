@@ -60,6 +60,11 @@
         "url": "https://da.live/app/adobecom/da-bacom/tools/ms-apps/bulkops" 
       },
       {
+        "title": "Nobu Test",
+        "description": "Test",
+        "url": "https://da.live/app/adobecom/da-bacom/tools/nobu-test/test" 
+      },
+      {
         "title": "Graybox",
         "description": "Admin tools for Milo Graybox",
         "image": "https://publish-p133406-e1301188.adobeaemcloud.com/content/dam/milo/app-icons/graybox.jpg",
