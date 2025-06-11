@@ -1,7 +1,7 @@
 // eslint-disable-next-line import/no-unresolved
 import { crawl } from 'https://da.live/nx/public/utils/tree.js';
 
-const PATH = 'adobecom/da-bacom/products/analytics/';
+const PATH = '/adobecom/da-bacom/products/analytics/';
 
 (async function init() {
   // Create cancel button
