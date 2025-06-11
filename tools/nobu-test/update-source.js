@@ -22,6 +22,6 @@ const MOCK_PAGE = `
   };
   const fullpath = `https://admin.da.live/source/${org}/${repo}/drafts/slavin/nobu/nobu.html`;
   const resp = await fetch(fullpath, opts);
-  const body = await resp.body;
-  console.log(resp.status, body);
+  const text = await resp.text();
+  console.log(resp.status, text);
 }());
