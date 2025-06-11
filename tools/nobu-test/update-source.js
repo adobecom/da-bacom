@@ -24,4 +24,10 @@ const MOCK_PAGE = `
   const resp = await fetch(fullpath, opts);
   const text = await resp.text();
   console.log(resp.status, text);
+
+  const newParser = new DOMParser();
+  const page = newParser.parseFromString(text);
+
+  const title = page.querySelector('h1');
+  console.log(title);
 }());
