@@ -26,7 +26,7 @@ const MOCK_PAGE = `
   console.log(resp.status, text);
 
   const newParser = new DOMParser();
-  const page = newParser.parseFromString(text);
+  const page = newParser.parseFromString(text, 'text/html');
 
   const title = page.querySelector('h1');
   console.log(title);
