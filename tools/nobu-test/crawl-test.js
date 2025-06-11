@@ -15,6 +15,7 @@ const PATH = '/adobecom/da-bacom/products/analytics/';
 
   const HEADERS = {
     'Content-Type': 'application/json',
+    // eslint-disable-next-line quote-props
     'Authorization': `Bearer ${token}`,
   };
 
