@@ -23,11 +23,15 @@ import DA_SDK from 'https://da.live/nx/utils/sdk.js';
   } else {
     const num = document.createElement('p');
     num.classList.add('number');
+    num.innerHTML = 1;
     page.body.append(num);
   }
   console.log(page, 'update');
 
-  const blob = new Blob([page], { type: 'text/html' });
+  const xmlSer = new XMLSerializer();
+  const newText = xmlSer.serializeToString(page);
+
+  const blob = new Blob([newText], { type: 'text/html' });
   const body = new FormData();
   body.append('data', blob);
   const postOpts = {
