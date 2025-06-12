@@ -13,6 +13,7 @@ import DA_SDK from 'https://da.live/nx/utils/sdk.js';
   const text = await resp.text();
   const newParser = new DOMParser();
   const page = newParser.parseFromString(text, 'text/html');
+  console.log(page);
   const number = page.querySelector('.number');
 
   if (number) {
@@ -20,10 +21,11 @@ import DA_SDK from 'https://da.live/nx/utils/sdk.js';
     toIterate += 1;
     number.innerHTML = toIterate;
   } else {
-    const num = document.createElement('div');
+    const num = document.createElement('p');
     num.classList.add('number');
     page.body.append(num);
   }
+  console.log(page, 'update');
 
   const blob = new Blob([page], { type: 'text/html' });
   const body = new FormData();
