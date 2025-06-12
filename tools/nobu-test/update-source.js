@@ -15,6 +15,7 @@ import DA_SDK from 'https://da.live/nx/utils/sdk.js';
   const page = newParser.parseFromString(text, 'text/html');
   console.log(page, resp.status);
   const number = page.querySelector('.number');
+  const section = page.querySelector('.section')
 
   if (number) {
     let toIterate = parseInt(number.innerHTML, 10);
@@ -24,7 +25,7 @@ import DA_SDK from 'https://da.live/nx/utils/sdk.js';
     const num = document.createElement('p');
     num.classList.add('number');
     num.innerHTML = 1;
-    page.body.append(num);
+    section.append(num);
   }
   console.log(page, 'update');
 

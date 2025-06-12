@@ -4,7 +4,7 @@ import DA_SDK from 'https://da.live/nx/utils/sdk.js';
 const MOCK_PAGE = `
   <body>
     <header></header>
-    <main><div><h1>Hello Nobu</h1></div></main>
+    <main><div class="section"><h1>Hello Nobu</h1></div></main>
     <footer></footer>
   </body>`;
 
