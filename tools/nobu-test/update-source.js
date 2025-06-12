@@ -13,7 +13,7 @@ import DA_SDK from 'https://da.live/nx/utils/sdk.js';
   const text = await resp.text();
   const newParser = new DOMParser();
   const page = newParser.parseFromString(text, 'text/html');
-  console.log(page, resp.status);
+  console.log(text, page, resp.status);
   const number = page.querySelector('.number');
   const section = page.querySelector('.section');
   console.log('SECTION', section);
