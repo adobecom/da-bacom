@@ -35,14 +35,6 @@
       "includePaths": ["DA"],
       "icon": "https://da.live/nx/public/plugins/rollout/media_195da69764de2782d555abed3042d8434a040e31c.png",
       "url": "https://da.live/nx/public/plugins/rollout.html"
-    },
-    {
-      "id": "da-tags",
-      "title": "Tag Browser",
-      "environments": ["edit"],
-      "daLibrary": true,
-      "icon": "https://main--da-bacom--adobecom.aem.page/media_16dd3261cd73df7adf30ed02b31d7d58ada82a3f0.png",
-      "path": "/tools/tags.html"
     }
   ],
   "apps": [
