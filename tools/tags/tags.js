@@ -91,10 +91,7 @@ function showError(message, link = null) {
   }
 
   const opts = { headers: { Authorization: `Bearer ${token}` } };
-  const aemConfig = await getAemRepo(context, opts).catch((error) => {
-    console.log('Config Error:', error);
-    return null;
-  });
+  const aemConfig = await getAemRepo(context, opts).catch(() => null);
   if (!aemConfig || !aemConfig.aemRepo) {
     showError('Failed to retrieve config. ', `https://da.live/config#/${context.org}/${context.repo}/`);
     return;
