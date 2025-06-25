@@ -5,7 +5,6 @@ import DA_SDK from 'https://da.live/nx/utils/sdk.js';
   const { org, repo } = context;
   const opts = {
     headers: {
-      'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
     },
     method: 'GET',
