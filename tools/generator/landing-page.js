@@ -4,78 +4,21 @@ import { LitElement, html, nothing } from 'da-lit';
 
 const style = await getStyle(import.meta.url);
 
-const fields = [
-  {
-    category: 'contentType', label: 'Content Type', fields: [
-      { name: 'contentType', label: 'Content Type', type: 'select', options: ['PDF', 'Video'] },
-    ],
-  },
-  {
-    category: 'form', label: 'Form', fields: [
-      { name: 'gated', label: 'Gated / Ungated', type: 'select', options: ['Gated', 'Ungated'] },
-      { name: 'formTemplate', label: 'Form Template', type: 'select', options: ['long', 'medium', 'short'] },
-      { name: 'campaignId', label: 'Campaign ID', type: 'text' },
-      { name: 'poi', label: 'POI', type: 'text' },
-    ],
-  },
-  {
-    category: 'marquee', label: 'Marquee', fields: [
-      { name: 'marqueeEyebrow', label: 'Marquee Eyebrow', type: 'text' },
-      { name: 'marqueeHeadline', label: 'Marquee Headline', type: 'text' },
-      { name: 'marqueeDescription', label: 'Marquee Description', type: 'textarea' },
-      { name: 'marqueeImage', label: 'Upload Marquee Image', type: 'file' },
-    ],
-  },
-  {
-    category: 'body', label: 'Body', fields: [
-      { name: 'bodyDescription', label: 'Body Description', type: 'textarea' },
-      { name: 'bodyImage', label: 'Upload Body Image', type: 'file' },
-    ],
-  },
-  {
-    category: 'card', label: 'Card', fields: [
-      { name: 'cardTitle', label: 'Card Title', type: 'text' },
-      { name: 'cardDescription', label: 'Card Description', type: 'textarea' },
-      { name: 'cardImage', label: 'Upload Card Image', type: 'file' },
-    ],
-  },
-  {
-    category: 'caas', label: 'CaaS Content', fields: [
-      { name: 'caasContentType', label: 'CaaS Content Type', type: 'select', options: ['Article', 'Blog'] },
-      { name: 'caasPrimaryProduct', label: 'CaaS Primary Product', type: 'text' },
-      { name: 'primaryProductName', label: 'Primary Product Name', type: 'text' },
-    ],
-  },
-  {
-    category: 'seo', label: 'SEO Metadata', fields: [
-      { name: 'seoMetadataTitle', label: 'SEO Metadata Title', type: 'text' },
-      { name: 'seoMetadataDescription', label: 'SEO Metadata Description', type: 'textarea' },
-    ],
-  },
-  {
-    category: 'experienceFragment', label: 'Experience Fragment', fields: [
-      { name: 'experienceFragment', label: 'Experience Fragment', type: 'text' },
-    ],
-  },
-  {
-    category: 'assetDelivery', label: 'Asset Delivery', fields: [
-      { name: 'assetDelivery', label: 'Asset Delivery', type: 'select', options: ['CDN', 'AEM'] },
-      { name: 'pdfAsset', label: 'Upload PDF Asset', type: 'file' },
-    ],
-  },
-  {
-    category: 'url', label: 'URL', fields: [
-      { name: 'url', label: 'URL', type: 'text' },
-    ],
-  },
-];
+// Data
+// TODO: Fetch POI options from Marketo Configurator options
+// TODO: Fetch Tags from AEM for CaaS Content Type & Primary Product Name
+
+// Lists
+// TODO: Get Eyebrow copy
+// TODO: Get Fragment list
+
+// Features
+// TODO: If select "ungated" don't show show form template, campaign template, POI 
+// TODO: Page generator will generate URL based on the content type and marquee title
 
 class LandingPageForm extends LitElement {
   static properties = {
     _data: { state: true },
-    _loading: { state: true },
-    _status: { state: true },
-    _time: { state: true },
   };
 
   connectedCallback() {
@@ -88,54 +31,91 @@ class LandingPageForm extends LitElement {
     e.preventDefault();
   }
 
-  getField(field) {
-    if (field.type === 'select') {
-      return html`
-        <sl-select name="${field.name}" label="${field.label}" value="" placeholder="${field.label}">
-          ${field.options.map(option => html`<option value="${option}">${option}</option>`)}
-        </sl-select>
-      `;
-    } else if (field.type === 'textarea') {
-      return html`
-        <sl-textarea
-          name="${field.name}"
-          label="${field.label}"
-          .value="${this._data?.[field.name] || ''}"
-          class="${field.class || ''}"
-          error="${field.error || ''}"
-        ></sl-textarea>
-      `;
-    } else if (field.type === 'file') {
-      return html`
-        <sl-input type="file" name="${field.name}" placeholder="${field.label}" label="${field.label}"></sl-input>
-      `;
-    } else {
-      return html`
-        <sl-input type="${field.type}" name="${field.name}" placeholder="${field.label}" label="${field.label}"></sl-input>
-      `;
-    }
-  }
-
-  getFields() {
-    return fields.map(category => html`
-      <div class="form-row">
-        <h2>${category.label}</h2>
-        ${category.fields.map(field => this.getField(field))}
-      </div>
-    `);
-  }
-
-
   render() {
     return html`
       <h1>Campaign Landing Page Generator</h1>
       <form @submit=${this.handleSubmit}>
-        ${this.getFields()}
+        <div class="form-row">
+          <h2>Content Type</h2>
+          <sl-select value="" name="contentType" label="Content Type" placeholder="Content Type">
+            <option value="Guide">Guide</option>
+            <option value="Infographic">Infographic</option>
+            <option value="Report">Report</option>
+            <option value="Video/Demo">Video/Demo</option>
+          </sl-select>
+        </div>
+        <div class="form-row">
+          <h2>Form</h2>
+          <sl-select value="" name="gated" label="Gated / Ungated" placeholder="Gated / Ungated">
+            <option value="Gated">Gated</option>
+            <option value="Ungated">Ungated</option>
+          </sl-select>
+          <sl-select value="" name="formTemplate" label="Form Template" placeholder="Form Template">
+            <option value="Long">Long</option>
+            <option value="Medium">Medium</option>
+            <option value="Short">Short</option>
+          </sl-select>
+          <sl-input type="text" name="campaignId" placeholder="Campaign ID" label="Campaign ID"></sl-input>
+          <sl-select value="" name="poi" label="POI" placeholder="POI">
+            <option value="TODO">TODO: Fetch Marketo Configurator POI options</option>
+          </sl-select>
+        </div>
+        <div class="form-row">
+          <h2>Marquee</h2>
+          <sl-select value="" name="marqueeEyebrow" label="Marquee Eyebrow" placeholder="Marquee Eyebrow">
+            <option value="TODO">TODO: Generate the Eyebrow based on the selected content type</option>
+          </sl-select>
+          <sl-input type="text" name="marqueeHeadline" placeholder="Marquee Headline" label="Marquee Headline"></sl-input>
+          <sl-input type="text" name="marqueeDescription" placeholder="Marquee Description" label="Marquee Description"></sl-input>
+          <sl-input type="file" name="marqueeImage" placeholder="Upload Marquee Image" label="Upload Marquee Image"></sl-input>
+        </div>
+        <div class="form-row">
+          <h2>Body</h2>
+          <sl-input type="text" name="bodyDescription" placeholder="Body Description" label="Body Description"></sl-input>
+          <sl-input type="file" name="bodyImage" placeholder="Upload Body Image" label="Upload Body Image"></sl-input>
+        </div>
+        <div class="form-row">
+          <h2>Card</h2>
+          <sl-input type="text" name="cardTitle" placeholder="Card Title" label="Card Title"></sl-input>
+          <sl-input type="text" name="cardDescription" placeholder="Card Description" label="Card Description"></sl-input>
+          <sl-input type="file" name="cardImage" placeholder="Upload Card Image" label="Upload Card Image"></sl-input>
+        </div>
+        <div class="form-row">
+          <h2>CaaS Content</h2>
+          <sl-select value="" name="caasContentType" label="CaaS Content Type">
+            <option value="TODO">TODO: Fetch BACOM Tags from AEM</option>
+          </sl-select>
+          <sl-select value="" name="caasPrimaryProduct" label="CaaS Primary Product">
+            <option value="TODO">TODO: Fetch BACOM Tags from AEM</option>
+          </sl-select>
+          <sl-select value="" name="primaryProductName" label="Primary Product Name"">
+            <option value="TODO">TODO: Fetch BACOM Tags from AEM</option>
+          </sl-select>
+        </div>
+        <div class="form-row">
+          <h2>SEO Metadata</h2>
+          <sl-input type="text" name="seoMetadataTitle" placeholder="Max 70 characters" label="SEO Metadata Title"></sl-input>
+          <sl-input type="text" name="seoMetadataDescription" placeholder="Max 155 characters" label="SEO Metadata Title"></sl-input>
+        </div>
+        <div class="form-row">
+          <h2>Experience Fragment</h2>
+          <sl-select value="" name="experienceFragment" label="Experience Fragment">
+            <option value="TODO">TODO: Show Experience Fragment from a predefined list</option>
+          </sl-select>
+        </div>
+        <div class="form-row">
+          <h2>Asset Delivery</h2>
+          <sl-input type="text" name="videoAsset" placeholder="https://video.tv.adobe.com/v/..." label="Video Asset"></sl-input>
+          <sl-input type="file" name="pdfAsset" placeholder="Upload PDF Asset" label="Upload PDF Asset"></sl-input>
+        </div>
+        <div class="form-row">
+          <h2>URL</h2>
+          <sl-input type="text" name="url" placeholder="/resources/sdk/mixing-agile-and-waterfall.html" label="URL"></sl-input>
+        </div>
         <div class="submit-row">
           <sl-button type="submit" variant="primary" class="accent">Generate</sl-button>
-          <sl-button variant="secondary" @click=${() => window.location.reload()}>Reset</sl-button>
-          <sl-button variant="success" @click=${() => alert('View Page functionality not implemented yet')}>View Page</sl-button>
-          <sl-button variant="warning" @click=${() => alert('Edit Content functionality not implemented yet')}>Edit Content</sl-button>
+          <sl-button variant="success">View Page</sl-button>
+          <sl-button variant="warning">Edit Content</sl-button>
         </div>
       </form>
     `;
