@@ -1,0 +1,111 @@
+<div>
+  <div class="marquee small light">
+    <div>
+      <div data-valign="middle">#F5F5F5</div>
+    </div>
+    <div>
+      <div data-valign="middle">
+        <p>{{content-type}}</p>
+        <h1>{{marquee-headline}}</h1>
+      </div>
+      <div data-valign="middle">
+        <picture>
+          <source type="image/webp" srcset="{{marquee-image}}?width=2000&format=webply&optimize=medium" media="(min-width: 600px)">
+          <source type="image/webp" srcset="{{marquee-image}}?width=750&format=webply&optimize=medium">
+          <source type="image/png" srcset="{{marquee-image}}?width=2000&format=png&optimize=medium" media="(min-width: 600px)">
+          <img loading="lazy" alt="" src="{{marquee-image}}?width=750&format=png&optimize=medium" width="1200" height="600">
+        </picture>
+      </div>
+    </div>
+  </div>
+</div>
+<div>
+  <p>{{body-description}}</p>
+  <div class="marketo">
+    <div>
+      <div><a href="{{form-template}}">Marketo Configurator</a></div>
+    </div>
+    <div>
+      <div>Description</div>
+      <div>{{form-description}}</div>
+    </div>
+    <div>
+      <div>Success Type</div>
+      <div>{{form-success-type}}</div>
+    </div>
+    <div>
+      <div>Success Section</div>
+      <div>{{form-success-section}}</div>
+    </div>
+    <div>
+      <div>Success Content</div>
+      <div>{{form-success-content}}</div>
+    </div>
+  </div>
+  <div class="section-metadata">
+    <div>
+      <div>style</div>
+      <div>xxl spacing, two-up, resource-form</div>
+    </div>
+  </div>
+</div>
+<div>
+  <p><a href="{{pdf-asset}}">{{pdf-asset}}</a></p>
+  <div class="section-metadata">
+    <div>
+      <div data-valign="middle">style</div>
+      <div data-valign="middle">hide block, form success</div>
+    </div>
+    <div>
+      <div data-valign="middle">background</div>
+      <div data-valign="middle">#F5F5F5</div>
+    </div>
+  </div>
+</div>
+<div>
+  <div class="text max-width-10-desktop center xl-spacing-top s-spacing-bottom">
+    <div>
+      <div data-valign="middle">
+        <h3>{{card-title}}</h3>
+      </div>
+    </div>
+  </div>
+  <p><a href="{{experience-fragment}}">{{experience-fragment}}</a></p>
+  <div class="text center no-spacing-top xxl-spacing-bottom">
+    <div>
+      <div data-valign="middle"><em><a href="https://business.adobe.com/resources/main.html">See all resources</a></em></div>    </div>
+  </div>
+  <div class="card-metadata">
+    <div>
+      <div>cardTitle</div>
+      <div>{{card-title}}</div>
+    </div>
+    <div>
+      <div>CardDescription</div>
+      <div>{{card-description}}</div>
+    </div>
+    <div>
+      <div>cardDate</div>
+      <div>{{card-date}}</div>
+    </div>
+    <div>
+      <div>cardImage</div>
+      <div>
+        <picture>
+          <source type="image/webp" srcset="{{card-image}}?width=2000&format=webply&optimize=medium" media="(min-width: 600px)">
+          <source type="image/webp" srcset="{{card-image}}?width=750&format=webply&optimize=medium">
+          <source type="image/png" srcset="{{card-image}}?width=2000&format=png&optimize=medium" media="(min-width: 600px)">
+          <img loading="lazy" alt="" src="{{card-image}}?width=750&format=png&optimize=medium" width="756" height="426">
+        </picture>
+      </div>
+    </div>
+    <div>
+      <div>primaryTag</div>
+      <div>{{caas-content-type}}</div>
+    </div>
+    <div>
+      <div>Tags</div>
+      <div>{{caas-content-type}}, {{caas-primary-product}}</div>
+    </div>
+  </div>
+</div>

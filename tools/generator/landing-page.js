@@ -1,6 +1,8 @@
+/* eslint-disable class-methods-use-this */
+/* eslint-disable import/no-unresolved */
 import 'https://da.live/nx/public/sl/components.js';
 import getStyle from 'https://da.live/nx/utils/styles.js';
-import { LitElement, html, nothing } from 'da-lit';
+import { LitElement, html } from 'da-lit';
 
 const style = await getStyle(import.meta.url);
 
@@ -13,19 +15,16 @@ const style = await getStyle(import.meta.url);
 // TODO: Get Fragment list
 
 // Features
-// TODO: If select "ungated" don't show show form template, campaign template, POI 
+// TODO: If select "ungated" don't show show form template, campaign template, POI
 // TODO: Page generator will generate URL based on the content type and marquee title
 
 class LandingPageForm extends LitElement {
-  static properties = {
-    _data: { state: true },
-  };
+  static properties = { _data: { state: true } };
 
   connectedCallback() {
     super.connectedCallback();
     this.shadowRoot.adoptedStyleSheets = [style];
   }
-
 
   async handleSubmit(e) {
     e.preventDefault();
@@ -123,7 +122,6 @@ class LandingPageForm extends LitElement {
 }
 
 customElements.define('da-generator', LandingPageForm);
-
 
 export default async function init(el) {
   const bulk = document.createElement('da-generator');
