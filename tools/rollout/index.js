@@ -1,4 +1,4 @@
-const DA_TRANSLATE = '/.da/translate.json';
+const DA_TRANSLATE = '/.da/translate-v2.json';
 const DA_SOURCE = 'https://admin.da.live/source/';
 
 async function fetchConf(org, repo, token) {

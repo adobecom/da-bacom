@@ -24,7 +24,7 @@ function extractPaths(languages) {
 
 async function fetchLangPaths({ org, repo }, token) {
   const opts = { headers: { Authorization: `Bearer ${token}` } };
-  const langConfigUrl = `${ADMIN_SOURCE}${org}/${repo}/.da/translate.json`;
+  const langConfigUrl = `${ADMIN_SOURCE}${org}/${repo}/.da/translate-v2.json`;
 
   try {
     const resp = await fetch(langConfigUrl, opts);
