@@ -1,8 +1,6 @@
 const STYLES = ['/styles/styles.css'];
 const CONFIG = {
   imsClientId: 'bacom',
-  imsScope: 'AdobeID,openid,gnav,read_organizations,additional_info.projectedProductContext,additional_info.roles',
-  env: { ims: 'prod' },
   local: {
     pdfViewerClientId: '3b685312b5784de6943647df19f1f492',
     pdfViewerReportSuite: 'adbadobedxqa',
@@ -145,7 +143,10 @@ const CONFIG = {
     onDemand: false,
   },
 };
-
+if (window.location.host.includes('.aem.')) {
+  CONFIG.imsScope = 'AdobeID,openid,gnav,read_organizations,additional_info.projectedProductContext,additional_info.roles';
+  CONFIG.env = { ims: 'prod' };
+}
 const eagerLoad = (img) => {
   img?.setAttribute('loading', 'eager');
   img?.setAttribute('fetchpriority', 'high');
