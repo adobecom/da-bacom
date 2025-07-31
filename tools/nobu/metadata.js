@@ -5,6 +5,10 @@ import getStyle from 'https://da.live/nx/utils/styles.js';
 import { LitElement, html, nothing } from 'da-lit';
 import DA_SDK from 'https://da.live/nx/utils/sdk.js';
 import { crawl } from 'https://da.live/nx/public/utils/tree.js';
+import { ModifyProperty } from './modifyProperty.js';
+import { CountItem } from './counts.js';
+
+const style = await getStyle(import.meta.url);
 
 // const style = await getStyle(import.meta.url);
 const ppn = 'primaryProductName';
@@ -19,6 +23,7 @@ class MetadataManager extends LitElement {
     _cancelCallback: { state: true },
     _cancelCallbackAcitve: { state: true },
     _metaDataProperties: { state: true },
+    _willModify: { state: true },
   };
 
   constructor() {
@@ -28,7 +33,14 @@ class MetadataManager extends LitElement {
     this._cancelCallback = () => {};
     this._cancelCallbackAcitve = false;
     this._metaDataProperties = [];
+    this._willModify = false;
   }
+
+  async connectedCallback() {
+    super.connectedCallback();
+    this.shadowRoot.adoptedStyleSheets = [style];
+  }
+
   // Function to take take the path and crawl pages
 
   // function to store the html returned into state
@@ -150,34 +162,19 @@ class MetadataManager extends LitElement {
     this.getListFromPath();
   }
 
-  renderCounts(countItem) {
-    const matchingPages = this._pages.filter((page) => page.foundProperty === countItem.property);
-
-    return html`
-      <div>
-        <p>Property: ${countItem.property}</p>
-        <p>Count: ${countItem.count}<p>
-        <p>Paths:</p>
-        <ul>
-          ${matchingPages.map((page) => html`<li>${page.path}</li>`)}
-        </ul>
-      </div>
-    `;
-  }
-
   render() {
     return html`
-      <h1>${this.h1Title}</h1>
+      <h1>Metadata Manager</h1>
       <form>
         <div class='fieldgroup'>
           <label for="path">Path</label>
           <sl-input type="text" id="path" name="path" placeholder="path" value=${pth}></sl-input>
         </div>
-        <div>
+        <div class='fieldgroup'>
           <label for="property">Property</label>
           <sl-input type="text" id="property" name="property" placeholder="property" value=${ppn}></sl-input>
         </div>
-        <div>
+        <div class="submit">
             <sl-button @click=${this.handleSubmit}>Search Metadata</sl-button>
           </div>
         </div>
@@ -185,7 +182,7 @@ class MetadataManager extends LitElement {
       <section class="results">
         <div> 
           <p>Counts<p>
-          ${this._metaDataProperties.length > 0 ? this._metaDataProperties.map((countItem) => this.renderCounts(countItem)) : nothing}
+          ${this._metaDataProperties.length > 0 ? this._metaDataProperties.map((countItem) => html`<da-count-item .countItem=${countItem} .pages=${this._pages}>`) : nothing}
         </div>
       </section>
       <div>
@@ -199,3 +196,5 @@ class MetadataManager extends LitElement {
 }
 
 customElements.define('da-metadata-manager', MetadataManager);
+customElements.define('da-modify-property', ModifyProperty);
+customElements.define('da-count-item', CountItem);
