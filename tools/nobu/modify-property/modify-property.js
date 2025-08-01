@@ -7,7 +7,20 @@ import DA_SDK from 'https://da.live/nx/utils/sdk.js';
 import { crawl } from 'https://da.live/nx/public/utils/tree.js';
 
 class ModifyProperty extends LitElement {
-  async handleSubmit() {
+  static properties = {
+    _inputVal: { state: true },
+  }
+
+  constructor() {
+    super();
+    this._inputVal = '';
+  }
+
+  handleInput(e) {
+    this._inputVal = e.target.value;
+  }
+
+  async handleSubmit(e) {
     for (const path of this.paths) {
       console.log(path);
       const { context, token } = await DA_SDK;
@@ -51,6 +64,25 @@ class ModifyProperty extends LitElement {
       console.log(foundValue);
 
       // Now we modify and post 
+      foundValue.innerText = this._inputVal;
+      console.log(foundValue, parsedPage);
+
+      // Serialize the data, and post 
+      const xmlSer = new XMLSerializer();
+      const newText = xmlSer.serializeToString(parsedPage);
+
+      const blob = new Blob([newText], { type: 'text/html' });
+      const body = new FormData();
+      body.append('data', blob);
+
+      const postOpts = {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body,
+      };
+
+      const postResp = await fetch(listPath, postOpts);
+      console.log(postResp.status);
     }
   }
 
@@ -59,7 +91,7 @@ class ModifyProperty extends LitElement {
       <form class="modify-property">
         <div class='fieldgroup'>
           <label for="new-property">New Property</label>
-          <sl-input type="text" id="new-property" name="new-property" placeholder="new property" value=""></sl-input>
+          <sl-input type="text" id="new-property" name="new-property" placeholder="new property" value=${this._inputVal} @input=${this.handleInput}></sl-input>
         </div>
         <div class="submit">
             <sl-button @click=${this.handleSubmit}>Modify Property</sl-button>
