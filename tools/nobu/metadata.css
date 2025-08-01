@@ -9,18 +9,3 @@ main {
 .submit {
   margin: 20px 0;
 }
-
-.property-counts {
-  background-color: white;
-}
-
-.property-counts .found-property {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  width: 100%;
-}
-
-.property-counts .found-paths {
-  background-color: white;
-}

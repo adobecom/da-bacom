@@ -3,18 +3,28 @@
 import 'https://da.live/nx/public/sl/components.js';
 import getStyle from 'https://da.live/nx/utils/styles.js';
 import { LitElement, html, nothing } from 'da-lit';
-import DA_SDK from 'https://da.live/nx/utils/sdk.js';
-import { crawl } from 'https://da.live/nx/public/utils/tree.js';
+import { ModifyProperty } from '../modify-property/modify-property.js';
+
+const style = await getStyle(import.meta.url);
 
 class CountItem extends LitElement {
-  // static properties = {
-  //   _paths: { state: true },
-  // }
+  static properties = {
+    _modify: { state: true },
+  }
 
-  // constructor() {
-  //   super();
-  //   this._paths = [];
-  // }
+  constructor() {
+    super();
+    this._modify = false;
+  }
+
+  async connectedCallback() {
+    super.connectedCallback();
+    this.shadowRoot.adoptedStyleSheets = [style];
+  }
+
+  toggleModify() {
+    this._modify = !this._modify;
+  }
 
   handleSubmit() {
     this._paths.forEach((p) => {
@@ -32,8 +42,8 @@ class CountItem extends LitElement {
         <div class="found-property"> 
           <h3>Property: ${this.countItem.property}</h3>
           <h3>Count: ${this.countItem.count}<h3>
-          <sl-button>Modify</sl-button>
-          <da-modify-property .paths=${matchingPages}></da-modify-property>
+          <sl-button @click=${this.toggleModify}>Modify</sl-button>
+          ${this._modify ? html`<da-modify-property .paths=${matchingPages} .mdProperty=${this.countItem.property}></da-modify-property>` : nothing}
         </div>
         <div class="found-paths">
           <h3>Paths:</h3>
@@ -45,5 +55,7 @@ class CountItem extends LitElement {
     `;
   }
 }
+
+customElements.define('da-modify-property', ModifyProperty);
 
 export { CountItem };

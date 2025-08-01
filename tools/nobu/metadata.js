@@ -5,8 +5,7 @@ import getStyle from 'https://da.live/nx/utils/styles.js';
 import { LitElement, html, nothing } from 'da-lit';
 import DA_SDK from 'https://da.live/nx/utils/sdk.js';
 import { crawl } from 'https://da.live/nx/public/utils/tree.js';
-import { ModifyProperty } from './modifyProperty.js';
-import { CountItem } from './counts.js';
+import { CountItem } from './counts/counts.js';
 
 const style = await getStyle(import.meta.url);
 
@@ -196,5 +195,4 @@ class MetadataManager extends LitElement {
 }
 
 customElements.define('da-metadata-manager', MetadataManager);
-customElements.define('da-modify-property', ModifyProperty);
 customElements.define('da-count-item', CountItem);
