@@ -5,11 +5,13 @@ import getStyle from 'https://da.live/nx/utils/styles.js';
 import { LitElement, html, nothing } from 'da-lit';
 import DA_SDK from 'https://da.live/nx/utils/sdk.js';
 import { crawl } from 'https://da.live/nx/public/utils/tree.js';
-import { CountItem } from './counts/counts.js';
+import CountItem from './counts/counts.js';
+import { matchPageToMetadata } from './document-utils.js';
+import fetchDaSource from './fetch-utils.js';
 
 const style = await getStyle(import.meta.url);
 
-// const style = await getStyle(import.meta.url);
+// For testing purposes, to remove later
 const ppn = 'primaryProductName';
 const pth = 'drafts/slavin/nobu';
 
@@ -40,35 +42,6 @@ class MetadataManager extends LitElement {
     this.shadowRoot.adoptedStyleSheets = [style];
   }
 
-  // Function to take take the path and crawl pages
-
-  // function to store the html returned into state
-  async getHtml(path, opts) {
-    const daLivePath = `https://admin.da.live/source${path}`;
-    const resp = await fetch(daLivePath, opts);
-    if (!resp.ok) return;
-    const text = await resp.text();
-    this._pages.push({
-      path,
-      html: text,
-    });
-  }
-
-  parseMetadata(page) {
-    const newParser = new DOMParser();
-    const parsedPage = newParser.parseFromString(page.html, 'text/html');
-    const metadata = parsedPage.querySelectorAll('.metadata > div');
-    metadata.forEach((pair) => {
-      const key = pair?.children[0]?.children[0];
-      const value = pair?.children[1]?.children[0];
-      console.log(`Key ${key?.innerText} Value ${value?.innerText}`);
-      if (key.innerText === ppn) {
-        page.foundProperty = value.innerText;
-      }
-    });
-    return page;
-  }
-
   showCounts() {
     const propertyCounts = {};
 
@@ -90,14 +63,9 @@ class MetadataManager extends LitElement {
 
   // function to parse results
   async getListFromPath() {
-    console.log('get list from path');
     const { context, token } = await DA_SDK;
     const targetProject = `${context.org}/${context.repo}`;
-
-    const DA_ORIGIN = 'https://admin.da.live';
-    const partPath = `/${targetProject}/${this._path}/`;
-    const listPath = `${DA_ORIGIN}/list/${targetProject}/${this._path}/`;
-    console.log(`This is the list path: ${listPath}`);
+    const folderPath = `/${targetProject}/${this._path}/`;
 
     const HEADERS = {
       'Content-Type': 'application/json',
@@ -110,19 +78,20 @@ class MetadataManager extends LitElement {
       headers: HEADERS,
     };
 
-    const resp = await fetch(listPath, opts);
-    if (resp.ok) {
-      const json = await resp.json();
-      console.log(json);
-    }
-
     // Create the callback to fire when a file is returned
     const callback = async (file) => {
-      await this.getHtml(file.path, opts);
+      const htmlText = await fetchDaSource(file.path, opts);
+      const metadataProp = matchPageToMetadata(htmlText, ppn);
+      this._pages.push({
+        path: file.path,
+        foundProperty: metadataProp,
+      });
     };
 
     // Start the crawl
-    const { results, getDuration, cancelCrawl } = crawl({ path: partPath, callback, throttle: 10 });
+    const { results, getDuration, cancelCrawl } = crawl(
+      { path: folderPath, callback, throttle: 10 },
+    );
 
     // Asign the cancel button the cancel event
     this._cancelCallbackAcitve = true;
@@ -132,13 +101,6 @@ class MetadataManager extends LitElement {
     await results;
 
     this._duration = getDuration();
-    console.log(results, 'results');
-
-    this._pages.forEach((page) => {
-      const primary = this.parseMetadata(page);
-      console.log(primary);
-    });
-
     this.showCounts();
   }
 
@@ -156,8 +118,6 @@ class MetadataManager extends LitElement {
 
     this._path = entries.path;
     this._property = entries.property;
-
-    console.log(entries, formData);
     this.getListFromPath();
   }
 

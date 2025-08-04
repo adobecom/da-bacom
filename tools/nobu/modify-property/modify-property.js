@@ -102,4 +102,4 @@ class ModifyProperty extends LitElement {
   }
 }
 
-export { ModifyProperty };
+export default ModifyProperty;

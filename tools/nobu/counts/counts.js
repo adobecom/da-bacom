@@ -3,14 +3,12 @@
 import 'https://da.live/nx/public/sl/components.js';
 import getStyle from 'https://da.live/nx/utils/styles.js';
 import { LitElement, html, nothing } from 'da-lit';
-import { ModifyProperty } from '../modify-property/modify-property.js';
+import ModifyProperty from '../modify-property/modify-property.js';
 
 const style = await getStyle(import.meta.url);
 
 class CountItem extends LitElement {
-  static properties = {
-    _modify: { state: true },
-  }
+  static properties = { _modify: { state: true } };
 
   constructor() {
     super();
@@ -26,15 +24,9 @@ class CountItem extends LitElement {
     this._modify = !this._modify;
   }
 
-  handleSubmit() {
-    this._paths.forEach((p) => {
-      console.log(p);
-    });
-  }
-
   render() {
     const matchingPages = this.pages.filter(
-      (page) => page.foundProperty === this.countItem.property
+      (page) => page.foundProperty === this.countItem.property,
     );
 
     return html`
@@ -58,4 +50,4 @@ class CountItem extends LitElement {
 
 customElements.define('da-modify-property', ModifyProperty);
 
-export { CountItem };
+export default CountItem;
