@@ -6,8 +6,8 @@ import { LitElement, html, nothing } from 'da-lit';
 import DA_SDK from 'https://da.live/nx/utils/sdk.js';
 import { crawl } from 'https://da.live/nx/public/utils/tree.js';
 import CountItem from './counts/counts.js';
-import { matchPageToMetadata } from './document-utils.js';
-import fetchDaSource from './fetch-utils.js';
+import matchPageToMetadata from './document-utils.js';
+import { getDaSourceText } from './fetch-utils.js';
 
 const style = await getStyle(import.meta.url);
 
@@ -67,24 +67,13 @@ class MetadataManager extends LitElement {
     const targetProject = `${context.org}/${context.repo}`;
     const folderPath = `/${targetProject}/${this._path}/`;
 
-    const HEADERS = {
-      'Content-Type': 'application/json',
-      // eslint-disable-next-line quote-props
-      'Authorization': `Bearer ${token}`,
-    };
-
-    const opts = {
-      method: 'GET',
-      headers: HEADERS,
-    };
-
     // Create the callback to fire when a file is returned
     const callback = async (file) => {
-      const htmlText = await fetchDaSource(file.path, opts);
-      const metadataProp = matchPageToMetadata(htmlText, ppn);
+      const htmlText = await getDaSourceText(file.path, token);
+      const { foundValue } = matchPageToMetadata(htmlText, ppn);
       this._pages.push({
         path: file.path,
-        foundProperty: metadataProp,
+        foundProperty: foundValue.innerText,
       });
     };
 
