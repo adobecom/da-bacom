@@ -1,10 +1,14 @@
 .modify-property-container {
-  min-width: 300px;
-  min-height: 100%;
+  min-height: 150px;
+  margin-top: 20px;
 }
 
-.modify-property-container > * {
-  padding: 10px;
+.modify-property .fieldgroup > * {
+  margin: 10px;
+}
+
+.modify-property .submit {
+  margin-left: 10px;
 }
 
 .updating-ellipsis::after {

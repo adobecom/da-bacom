@@ -4,11 +4,16 @@
   grid-template-areas: 
     "a a c"
     "b b c";
-  margin: 10px;
+  grid-template-columns: 1fr 1fr 1fr;
+  margin: 20px;
 }
 
 .property-counts h3 {
   margin: 0;
+}
+
+.found-property h3 {
+  width: 50%;
 }
 
 .property-counts .found-property {
@@ -20,10 +25,16 @@
   padding: 10px;
 }
 
-.property-counts .found-paths {
+.found-paths {
   grid-area: b;
   background-color: white;
   padding: 10px;
+  width: 100%;
+}
+
+.found-paths .title {
+  display: flex;
+  flex-direction: row;
 }
 
 .modify-container {
@@ -31,9 +42,11 @@
   grid-area: c;
 }
 
-.modify-button {
+.modify-button,
+.found-paths button {
   display: flex;
   justify-content: center;
+  margin-left: 10px;
   min-width: 34px;
   gap: 6px;
   padding: 5px 14px;
@@ -54,6 +67,42 @@
   margin-right: 230px;
 }
 
+.modify-button:hover,
+.found-paths button:hover {
+  background: var(--s2-blue-1000);
+  border-color: var(--s2-blue-1000);
+}
+
 .update-open {
   background: #737373;
+}
+
+.paths-list {
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+}
+
+.paths-list.shown {
+  max-height: 500px;
+  opacity: 1;
+  overflow: hidden;
+  transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  animation: reveal-content 0.3s ease-in-out;
+}
+
+.paths-list li {
+  font-weight: 100;
+}
+
+@keyframes reveal-content {
+  from {
+    max-height: 0;
+    opacity: 0;
+  }
+
+  to {
+    max-height: 500px;
+    opacity: 1;
+  }
 }

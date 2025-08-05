@@ -120,7 +120,7 @@ class MetadataManager extends LitElement {
   render() {
     return html`
       <h1>Metadata Manager</h1>
-      <form>
+      <form class="metadata-manager">
         <div class='fieldgroup'>
           <label for="path">Path</label>
           <sl-input type="text" id="path" name="path" placeholder="path" value=${pth}></sl-input>
@@ -136,16 +136,19 @@ class MetadataManager extends LitElement {
       </form>
       <section class="results">
         <div> 
-          <p>Counts<p>
+          <h3>Counts</h3>
           ${this._metaDataProperties.length > 0 ? this._metaDataProperties.map((countItem) => html`<da-count-item .countItem=${countItem} .pages=${this._pages}>`) : nothing}
         </div>
       </section>
-      <div>
-        <p>${this._duration}</p>
-      </div>
-      <div>
-        ${this._cancelCallbackAcitve ? html`<button @click=${this._cancelCallback}>Cancel crawl</button>` : nothing}
-      </div>
+      <section class='crawl'> 
+        <div>
+          <p>Crawl duration:</p>
+          <p>${this._duration}</p>
+        </div>
+        <div class='cancel'>
+          ${this._cancelCallbackAcitve ? html`<sl-button @click=${this._cancelCallback}>Cancel crawl</sl-button>` : nothing}
+        </div>
+      </section>
     `;
   }
 }

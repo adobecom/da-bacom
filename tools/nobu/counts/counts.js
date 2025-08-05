@@ -11,12 +11,14 @@ class CountItem extends LitElement {
   static properties = {
     _modify: { state: true },
     _updateOpen: { state: true },
+    _pathsShown: { type: String },
   };
 
   constructor() {
     super();
     this._modify = false;
     this._updateOpen = '';
+    this._pathsShown = '';
     this.addEventListener('updatedMetadata', () => {
       this.toggleModify();
     });
@@ -25,6 +27,15 @@ class CountItem extends LitElement {
   async connectedCallback() {
     super.connectedCallback();
     this.shadowRoot.adoptedStyleSheets = [style];
+  }
+
+  togglePathsList() {
+    console.log(this._pathsShown);
+    if (this._pathsShown === '') {
+      this._pathsShown = 'shown';
+    } else {
+      this._pathsShown = '';
+    }
   }
 
   toggleModify() {
@@ -45,11 +56,14 @@ class CountItem extends LitElement {
       <section class="property-counts">
         <div class="found-property"> 
           <h3>Property: ${this.countItem.property}</h3>
-          <h3>Count: ${this.countItem.count}<h3>
+          <h3>Count: ${this.countItem.count}</h3>
         </div>
         <div class="found-paths">
-          <h3>Paths:</h3>
-          <ul>
+          <div class="title"> 
+            <h3>Paths:</h3>
+            <button @click=${this.togglePathsList}>Expand</button>
+          </div>
+          <ul class="paths-list ${this._pathsShown}">
             ${matchingPages.map((page) => html`<li>${page.path}</li>`)}
           </ul>
         </div>
