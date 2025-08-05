@@ -1,14 +1,59 @@
 .property-counts {
   background-color: white;
+  display: grid;
+  grid-template-areas: 
+    "a a c"
+    "b b c";
+  margin: 10px;
+}
+
+.property-counts h3 {
+  margin: 0;
 }
 
 .property-counts .found-property {
+  grid-area: a;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   width: 100%;
+  padding: 10px;
 }
 
 .property-counts .found-paths {
+  grid-area: b;
   background-color: white;
+  padding: 10px;
+}
+
+.modify-container {
+  padding: 10px;
+  grid-area: c;
+}
+
+.modify-button {
+  display: flex;
+  justify-content: center;
+  min-width: 34px;
+  gap: 6px;
+  padding: 5px 14px;
+  line-height: 18px;
+  font-size: 14px;
+  color: #fff;
+  background: var(--s2-blue-900);
+  border: 2px solid var(--s2-blue-900);
+  font-family: var(--font-family);
+  border-radius: var(--s2-border-radius);
+  outline-color: var(--s2-blue-900);
+  outline-offset: 0;
+  transition: outline-offset 0.2s;
+  text-decoration: none;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  margin-right: 230px;
+}
+
+.update-open {
+  background: #737373;
 }

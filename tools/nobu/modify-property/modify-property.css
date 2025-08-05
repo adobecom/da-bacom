@@ -1,0 +1,20 @@
+.modify-property-container {
+  min-width: 300px;
+  min-height: 100%;
+}
+
+.modify-property-container > * {
+  padding: 10px;
+}
+
+.updating-ellipsis::after {
+    content: "";
+    animation: ellipsis-animation 1s infinite;
+}    
+
+@keyframes ellipsis-animation {
+    0% { content: ""; }
+    33% { content: "."; }
+    66% { content: ".."; }
+    100% { content: "..."; }
+}

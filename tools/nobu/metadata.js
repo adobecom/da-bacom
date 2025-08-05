@@ -35,6 +35,13 @@ class MetadataManager extends LitElement {
     this._cancelCallbackAcitve = false;
     this._metaDataProperties = [];
     this._willModify = false;
+    this.addEventListener('updatedMetadata', (e) => {
+      console.log('updated', e);
+      this._pages = [];
+      this._metaDataProperties = [];
+      // need an actual call back here, probably only need to update the item itself
+      this.getListFromPath();
+    });
   }
 
   async connectedCallback() {

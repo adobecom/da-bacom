@@ -8,11 +8,18 @@ import ModifyProperty from '../modify-property/modify-property.js';
 const style = await getStyle(import.meta.url);
 
 class CountItem extends LitElement {
-  static properties = { _modify: { state: true } };
+  static properties = {
+    _modify: { state: true },
+    _updateOpen: { state: true },
+  };
 
   constructor() {
     super();
     this._modify = false;
+    this._updateOpen = '';
+    this.addEventListener('updatedMetadata', () => {
+      this.toggleModify();
+    });
   }
 
   async connectedCallback() {
@@ -22,6 +29,11 @@ class CountItem extends LitElement {
 
   toggleModify() {
     this._modify = !this._modify;
+    if (this._updateOpen === '') {
+      this._updateOpen = 'update-open';
+    } else {
+      this._updateOpen = '';
+    }
   }
 
   render() {
@@ -34,15 +46,17 @@ class CountItem extends LitElement {
         <div class="found-property"> 
           <h3>Property: ${this.countItem.property}</h3>
           <h3>Count: ${this.countItem.count}<h3>
-          <sl-button @click=${this.toggleModify}>Modify</sl-button>
-          ${this._modify ? html`<da-modify-property .paths=${matchingPages} .mdProperty=${this.countItem.property}></da-modify-property>` : nothing}
         </div>
         <div class="found-paths">
           <h3>Paths:</h3>
           <ul>
             ${matchingPages.map((page) => html`<li>${page.path}</li>`)}
           </ul>
-          </div>
+        </div>
+        <div class='modify-container'>
+         <button @click=${this.toggleModify} class='modify-button ${this._updateOpen}'>Modify</button>
+          ${this._modify ? html`<da-modify-property .paths=${matchingPages} .mdProperty=${this.countItem.property}></da-modify-property>` : nothing}
+        </div>
       </section>
     `;
   }

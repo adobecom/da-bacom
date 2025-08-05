@@ -35,8 +35,7 @@ async function updateDaPage(htmlText, path, token) {
   if (!postResp.ok) {
     console.error('Issue with updating page');
   }
-  console.log(postResp)
   return postResp.status;
 }
 
-export { getDaSource, updateDaPage };
+export { getDaSourceText, updateDaPage };
