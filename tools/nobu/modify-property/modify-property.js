@@ -13,17 +13,33 @@ class ModifyProperty extends LitElement {
   static properties = {
     _inputVal: { state: true },
     _updating: { state: true },
+    _allowedProperties: { type: Array },
   };
 
   constructor() {
     super();
     this._inputVal = '';
     this._updating = false;
+    this._allowedProperties = [];
   }
 
   async connectedCallback() {
     super.connectedCallback();
     this.shadowRoot.adoptedStyleSheets = [style];
+    const allowedPropListUrl = 'https://main--da-bacom--adobecom.aem.live/drafts/slavin/nobu/allowed-ppn.json';
+    const allowedPropList = await fetch(allowedPropListUrl);
+    if (allowedPropList.ok) {
+      const json = await allowedPropList.json();
+      // We're going to want to expand this method to include any metadata properties on the list
+      // And match it to the input value of the initial search
+      const allowed = json.data.reduce((list, obj) => {
+        if (obj[this.selectedProp] !== '') {
+          list.push(obj[this.selectedProp]);
+        }
+        return list;
+      }, []);
+      this._allowedProperties = allowed;
+    }
   }
 
   handleInput(e) {
@@ -77,7 +93,9 @@ class ModifyProperty extends LitElement {
     : html`<form class="modify-property">
           <div class='fieldgroup'>
             <label for="new-property">New Property</label>
-            <sl-input type="text" id="new-property" name="new-property" placeholder="new property" value=${this._inputVal} @input=${this.handleInput}></sl-input>
+            <select type="select" id="new-property" name="new-property" placeholder="new property" value=${this._inputVal} @input=${this.handleInput}>
+              ${this._allowedProperties.map((prop) => html`<option name=${prop}>${prop}</option>`)}
+            </select>
           </div>
           <div class="submit">
               <sl-button @click=${this.handleSubmit}>Modify Property</sl-button>

@@ -12,7 +12,6 @@ import { getDaSourceText } from './fetch-utils.js';
 const style = await getStyle(import.meta.url);
 
 // For testing purposes, to remove later
-const ppn = 'primaryProductName';
 const pth = 'drafts/slavin/nobu';
 
 class MetadataManager extends LitElement {
@@ -25,6 +24,7 @@ class MetadataManager extends LitElement {
     _cancelCallbackAcitve: { state: true },
     _metaDataProperties: { state: true },
     _willModify: { state: true },
+    _metadataSearchProps: { type: Array },
   };
 
   constructor() {
@@ -42,11 +42,22 @@ class MetadataManager extends LitElement {
       // need an actual call back here, probably only need to update the item itself
       this.getListFromPath();
     });
+    this._metadataSearchProps = [];
   }
 
   async connectedCallback() {
     super.connectedCallback();
     this.shadowRoot.adoptedStyleSheets = [style];
+    const mdAllowSheetUrl = 'https://main--da-bacom--adobecom.aem.live/drafts/slavin/nobu/allowed-ppn.json';
+    const mdAllowSheetResp = await fetch(mdAllowSheetUrl);
+    if (mdAllowSheetResp.ok) {
+      const json = await mdAllowSheetResp.json();
+      const allowedSearches = Object.keys(json.data[0]).reduce((list, key) => {
+        list.push(key);
+        return list;
+      }, []);
+      this._metadataSearchProps = allowedSearches;
+    }
   }
 
   showCounts() {
@@ -77,7 +88,7 @@ class MetadataManager extends LitElement {
     // Create the callback to fire when a file is returned
     const callback = async (file) => {
       const htmlText = await getDaSourceText(file.path, token);
-      const { foundValue } = matchPageToMetadata(htmlText, ppn);
+      const { foundValue } = matchPageToMetadata(htmlText, this._property);
       this._pages.push({
         path: file.path,
         foundProperty: foundValue.innerText,
@@ -103,6 +114,8 @@ class MetadataManager extends LitElement {
   // Function to show results
   handleSubmit(e) {
     e.preventDefault();
+    this._pages = [];
+    this._metaDataProperties = [];
     const formData = new FormData(e.target.closest('form'));
     const entries = Object.fromEntries(formData.entries());
     const empty = Object.keys(entries).some((key) => !entries[key]);
@@ -127,7 +140,9 @@ class MetadataManager extends LitElement {
         </div>
         <div class='fieldgroup'>
           <label for="property">Property</label>
-          <sl-input type="text" id="property" name="property" placeholder="property" value=${ppn}></sl-input>
+          <select type="text" id="property" name="property" placeholder="property">
+            ${this._metadataSearchProps.map((prop) => html`<option name=${prop}>${prop}</option>`)}
+          </select>
         </div>
         <div class="submit">
             <sl-button @click=${this.handleSubmit}>Search Metadata</sl-button>
@@ -137,7 +152,7 @@ class MetadataManager extends LitElement {
       <section class="results">
         <div> 
           <h3>Counts</h3>
-          ${this._metaDataProperties.length > 0 ? this._metaDataProperties.map((countItem) => html`<da-count-item .countItem=${countItem} .pages=${this._pages}>`) : nothing}
+          ${this._metaDataProperties.length > 0 ? this._metaDataProperties.map((countItem) => html`<da-count-item .selectedProp=${this._property} .countItem=${countItem} .pages=${this._pages}>`) : nothing}
         </div>
       </section>
       <section class='crawl'> 

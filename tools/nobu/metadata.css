@@ -50,3 +50,19 @@ h1 {
   align-self: center;
   margin-left: 20px;
 }
+
+/* remove and replace with proper sl-select type */
+select {
+  width: 100%;
+  display: block;
+  padding: 5px 12px;
+  line-height: var(--sl-field-height);
+  font-family: var(--font-family);
+  font-size: var(--sl-field-font-size);
+  border-radius: var(--s2-radius-100);
+  outline-color: var(--s2-blue-900);
+  outline-offset: 0;
+  transition: outline-offset 0.2s;
+  border: var(--sl-field-border);
+  box-sizing: border-box;
+}

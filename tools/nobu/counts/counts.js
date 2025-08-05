@@ -69,7 +69,7 @@ class CountItem extends LitElement {
         </div>
         <div class='modify-container'>
          <button @click=${this.toggleModify} class='modify-button ${this._updateOpen}'>Modify</button>
-          ${this._modify ? html`<da-modify-property .paths=${matchingPages} .mdProperty=${this.countItem.property}></da-modify-property>` : nothing}
+          ${this._modify ? html`<da-modify-property .selectedProp=${this.selectedProp} .paths=${matchingPages} .mdProperty=${this.countItem.property}></da-modify-property>` : nothing}
         </div>
       </section>
     `;
