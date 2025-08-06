@@ -13,6 +13,7 @@ const style = await getStyle(import.meta.url);
 
 // For testing purposes, to remove later
 const pth = 'drafts/slavin/nobu';
+// const pth = 'products'
 
 class MetadataManager extends LitElement {
   static properties = {
