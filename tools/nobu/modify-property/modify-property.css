@@ -1,6 +1,5 @@
 .modify-property-container {
-  min-height: 150px;
-  margin-top: 20px;
+  margin: 20px 10px;
 }
 
 .modify-property .fieldgroup > * {

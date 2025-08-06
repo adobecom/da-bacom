@@ -10,6 +10,7 @@ import matchPageToMetadata from './document-utils.js';
 import { getDaSourceText } from './fetch-utils.js';
 
 const style = await getStyle(import.meta.url);
+const COPY_TO_CLIPBOARD = 'Copy paths to clipboard';
 
 // For testing purposes, to remove later
 const pth = 'drafts/slavin/nobu';
@@ -25,6 +26,8 @@ class MetadataManager extends LitElement {
     _cancelCallbackAcitve: { state: true },
     _metaDataProperties: { state: true },
     _willModify: { state: true },
+    _copyText: { type: String },
+    _updatedPaths: { type: Array },
     _metadataSearchProps: { type: Array },
   };
 
@@ -36,12 +39,32 @@ class MetadataManager extends LitElement {
     this._cancelCallbackAcitve = false;
     this._metaDataProperties = [];
     this._willModify = false;
-    this.addEventListener('updatedMetadata', (e) => {
-      console.log('updated', e);
-      this._pages = [];
-      this._metaDataProperties = [];
-      // need an actual call back here, probably only need to update the item itself
-      this.getListFromPath();
+    this._updatedPaths = [];
+    this._copyText = COPY_TO_CLIPBOARD;
+    this.addEventListener('updatedMetadata', async (e) => {
+      const updatedPages = e.detail.updatePayload;
+      this._pages = this._pages.map((page) => {
+        const updatedPage = updatedPages.find((up) => up.path.path === page.path);
+        if (updatedPage) {
+          return {
+            ...page,
+            foundProperty: updatedPage.updatedValue,
+          };
+        }
+        return page;
+      });
+
+      this.showCounts();
+      const { context } = await DA_SDK;
+      const updatedPaths = e.detail.updatePayload.map((p) => {
+        const daPath = p.path.path;
+        const trimmed = daPath.replace(`/${context.org}/${context.repo}/`, '');
+        const aemPath = `https://main--${context.repo}--${context.org}.aem.page/${trimmed}`;
+        return aemPath;
+      });
+      // Use Set to ensure no duplicates
+      const uniquePaths = [...new Set([...updatedPaths, ...this._updatedPaths])];
+      this._updatedPaths = uniquePaths;
     });
     this._metadataSearchProps = [];
   }
@@ -49,6 +72,7 @@ class MetadataManager extends LitElement {
   async connectedCallback() {
     super.connectedCallback();
     this.shadowRoot.adoptedStyleSheets = [style];
+    // To modify after PoC
     const mdAllowSheetUrl = 'https://main--da-bacom--adobecom.aem.live/drafts/slavin/nobu/allowed-ppn.json';
     const mdAllowSheetResp = await fetch(mdAllowSheetUrl);
     if (mdAllowSheetResp.ok) {
@@ -77,7 +101,9 @@ class MetadataManager extends LitElement {
       count,
     }));
 
-    this._metaDataProperties = result;
+    // Create a new array to trigger reactivity
+    this._metaDataProperties = [...result];
+    return result;
   }
 
   // function to parse results
@@ -112,6 +138,29 @@ class MetadataManager extends LitElement {
     this.showCounts();
   }
 
+  handleCopy(e) {
+    e.preventDefault();
+    if (this._updatedPaths.length > 0) {
+      const pathsText = this._updatedPaths.join('\n');
+      navigator.clipboard.writeText(pathsText).then(() => {
+        this._copyText = 'Copied';
+        setTimeout(() => {
+          this._copyText = COPY_TO_CLIPBOARD;
+        }, 1500);
+      }).catch(() => {
+        this._copyText = 'Error';
+        setTimeout(() => {
+          this._copyText = COPY_TO_CLIPBOARD;
+        }, 1500);
+      });
+    } else {
+      this._copyText = 'No updated paths to copy';
+      setTimeout(() => {
+        this._copyText = COPY_TO_CLIPBOARD;
+      }, 1500);
+    }
+  }
+
   // Function to show results
   handleSubmit(e) {
     e.preventDefault();
@@ -134,22 +183,25 @@ class MetadataManager extends LitElement {
   render() {
     return html`
       <h1>Metadata Manager</h1>
-      <form class="metadata-manager">
-        <div class='fieldgroup'>
-          <label for="path">Path</label>
-          <sl-input type="text" id="path" name="path" placeholder="path" value=${pth}></sl-input>
-        </div>
-        <div class='fieldgroup'>
-          <label for="property">Property</label>
-          <select type="text" id="property" name="property" placeholder="property">
-            ${this._metadataSearchProps.map((prop) => html`<option name=${prop}>${prop}</option>`)}
-          </select>
-        </div>
-        <div class="submit">
-            <sl-button @click=${this.handleSubmit}>Search Metadata</sl-button>
+      <section class='main-ui'>
+        <form class="metadata-manager">
+          <div class='fieldgroup'>
+            <label for="path">Path</label>
+            <sl-input type="text" id="path" name="path" placeholder="path" value=${pth}></sl-input>
           </div>
-        </div>
-      </form>
+          <div class='fieldgroup'>
+            <label for="property">Property</label>
+            <select type="text" id="property" name="property" placeholder="property">
+              ${this._metadataSearchProps.map((prop) => html`<option name=${prop}>${prop}</option>`)}
+            </select>
+          </div>
+          <div class="submit">
+              <sl-button @click=${this.handleSubmit}>Search Metadata</sl-button>
+            </div>
+          </div>
+        </form>
+        ${this._updatedPaths.length > 0 ? html`<sl-button class='copy' @click=${this.handleCopy}>${this._copyText}</sl-button>` : nothing}
+      </section>
       <section class="results">
         <div> 
           <h3>Counts</h3>

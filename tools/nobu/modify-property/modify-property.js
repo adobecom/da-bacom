@@ -1,7 +1,7 @@
 /* eslint-disable no-underscore-dangle */
 /* eslint-disable import/no-unresolved */
 import 'https://da.live/nx/public/sl/components.js';
-import { LitElement, html } from 'da-lit';
+import { LitElement, html, nothing } from 'da-lit';
 import getStyle from 'https://da.live/nx/utils/styles.js';
 import DA_SDK from 'https://da.live/nx/utils/sdk.js';
 import { getDaSourceText, updateDaPage } from '../fetch-utils.js';
@@ -14,6 +14,7 @@ class ModifyProperty extends LitElement {
     _inputVal: { state: true },
     _updating: { state: true },
     _allowedProperties: { type: Array },
+    _isUpdated: { state: true },
   };
 
   constructor() {
@@ -21,6 +22,7 @@ class ModifyProperty extends LitElement {
     this._inputVal = '';
     this._updating = false;
     this._allowedProperties = [];
+    this._isUpdated = false;
   }
 
   async connectedCallback() {
@@ -55,7 +57,7 @@ class ModifyProperty extends LitElement {
       const { token } = await DA_SDK;
 
       // eslint-disable-next-line no-promise-executor-return
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
       const htmlResp = await getDaSourceText(path.path, token);
       const { foundValue, parsedPage } = matchPageToMetadata(htmlResp, this.mdProperty, false);
@@ -80,6 +82,7 @@ class ModifyProperty extends LitElement {
     const updateEvent = new CustomEvent('updatedMetadata', { bubbles: true, composed: true, detail: { updatePayload } });
     this.dispatchEvent(updateEvent);
     this._updating = false;
+    this._isUpdated = true;
   }
 
   render() {
@@ -102,6 +105,7 @@ class ModifyProperty extends LitElement {
             </div>
           </div>
         </form>`}
+        ${this._isUpdated ? html`<button>Copy</button> ` : nothing}
       </section>
     `;
   }

@@ -2,11 +2,21 @@ main {
   padding: 40px;
 }
 
+.main-ui {
+  display: flex;
+  flex-direction: row;
+}
+
+.main-ui .copy {
+  position: relative;
+  top: 12px;
+  align-self: center;
+}
+
 .metadata-manager {
   display: flex;
   align-items: center;
   height: 100px;
-  width: 100%;
 }
 
 h1 {

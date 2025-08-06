@@ -9,6 +9,9 @@ const style = await getStyle(import.meta.url);
 
 class CountItem extends LitElement {
   static properties = {
+    selectedProp: { type: String },
+    countItem: { type: Object },
+    pages: { type: Array },
     _modify: { state: true },
     _updateOpen: { state: true },
     _pathsShown: { type: String },

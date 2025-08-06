@@ -5,7 +5,10 @@
     "a a c"
     "b b c";
   grid-template-columns: 1fr 1fr 1fr;
+  /* stylelint-disable-next-line declaration-block-no-redundant-longhand-properties */
+  grid-template-rows: 1fr 2fr;
   margin: 20px;
+  min-height: 225px;
 }
 
 .property-counts h3 {
