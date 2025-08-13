@@ -142,6 +142,7 @@ const CONFIG = {
     version: '1.0',
     onDemand: false,
   },
+  atvCaptionsKey: 'bacom',
 };
 
 const eagerLoad = (img) => {
