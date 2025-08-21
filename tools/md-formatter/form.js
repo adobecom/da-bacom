@@ -3,35 +3,114 @@
 import 'https://da.live/nx/public/sl/components.js';
 import getStyle from 'https://da.live/nx/utils/styles.js';
 import { LitElement, html, nothing } from 'da-lit';
-import DA_SDK from 'https://da.live/nx/utils/sdk.js';
-import { crawl } from 'https://da.live/nx/public/utils/tree.js';
 
 const style = await getStyle(import.meta.url);
 
 // For testing purposes, to remove later
-const mdConfig = 'https://main--da-bacom--adobecom.aem.live/drafts/slavin/metadata-selector/md-config.json';
+// const mdConfig = 'https://main--da-bacom--adobecom.aem.live/drafts/slavin/metadata-selector/md-config.json';
 // const pth = 'products'
 
 class MdForm extends LitElement {
   static properties = {
     _title: { state: true },
     _formFields: { state: true },
-    _addSelection: { state: true },
+    _addFields: { state: true },
+    _optionsErrorMessage: { type: String },
+    _metadataOptions: { state: true },
   };
 
   constructor() {
     super();
     this._title = 'Metadata Builder';
-    this._formFields = [
-      { label: 'Title', placeholder: 'page title' },
-      { label: 'Description', placeholder: 'page description' },
+    this._defaultFields = [
+      { key: 'Title', value: 'page title' },
+      { key: 'Description', value: 'page description' },
     ];
-    this._addSelection = [];
+    this._addedFields = [];
+    this._optionsErrorMessage = '';
+    this._metadataOptions = {};
+  }
+
+  async getMetadataOptions() {
+    const sheetUrl = 'https://main--da-bacom--adobecom.aem.live/drafts/slavin/nobu/allowed-ppn.json';
+    const resp = await fetch(sheetUrl);
+    if (!resp.ok) {
+      this._optionsErrorMessage = 'Failed to fetch metadata options';
+      return {};
+    }
+    const json = await resp.json();
+    return json;
+  }
+
+  /**
+   *
+   * @returns
+   *   "data": [
+    {
+      "primaryProductName": "Marketo Engage",
+      "serp-content-type": "product"
+    },
+    {
+      "primaryProductName": "Adobe Experience Platform",
+      "serp-content-type": "service"
+    },
+    {
+      "primaryProductName": "RTCDP",
+      "serp-content-type": "b2b"
+    },
+    {
+      "primaryProductName": "GenStudio",
+      "serp-content-type": "b2c"
+    },
+    {
+      "primaryProductName": "Experience Manager Sites",
+      "serp-content-type": "caas"
+    },
+    {
+      "primaryProductName": "Adobe Analytics",
+      "serp-content-type": "adobe"
+    },
+    {
+      "primaryProductName": "Adobe Firefly",
+      "serp-content-type": "product"
+    },
+    {
+      "primaryProductName": "Marketo",
+      "serp-content-type": "marketing"
+    },
+    {
+      "primaryProductName": "Adobe-Business",
+      "serp-content-type": "AB"
+    }
+  ],
+   */
+
+  setSelectOptions() {
+    if (!this._metadataOptions?.data?.length) return [];
+
+    const firstItem = this._metadataOptions.data[0];
+    const keys = Object.keys(firstItem);
+
+    // Initialize the result structure
+    const selectOptions = keys.map((key) => ({ keyName: key, values: [] }));
+
+    // Single pass through the data to populate all values
+    this._metadataOptions.data.forEach((item) => {
+      keys.forEach((key) => {
+        if (item[key]) {
+          selectOptions.find((option) => option.keyName === key).values.push(item[key]);
+        }
+      });
+    });
+
+    return selectOptions;
   }
 
   async connectedCallback() {
     super.connectedCallback();
     this.shadowRoot.adoptedStyleSheets = [style];
+    this._metadataOptions = await this.getMetadataOptions();
+    this._selectOptions = this.setSelectOptions();
   }
 
   handleAdd(e) {
@@ -48,7 +127,30 @@ class MdForm extends LitElement {
     }
 
     console.log(entries);
-    this._addSelection = entries;
+    this._formFields = [...this._formFields, entries];
+  }
+
+  renderDefaultFields() {
+    return this._defaultFields.map(({ key, value }) => html`
+      <div class='fieldgroup'>
+        <label for=${key}>${key}</label>
+        <input type='text' name=${key} id=${key} placeholder=${value}></input>
+      </div>
+    `);
+  }
+
+  renderSelectField() {
+    console.log(this._selectOptions);
+    return html`
+      <select name='key' id='key-select'>
+        <option value="select-key">Select key</option>
+        <option value="key-opt">Opt 2</option>
+      </select>
+      <select name='choice' id='choice-select'>
+        <option value="select-choice">Select your choice here</option>
+        <option value="choice-opt">Opt 2</option>
+      </select> 
+    `;
   }
 
   render() {
@@ -62,22 +164,10 @@ class MdForm extends LitElement {
               <!-- this is the submit button -->
               <button><span class='copy-icon'></span>Copy as table</button>
             </div>
-            ${this._formFields.map((fg) => html`
-              <div class='fieldgroup'>
-                <label for=${fg.label}>${fg.label}</label>
-                <input type='text' name=${fg.label} id=${fg.label} placeholder=${fg.placeholder}></input>
-              </div>
-              `)}
-          </form>
+            ${this.renderDefaultFields()}
+          </key
           <form class='add-fields'>
-            <select name='key' id='key-select'>
-              <option value="select-key">Select key</option>
-              <option value="key-opt">Opt 2</option>
-            </select>
-            <select name='choice' id='choice-select'>
-              <option value="select-choice">Select your choice here</option>
-              <option value="choice-opt">Opt 2</option>
-            </select> 
+            ${this._selectOptions ? this.renderSelectField() : nothing}
             <button @click=${this.handleAdd}>Add</button>
           </form>
         </div>
