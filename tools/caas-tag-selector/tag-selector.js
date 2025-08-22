@@ -1,67 +1,80 @@
 /* eslint-disable no-underscore-dangle, import/no-unresolved */
-import { LitElement, html, nothing } from 'https://da.live/nx/deps/lit/lit-core.min.js';
+import 'https://da.live/nx/public/sl/components.js';
+import { LitElement, html, } from 'https://da.live/nx/deps/lit/lit-core.min.js';
 import getStyle from 'https://da.live/nx/utils/styles.js';
 import DA_SDK from 'https://da.live/nx/utils/sdk.js';
 import { getTags, getAemRepo, getRootTags } from '../tags/tag-utils.js';
 
 const style = await getStyle(import.meta.url);
-const UI_TAG_PATH = '/ui#/aem/aem/tags';
+const { context, token } = await DA_SDK.catch(() => null);
+const options = { headers: { Authorization: `Bearer ${token}` } };
+const collectionName = 'dx-tags/dx-caas';
 
-const { context, actions, token } = await DA_SDK.catch(() => null);
+async function processRootTags(opts) {
+  const aemConfig = await getAemRepo(context, opts).catch(() => null);
+  if (!aemConfig || !aemConfig.aemRepo) {
+    console.log('error');
+  }
 
-const opts = { headers: { Authorization: `Bearer ${token}` } };
-const aemConfig = await getAemRepo(context, opts).catch(() => null);
-if (!aemConfig || !aemConfig.aemRepo) {
-  console.log('error');
-  // return;
+  const namespaces = aemConfig?.namespaces.split(',').map((namespace) => namespace.trim()) || [];
+  const rootTags = await getRootTags(namespaces, aemConfig, opts);
+
+  if (!rootTags || rootTags.length === 0) {
+    console.log('error');
+  }
+  return rootTags;
 }
 
-const namespaces = aemConfig?.namespaces.split(',').map((namespace) => namespace.trim()) || [];
-const rootTags = await getRootTags(namespaces, aemConfig, opts);
-
-if (!rootTags || rootTags.length === 0) {
-  console.log('error');
-  // return;
+async function getTagCollection(root, name, opts) {
+  let collection = [];
+  for (const tag of root) {
+    const currentCollection = await getTags(tag.path, opts);
+    const firstTag = currentCollection[0];
+    if (firstTag && firstTag?.activeTag === name) {
+      collection = currentCollection;
+      return collection;
+    }
+  }
+  return collection;
 }
-
-for (const tag of rootTags) {
-  console.log(tag, rootTags);
-  const tagList = await getTags(tag.path, opts);
-  console.log(tagList);
-}
-
 class DaTagSelector extends LitElement {
   static properties = {
+    _tags: { state: true },
+    _caasPPN: { state: true },
+    _contentTypes: { state: true },
   };
 
   constructor() {
     super();
+    this._tags = [];
+    this._contentTypes = [];
+    this._caasPPN = [];
   }
 
-  connectedCallback() {
+  async connectedCallback() {
     super.connectedCallback();
     this.shadowRoot.adoptedStyleSheets = [style];
-    this.addEventListener('blur', this.handleBlur, true);
+    const rootCollections = await processRootTags(options);
+    const currentCollection = await getTagCollection(rootCollections, collectionName, options);
+    this._tags = currentCollection;
+    const caasContentTypeCollection = this._tags.filter((tag) => tag.details['jcr:title'].includes('caas:content-type'));
+    const caasPrimaryProductCollection = this._tags.filter((tag) => tag.details['jcr:title'].includes('caas:products'));
+    this._contentTypes = caasContentTypeCollection;
+    this._caasPPN = caasPrimaryProductCollection;
   }
 
   render() {
-    // if (this._tags.length === 0) return nothing;
     return html`
       <div class="tag-selector-group">
-        <label for"caas-content-type">CaaS Content Type</label>
+        <label for="caas-content-type">CaaS Content Type</label>
         <select name="caas-content-type" id="caas-content-type">
           <option value=''>--Select--</option>
-          ${this._contentTypes ? this._contentTypes.map((val) => html`<option value=${val}>${val}</option>`) : nothing}
+          ${this._contentTypes.map((item) => html`<option value=${item.title}>${item.name}</option>`)}
         </select>
-        <label for"caas-primary-product">CaaS Primary Product</label>
+        <label for="caas-primary-product">CaaS Primary Product</label>
         <select name="caas-primary-product" id="caas-primary-product">
           <option value=''>--Select--</option>
-          ${this._caasPPN ? this._caasPPN.map((val) => html`<option value=${val}>${val}</option>`) : nothing}
-        </select>
-        <label for"primary-product-name">Primary Product Name</label>
-        <select name="primary-product-name" id="primary-product-name">
-          <option value=''>--Select--</option>
-          ${this._ppn ? this._ppn.map((val) => html`<option value=${val}>${val}</option>`) : nothing}
+          ${this._caasPPN.map((item) => html`<option value=${item.title}>${item.name}</option>`)}
         </select>
       </div>
     `;
