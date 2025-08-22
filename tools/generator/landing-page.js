@@ -1,10 +1,21 @@
 /* eslint-disable class-methods-use-this */
 /* eslint-disable import/no-unresolved */
-import 'https://da.live/nx/public/sl/components.js';
-import getStyle from 'https://da.live/nx/utils/styles.js';
+import 'components';
+import getStyle from 'styles';
+import DA_SDK from 'da-sdk';
 import { LitElement, html } from 'da-lit';
+import ImageDropzone from './image-dropzone/image-dropzone.js';
+import ToastMessage, { createToast } from './toast/toast.js';
+import { getSource, saveSource, saveImage } from './da-utils.js';
 
 const style = await getStyle(import.meta.url);
+
+const SDK_TIMEOUT = 3000;
+const TOAST_TIMEOUT = 5000;
+const DOCUMENT_NAME = 'generator';
+const DOCUMENT_PATH = `/drafts/bmarshal/${DOCUMENT_NAME}`;
+const MEDIA_PATH = `/drafts/bmarshal/.${DOCUMENT_NAME}/`;
+const EDIT_DOCUMENT_URL = `https://da.live/edit#/adobecom/da-bacom${DOCUMENT_PATH}`;
 
 // Data
 // TODO: Fetch POI options from Marketo Configurator options
@@ -19,11 +30,122 @@ const style = await getStyle(import.meta.url);
 // TODO: Page generator will generate URL based on the content type and marquee title
 
 class LandingPageForm extends LitElement {
-  static properties = { _data: { state: true } };
+  static properties = { data: { state: true } };
+
+  static styles = style;
+
+  constructor() {
+    super();
+    this.data = {};
+    this.marqueeImage = null;
+  }
+
+  updateMarqueeImage() {
+    const marquee = this.data.document?.querySelector('.marquee');
+    const marqueeImage = marquee?.querySelector('img');
+    if (marqueeImage?.src) {
+      this.marqueeImage = {
+        url: marqueeImage.src,
+        name: marqueeImage.alt || 'Marquee Image',
+      };
+    }
+  }
+
+  handleToast(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    const detail = e.detail || {};
+
+    const toast = createToast(detail.message, detail.type, detail.timeout);
+    document.body.appendChild(toast);
+    // eslint-disable-next-line no-console
+    if (detail.type === 'error') console.error('Error:', detail.message, detail);
+  }
 
   connectedCallback() {
     super.connectedCallback();
-    this.shadowRoot.adoptedStyleSheets = [style];
+
+    this.addEventListener('show-toast', this.handleToast);
+    if (window.self === window.top) {
+      this.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'Error connecting to DA SDK' } }));
+      return;
+    }
+    const sdkPromise = Promise.race([
+      DA_SDK,
+      new Promise((_, reject) => { setTimeout(() => reject(new Error('timeout')), SDK_TIMEOUT); }),
+    ]);
+
+    sdkPromise.then(({ context, token }) => {
+      this.data = {
+        context,
+        token,
+      };
+      getSource(DOCUMENT_PATH).then((document) => {
+        if (document == null) {
+          this.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'Error fetching document' } }));
+          return;
+        }
+        this.data.document = document;
+        this.updateMarqueeImage();
+        this.requestUpdate();
+      });
+    }).catch((error) => {
+      this.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: `Error connecting to DA SDK: ${error.message}` } }));
+    });
+  }
+
+  disconnectedCallback() {
+    this.removeEventListener('show-toast', this.handleToast);
+
+    if (this.marqueeImage?.url && this.marqueeImage.url.startsWith('blob:')) {
+      URL.revokeObjectURL(this.marqueeImage.url);
+    }
+
+    super.disconnectedCallback();
+  }
+
+  async uploadFile(file) {
+    try {
+      const imageUrl = await saveImage(MEDIA_PATH, file);
+
+      if (!imageUrl) {
+        this.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'Failed to upload file' } }));
+        return null;
+      }
+
+      this.marqueeImage = {
+        url: imageUrl,
+        name: file.name,
+      };
+      this.requestUpdate();
+
+      return imageUrl;
+    } catch (e) {
+      this.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'Failed to upload file' } }));
+      return null;
+    }
+  }
+
+  handleImageChange(e) {
+    const { file } = e.detail;
+    if (!file) return;
+
+    this.uploadFile(file).then((url) => {
+      if (!url) return;
+      this.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Image Uploaded', timeout: TOAST_TIMEOUT } }));
+      const marqueeBlock = this.data.document.querySelector('.marquee');
+      if (marqueeBlock) {
+        const img = marqueeBlock.querySelector('img');
+        if (img) {
+          img.src = url;
+          saveSource(DOCUMENT_PATH, this.data.document);
+          this.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Document Marquee Updated', timeout: TOAST_TIMEOUT } }));
+        }
+      }
+    }).catch((error) => {
+      this.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: `Upload failed: ${error.message}` } }));
+    });
+    this.requestUpdate();
   }
 
   async handleSubmit(e) {
@@ -33,6 +155,7 @@ class LandingPageForm extends LitElement {
   render() {
     return html`
       <h1>Campaign Landing Page Generator</h1>
+      <p>Page URL: <a href=${EDIT_DOCUMENT_URL} target="_blank">${EDIT_DOCUMENT_URL}</a></p>
       <form @submit=${this.handleSubmit}>
         <div class="form-row">
           <h2>Content Type</h2>
@@ -66,7 +189,14 @@ class LandingPageForm extends LitElement {
           </sl-select>
           <sl-input type="text" name="marqueeHeadline" placeholder="Marquee Headline" label="Marquee Headline"></sl-input>
           <sl-input type="text" name="marqueeDescription" placeholder="Marquee Description" label="Marquee Description"></sl-input>
-          <sl-input type="file" name="marqueeImage" placeholder="Upload Marquee Image" label="Upload Marquee Image"></sl-input>
+          <div class="image-dropzone-container">
+            <label>Marquee Image</label>
+            <div class="dropzone-wrapper">
+              <image-dropzone .file=${this.marqueeImage} @image-change=${this.handleImageChange}>
+                <label slot="img-label">Upload Marquee Image</label>
+              </image-dropzone>
+            </div>
+          </div>
         </div>
         <div class="form-row">
           <h2>Body</h2>
@@ -94,7 +224,7 @@ class LandingPageForm extends LitElement {
         <div class="form-row">
           <h2>SEO Metadata</h2>
           <sl-input type="text" name="seoMetadataTitle" placeholder="Max 70 characters" label="SEO Metadata Title"></sl-input>
-          <sl-input type="text" name="seoMetadataDescription" placeholder="Max 155 characters" label="SEO Metadata Title"></sl-input>
+          <sl-input type="text" name="seoMetadataDescription" placeholder="Max 155 characters" label="SEO Metadata Description"></sl-input>
         </div>
         <div class="form-row">
           <h2>Experience Fragment</h2>
@@ -121,7 +251,9 @@ class LandingPageForm extends LitElement {
   }
 }
 
+customElements.define('image-dropzone', ImageDropzone);
 customElements.define('da-generator', LandingPageForm);
+customElements.define('toast-message', ToastMessage);
 
 export default async function init(el) {
   const bulk = document.createElement('da-generator');

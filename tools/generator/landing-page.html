@@ -1,13 +1,19 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <title>Campaign Landing Page Generator</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="https://da.live/nx/styles/nexter.css">
-    <script type="importmap">
+  <script type="importmap">
     {
       "imports": {
-        "da-lit": "https://da.live/deps/lit/dist/index.js"
+        "da-sdk": "https://da.live/nx/utils/sdk.js",
+        "da-lit": "https://da.live/deps/lit/dist/index.js",
+        "da-fetch": "https://da.live/nx/utils/daFetch.js",
+        "constants": "https://da.live/nx/public/utils/constants.js",
+        "styles": "https://da.live/nx/utils/styles.js",
+        "components": "https://da.live/nx/public/sl/components.js"
       }
     }
   </script>
@@ -15,8 +21,10 @@
   <script src="/tools/generator/landing-page.js" type="module"></script>
   <link rel="icon" href="data:,">
 </head>
-<body>
+
+<body style="background: #fff;">
   <main>
   </main>
 </body>
+
 </html>

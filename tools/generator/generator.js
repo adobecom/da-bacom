@@ -1,11 +1,10 @@
-/* eslint-disable import/no-unresolved */
 import { LIBS } from '../../scripts/scripts.js';
 
 const { utf8ToB64 } = await import(`${LIBS}/utils/utils.js`);
 
 const DA_ORIGIN = 'https://admin.da.live';
 const ORG = 'adobecom';
-const SITENAME = 'da-bacom';
+const REPO = 'da-bacom';
 
 // Template questions
 // Should we have Asset H2?
@@ -72,7 +71,7 @@ async function uploadTemplatedText(daPath, templatedText) {
 }
 
 export async function template(path, data) {
-  const daPath = `${DA_ORIGIN}/source/${ORG}/${SITENAME}${path}`;
+  const daPath = `${DA_ORIGIN}/source/${ORG}/${REPO}${path}`;
   const text = await fetchTemplate(daPath);
   const templatedText = applyTemplateFields(text, data);
   await uploadTemplatedText(daPath, templatedText);
