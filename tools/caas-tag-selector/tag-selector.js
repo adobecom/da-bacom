@@ -1,6 +1,6 @@
 /* eslint-disable no-underscore-dangle, import/no-unresolved */
 import 'https://da.live/nx/public/sl/components.js';
-import { LitElement, html, } from 'https://da.live/nx/deps/lit/lit-core.min.js';
+import { LitElement, html } from 'https://da.live/nx/deps/lit/lit-core.min.js';
 import getStyle from 'https://da.live/nx/utils/styles.js';
 import DA_SDK from 'https://da.live/nx/utils/sdk.js';
 import { getTags, getAemRepo, getRootTags } from '../tags/tag-utils.js';
@@ -13,14 +13,14 @@ const collectionName = 'dx-tags/dx-caas';
 async function processRootTags(opts) {
   const aemConfig = await getAemRepo(context, opts).catch(() => null);
   if (!aemConfig || !aemConfig.aemRepo) {
-    console.log('error');
+    console.log('Error in getting AemRepo');
   }
 
   const namespaces = aemConfig?.namespaces.split(',').map((namespace) => namespace.trim()) || [];
   const rootTags = await getRootTags(namespaces, aemConfig, opts);
 
   if (!rootTags || rootTags.length === 0) {
-    console.log('error');
+    console.log('Error in getting RootTags');
   }
   return rootTags;
 }
@@ -37,16 +37,15 @@ async function getTagCollection(root, name, opts) {
   }
   return collection;
 }
-class DaTagSelector extends LitElement {
+class PageGeneratorCaaSTagSelector extends LitElement {
   static properties = {
-    _tags: { state: true },
+    propCollection: { Type: Array },
     _caasPPN: { state: true },
     _contentTypes: { state: true },
   };
 
   constructor() {
     super();
-    this._tags = [];
     this._contentTypes = [];
     this._caasPPN = [];
   }
@@ -54,11 +53,16 @@ class DaTagSelector extends LitElement {
   async connectedCallback() {
     super.connectedCallback();
     this.shadowRoot.adoptedStyleSheets = [style];
-    const rootCollections = await processRootTags(options);
-    const currentCollection = await getTagCollection(rootCollections, collectionName, options);
-    this._tags = currentCollection;
-    const caasContentTypeCollection = this._tags.filter((tag) => tag.details['jcr:title'].includes('caas:content-type'));
-    const caasPrimaryProductCollection = this._tags.filter((tag) => tag.details['jcr:title'].includes('caas:products'));
+    // fetch for collection should be in parent. Prepping for collection passed as props
+    let currentCollection;
+    if (this.propCollection && this?.propCollection?.length > 0) {
+      currentCollection = this.propCollection;
+    } else {
+      const rootCollections = await processRootTags(options);
+      currentCollection = await getTagCollection(rootCollections, collectionName, options);
+    }
+    const caasContentTypeCollection = currentCollection.filter((tag) => tag.details['jcr:title'].includes('caas:content-type'));
+    const caasPrimaryProductCollection = currentCollection.filter((tag) => tag.details['jcr:title'].includes('caas:products'));
     this._contentTypes = caasContentTypeCollection;
     this._caasPPN = caasPrimaryProductCollection;
   }
@@ -81,4 +85,4 @@ class DaTagSelector extends LitElement {
   }
 }
 
-customElements.define('da-tag-selector', DaTagSelector);
+customElements.define('pg-caas-tag-selector', PageGeneratorCaaSTagSelector);
