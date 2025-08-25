@@ -2,7 +2,7 @@
 import { LitElement, html } from 'da-lit';
 import getStyle from 'styles';
 
-const style = await getStyle(import.meta.url);
+const style = await getStyle(import.meta.url.split('?')[0]);
 
 const FADE_TIMEOUT = 300;
 

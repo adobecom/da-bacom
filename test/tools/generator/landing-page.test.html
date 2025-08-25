@@ -1,0 +1,125 @@
+<!-- npm run test:file "test/tools/generator/landing-page.test.html" -->
+<html>
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://da.live/nx/styles/nexter.css">
+  <script type="importmap">
+      {
+        "imports": {
+          "da-sdk": "./mocks/da-sdk.js",
+          "da-fetch": "./mocks/da-fetch.js",
+          "constants": "https://da.live/nx/public/utils/constants.js",
+          "da-lit": "https://da.live/deps/lit/dist/index.js",
+          "styles": "https://da.live/nx/utils/styles.js",
+          "components": "https://da.live/nx/public/sl/components.js"
+        }
+      }
+    </script>
+</head>
+
+<body>
+  <main></main>
+  <script type="module">
+    import { runTests } from '@web/test-runner-mocha';
+    import { expect } from '@esm-bundle/chai';
+    import { stub } from 'sinon';
+    import sinon from 'sinon';
+    import DA_SDK from 'da-sdk';
+    import '../../../tools/generator/landing-page.js';
+
+    const ogLana = window.lana;
+    const delay = (milliseconds) => new Promise((resolve) => { setTimeout(resolve, milliseconds); });
+
+    runTests(() => {
+      describe('LandingPageForm', () => {
+        beforeEach(async () => {
+          window.lana = { log: sinon.spy() };
+        });
+
+        afterEach(() => {
+          window.lana = ogLana;
+
+          document.querySelectorAll('toast-message').forEach(el => el.remove());
+        });
+
+        it('should render correctly', async () => {
+          const generator = document.querySelector('da-generator');
+          expect(generator).to.exist;
+
+          const shadowRoot = generator.shadowRoot;
+          expect(shadowRoot.querySelector('h1')).to.exist;
+          expect(shadowRoot.querySelector('form')).to.exist;
+        });
+
+        it('should render all form sections', async () => {
+          const generator = document.querySelector('da-generator');
+          const shadowRoot = generator.shadowRoot;
+
+          // Check for all major form sections
+          expect(shadowRoot.querySelector('sl-select[name="contentType"]')).to.exist;
+          expect(shadowRoot.querySelector('sl-select[name="gated"]')).to.exist;
+          expect(shadowRoot.querySelector('sl-input[name="marqueeHeadline"]')).to.exist;
+          expect(shadowRoot.querySelector('sl-input[name="campaignId"]')).to.exist;
+          expect(shadowRoot.querySelector('image-dropzone')).to.exist;
+        });
+
+        it('should have all form fields', async () => {
+          const generator = document.querySelector('da-generator');
+          const shadowRoot = generator.shadowRoot;
+
+          const formFields = [
+            'contentType',
+            'gated',
+            'formTemplate',
+            'campaignId',
+            'marqueeHeadline',
+            'marqueeDescription',
+            'bodyDescription',
+            'cardTitle',
+            'cardDescription',
+            'seoMetadataTitle',
+            'seoMetadataDescription',
+            'url'
+          ];
+
+          formFields.forEach(fieldName => {
+            const field = shadowRoot.querySelector(`[name="${fieldName}"]`);
+            expect(field, `Field ${fieldName} should exist`).to.exist;
+          });
+        });
+
+        it('should handle toast events', async () => {
+          const generator = document.querySelector('da-generator');
+          let toastCreated = false;
+
+          const toastEvent = new CustomEvent('show-toast', {
+            detail: { message: 'Test message', type: 'info', timeout: 100 }
+          });
+
+          generator.dispatchEvent(toastEvent);
+
+          const toast = document.querySelector('toast-message');
+          expect(toast).to.exist;
+          await delay(500); // 100 timout + 300 fade
+          expect(toast.visible).to.equal(false);
+        });
+
+        it('should register all custom elements', () => {
+          expect(customElements.get('image-dropzone')).to.exist;
+          expect(customElements.get('da-generator')).to.exist;
+          expect(customElements.get('toast-message')).to.exist;
+        });
+
+        it('should initialize with DA SDK', async () => {
+          const sdk = await DA_SDK;
+          expect(sdk).to.exist;
+          expect(sdk.context.repo).to.equal('adobecom');
+          expect(sdk.token).to.equal('mock-token');
+        });
+      });
+    });
+  </script>
+</body>
+
+</html>

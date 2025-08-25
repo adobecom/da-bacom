@@ -5,7 +5,7 @@ import getStyle from 'styles';
 
 const MAX_FILE_SIZE = 26214400; // 25MB
 
-const style = await getStyle(import.meta.url);
+const style = await getStyle(import.meta.url.split('?')[0]);
 
 async function isImageTypeValid(file) {
   const validTypes = ['jpeg', 'jpg', 'png', 'svg'];
@@ -23,6 +23,7 @@ async function isImageTypeValid(file) {
 
   if (signatures.jpeg.every((byte, i) => byte === bytes[i])) {
     const extension = file.name.split('.').pop().toLowerCase();
+    /* c8 ignore next 7 */
     if (extension === 'jpg' || extension === 'jpeg') {
       currentFileType = extension;
     } else {

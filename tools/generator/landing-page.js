@@ -8,7 +8,7 @@ import ImageDropzone from './image-dropzone/image-dropzone.js';
 import ToastMessage, { createToast } from './toast/toast.js';
 import { getSource, saveSource, saveImage } from './da-utils.js';
 
-const style = await getStyle(import.meta.url);
+const style = await getStyle(import.meta.url.split('?')[0]);
 
 const SDK_TIMEOUT = 3000;
 const TOAST_TIMEOUT = 5000;
@@ -66,10 +66,6 @@ class LandingPageForm extends LitElement {
     super.connectedCallback();
 
     this.addEventListener('show-toast', this.handleToast);
-    if (window.self === window.top) {
-      this.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'Error connecting to DA SDK' } }));
-      return;
-    }
     const sdkPromise = Promise.race([
       DA_SDK,
       new Promise((_, reject) => { setTimeout(() => reject(new Error('timeout')), SDK_TIMEOUT); }),

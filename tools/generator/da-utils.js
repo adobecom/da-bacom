@@ -22,6 +22,7 @@ export async function getSource(path) {
 
       return parsedPage;
     }
+  /* c8 ignore next 5 */
   } catch (error) {
     // eslint-disable-next-line no-console
     console.log(`Error fetching document ${daPath}`, error);

@@ -1,0 +1,130 @@
+<!-- npm run test:file "test/tools/generator/toast.test.html" -->
+<html>
+
+<head>
+  <script type="importmap">
+      {
+        "imports": {
+          "da-sdk": "./mocks/da-sdk.js",
+          "da-fetch": "./mocks/da-fetch.js",
+          "da-lit": "https://da.live/deps/lit/dist/index.js",
+          "constants": "https://da.live/nx/public/utils/constants.js",
+          "styles": "https://da.live/nx/utils/styles.js",
+          "components": "https://da.live/nx/public/sl/components.js"
+        }
+      }
+    </script>
+</head>
+
+<body>
+  <toast-message></toast-message>
+  <script type="module">
+    import { runTests } from '@web/test-runner-mocha';
+    import { expect } from '@esm-bundle/chai';
+    import { stub } from 'sinon';
+    import sinon from 'sinon';
+    import ToastMessage, { createToast } from '../../../tools/generator/toast/toast.js';
+
+    const ogLana = window.lana;
+    const delay = (milliseconds) => new Promise((resolve) => { setTimeout(resolve, milliseconds); });
+
+    customElements.define('toast-message', ToastMessage);
+
+    runTests(() => {
+      describe('Toast Message', () => {
+        beforeEach(async () => {
+          document.body.innerHTML = '';
+          window.lana = { log: sinon.spy() };
+        });
+
+        afterEach(() => {
+          window.lana = ogLana;
+        });
+
+        it('renders toast with message', async () => {
+          const toast = document.createElement('toast-message');
+          toast.message = 'Test message';
+          toast.type = 'info';
+          document.body.append(toast);
+          await delay(100);
+
+          expect(toast.shadowRoot.querySelector('.toast')).to.exist;
+          expect(toast.shadowRoot.querySelector('.toast').textContent).to.include('Test message');
+          expect(toast.shadowRoot.querySelector('.toast').classList.contains('info')).to.be.true;
+        });
+
+        it('renders different toast types', async () => {
+          const errorToast = document.createElement('toast-message');
+          errorToast.message = 'Error message';
+          errorToast.type = 'error';
+          document.body.append(errorToast);
+          await delay(100);
+
+          expect(errorToast.shadowRoot.querySelector('.toast.error')).to.exist;
+        });
+
+        it('becomes visible after connection', async () => {
+          const toast = document.createElement('toast-message');
+          toast.message = 'Test message';
+          document.body.append(toast);
+
+          expect(toast.visible).to.be.false;
+          await delay(400);
+          expect(toast.visible).to.be.true;
+        });
+
+        it('auto-hides after timeout', async () => {
+          const toast = document.createElement('toast-message');
+          toast.message = 'Test message';
+          toast.timeout = 500;
+          document.body.append(toast);
+
+          await delay(400);
+          expect(toast.visible).to.be.true;
+
+          await delay(600);
+          expect(toast.visible).to.be.false;
+        });
+
+        it('hides when close button clicked', async () => {
+          const toast = document.createElement('toast-message');
+          toast.message = 'Test message';
+          document.body.append(toast);
+          await delay(400);
+
+          const closeButton = toast.shadowRoot.querySelector('button');
+          closeButton.click();
+
+          expect(toast.visible).to.be.false;
+        });
+
+        it('has proper accessibility attributes', async () => {
+          const toast = document.createElement('toast-message');
+          toast.message = 'Test message';
+          document.body.append(toast);
+          await delay(100);
+
+          const toastEl = toast.shadowRoot.querySelector('.toast');
+          expect(toastEl.getAttribute('role')).to.equal('alert');
+          expect(toastEl.getAttribute('aria-live')).to.equal('polite');
+
+          const closeButton = toast.shadowRoot.querySelector('button');
+          expect(closeButton.getAttribute('aria-label')).to.equal('Close notification');
+        });
+
+        it('creates toast message', async () => {
+          const toast = createToast('Test message', 'info');
+          document.body.append(toast);
+          await delay(100);
+
+          expect(toast.shadowRoot.querySelector('.toast')).to.exist;
+          expect(toast.shadowRoot.querySelector('.toast').textContent).to.include('Test message');
+          expect(toast.shadowRoot.querySelector('.toast').classList.contains('info')).to.be.true;
+        });
+      });
+    });
+
+  </script>
+</body>
+
+</html>
