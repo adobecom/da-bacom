@@ -1,0 +1,33 @@
+<html>
+<!-- This file can be used as a test once the image upload file is merged in and the test config is updated -->
+<head>
+  <title>Mkto POI Landing Page</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <link rel="stylesheet" href="https://da.live/nx/styles/nexter.css">
+  <script type="importmap">
+      {
+        "imports": {
+          "da-lit": "https://da.live/deps/lit/dist/index.js",
+          "styles": "https://da.live/nx/utils/styles.js"
+        }
+      }
+    </script>
+  <script src="https://da.live/nx/utils/sdk.js" type="module"></script>
+  <link rel="icon" href="data:,">
+</head>
+<body>
+<body style="background: #fff;">
+  <main>
+  </main>
+</body>
+<script type="module">
+  import mktoPoiSelector from  '../mkto-poi/mkto-poi.js';
+  customElements.define('mkto-poi', mktoPoiSelector);
+
+  const selector = document.createElement('mkto-poi');
+  const opts = [{ Key: 'one', Value: 'two' }, { Key: 'three', Value: 'four' }];
+  
+  selector.propOptions = opts;
+  document.body.append(selector)
+</script>
+</html>
