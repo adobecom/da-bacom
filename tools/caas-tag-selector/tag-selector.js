@@ -3,7 +3,14 @@ import 'https://da.live/nx/public/sl/components.js';
 import { LitElement, html } from 'https://da.live/nx/deps/lit/lit-core.min.js';
 import getStyle from 'https://da.live/nx/utils/styles.js';
 import DA_SDK from 'https://da.live/nx/utils/sdk.js';
-import { getTags, getAemRepo, getRootTags } from '../tags/tag-utils.js';
+import {
+  getTags,
+  getAemRepo,
+  getRootTags,
+  jcrTitle,
+  caasContentType,
+  caasProducts,
+} from '../tags/tag-utils.js';
 
 const style = await getStyle(import.meta.url);
 const { context, token } = await DA_SDK.catch(() => null);
@@ -67,8 +74,10 @@ class PageGeneratorCaaSTagSelector extends LitElement {
       const rootCollections = await processRootTags(options);
       currentCollection = await getTagCollection(rootCollections, collectionName, options);
     }
-    const caasContentTypeCollection = currentCollection.filter((tag) => tag.details['jcr:title'].includes('caas:content-type'));
-    const caasPrimaryProductCollection = currentCollection.filter((tag) => tag.details['jcr:title'].includes('caas:products'));
+    const caasContentTypeCollection = currentCollection
+      .filter((tag) => tag.details[jcrTitle].includes(caasContentType));
+    const caasPrimaryProductCollection = currentCollection
+      .filter((tag) => tag.details[jcrTitle].includes(caasProducts));
     this._contentTypes = caasContentTypeCollection;
     this._caasPPN = caasPrimaryProductCollection;
   }

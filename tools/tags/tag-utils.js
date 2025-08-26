@@ -6,6 +6,10 @@ export const tagPathConfig = {
   ext: '.1.json',
 };
 
+export const jcrTitle = 'jcr:title';
+export const caasContentType = 'caas:content-type';
+export const caasProducts = 'caas:products';
+
 export function setTagPathConfig({ root, ext }) {
   tagPathConfig.root = root;
   tagPathConfig.ext = ext;
