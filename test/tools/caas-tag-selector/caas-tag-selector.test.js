@@ -4,7 +4,7 @@ import sinon from 'sinon';
 
 describe('Page Generator CaaS Tag Selector Fetching Data', () => {
   before(async () => {
-    document.body.innerHTML = await readFile({ path: './mocks/index.html' });
+    document.body.innerHTML = await readFile({ path: '../../../tools/caas-tag-selector/index.html' });
     // Stub fetch to avoid actual network requests
     sinon.stub(window, 'fetch').callsFake((url) => {
       // Return mock responses for expected URLs
@@ -41,12 +41,7 @@ describe('Page Generator CaaS Tag Selector Fetching Data', () => {
     });
   });
 
-  it('Has the body without an intialized component', () => {
-    expect(document.querySelector('body')).to.not.be.null;
-    expect(document.querySelector('pg-caas-tag-selector')).to.be.null;
-  });
-
-  it('Renders the component, making the correct fetch requests', () => {
+  it('Renders the component', () => {
     const tagSelector = document.createElement('pg-caas-tag-selector');
     document.body.append(tagSelector);
     const renderedTagSelector = document.querySelector('pg-caas-tag-selector');

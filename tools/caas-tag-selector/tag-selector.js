@@ -12,15 +12,22 @@ const collectionName = 'dx-tags/dx-caas';
 
 async function processRootTags(opts) {
   const aemConfig = await getAemRepo(context, opts).catch(() => null);
+  const errorEvent = (message) => {
+    const error = new CustomEvent('caasOptionsError', { details: { message } });
+    document.dispatchEvent(error);
+  };
+
   if (!aemConfig || !aemConfig.aemRepo) {
-    console.log('Error in getting AemRepo');
+    const repoError = 'Error in retrieving AemRepo';
+    errorEvent(repoError);
   }
 
   const namespaces = aemConfig?.namespaces.split(',').map((namespace) => namespace.trim()) || [];
   const rootTags = await getRootTags(namespaces, aemConfig, opts);
 
   if (!rootTags || rootTags.length === 0) {
-    console.log('Error in getting RootTags');
+    const rootTagError = 'Error in getting RootTags';
+    errorEvent(rootTagError);
   }
   return rootTags;
 }
@@ -50,10 +57,9 @@ class PageGeneratorCaaSTagSelector extends LitElement {
     this._caasPPN = [];
   }
 
-  async connectedCallback() {
-    super.connectedCallback();
-    this.shadowRoot.adoptedStyleSheets = [style];
-    // fetch for collection should be in parent. Prepping for collection passed as props
+  static styles = style;
+
+  async setCollections() {
     let currentCollection;
     if (this.propCollection && this?.propCollection?.length > 0) {
       currentCollection = this.propCollection;
@@ -65,6 +71,12 @@ class PageGeneratorCaaSTagSelector extends LitElement {
     const caasPrimaryProductCollection = currentCollection.filter((tag) => tag.details['jcr:title'].includes('caas:products'));
     this._contentTypes = caasContentTypeCollection;
     this._caasPPN = caasPrimaryProductCollection;
+  }
+
+  async connectedCallback() {
+    super.connectedCallback();
+    // fetch for collection should be in parent. Prepping for collection passed as props
+    this.setCollections();
   }
 
   render() {
