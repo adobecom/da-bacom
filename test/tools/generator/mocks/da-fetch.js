@@ -1,4 +1,8 @@
-export const daFetch = async (url, options = {}) => {
+import sinon from 'sinon';
+
+export const daFetch = sinon.stub();
+
+daFetch.callsFake(async (url, options = {}) => {
   const method = options.method || 'GET';
 
   if (method === 'GET') {
@@ -53,7 +57,7 @@ export const daFetch = async (url, options = {}) => {
     text: async () => 'Not Found',
     json: async () => ({ error: 'Not Found' }),
   };
-};
+});
 
 export const replaceHtml = (html, org, repo) => html.replace(/href="([^"]*?)"/g, (match, url) => {
   if (url.startsWith('/')) {

@@ -26,24 +26,33 @@
     import { stub } from 'sinon';
     import sinon from 'sinon';
     import DA_SDK from 'da-sdk';
+    import { daFetch } from './mocks/da-fetch.js';
     import '../../../tools/generator/landing-page.js';
 
     const ogLana = window.lana;
-    const delay = (milliseconds) => new Promise((resolve) => { setTimeout(resolve, milliseconds); });
 
     runTests(() => {
       describe('LandingPageForm', () => {
+        let clock;
+
+        const tick = async (milliseconds) => {
+          clock.tick(milliseconds);
+          await clock.nextAsync();
+        };
+
         beforeEach(async () => {
           window.lana = { log: sinon.spy() };
+          clock = sinon.useFakeTimers();
         });
 
         afterEach(() => {
           window.lana = ogLana;
+          clock.restore();
 
           document.querySelectorAll('toast-message').forEach(el => el.remove());
         });
 
-        it('should render correctly', async () => {
+        it('renders correctly', async () => {
           const generator = document.querySelector('da-generator');
           expect(generator).to.exist;
 
@@ -52,7 +61,7 @@
           expect(shadowRoot.querySelector('form')).to.exist;
         });
 
-        it('should render all form sections', async () => {
+        it('renders all form sections', async () => {
           const generator = document.querySelector('da-generator');
           const shadowRoot = generator.shadowRoot;
 
@@ -64,7 +73,7 @@
           expect(shadowRoot.querySelector('image-dropzone')).to.exist;
         });
 
-        it('should have all form fields', async () => {
+        it('has all form fields', async () => {
           const generator = document.querySelector('da-generator');
           const shadowRoot = generator.shadowRoot;
 
@@ -85,11 +94,11 @@
 
           formFields.forEach(fieldName => {
             const field = shadowRoot.querySelector(`[name="${fieldName}"]`);
-            expect(field, `Field ${fieldName} should exist`).to.exist;
+            expect(field, `Field ${fieldName} exist`).to.exist;
           });
         });
 
-        it('should handle toast events', async () => {
+        it('handles toast events', async () => {
           const generator = document.querySelector('da-generator');
           let toastCreated = false;
 
@@ -101,21 +110,43 @@
 
           const toast = document.querySelector('toast-message');
           expect(toast).to.exist;
-          await delay(500); // 100 timout + 300 fade
+          await tick(500);
           expect(toast.visible).to.equal(false);
         });
 
-        it('should register all custom elements', () => {
+        it('registers all custom elements', () => {
           expect(customElements.get('image-dropzone')).to.exist;
           expect(customElements.get('da-generator')).to.exist;
           expect(customElements.get('toast-message')).to.exist;
         });
 
-        it('should initialize with DA SDK', async () => {
+        it('initializes with DA SDK', async () => {
           const sdk = await DA_SDK;
           expect(sdk).to.exist;
           expect(sdk.context.repo).to.equal('adobecom');
           expect(sdk.token).to.equal('mock-token');
+        });
+
+        it('uploads mock image', async () => {
+          const generator = document.querySelector('da-generator');
+          const file = new File(['mock image content'], 'mock-image.jpg', { type: 'image/jpeg' });
+
+          generator.handleImageChange({ detail: { file } });
+          await tick(500);
+
+          expect(daFetch.called).to.be.true;
+
+          // Get all the URLs that were fetched
+          const fetchCalls = daFetch.getCalls();
+          const fetchUrls = fetchCalls.map((call) => call.args[0]);
+
+          expect(fetchUrls).to.deep.equal([
+            "https://admin.da.live/source/adobecom/da-bacom/drafts/bmarshal/generator.html",
+            "https://admin.da.live/source/adobecom/da-bacom/drafts/bmarshal/.generator/mock-image.jpg",
+            "https://admin.da.live/source/adobecom/da-bacom/drafts/bmarshal/generator.html"
+          ]);
+
+          expect(generator.marqueeImage).to.deep.equal({ url: '/test/tools/generator/mocks/mock-image.jpg', name: 'mock-image.jpg' });
         });
       });
     });

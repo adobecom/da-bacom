@@ -29,8 +29,15 @@ const EDIT_DOCUMENT_URL = `https://da.live/edit#/adobecom/da-bacom${DOCUMENT_PAT
 // TODO: If select "ungated" don't show show form template, campaign template, POI
 // TODO: Page generator will generate URL based on the content type and marquee title
 
+function withTimeout(promise, ms) {
+  return Promise.race([promise, new Promise((_, reject) => { setTimeout(() => reject(new Error('timeout')), ms); })]);
+}
+
 class LandingPageForm extends LitElement {
-  static properties = { data: { state: true } };
+  static properties = {
+    data: { state: true },
+    marqueeImage: { state: true },
+  };
 
   static styles = style;
 
@@ -66,28 +73,21 @@ class LandingPageForm extends LitElement {
     super.connectedCallback();
 
     this.addEventListener('show-toast', this.handleToast);
-    const sdkPromise = Promise.race([
-      DA_SDK,
-      new Promise((_, reject) => { setTimeout(() => reject(new Error('timeout')), SDK_TIMEOUT); }),
-    ]);
 
-    sdkPromise.then(({ context, token }) => {
-      this.data = {
-        context,
-        token,
-      };
-      getSource(DOCUMENT_PATH).then((document) => {
-        if (document == null) {
+    withTimeout(DA_SDK, SDK_TIMEOUT)
+      .then(({ context, token }) => {
+        this.data = { context, token };
+        return getSource(DOCUMENT_PATH);
+      }).then((document) => {
+        if (!document) {
           this.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'Error fetching document' } }));
           return;
         }
-        this.data.document = document;
+        this.data = { ...this.data, document };
         this.updateMarqueeImage();
-        this.requestUpdate();
+      }).catch((error) => {
+        this.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: `Error connecting to DA SDK: ${error.message}` } }));
       });
-    }).catch((error) => {
-      this.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: `Error connecting to DA SDK: ${error.message}` } }));
-    });
   }
 
   disconnectedCallback() {
@@ -100,20 +100,21 @@ class LandingPageForm extends LitElement {
     super.disconnectedCallback();
   }
 
+  updateDocumentMarquee(imageUrl) {
+    const marqueeBlock = this.data.document.querySelector('.marquee');
+    if (!marqueeBlock) return;
+
+    const img = marqueeBlock.querySelector('img');
+    if (img) img.src = imageUrl;
+  }
+
   async uploadFile(file) {
     try {
       const imageUrl = await saveImage(MEDIA_PATH, file);
 
-      if (!imageUrl) {
-        this.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'Failed to upload file' } }));
-        return null;
-      }
+      if (!imageUrl) throw new Error('Failed to upload file');
 
-      this.marqueeImage = {
-        url: imageUrl,
-        name: file.name,
-      };
-      this.requestUpdate();
+      this.marqueeImage = { url: imageUrl, name: file.name };
 
       return imageUrl;
     } catch (e) {
@@ -123,25 +124,31 @@ class LandingPageForm extends LitElement {
   }
 
   handleImageChange(e) {
+    if (this.marqueeImage?.url && this.marqueeImage.url.startsWith('blob:')) {
+      URL.revokeObjectURL(this.marqueeImage.url);
+    }
+
+    this.marqueeImage = { url: '', name: '' };
+
     const { file } = e.detail;
     if (!file) return;
 
-    this.uploadFile(file).then((url) => {
-      if (!url) return;
-      this.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Image Uploaded', timeout: TOAST_TIMEOUT } }));
-      const marqueeBlock = this.data.document.querySelector('.marquee');
-      if (marqueeBlock) {
-        const img = marqueeBlock.querySelector('img');
-        if (img) {
-          img.src = url;
-          saveSource(DOCUMENT_PATH, this.data.document);
-          this.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Document Marquee Updated', timeout: TOAST_TIMEOUT } }));
-        }
-      }
-    }).catch((error) => {
-      this.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: `Upload failed: ${error.message}` } }));
-    });
-    this.requestUpdate();
+    this.uploadFile(file)
+      .then((url) => {
+        if (!url) return;
+
+        this.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Image Uploaded', timeout: TOAST_TIMEOUT } }));
+        this.updateDocumentMarquee(url);
+        saveSource(DOCUMENT_PATH, this.data.document)
+          .then(() => {
+            this.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Document Marquee Updated', timeout: TOAST_TIMEOUT } }));
+          })
+          .catch((error) => {
+            this.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: `Failed to save document: ${error.message}` } }));
+          });
+      }).catch((error) => {
+        this.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: `Upload failed: ${error.message}` } }));
+      });
   }
 
   async handleSubmit(e) {
@@ -213,7 +220,7 @@ class LandingPageForm extends LitElement {
           <sl-select value="" name="caasPrimaryProduct" label="CaaS Primary Product">
             <option value="TODO">TODO: Fetch BACOM Tags from AEM</option>
           </sl-select>
-          <sl-select value="" name="primaryProductName" label="Primary Product Name"">
+          <sl-select value="" name="primaryProductName" label="Primary Product Name">
             <option value="TODO">TODO: Fetch BACOM Tags from AEM</option>
           </sl-select>
         </div>

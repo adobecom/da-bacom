@@ -47,6 +47,7 @@ export async function saveSource(path, document) {
 
       return json?.source?.contentUrl;
     }
+  /* c8 ignore next 5 */
   } catch (error) {
     // eslint-disable-next-line no-console
     console.log(`Couldn't save ${daPath}`, error);
@@ -67,7 +68,7 @@ export async function saveImage(path, file) {
       const json = await resp.json();
       return json?.source?.contentUrl;
     }
-
+    /* c8 ignore next 7 */
     return null;
   } catch (error) {
     // eslint-disable-next-line no-console

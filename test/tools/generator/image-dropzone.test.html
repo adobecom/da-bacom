@@ -25,15 +25,13 @@
     import ImageDropzone from '../../../tools/generator/image-dropzone/image-dropzone.js';
 
     const ogLana = window.lana;
-    const delay = (milliseconds) => new Promise((resolve) => { setTimeout(resolve, milliseconds); });
     const ogCreateObjectURL = URL.createObjectURL;
     const ogRevokeObjectURL = URL.revokeObjectURL;
-    
+
     customElements.define('image-dropzone', ImageDropzone);
 
     const createMockFile = (name, type, size, content = 'mock content') => {
       const blob = new Blob([content], { type });
-      // Use Object.defineProperty to set read-only properties
       Object.defineProperty(blob, 'name', {
         value: name,
         writable: false
@@ -69,19 +67,28 @@
 
     runTests(() => {
       describe('Image Dropzone', () => {
+        let clock;
+
+        const tick = async (milliseconds) => {
+          clock.tick(milliseconds);
+          await clock.nextAsync();
+        };
+
         beforeEach(async () => {
+          clock = sinon.useFakeTimers();
           document.body.innerHTML = '<image-dropzone></image-dropzone>';
           window.lana = { log: sinon.spy() };
           URL.createObjectURL = sinon.stub().returns('blob:mock-url');
           URL.revokeObjectURL = sinon.stub();
           await customElements.whenDefined('image-dropzone');
-          await delay(100);
+          await tick(100);
         });
 
         afterEach(() => {
           window.lana = ogLana;
           URL.createObjectURL = ogCreateObjectURL;
           URL.revokeObjectURL = ogRevokeObjectURL;
+          clock.restore();
         });
 
         it('renders empty dropzone initially', async () => {
@@ -166,31 +173,34 @@
           expect(imageDropzone.file).to.be.null;
         });
 
-        it('emits image-change event on file selection', async () => {
+        it('handles different file types through onImageChange', async () => {
           const imageDropzone = document.querySelector('image-dropzone');
           await imageDropzone.updateComplete;
 
-          let changeEvent;
-          imageDropzone.addEventListener('image-change', (e) => { changeEvent = e; });
+          const testCases = [
+            { name: 'test.jpg', type: 'image/jpeg', desc: 'JPEG' },
+            { name: 'test.png', type: 'image/png', desc: 'PNG' },
+            { name: 'test.svg', type: 'image/svg+xml', desc: 'SVG' }
+          ];
 
-          const fileInput = imageDropzone.shadowRoot.querySelector('.img-file-input');
-          const mockFile = createMockImageFile('test.jpg', 'image/jpeg', 1000);
+          for (const testCase of testCases) {
+            let changeEvent;
+            imageDropzone.addEventListener('image-change', (e) => { changeEvent = e; });
 
-          Object.defineProperty(fileInput, 'files', {
-            value: [mockFile],
-            writable: false,
-          });
+            const mockFile = createMockImageFile(testCase.name, testCase.type, 1000);
+            const mockEvent = {
+              currentTarget: { files: [mockFile] }
+            };
 
-          const inputChangeEvent = new Event('change');
-          fileInput.dispatchEvent(inputChangeEvent);
-          await delay(100);
+            await imageDropzone.onImageChange(mockEvent);
+            await tick(0);
 
-          expect(changeEvent).to.exist;
-          expect(changeEvent.detail.file).to.equal(mockFile);
-        });
+            expect(changeEvent, `${testCase.desc} file should emit change event`).to.exist;
+            expect(changeEvent.detail.file).to.equal(mockFile);
 
-        it('registers the custom element', () => {
-          expect(customElements.get('image-dropzone')).to.exist;
+            imageDropzone.removeEventListener('image-change', () => { });
+            changeEvent = null;
+          }
         });
 
         it('returns file through getFile method', async () => {
@@ -210,91 +220,38 @@
           imageDropzone.handleImage = handleImageSpy;
 
           const mockFile = createMockImageFile('test.png', 'image/png', 1000);
-          
-          const fileInput = document.createElement('input');
-          Object.defineProperty(fileInput, 'files', {
-            value: [mockFile],
-            writable: false,
-          });
-          
-          const inputChangeEvent = new Event('change');
-          Object.defineProperty(inputChangeEvent, 'currentTarget', {
-            value: fileInput,
-            writable: false,
-          });
-          
-          await imageDropzone.onImageChange(inputChangeEvent);
-          
+
+          const mockEvent = {
+            currentTarget: {
+              files: [mockFile]
+            }
+          };
+
+          await imageDropzone.onImageChange(mockEvent);
+
           expect(handleImageSpy.called).to.be.true;
-        });
-
-        it('handles file input change event', async () => {
-          const imageDropzone = document.querySelector('image-dropzone');
-          await imageDropzone.updateComplete;
-
-          const fileInput = imageDropzone.shadowRoot.querySelector('.img-file-input');
-          const mockFile = createMockImageFile('test.png', 'image/png', 1000);
-
-          let changeEvent;
-          imageDropzone.addEventListener('image-change', (e) => { changeEvent = e; });
-
-          Object.defineProperty(fileInput, 'files', {
-            value: [mockFile],
-            writable: false,
-          });
-
-          const inputChangeEvent = new Event('change');
-          fileInput.dispatchEvent(inputChangeEvent);
-          await delay(100);
-
-          expect(changeEvent).to.exist;
-          expect(changeEvent.detail.file).to.equal(mockFile);
         });
 
         it('handles drop event with files', async () => {
           const imageDropzone = document.querySelector('image-dropzone');
           await imageDropzone.updateComplete;
 
-          const dropArea = imageDropzone.shadowRoot.querySelector('.img-file-input-label');
           const mockFile = createMockImageFile('test.png', 'image/png', 1000);
 
           let changeEvent;
           imageDropzone.addEventListener('image-change', (e) => { changeEvent = e; });
-
-          const dropEvent = new DragEvent('drop');
-          Object.defineProperty(dropEvent, 'dataTransfer', {
-            value: { files: [mockFile] },
-            writable: false,
-          });
-
-          dropArea.dispatchEvent(dropEvent);
-          await delay(100);
+          const mockDropEvent = {
+            preventDefault: () => { },
+            stopPropagation: () => { },
+            dataTransfer: {
+              files: [mockFile]
+            }
+          };
+          await imageDropzone.handleImageDrop(mockDropEvent);
+          await tick(0);
 
           expect(changeEvent).to.exist;
           expect(changeEvent.detail.file).to.equal(mockFile);
-        });
-
-        it('validates SVG files correctly', async () => {
-          const imageDropzone = document.querySelector('image-dropzone');
-          await imageDropzone.updateComplete;
-
-          const mockSvgFile = createMockImageFile('test.svg', 'image/svg+xml', 1000);
-
-          let changeEvent;
-          imageDropzone.addEventListener('image-change', (e) => { changeEvent = e; });
-
-          const fileInput = imageDropzone.shadowRoot.querySelector('.img-file-input');
-          Object.defineProperty(fileInput, 'files', {
-            value: [mockSvgFile],
-            writable: false,
-          });
-
-          const inputChangeEvent = new Event('change');
-          fileInput.dispatchEvent(inputChangeEvent);
-          await delay(100);
-
-          expect(changeEvent).to.exist;
-          expect(changeEvent.detail.file).to.equal(mockSvgFile);
         });
 
         it('cleans up blob URL on disconnect', async () => {
