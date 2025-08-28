@@ -7,15 +7,15 @@ import {
   getTags,
   getAemRepo,
   getRootTags,
-  jcrTitle,
-  caasContentType,
-  caasProducts,
 } from '../tags/tag-utils.js';
 
 const style = await getStyle(import.meta.url);
 const { context, token } = await DA_SDK.catch(() => null);
 const options = { headers: { Authorization: `Bearer ${token}` } };
 const collectionName = 'dx-tags/dx-caas';
+const jcrTitle = 'jcr:title';
+const caasContentType = 'caas:content-type';
+const caasProducts = 'caas:products';
 
 async function processRootTags(opts) {
   const aemConfig = await getAemRepo(context, opts).catch(() => null);
@@ -27,6 +27,7 @@ async function processRootTags(opts) {
   if (!aemConfig || !aemConfig.aemRepo) {
     const repoError = 'Error in retrieving AemRepo';
     errorEvent(repoError);
+    return [];
   }
 
   const namespaces = aemConfig?.namespaces.split(',').map((namespace) => namespace.trim()) || [];
@@ -68,7 +69,7 @@ class PageGeneratorCaaSTagSelector extends LitElement {
 
   async setCollections() {
     let currentCollection;
-    if (this.propCollection && this?.propCollection?.length > 0) {
+    if (this?.propCollection?.length > 0) {
       currentCollection = this.propCollection;
     } else {
       const rootCollections = await processRootTags(options);
