@@ -21,6 +21,7 @@ function poiPair(data) {
   const poiList = data.poi.data;
   return poiList.reduce((rdx, item) => {
     const { Key, Value } = item;
+    if (Key.length === 0 || Value.length === 0) return rdx;
     rdx.push({ Key, Value });
     return rdx;
   }, []);
@@ -56,7 +57,7 @@ export default class mktoPoiSelector extends LitElement {
       <section class="mkto-poi">
         <label for="mkto-poi">POI</label>
         <select name="mkto-poi" id="mkto-poi">
-          <option value=''>--Select--</option>
+          <option value='' disabled>--Select--</option>
           ${this._options.map(({ Key, Value }) => html`<option value=${Value}>${Key}</option>`)}
         </section>
       </div>
