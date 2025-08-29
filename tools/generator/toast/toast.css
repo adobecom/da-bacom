@@ -1,0 +1,49 @@
+:host {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  opacity: 0;
+  transform: translateX(100%);
+  transition: all 0.3s ease;
+}
+
+:host([visible]) {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.toast {
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px #00000026;
+  padding: 12px 16px;
+  min-width: 250px;
+  border-left: 4px solid #3b82f6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.toast.success { border-left-color: #10b981; }
+.toast.error { border-left-color: #ef4444; }
+.toast.warning { border-left-color: #f59e0b; }
+
+.toast button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: #666;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toast button:hover {
+  color: #333;
+}
