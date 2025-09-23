@@ -170,3 +170,5 @@ export default class ImageDropzone extends LitElement {
     </div>`;
   }
 }
+
+if (!customElements.get('image-dropzone')) customElements.define('image-dropzone', ImageDropzone);

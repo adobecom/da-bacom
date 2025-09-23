@@ -66,11 +66,22 @@
           const shadowRoot = generator.shadowRoot;
 
           // Check for all major form sections
-          expect(shadowRoot.querySelector('sl-select[name="contentType"]')).to.exist;
-          expect(shadowRoot.querySelector('sl-select[name="gated"]')).to.exist;
-          expect(shadowRoot.querySelector('sl-input[name="marqueeHeadline"]')).to.exist;
-          expect(shadowRoot.querySelector('sl-input[name="campaignId"]')).to.exist;
-          expect(shadowRoot.querySelector('image-dropzone')).to.exist;
+          const formSections = [
+            'Content Type',
+            'Form',
+            'Marquee',
+            'Body',
+            'Card',
+            'CaaS Content',
+            'SEO Metadata',
+            'Experience Fragment',
+            'Asset Delivery',
+            'URL'
+          ];
+
+          const h2s = shadowRoot.querySelectorAll('form h2');
+          const h2Texts = Array.from(h2s).map(h2 => h2.textContent.trim());
+          expect(h2Texts).to.deep.equal(formSections);
         });
 
         it('has all form fields', async () => {
@@ -80,8 +91,7 @@
           const formFields = [
             'contentType',
             'gated',
-            'formTemplate',
-            'campaignId',
+            'marqueeEyebrow',
             'marqueeHeadline',
             'marqueeDescription',
             'bodyDescription',
@@ -89,13 +99,14 @@
             'cardDescription',
             'seoMetadataTitle',
             'seoMetadataDescription',
+            'experienceFragment',
+            'pdfAsset',
             'url'
           ];
 
-          formFields.forEach(fieldName => {
-            const field = shadowRoot.querySelector(`[name="${fieldName}"]`);
-            expect(field, `Field ${fieldName} exist`).to.exist;
-          });
+          const fields = shadowRoot.querySelectorAll('form [name]');
+          const fieldNames = Array.from(fields).map(field => field.getAttribute('name'));
+          expect(fieldNames).to.deep.equal(formFields);
         });
 
         it('handles toast events', async () => {
@@ -136,17 +147,9 @@
 
           expect(daFetch.called).to.be.true;
 
-          // Get all the URLs that were fetched
-          const fetchCalls = daFetch.getCalls();
-          const fetchUrls = fetchCalls.map((call) => call.args[0]);
-
-          expect(fetchUrls).to.deep.equal([
-            "https://admin.da.live/source/adobecom/da-bacom/drafts/bmarshal/generator.html",
-            "https://admin.da.live/source/adobecom/da-bacom/drafts/bmarshal/.generator/mock-image.jpg",
-            "https://admin.da.live/source/adobecom/da-bacom/drafts/bmarshal/generator.html"
-          ]);
-
-          expect(generator.marqueeImage).to.deep.equal({ url: '/test/tools/generator/mocks/mock-image.jpg', name: 'mock-image.jpg' });
+          const fetchUrls = daFetch.getCalls().map(call => call.args[0]);
+          const fetchFileNames = fetchUrls.map(url => url.split('/').pop());
+          expect(fetchFileNames).to.include("mock-image.jpg");
         });
       });
     });

@@ -20,13 +20,19 @@ p {
   margin: 0 0 24px;
 }
 
+.builder-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
 .form-row {
   margin-bottom: 32px;
 }
 
 .submit-row {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
   gap: 12px;
 }
 
@@ -52,4 +58,13 @@ p {
   height: 120px;
   display: block;
   transition: all 0.3s ease;
+}
+
+.preview p {
+  margin: 0;
+}
+
+.preview iframe {
+  width: 100%;
+  height: 80vh;
 }

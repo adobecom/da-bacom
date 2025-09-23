@@ -1,6 +1,8 @@
 /* eslint-disable import/no-unresolved */
 import { DA_ORIGIN } from 'https://da.live/nx/public/utils/constants.js';
 
+const cache = new Map();
+
 export const tagPathConfig = {
   root: '/content/cq:tags',
   ext: '.1.json',
@@ -24,9 +26,17 @@ export async function getAemRepo(project, opts) {
 
 export async function getTags(path, opts) {
   const activeTag = path.split('cq:tags').pop().replace('.1.json', '').slice(1);
-  const resp = await fetch(path, opts);
-  if (!resp.ok) return null;
-  const json = await resp.json();
+  let json;
+  if (cache.has(path)) {
+    json = cache.get(path);
+  } else {
+    const resp = await fetch(path, opts);
+    if (!resp.ok) {
+      return null;
+    }
+    json = await resp.json();
+    cache.set(path, json);
+  }
   const tags = Object.keys(json).reduce((acc, key) => {
     if (json[key]['jcr:primaryType'] === 'cq:Tag') {
       acc.push({

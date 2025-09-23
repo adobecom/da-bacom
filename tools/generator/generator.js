@@ -3,6 +3,7 @@ import { LIBS } from '../../scripts/scripts.js';
 const { utf8ToB64 } = await import(`${LIBS}/utils/utils.js`);
 
 const DA_ORIGIN = 'https://admin.da.live';
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 const ORG = 'adobecom';
 const REPO = 'da-bacom';
 
@@ -39,6 +40,10 @@ const templatedFields = {
   pdfAsset: '{{pdf-asset}}',
   marketoDataUrl: '{{marketo-data-url}}',
 };
+
+export function withTimeout(promise, ms) {
+  return Promise.race([promise, new Promise((_, reject) => { setTimeout(() => reject(new Error('timeout')), ms); })]);
+}
 
 // TODO: Use default URL or generated URL
 export function marketoUrl(state) {
@@ -81,4 +86,41 @@ export async function replaceTemplate(data) {
   const templatePaths = ['/index.html', '/nav.html', '/footer.html'];
 
   await Promise.all(templatePaths.map((path) => template(path, data)));
+}
+
+export function getStorageItem(key, defaultValue = null) {
+  try {
+    const item = localStorage.getItem(key);
+    return item ? JSON.parse(item) : defaultValue;
+  } catch {
+    return defaultValue;
+  }
+}
+
+export function setStorageItem(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+export function getCachedData(key) {
+  try {
+    const cached = getStorageItem(key);
+    if (cached && cached.timestamp && (Date.now() - cached.timestamp < CACHE_TTL)) {
+      return cached.data;
+    }
+    if (cached) {
+      localStorage.removeItem(key);
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export function setCachedData(key, data) {
+  setStorageItem(key, { data, timestamp: Date.now() });
+  return data;
 }

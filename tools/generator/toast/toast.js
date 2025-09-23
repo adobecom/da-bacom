@@ -3,8 +3,14 @@ import { LitElement, html } from 'da-lit';
 import getStyle from 'styles';
 
 const style = await getStyle(import.meta.url.split('?')[0]);
-
 const FADE_TIMEOUT = 300;
+
+export const TOAST_TYPES = {
+  SUCCESS: 'success',
+  ERROR: 'error',
+  WARNING: 'warning',
+  INFO: 'info',
+};
 
 export default class ToastMessage extends LitElement {
   static properties = {
@@ -27,16 +33,37 @@ export default class ToastMessage extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     setTimeout(() => {
+      if (!this.isConnected) return;
+
       this.visible = true;
       if (this.timeout > 0) {
-        setTimeout(() => this.hide(), this.timeout);
+        this.autoHideTimer = setTimeout(() => {
+          if (this.isConnected) {
+            this.hide();
+          }
+        }, this.timeout);
       }
     }, FADE_TIMEOUT);
   }
 
+  disconnectedCallback() {
+    if (this.autoHideTimer) {
+      clearTimeout(this.autoHideTimer);
+    }
+    super.disconnectedCallback();
+  }
+
   hide() {
     this.visible = false;
-    setTimeout(() => this.remove(), FADE_TIMEOUT);
+    if (this.autoHideTimer) {
+      clearTimeout(this.autoHideTimer);
+    }
+
+    setTimeout(() => {
+      if (this.isConnected && this.parentNode) {
+        this.remove();
+      }
+    }, FADE_TIMEOUT);
   }
 
   render() {
@@ -57,3 +84,5 @@ export const createToast = (message, type = 'info', timeout = 0) => {
 
   return toast;
 };
+
+if (!customElements.get('toast-message')) customElements.define('toast-message', ToastMessage);
