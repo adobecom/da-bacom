@@ -98,11 +98,8 @@ export function getStorageItem(key, defaultValue = null) {
 }
 
 export function setStorageItem(key, value) {
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    // Ignore storage errors
-  }
+  if (!value || (Array.isArray(value) && value.length === 0)) return;
+  localStorage.setItem(key, JSON.stringify(value));
 }
 
 export function getCachedData(key) {
@@ -121,6 +118,7 @@ export function getCachedData(key) {
 }
 
 export function setCachedData(key, data) {
+  if (!data || (Array.isArray(data) && data.length === 0)) return data;
   setStorageItem(key, { data, timestamp: Date.now() });
   return data;
 }

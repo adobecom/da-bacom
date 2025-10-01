@@ -117,7 +117,7 @@
             detail: { message: 'Test message', type: 'info', timeout: 100 }
           });
 
-          generator.dispatchEvent(toastEvent);
+          document.dispatchEvent(toastEvent);
 
           const toast = document.querySelector('toast-message');
           expect(toast).to.exist;

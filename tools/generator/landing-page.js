@@ -34,7 +34,7 @@ const SDK_TIMEOUT = 3000;
 const AEM_PAGE = 'https://main--da-bacom--adobecom.aem.live';
 const DA_EDIT = 'https://da.live/edit#/adobecom/da-bacom';
 const PREVIEW_PARAMS = '?martech=off&dapreview=on';
-const FORM_STORAGE_KEY = 'landing-page-form-state';
+const FORM_STORAGE_KEY = 'landing-page-builder';
 const OPTIONS_LOADING = [{ value: 'loading', label: 'Loading...' }];
 const OPTIONS_ERROR = [{ value: 'error', label: 'Error loading options' }];
 
@@ -115,7 +115,7 @@ class LandingPageForm extends LitElement {
   saveFormState() {
     const formToSave = { ...this.form };
     // TODO: Handle other images
-    if (formToSave.marqueeImage && formToSave.marqueeImage.url && formToSave.marqueeImage.url.startsWith('blob:')) {
+    if (formToSave.marqueeImage?.url?.startsWith('blob:')) {
       formToSave.marqueeImage = null;
     }
     setStorageItem(FORM_STORAGE_KEY, formToSave);
@@ -135,17 +135,16 @@ class LandingPageForm extends LitElement {
     const cached = getCachedData(cacheKey);
     if (cached) return cached;
 
-    try {
-      const data = await fetchFunction(...args);
-      return setCachedData(cacheKey, data);
-    } catch (error) {
-      return [];
+    const data = await fetchFunction(...args);
+    if (!data || (Array.isArray(data) && data.length === 0)) {
+      throw new Error('No data received');
     }
+    return setCachedData(cacheKey, data);
   }
 
   async connectedCallback() {
     super.connectedCallback();
-    this.addEventListener('show-toast', this.handleToast);
+    document.addEventListener('show-toast', this.handleToast);
     this.loadFormState();
 
     try {
@@ -153,24 +152,16 @@ class LandingPageForm extends LitElement {
       this.context = context;
       this.token = token;
 
-      const [marketoOptions, contentTypes, primaryProducts] = await Promise.all([
-        this.fetchCachedOptions('marketo-poi', fetchMarketoPOIOptions),
-        this.fetchCachedOptions('caas-content-types', fetchContentTypeOptions, context, token),
-        this.fetchCachedOptions('caas-primary-products', fetchPrimaryProductOptions, context, token),
-      ]);
-
-      this.marketoPOIOptions = marketoOptions;
-      this.contentTypeOptions = contentTypes;
-      this.primaryProductOptions = primaryProducts;
+      [this.marketoPOIOptions, this.contentTypeOptions, this.primaryProductOptions] = await Promise.all([
+        ['marketo-poi', fetchMarketoPOIOptions, []],
+        ['caas-content-types', fetchContentTypeOptions, [context, token]],
+        ['caas-primary-products', fetchPrimaryProductOptions, [context, token]],
+      ].map(([cacheKey, fetchFn, args]) => this.fetchCachedOptions(cacheKey, fetchFn, ...args).catch(() => OPTIONS_ERROR)));
 
       this.isInitialized = true;
       this.requestUpdate();
     } catch (error) {
       this.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: `Error loading options: ${error.message}` } }));
-
-      this.marketoPOIOptions = OPTIONS_ERROR;
-      this.contentTypeOptions = OPTIONS_ERROR;
-      this.primaryProductOptions = OPTIONS_ERROR;
       this.requestUpdate();
     }
   }
@@ -247,7 +238,7 @@ class LandingPageForm extends LitElement {
   }
 
   disconnectedCallback() {
-    this.removeEventListener('show-toast', this.handleToast);
+    document.removeEventListener('show-toast', this.handleToast);
     Object.values(this.form).forEach((value) => {
       if (value?.url && value.url.startsWith('blob:')) {
         URL.revokeObjectURL(value.url);
@@ -308,24 +299,6 @@ class LandingPageForm extends LitElement {
     console.table(this.form);
   }
 
-  getSections() {
-    return [
-      () => renderContentType(this.form, this.handleInput),
-      () => renderForm(this.form, this.handleInput, { marketoPOIOptions: this.marketoPOIOptions }),
-      () => renderMarquee(this.form, this.handleInput, this.handleImageChange.bind(this)),
-      () => renderBody(this.form, this.handleInput, this.handleImageChange.bind(this)),
-      () => renderCard(this.form, this.handleInput, this.handleImageChange.bind(this)),
-      () => renderCaas(this.form, this.handleInput, {
-        contentTypeOptions: this.contentTypeOptions,
-        primaryProductOptions: this.primaryProductOptions,
-      }),
-      () => renderSeo(this.form, this.handleInput),
-      () => renderExperienceFragment(this.form, this.handleInput),
-      () => renderAssetDelivery(this.form, this.handleInput),
-      () => renderUrl(this.form, this.handleInput),
-    ];
-  }
-
   getTemplatePath() {
     const { contentType, gated } = this.form;
     if (!contentType || !gated) return '';
@@ -349,7 +322,6 @@ class LandingPageForm extends LitElement {
   }
 
   render() {
-    const sections = this.getSections();
     const isFormComplete = this.isFormComplete();
     const templatePath = this.getTemplatePath();
 
@@ -362,7 +334,16 @@ class LandingPageForm extends LitElement {
       <h1>Landing Page Builder</h1>
       <div class="builder-container">
         <form>
-          ${sections.map((renderSection) => renderSection())}
+    ${renderContentType(this.form, this.handleInput)}
+    ${renderForm(this.form, this.handleInput, { marketoPOIOptions: this.marketoPOIOptions })}
+    ${renderMarquee(this.form, this.handleInput, this.handleImageChange.bind(this))}
+    ${renderBody(this.form, this.handleInput, this.handleImageChange.bind(this))}
+    ${renderCard(this.form, this.handleInput, this.handleImageChange.bind(this))}
+    ${renderCaas(this.form, this.handleInput, { contentTypeOptions: this.contentTypeOptions, primaryProductOptions: this.primaryProductOptions })}
+    ${renderSeo(this.form, this.handleInput)}
+    ${renderExperienceFragment(this.form, this.handleInput)}
+    ${renderAssetDelivery(this.form, this.handleInput)}
+    ${renderUrl(this.form, this.handleInput)}
           <div class="submit-row">
             <sl-button type="submit" @click=${this.handleSubmit} ?disabled=${!isFormComplete}>
             Generate
