@@ -5,12 +5,11 @@ import getStyle from 'https://da.live/nx/utils/styles.js';
 import DA_SDK from 'https://da.live/nx/utils/sdk.js';
 
 const style = await getStyle(import.meta.url);
-const { context, token } = await DA_SDK.catch(() => null);
+const { token } = await DA_SDK.catch(() => null);
 const options = { headers: { Authorization: `Bearer ${token}` } };
 const marqueeSource = 'https://admin.da.live/source/adobecom/da-bacom/drafts/slavin/my-tests/marquee.html';
 
 const allowedBlocks = ['marquee', 'text'];
-const textTypes = ['p', 'h1', 'h2', 'h3', 'h4', 'h5'];
 
 class BlockToForm extends LitElement {
   static properties = {
@@ -18,6 +17,8 @@ class BlockToForm extends LitElement {
     _title: { Type: String },
     _inputObjects: { Type: Array },
     _document: { state: true },
+    _inputKeys: { Type: Array },
+    _cleanupClasses: { Type: Array },
   };
 
   constructor() {
@@ -25,20 +26,21 @@ class BlockToForm extends LitElement {
     this._title = 'Block to Form';
     this._inputObjects = {};
     this._document = {};
+    this._inputKeys = [];
+    this._cleanupClasses = [];
   }
 
   static styles = style;
 
   parseDomForBlocks(doc) {
-    const cleanUpClasses = [];
     const sections = doc.querySelectorAll('main > div');
     const blocksWithPlaceholders = {};
 
     sections.forEach((section, i) => {
       const sectionClass = `section-${i}`;
       section.classList.add(sectionClass);
+      this._cleanupClasses.push(sectionClass);
       section.classList.add('section');
-      cleanUpClasses.push(sectionClass);
     });
 
     const blocks = doc.querySelectorAll('main > div > div');
@@ -48,13 +50,15 @@ class BlockToForm extends LitElement {
       const blockClass = block.classList[0];
       if (allowedBlocks.includes(blockClass)) {
         const sectionClass = block.closest('.section').classList[0];
-        blocksWithPlaceholders[sectionClass] = [];
-        const queryKey = `${sectionClass}-${blockClass}-${i}`;
-        block.classList.add(`${queryKey}`);
-        cleanUpClasses.push(queryKey);
+        blocksWithPlaceholders[sectionClass] = blocksWithPlaceholders[sectionClass] || [];
 
         const placeholders = Array.from(block.querySelectorAll('*')).filter((node) => node.children.length === 0 && node.textContent.includes('{{'));
-        placeholders.forEach((placeholder) => {
+        placeholders.forEach((placeholder, j) => {
+          const queryKey = `${sectionClass}-${blockClass}-${i}-placeholder-${j}`;
+          this._inputKeys.push(queryKey);
+          placeholder.classList.add(`${queryKey}`);
+          this._cleanupClasses.push(queryKey);
+
           const tag = placeholder.tagName;
           const content = placeholder.textContent.replace('{{', '').replace('}}', '');
           blocksWithPlaceholders[sectionClass].push({
@@ -86,11 +90,71 @@ class BlockToForm extends LitElement {
     this.parseDomForBlocks(page);
   }
 
+  renderInputs(input) {
+    const inputLabel = input.blockId.split('-').join(' ');
+    return html`
+      <div>
+        <label for='${input.queryKey}'>${inputLabel} ${input.content}</label>
+        <input type='text' id='${input.queryKey}' name='${input.queryKey}' placeholder='${input.content}'></input>
+      </div>
+    `;
+  }
+
+  async addValues(e, doc) {
+    e.preventDefault();
+    const formData = new FormData(e.target.closest('form'));
+    const entries = Object.fromEntries(formData.entries());
+    console.log(entries);
+
+    Object.keys(entries).forEach((key) => {
+      const placeholder = doc.querySelector(`.${key}`);
+      placeholder.innerText = entries[key];
+    });
+
+    doc.querySelectorAll('.section').forEach((s) => s.classList.remove('section'));
+
+    this._cleanupClasses.forEach((cc) => {
+      doc.querySelector(`.${cc}`).classList.remove(cc);
+    });
+
+    console.log(doc);
+
+    const updatePath = `https://admin.da.live/source/adobecom/da-bacom/drafts/slavin/my-tests/block-to-form.html`;
+
+    const xmlSer = new XMLSerializer();
+    const newText = xmlSer.serializeToString(doc);
+
+    const blob = new Blob([newText], { type: 'text/html' });
+    const body = new FormData();
+    body.append('data', blob);
+    const postOpts = {
+      headers: { Authorization: `Bearer ${token}` },
+      method: 'POST',
+      body,
+    };
+    const postResp = await fetch(updatePath, postOpts);
+    console.log(postResp.status);
+  }
+
+  renderSection(key) {
+    const sectionName = key.split('-').join(' ');
+
+    return html`
+      <section class='form-${sectionName}'>
+        <h4>${sectionName}</h4>
+        ${this._inputObjects[key].map((input) => this.renderInputs(input))}
+      </section>
+    `;
+  }
+
   render() {
     return html`
       <div class="block-to-form">
         <h1>${this._title}</h1>
-        <div class='preview'></div>
+        <form class='preview'>
+          ${Object.keys(this._inputObjects).map((key) => this.renderSection(key))}
+          <button @click=${(e) => this.addValues(e, this._document)}>Create Page</submit>
+        </form>
       </div>
     `;
   }
