@@ -145,6 +145,26 @@ const CONFIG = {
   atvCaptionsKey: 'bacom',
 };
 
+export const EVENT_LIBS = (() => {
+  const version = 'v1';
+  const { hostname, search } = window.location;
+
+  if (!(hostname.includes('.hlx.') || hostname.includes('.aem.') || hostname.includes('local'))) {
+    return '/event-libs';
+  }
+
+  const branch = new URLSearchParams(search).get('eventlibs') || 'main';
+  if (branch === 'local') {
+    return `http://localhost:3868/event-libs/${version}`;
+  }
+
+  if (branch.includes('--')) {
+    return `https://${branch}.aem.live/event-libs/${version}`;
+  }
+
+  return `https://${branch}--event-libs--adobecom.aem.live/event-libs/${version}`;
+})();
+
 const eagerLoad = (img) => {
   img?.setAttribute('loading', 'eager');
   img?.setAttribute('fetchpriority', 'high');
@@ -176,10 +196,6 @@ export const getLCPImages = (doc) => {
   const lcpImages = getLCPImages(document);
   lcpImages?.forEach(eagerLoad);
 }());
-
-// if event details page
-// decorateEvent(area); 
-// updateConfig()
 
 export function setLibs(location) {
   const { hostname, search } = location;
@@ -213,9 +229,22 @@ export function transformExlLinks(locale) {
 }
 
 async function loadPage() {
+  const [miloUtils, eventUtils] = await Promise.all([
+    import(`${LIBS}/utils/utils.js`),
+    import(`${EVENT_LIBS}/libs.js`),
+  ]);
+
   const {
     loadArea, loadLana, setConfig, createTag, getMetadata, getLocale,
-  } = await import(`${LIBS}/utils/utils.js`);
+  } = miloUtils;
+
+  const {
+    setEventConfig,
+    decorateEvent,
+    EVENT_BLOCKS,
+  } = eventUtils;
+
+  const isEventMetadata = getMetadata('event-details-page') === 'yes';
   if (getMetadata('template') === '404') window.SAMPLE_PAGEVIEWS_AT_RATE = 'high';
 
   const metaCta = document.querySelector('meta[name="chat-cta"]');
@@ -235,12 +264,29 @@ async function loadPage() {
     if (lastSection) lastSection.insertAdjacentElement('beforeend', a);
   }
 
-  // decorateArea: () => deocrateEvent(area)
-  setConfig({ ...CONFIG, miloLibs: LIBS });
+  const eventConfigItems = {
+    decorateArea: () => decorateEvent(document),
+    externalLibs: [
+      {
+        base: EVENT_LIBS,
+        blocks: EVENT_BLOCKS, // or your custom EVENT_BLOCKS_OVERRIDE
+      },
+    ],
+  };
 
-  // const EVENT_CONFIG = setEventConfig({ cmsType: 'DA' }, MILO_CONFIG);
+  setConfig({ ...CONFIG, ...eventConfigItems, miloLibs: LIBS });
+  setEventConfig({ cmsType: 'DA' }, CONFIG);
+
+  if (isEventMetadata) decorateEvent(document);
+
   loadLana({ clientId: 'bacom', tags: 'info', endpoint: 'https://business.adobe.com/lana/ll', endpointStage: 'https://business.stage.adobe.com/lana/ll' });
   transformExlLinks(getLocale(CONFIG.locales));
+
+  if (isEventMetadata) {
+    const { eventsDelayedActions } = await import(`${EVENT_LIBS}/libs.js`);
+    eventsDelayedActions();
+  }
+
   await loadArea();
 
   if (document.querySelector('meta[name="aa-university"]')) {
@@ -257,10 +303,6 @@ async function loadPage() {
   });
   observer.observe({ type: 'resource', buffered: true });
 }
-// loadpage().then(async () => {
-  //   const { eventsDelayedActions } = await import(`${EVENT_LIBS}/libs.js`);
-  //   if (getMetadata('event-details-page') === 'yes') eventsDelayedActions();
-  // });
 loadPage();
 
 // DA Live Preview
