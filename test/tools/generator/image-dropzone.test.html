@@ -28,8 +28,6 @@
     const ogCreateObjectURL = URL.createObjectURL;
     const ogRevokeObjectURL = URL.revokeObjectURL;
 
-    customElements.define('image-dropzone', ImageDropzone);
-
     const createMockFile = (name, type, size, content = 'mock content') => {
       const blob = new Blob([content], { type });
       Object.defineProperty(blob, 'name', {

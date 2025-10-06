@@ -1,57 +1,226 @@
+/* eslint-disable max-len */
 /* eslint-disable class-methods-use-this */
 /* eslint-disable import/no-unresolved */
 import 'components';
 import getStyle from 'styles';
 import DA_SDK from 'da-sdk';
-import { LitElement, html } from 'da-lit';
-import ImageDropzone from './image-dropzone/image-dropzone.js';
-import ToastMessage, { createToast } from './toast/toast.js';
-import { getSource, saveSource, saveImage } from './da-utils.js';
+import { LitElement, html, createRef, ref, nothing } from 'da-lit';
+import { createToast, TOAST_TYPES } from './toast/toast.js';
+import { getSource, saveImage } from './da-utils.js';
+import {
+  getStorageItem,
+  setStorageItem,
+  getCachedData,
+  setCachedData,
+  withTimeout,
+} from './generator.js';
+import { fetchMarketoPOIOptions, fetchContentTypeOptions, fetchPrimaryProductOptions } from './data-sources.js';
+import {
+  renderContentType,
+  renderForm,
+  renderMarquee,
+  renderBody,
+  renderCard,
+  renderCaas,
+  renderSeo,
+  renderExperienceFragment,
+  renderAssetDelivery,
+  renderUrl,
+} from './form-sections.js';
 
 const style = await getStyle(import.meta.url.split('?')[0]);
 
 const SDK_TIMEOUT = 3000;
-const TOAST_TIMEOUT = 5000;
-const DOCUMENT_NAME = 'generator';
-const DOCUMENT_PATH = `/drafts/bmarshal/${DOCUMENT_NAME}`;
-const MEDIA_PATH = `/drafts/bmarshal/.${DOCUMENT_NAME}/`;
-const EDIT_DOCUMENT_URL = `https://da.live/edit#/adobecom/da-bacom${DOCUMENT_PATH}`;
+const AEM_PAGE = 'https://main--da-bacom--adobecom.aem.live';
+const DA_EDIT = 'https://da.live/edit#/adobecom/da-bacom';
+const PREVIEW_PARAMS = '?martech=off&dapreview=on';
+const FORM_STORAGE_KEY = 'landing-page-builder';
+const OPTIONS_LOADING = [{ value: 'loading', label: 'Loading...' }];
+const OPTIONS_ERROR = [{ value: 'error', label: 'Error loading options' }];
 
-// Data
-// TODO: Fetch POI options from Marketo Configurator options
-// TODO: Fetch Tags from AEM for CaaS Content Type & Primary Product Name
+const TEMPLATE_MAP = {
+  guide: {
+    gated: '/tools/page-builder/prd-template-basic',
+    ungated: '/tools/page-builder/prd-template-basic-ungated',
+  },
+  report: {
+    gated: '/tools/page-builder/prd-template-basic',
+    ungated: '/tools/page-builder/prd-template-basic-ungated',
+  },
+  'video/demo': {
+    gated: '/tools/page-builder/prd-template-basic',
+    ungated: '/tools/page-builder/prd-template-video',
+  },
+  infographic: {
+    gated: '/tools/page-builder/prd-template-basic',
+    ungated: '/tools/page-builder/prd-template-basic-ungated',
+  },
+};
 
-// Lists
-// TODO: Get Eyebrow copy
-// TODO: Get Fragment list
-
-// Features
-// TODO: If select "ungated" don't show show form template, campaign template, POI
-// TODO: Page generator will generate URL based on the content type and marquee title
-
-function withTimeout(promise, ms) {
-  return Promise.race([promise, new Promise((_, reject) => { setTimeout(() => reject(new Error('timeout')), ms); })]);
-}
+const FORM_SCHEMA = {
+  contentType: '',
+  gated: '',
+  formTemplate: '',
+  campaignId: '',
+  marketoPOI: '',
+  marqueeEyebrow: '',
+  marqueeHeadline: '',
+  marqueeDescription: '',
+  marqueeImage: null,
+  bodyDescription: '',
+  cardTitle: '',
+  cardDescription: '',
+  contentTypeCaas: '',
+  primaryProduct: '',
+  seoMetadataTitle: '',
+  seoMetadataDescription: '',
+  experienceFragment: '',
+  videoAsset: '',
+  url: '',
+};
 
 class LandingPageForm extends LitElement {
-  static properties = {
-    data: { state: true },
-    marqueeImage: { state: true },
-  };
-
   static styles = style;
+
+  static get properties() {
+    return {
+      form: { type: Object },
+      marketoPOIOptions: { type: Array },
+      contentTypeOptions: { type: Array },
+      primaryProductOptions: { type: Array },
+      isInitialized: { type: Boolean },
+    };
+  }
 
   constructor() {
     super();
-    this.data = {};
-    this.marqueeImage = null;
+    this.form = { ...FORM_SCHEMA };
+    this.marketoPOIOptions = OPTIONS_LOADING;
+    this.contentTypeOptions = OPTIONS_LOADING;
+    this.primaryProductOptions = OPTIONS_LOADING;
+    this.isInitialized = false;
+    this.iframeRef = createRef();
+    this.template = null;
+    this.currentTemplateKey = null;
   }
 
+  resetForm() {
+    this.form = { ...FORM_SCHEMA };
+    localStorage.removeItem(FORM_STORAGE_KEY);
+    if (this.isInitialized) {
+      this.requestUpdate();
+    }
+  }
+
+  saveFormState() {
+    const formToSave = { ...this.form };
+    // TODO: Handle other images
+    if (formToSave.marqueeImage?.url?.startsWith('blob:')) {
+      formToSave.marqueeImage = null;
+    }
+    setStorageItem(FORM_STORAGE_KEY, formToSave);
+  }
+
+  loadFormState() {
+    try {
+      const savedForm = getStorageItem(FORM_STORAGE_KEY);
+      if (!savedForm) return;
+      this.form = { ...FORM_SCHEMA, ...savedForm };
+    } catch (error) {
+      this.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Failed to load saved form data' } }));
+    }
+  }
+
+  async fetchCachedOptions(cacheKey, fetchFunction, ...args) {
+    const cached = getCachedData(cacheKey);
+    if (cached) return cached;
+
+    const data = await fetchFunction(...args);
+    if (!data || (Array.isArray(data) && data.length === 0)) {
+      throw new Error('No data received');
+    }
+    return setCachedData(cacheKey, data);
+  }
+
+  async connectedCallback() {
+    super.connectedCallback();
+    document.addEventListener('show-toast', this.handleToast);
+    this.loadFormState();
+
+    try {
+      const { context, token } = await withTimeout(DA_SDK, SDK_TIMEOUT);
+      this.context = context;
+      this.token = token;
+
+      [this.marketoPOIOptions, this.contentTypeOptions, this.primaryProductOptions] = await Promise.all([
+        ['marketo-poi', fetchMarketoPOIOptions, []],
+        ['caas-content-types', fetchContentTypeOptions, [context, token]],
+        ['caas-primary-products', fetchPrimaryProductOptions, [context, token]],
+      ].map(([cacheKey, fetchFn, args]) => this.fetchCachedOptions(cacheKey, fetchFn, ...args).catch(() => OPTIONS_ERROR)));
+
+      this.isInitialized = true;
+      this.requestUpdate();
+    } catch (error) {
+      this.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: `Error loading options: ${error.message}` } }));
+      this.requestUpdate();
+    }
+  }
+
+  async getTemplateContent() {
+    const { contentType, gated } = this.form;
+    if (!contentType || !gated) return '';
+
+    const contentTypeKey = contentType.toLowerCase();
+    const gatedKey = gated.toLowerCase();
+    const templateKey = `${contentTypeKey}-${gatedKey}`;
+
+    if (this.currentTemplateKey !== templateKey) {
+      this.template = null;
+      this.currentTemplateKey = templateKey;
+    }
+
+    if (!this.template) {
+      const templatePath = TEMPLATE_MAP[contentTypeKey]?.[gatedKey];
+      this.template = await getSource(templatePath);
+    }
+
+    return this.template?.body;
+  }
+
+  async updatePreview() {
+    // TODO: Template generation and preview
+  }
+
+  handleInput = (e) => {
+    if (!this.isInitialized) return;
+
+    const { name, value, files } = e.target;
+    const newForm = { ...this.form };
+
+    if (name === 'contentType') {
+      newForm.marqueeEyebrow = value;
+    }
+    if (files && files.length) {
+      const [file] = files;
+      newForm[name] = file;
+    } else {
+      newForm[name] = value;
+    }
+
+    this.form = newForm;
+    this.updatePreview();
+    this.saveFormState();
+  };
+
   updateMarqueeImage() {
-    const marquee = this.data.document?.querySelector('.marquee');
+    const template = this.template?.body;
+    if (!template) return;
+
+    // TODO: Handle other images
+    const marquee = template.querySelector('.marquee');
     const marqueeImage = marquee?.querySelector('img');
     if (marqueeImage?.src) {
-      this.marqueeImage = {
+      this.form.marqueeImage = {
         url: marqueeImage.src,
         name: marqueeImage.alt || 'Marquee Image',
       };
@@ -62,201 +231,144 @@ class LandingPageForm extends LitElement {
     e.stopPropagation();
     e.preventDefault();
     const detail = e.detail || {};
-
     const toast = createToast(detail.message, detail.type, detail.timeout);
     document.body.appendChild(toast);
     // eslint-disable-next-line no-console
     if (detail.type === 'error') console.error('Error:', detail.message, detail);
   }
 
-  connectedCallback() {
-    super.connectedCallback();
-
-    this.addEventListener('show-toast', this.handleToast);
-
-    withTimeout(DA_SDK, SDK_TIMEOUT)
-      .then(({ context, token }) => {
-        this.data = { context, token };
-        return getSource(DOCUMENT_PATH);
-      }).then((document) => {
-        if (!document) {
-          this.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'Error fetching document' } }));
-          return;
-        }
-        this.data = { ...this.data, document };
-        this.updateMarqueeImage();
-      }).catch((error) => {
-        this.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: `Error connecting to DA SDK: ${error.message}` } }));
-      });
-  }
-
   disconnectedCallback() {
-    this.removeEventListener('show-toast', this.handleToast);
-
-    if (this.marqueeImage?.url && this.marqueeImage.url.startsWith('blob:')) {
-      URL.revokeObjectURL(this.marqueeImage.url);
-    }
+    document.removeEventListener('show-toast', this.handleToast);
+    Object.values(this.form).forEach((value) => {
+      if (value?.url && value.url.startsWith('blob:')) {
+        URL.revokeObjectURL(value.url);
+      }
+    });
 
     super.disconnectedCallback();
   }
 
-  updateDocumentMarquee(imageUrl) {
-    const marqueeBlock = this.data.document.querySelector('.marquee');
-    if (!marqueeBlock) return;
+  handleIframeLoad = () => {
+    // TODO: Initialize preview when iframe loads
+    this.updatePreview();
+  };
 
-    const img = marqueeBlock.querySelector('img');
-    if (img) img.src = imageUrl;
-  }
-
-  async uploadFile(file) {
+  async uploadFile(file, path) {
     try {
-      const imageUrl = await saveImage(MEDIA_PATH, file);
-
+      const imageUrl = await saveImage(path, file);
       if (!imageUrl) throw new Error('Failed to upload file');
-
-      this.marqueeImage = { url: imageUrl, name: file.name };
 
       return imageUrl;
     } catch (e) {
-      this.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'Failed to upload file' } }));
+      this.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Failed to upload file' } }));
       return null;
     }
   }
 
   handleImageChange(e) {
-    if (this.marqueeImage?.url && this.marqueeImage.url.startsWith('blob:')) {
-      URL.revokeObjectURL(this.marqueeImage.url);
+    if (this.form.marqueeImage?.url && this.form.marqueeImage.url.startsWith('blob:')) {
+      URL.revokeObjectURL(this.form.marqueeImage.url);
     }
-
-    this.marqueeImage = { url: '', name: '' };
-
+    this.form.marqueeImage = { url: '', name: '' };
     const { file } = e.detail;
     if (!file) return;
 
-    this.uploadFile(file)
+    // TODO: update template after page generation to correct path
+    const path = '/tools/page-builder/.prd-template/';
+    this.uploadFile(file, path)
       .then((url) => {
         if (!url) return;
-
-        this.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Image Uploaded', timeout: TOAST_TIMEOUT } }));
-        this.updateDocumentMarquee(url);
-        saveSource(DOCUMENT_PATH, this.data.document)
-          .then(() => {
-            this.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Document Marquee Updated', timeout: TOAST_TIMEOUT } }));
-          })
-          .catch((error) => {
-            this.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: `Failed to save document: ${error.message}` } }));
-          });
+        this.form.marqueeImage = { url, name: file.name };
+        this.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Image Uploaded' } }));
       }).catch((error) => {
         this.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: `Upload failed: ${error.message}` } }));
       });
+    this.updatePreview();
+    this.saveFormState();
   }
 
   async handleSubmit(e) {
     e.preventDefault();
+    // TODO: Validate form data
+    if (!this.isFormComplete()) {
+      this.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Please complete all required fields' } }));
+      return;
+    }
+    // TODO: Create page in DA and upload assets, uploadTemplatedText
+    // eslint-disable-next-line no-console
+    console.table(this.form);
+  }
+
+  getTemplatePath() {
+    const { contentType, gated } = this.form;
+    if (!contentType || !gated) return '';
+
+    const contentTypeKey = contentType.toLowerCase();
+    const gatedKey = gated.toLowerCase();
+
+    const template = TEMPLATE_MAP[contentTypeKey]?.[gatedKey];
+    return template ? `${template}` : '';
+  }
+
+  isFormComplete() {
+    const required = ['contentType', 'gated', 'url'];
+    const hasRequired = required.every((field) => this.form[field]);
+
+    if (this.form.contentType === 'video/demo' && !this.form.videoAsset) {
+      return false;
+    }
+
+    return hasRequired;
   }
 
   render() {
+    const isFormComplete = this.isFormComplete();
+    const templatePath = this.getTemplatePath();
+
+    const previewUrl = `${AEM_PAGE}${templatePath}${PREVIEW_PARAMS}`;
+    // TODO: Update URLs based on created page
+    const viewUrl = `${AEM_PAGE}${templatePath}`;
+    const editUrl = `${DA_EDIT}${templatePath}`;
+
     return html`
-      <h1>Campaign Landing Page Generator</h1>
-      <p>Page URL: <a href=${EDIT_DOCUMENT_URL} target="_blank">${EDIT_DOCUMENT_URL}</a></p>
-      <form @submit=${this.handleSubmit}>
-        <div class="form-row">
-          <h2>Content Type</h2>
-          <sl-select value="" name="contentType" label="Content Type" placeholder="Content Type">
-            <option value="Guide">Guide</option>
-            <option value="Infographic">Infographic</option>
-            <option value="Report">Report</option>
-            <option value="Video/Demo">Video/Demo</option>
-          </sl-select>
-        </div>
-        <div class="form-row">
-          <h2>Form</h2>
-          <sl-select value="" name="gated" label="Gated / Ungated" placeholder="Gated / Ungated">
-            <option value="Gated">Gated</option>
-            <option value="Ungated">Ungated</option>
-          </sl-select>
-          <sl-select value="" name="formTemplate" label="Form Template" placeholder="Form Template">
-            <option value="Long">Long</option>
-            <option value="Medium">Medium</option>
-            <option value="Short">Short</option>
-          </sl-select>
-          <sl-input type="text" name="campaignId" placeholder="Campaign ID" label="Campaign ID"></sl-input>
-          <sl-select value="" name="poi" label="POI" placeholder="POI">
-            <option value="TODO">TODO: Fetch Marketo Configurator POI options</option>
-          </sl-select>
-        </div>
-        <div class="form-row">
-          <h2>Marquee</h2>
-          <sl-select value="" name="marqueeEyebrow" label="Marquee Eyebrow" placeholder="Marquee Eyebrow">
-            <option value="TODO">TODO: Generate the Eyebrow based on the selected content type</option>
-          </sl-select>
-          <sl-input type="text" name="marqueeHeadline" placeholder="Marquee Headline" label="Marquee Headline"></sl-input>
-          <sl-input type="text" name="marqueeDescription" placeholder="Marquee Description" label="Marquee Description"></sl-input>
-          <div class="image-dropzone-container">
-            <label>Marquee Image</label>
-            <div class="dropzone-wrapper">
-              <image-dropzone .file=${this.marqueeImage} @image-change=${this.handleImageChange}>
-                <label slot="img-label">Upload Marquee Image</label>
-              </image-dropzone>
-            </div>
+      <h1>Landing Page Builder</h1>
+      <div class="builder-container">
+        <form>
+    ${renderContentType(this.form, this.handleInput)}
+    ${renderForm(this.form, this.handleInput, { marketoPOIOptions: this.marketoPOIOptions })}
+    ${renderMarquee(this.form, this.handleInput, this.handleImageChange.bind(this))}
+    ${renderBody(this.form, this.handleInput, this.handleImageChange.bind(this))}
+    ${renderCard(this.form, this.handleInput, this.handleImageChange.bind(this))}
+    ${renderCaas(this.form, this.handleInput, { contentTypeOptions: this.contentTypeOptions, primaryProductOptions: this.primaryProductOptions })}
+    ${renderSeo(this.form, this.handleInput)}
+    ${renderExperienceFragment(this.form, this.handleInput)}
+    ${renderAssetDelivery(this.form, this.handleInput)}
+    ${renderUrl(this.form, this.handleInput)}
+          <div class="submit-row">
+            <sl-button type="submit" @click=${this.handleSubmit} ?disabled=${!isFormComplete}>
+            Generate
+            </sl-button>
+            <sl-button @click=${() => window.open(viewUrl, '_blank')} ?disabled=${!isFormComplete}>
+            View Page
+            </sl-button>
+            <sl-button variant="warning" @click=${() => window.open(editUrl, '_blank')} ?disabled=${!isFormComplete}>
+            Edit Content
+            </sl-button>
+            <sl-button variant="reset" @click=${this.resetForm}>
+            Reset Form
+            </sl-button>
           </div>
+        </form>
+        <div class="preview">
+          <h2>Template</h2>
+          ${templatePath ? html`<p>${this.form.contentType} ${this.form.gated}: <a href=${viewUrl} target="_blank">${templatePath}</a></p><iframe ${ref(this.iframeRef)} src="${previewUrl}" @load=${this.handleIframeLoad}></iframe>` : nothing}
         </div>
-        <div class="form-row">
-          <h2>Body</h2>
-          <sl-input type="text" name="bodyDescription" placeholder="Body Description" label="Body Description"></sl-input>
-          <sl-input type="file" name="bodyImage" placeholder="Upload Body Image" label="Upload Body Image"></sl-input>
-        </div>
-        <div class="form-row">
-          <h2>Card</h2>
-          <sl-input type="text" name="cardTitle" placeholder="Card Title" label="Card Title"></sl-input>
-          <sl-input type="text" name="cardDescription" placeholder="Card Description" label="Card Description"></sl-input>
-          <sl-input type="file" name="cardImage" placeholder="Upload Card Image" label="Upload Card Image"></sl-input>
-        </div>
-        <div class="form-row">
-          <h2>CaaS Content</h2>
-          <sl-select value="" name="caasContentType" label="CaaS Content Type">
-            <option value="TODO">TODO: Fetch BACOM Tags from AEM</option>
-          </sl-select>
-          <sl-select value="" name="caasPrimaryProduct" label="CaaS Primary Product">
-            <option value="TODO">TODO: Fetch BACOM Tags from AEM</option>
-          </sl-select>
-          <sl-select value="" name="primaryProductName" label="Primary Product Name">
-            <option value="TODO">TODO: Fetch BACOM Tags from AEM</option>
-          </sl-select>
-        </div>
-        <div class="form-row">
-          <h2>SEO Metadata</h2>
-          <sl-input type="text" name="seoMetadataTitle" placeholder="Max 70 characters" label="SEO Metadata Title"></sl-input>
-          <sl-input type="text" name="seoMetadataDescription" placeholder="Max 155 characters" label="SEO Metadata Description"></sl-input>
-        </div>
-        <div class="form-row">
-          <h2>Experience Fragment</h2>
-          <sl-select value="" name="experienceFragment" label="Experience Fragment">
-            <option value="TODO">TODO: Show Experience Fragment from a predefined list</option>
-          </sl-select>
-        </div>
-        <div class="form-row">
-          <h2>Asset Delivery</h2>
-          <sl-input type="text" name="videoAsset" placeholder="https://video.tv.adobe.com/v/..." label="Video Asset"></sl-input>
-          <sl-input type="file" name="pdfAsset" placeholder="Upload PDF Asset" label="Upload PDF Asset"></sl-input>
-        </div>
-        <div class="form-row">
-          <h2>URL</h2>
-          <sl-input type="text" name="url" placeholder="/resources/sdk/mixing-agile-and-waterfall.html" label="URL"></sl-input>
-        </div>
-        <div class="submit-row">
-          <sl-button type="submit" variant="primary" class="accent">Generate</sl-button>
-          <sl-button variant="success">View Page</sl-button>
-          <sl-button variant="warning">Edit Content</sl-button>
-        </div>
-      </form>
+      </div>
     `;
   }
 }
 
-customElements.define('image-dropzone', ImageDropzone);
-customElements.define('da-generator', LandingPageForm);
-customElements.define('toast-message', ToastMessage);
+if (!customElements.get('da-generator')) customElements.define('da-generator', LandingPageForm);
 
 export default async function init(el) {
   const bulk = document.createElement('da-generator');
