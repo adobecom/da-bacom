@@ -139,7 +139,7 @@
   }
   const scriptTag = document.createElement('script');
   scriptTag.setAttribute('type', 'application/ld+json');
-  scriptTag.innerHTML = JSON.stringify(schema);
+  scriptTag.innerText = JSON.stringify(schema);
   document.head.append(scriptTag);
 
 </script>
