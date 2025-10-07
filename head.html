@@ -65,7 +65,83 @@
     }, []);
 
     document.head.querySelector('title').after(xDefault, enUs, ...links);
+  }  
+  document.querySelector('[type="application/ld+json"]').remove();
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": ["WebPage", "WebSite"],
+    "url": window.location.href, // url of the page
+    "@id": window.location.href, // url of the page
+    "name": document.title.split('|')[0], // title of the page
+    "inLanguage": window.navigator.language, // language of the page
+    "audience": {
+      "@type": "Audience",
+      "geographicArea": {
+        "@type": "AdministrativeArea",
+        "address": {
+          "@type": "PostalAddress",
+          "addressCountry": window.navigator.language.split('-')[1] // set part of ietf, I think
+        }
+      }
+    },
+    "isPartOf": {
+      "@type": "WebSite",
+      "url": "https://business.adobe.com/",
+      "name": "Adobe for Business",
+      "@id": "https://business.adobe.com/",
+      "isPartOf": {
+        "@type": "WebSite",
+        "url": "https://www.adobe.com",
+        "name": "Adobe",
+        "@id": "https://www.adobe.com",
+        "publisher": {
+          "@type": "Corporation",
+          "name": "Adobe",
+          "@id": "https://www.adobe.com/#organization",
+          "sameAs": [
+            "https://en.wikipedia.org/wiki/Adobe",
+            "https://twitter.com/Adobe",
+            "https://www.linkedin.com/company/adobe",
+            "https://www.crunchbase.com/organization/adobe-systems"
+          ],
+          "legalName": "Adobe Inc.",
+          "url": "https://www.adobe.com/",
+          "brand": [
+            {
+              "@type": "Brand",
+              "name": "Adobe Creative Cloud",
+              "alternateName": "Creative Cloud",
+              "url": "https://www.adobe.com/&&/creativecloud.html",
+              "sameAs": "https://www.wikidata.org/entity/Q14636918"
+            },
+            {
+              "@type": "Brand",
+              "name": "Adobe for Business",
+              "alternateName": "Experience Cloud",
+              "url": "{placeholder}",
+              "sameAs": "https://www.wikidata.org/entity/Q16927817"
+            },
+            {
+              "@type": "Brand",
+              "name": "Adobe Document Cloud",
+              "alternateName": "Document Cloud",
+              "url": "https://www.adobe.com/&&/documentcloud.html",
+              "sameAs": "https://www.wikidata.org/entity/Q2823478"
+            }
+          ]
+        }
+      },
+      "mainEntityOfPage": {
+        "@type": ["WebPage", "WebSite"],
+        "@id": window.location.href // url of the page
+      }
+    }
   }
+  const scriptTag = document.createElement('script');
+  scriptTag.setAttribute('type', 'application/ld+json');
+  scriptTag.innerHTML = schema;
+  document.head.append(scriptTag);
+
 </script>
 <script src="/scripts/scripts.js" type="module"></script>
 <style>body { display: none; }</style>
