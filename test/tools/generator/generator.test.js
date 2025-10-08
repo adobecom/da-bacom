@@ -1,7 +1,7 @@
 /* eslint-disable import/no-unresolved */
 import { readFile } from '@web/test-runner-commands';
 import { expect } from '@esm-bundle/chai';
-import { applyTemplateFields } from '../../../tools/generator/generator.js';
+import { applyTemplateData } from '../../../tools/generator/generator.js';
 import { LIBS } from '../../../scripts/scripts.js';
 
 const { loadArea } = await import(`${LIBS}/utils/utils.js`);
@@ -41,7 +41,7 @@ describe('Generator', () => {
 
   it('applies ungated template fields correctly', async () => {
     document.body.innerHTML = ungated;
-    const result = applyTemplateFields(ungated, data);
+    const result = applyTemplateData(ungated, data);
     document.body.innerHTML = result;
     await loadArea();
     const remainingFields = result.match(/{{[^}]+}}/g) || [];
@@ -50,7 +50,7 @@ describe('Generator', () => {
 
   it.skip('applies gated template fields correctly', async () => {
     document.body.innerHTML = gated;
-    const result = applyTemplateFields(gated, data);
+    const result = applyTemplateData(gated, data);
     document.body.innerHTML = result;
     await loadArea();
     const remainingFields = result.match(/{{[^}]+}}/g) || [];
