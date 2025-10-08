@@ -1,6 +1,5 @@
-import { LIBS } from '../../scripts/scripts.js';
-
-const { utf8ToB64 } = await import(`${LIBS}/utils/utils.js`);
+export const utf8ToB64 = (str) => window.btoa(unescape(encodeURIComponent(str)));
+export const b64ToUtf8 = (str) => decodeURIComponent(escape(window.atob(str)));
 
 const DA_ORIGIN = 'https://admin.da.live';
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
@@ -10,36 +9,6 @@ const REPO = 'da-bacom';
 // Template questions
 // Should we have Asset H2?
 // Should we have Form Title and Description?
-const templatedFields = {
-  contentType: '{{content-type}}',
-  gated: '{{gated}}',
-  formTemplate: '{{form-template}}',
-  formDescription: '{{form-description}}',
-  formSuccessType: '{{form-success-type}}',
-  formSuccessSection: '{{form-success-section}}',
-  formSuccessContent: '{{form-success-content}}',
-  campaignId: '{{campaign-id}}',
-  poi: '{{poi}}',
-  marqueeEyebrow: '{{marquee-eyebrow}}',
-  marqueeHeadline: '{{marquee-headline}}',
-  marqueeDescription: '{{marquee-description}}',
-  marqueeImage: '{{marquee-image}}',
-  bodyDescription: '{{body-description}}',
-  bodyImage: '{{body-image}}',
-  cardTitle: '{{card-title}}',
-  cardDescription: '{{card-description}}',
-  cardImage: '{{card-image}}',
-  cardDate: '{{card-date}}',
-  caasContentType: '{{caas-content-type}}',
-  caasPrimaryProduct: '{{caas-primary-product}}',
-  primaryProductName: '{{primary-product-name}}',
-  seoMetadataTitle: '{{seo-metadata-title}}',
-  seoMetadataDescription: '{{seo-metadata-description}}',
-  experienceFragment: '{{experience-fragment}}',
-  assetDelivery: '{{asset-delivery}}',
-  pdfAsset: '{{pdf-asset}}',
-  marketoDataUrl: '{{marketo-data-url}}',
-};
 
 export function withTimeout(promise, ms) {
   return Promise.race([promise, new Promise((_, reject) => { setTimeout(() => reject(new Error('timeout')), ms); })]);
@@ -57,14 +26,23 @@ async function fetchTemplate(daPath) {
   return res.text();
 }
 
-export function applyTemplateFields(templateString, data) {
-  return Object.entries(templatedFields).reduce(
-    (text, [key, placeholder]) => {
-      if (!data[key]) return text;
-      return text.replaceAll(placeholder, data[key]);
-    },
-    templateString,
-  );
+function placeholderToFieldName(templateField) {
+  return templateField.charAt(0).toLowerCase() + templateField.split('-').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join('').slice(1);
+}
+
+export function findPlaceholders(templateStr) {
+  const regex = /\{\{(.*?)\}\}/g;
+  const fields = templateStr.match(regex) || [];
+  return fields.map((field) => field.replace('{{', '').replace('}}', ''));
+}
+
+export function applyTemplateData(templateStr, data) {
+  const fields = findPlaceholders(templateStr);
+  return fields.reduce((text, field) => {
+    const fieldName = placeholderToFieldName(field);
+    if (!data[fieldName]) return text;
+    return text.replaceAll(`{{${field}}}`, data[fieldName]);
+  }, templateStr);
 }
 
 async function uploadTemplatedText(daPath, templatedText) {
@@ -78,7 +56,7 @@ async function uploadTemplatedText(daPath, templatedText) {
 export async function template(path, data) {
   const daPath = `${DA_ORIGIN}/source/${ORG}/${REPO}${path}`;
   const text = await fetchTemplate(daPath);
-  const templatedText = applyTemplateFields(text, data);
+  const templatedText = applyTemplateData(text, data);
   await uploadTemplatedText(daPath, templatedText);
 }
 
