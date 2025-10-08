@@ -4,7 +4,7 @@
 import 'components';
 import getStyle from 'styles';
 import DA_SDK from 'da-sdk';
-import { LitElement, html, createRef, ref, nothing } from 'da-lit';
+import { LitElement, html, createRef, ref } from 'da-lit';
 import { createToast, TOAST_TYPES } from './toast/toast.js';
 import { getSource, saveImage } from './da-utils.js';
 import {
@@ -216,7 +216,14 @@ class LandingPageForm extends LitElement {
 
   templatePlaceholders(form) {
     // TODO: Update dynamic placeholders
-    const state = { 'program.campaignids.sfdc': form.campaignId };
+    const state = {
+      'form id': '2277',
+      'marketo munckin': '360-KCI-804',
+      'marketo host': 'engage.adobe.com',
+      'form type': 'marketo_form',
+      'program.campaignids.sfdc': form.campaignId,
+      'program.poi': form.marketoPOI,
+    };
 
     return {
       ...form,
@@ -224,7 +231,7 @@ class LandingPageForm extends LitElement {
       poi: form.marketoPOI,
       primaryProductName: form.primaryProduct,
       caasContentType: form.contentTypeCaas,
-      cardDate: new Date().toISOString(),
+      cardDate: new Date().toISOString().split('T')[0],
       marqueeImage: form.marqueeImage?.url,
       bodyImage: form.bodyImage?.url,
       cardImage: form.cardImage?.url,
@@ -394,6 +401,7 @@ class LandingPageForm extends LitElement {
     const templatePath = this.getTemplatePath();
 
     const templateUrl = `${AEM_PAGE}${templatePath}${PREVIEW_PARAMS}`;
+    // TODO: Update URLs based on created page
     const viewUrl = `${AEM_PAGE}${templatePath}`;
     const editUrl = `${DA_EDIT}${templatePath}`;
     const isGenerated = this.previewMode === 'generated';
@@ -439,7 +447,7 @@ class LandingPageForm extends LitElement {
           ${templatePath ? html`
             ${isGenerated ? html`<p>Live generated preview</p>` : html`<p>${this.form.contentType} ${this.form.gated}: <a href=${viewUrl} target="_blank">${templatePath}</a></p>`}
             <iframe ${ref(this.iframeRef)} src="${iframeSrc}"></iframe>
-          ` : nothing}
+          ` : html`<p>Please select a content type and gated option to preview.</p>`}
         </div>
       </div>
     `;

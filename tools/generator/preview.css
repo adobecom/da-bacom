@@ -24,3 +24,12 @@ main img {
   height: auto;
   display: block;
 }
+
+main > div > div > span {
+  font-size: 12px;
+  color: #505050;
+  font-weight: 500;
+  margin-bottom: 4px;
+  display: block;
+  text-align: right;
+}
