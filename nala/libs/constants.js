@@ -10,12 +10,12 @@ const BASE_URLS = {
   main: `https://main--${DEFAULT_REPO}--${DEFAULT_ORG}.aem.live`,
 };
 
-// 🟣 Utility function to generate branch live URLs dynamically
+// Utility function to generate branch live URLs dynamically
 function getBranchUrl(branch, repo = DEFAULT_REPO, org = DEFAULT_ORG, path = '') {
   return `https://${branch}--${repo}--${org}.aem.live${path.startsWith('/') ? '' : '/'}${path}`;
 }
 
-// ✅ Optional extras you can extend:
+// Optional extras you can extend:
 const A11Y_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 const MAX_A11Y_VIOLATIONS = 0;
 const SLACK_CHANNEL = '#nala-reports';

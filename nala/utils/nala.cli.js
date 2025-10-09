@@ -6,7 +6,7 @@ const fs = require('fs');
 const { processUrlsFromCommand, processUrlsFromFile } = require('./a11y-bot.js');
 
 // Dynamic config loader
-let PROJECT, ORG, BASE_URLS, getBranchUrl;
+let PROJECT; let ORG; let BASE_URLS; let getBranchUrl;
 try {
   ({ PROJECT, ORG, BASE_URLS } = require('../libs/config.js'));
   ({ getBranchUrl } = require('../libs/constants.js'));
@@ -64,7 +64,6 @@ program
         console.error(chalk.red('No valid URLs to test.'));
         process.exit(1);
       }
-
     } catch (error) {
       console.error(chalk.red(`An error occurred during processing: ${error.message}`));
       process.exit(1);

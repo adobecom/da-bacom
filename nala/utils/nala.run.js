@@ -5,7 +5,7 @@
 const { spawn } = require('child_process');
 
 // Dynamic config loader
-let PROJECT, ORG, BASE_URLS, getBranchUrl;
+let PROJECT; let ORG; let BASE_URLS; let getBranchUrl;
 try {
   ({ PROJECT, ORG, BASE_URLS } = require('../libs/config.js'));
   ({ getBranchUrl } = require('../libs/constants.js'));
@@ -64,8 +64,8 @@ function parseArgs(args) {
     config: '',
     project: '',
     milolibs: '',
-    repo: PROJECT ,
-    owner: ORG ,
+    repo: PROJECT,
+    owner: ORG,
   };
 
   const parsedParams = { ...defaultParams };
@@ -116,7 +116,6 @@ function getLocalTestLiveUrl(env, milolibs, repo = PROJECT, owner = ORG) {
 
   return getBranchUrl(env, repo, owner);
 }
-
 
 function buildPlaywrightCommand(parsedParams, localTestLiveUrl) {
   const {
