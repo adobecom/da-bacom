@@ -94,9 +94,12 @@
             'marqueeEyebrow',
             'marqueeHeadline',
             'marqueeDescription',
+            'marqueeImage',
             'bodyDescription',
+            'bodyImage',
             'cardTitle',
             'cardDescription',
+            'cardImage',
             'seoMetadataTitle',
             'seoMetadataDescription',
             'experienceFragment',
@@ -142,14 +145,13 @@
           const generator = document.querySelector('da-generator');
           const file = new File(['mock image content'], 'mock-image.jpg', { type: 'image/jpeg' });
 
-          generator.handleImageChange({ detail: { file } });
+          generator.handleImageChange({ detail: { file } , target: { name: 'marqueeImage' } });
           await tick(500);
 
           expect(daFetch.called).to.be.true;
 
           const fetchUrls = daFetch.getCalls().map(call => call.args[0]);
-          const fetchFileNames = fetchUrls.map(url => url.split('/').pop());
-          expect(fetchFileNames).to.include("mock-image.jpg");
+          expect(fetchUrls[0]).to.include('mock-image.jpg');
         });
       });
     });

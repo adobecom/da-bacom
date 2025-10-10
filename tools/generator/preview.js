@@ -1,10 +1,11 @@
-import { applyTemplateData } from './generator.js';
+import { applyTemplateData, findPlaceholders } from './generator.js';
 
 const ORIGIN = window.location.origin;
 
 let currentPlaceholders = {};
 let currentTemplate = '';
 let previousHtml = '';
+let templatePlaceholders = [];
 
 function highlightSections(changedSections = []) {
   const sections = document.querySelectorAll('main > div');
@@ -33,6 +34,11 @@ function addSectionBreaks() {
   });
 }
 
+function listPlaceholders() {
+  const remainingPlaceholders = findPlaceholders(document.body.innerHTML);
+  return { templatePlaceholders, remainingPlaceholders };
+}
+
 function updateTemplate() {
   if (!currentTemplate || !currentPlaceholders) return;
   const newHtml = applyTemplateData(currentTemplate, currentPlaceholders);
@@ -50,7 +56,6 @@ function updateTemplate() {
   document.body.innerHTML = nextDoc.body.innerHTML;
   previousHtml = newHtml;
 
-  // TODO: Update Images
   addSectionBreaks();
   highlightSections(changedSections);
 }
@@ -64,8 +69,9 @@ window.addEventListener('message', async (e) => {
     const { placeholders } = payload || {};
     currentPlaceholders = placeholders || {};
     currentTemplate = payload.template || '';
+    templatePlaceholders = findPlaceholders(currentTemplate);
     updateTemplate();
-    window.parent?.postMessage({ type: 'updated' }, ORIGIN);
+    window.parent?.postMessage({ type: 'updated', payload: listPlaceholders() }, ORIGIN);
   }
 });
 

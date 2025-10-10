@@ -6,7 +6,7 @@ import './image-dropzone/image-dropzone.js';
 export function renderContentType(form, handleInput) {
   return html`
     <div class="form-row">
-      <h2>Content Type</h2>
+      <h2>Core Options</h2>
       <sl-select
         .value=${form.contentType}
         name="contentType"
@@ -19,14 +19,6 @@ export function renderContentType(form, handleInput) {
         <option value="Report" ?selected=${form.contentType === 'Report'}>Report</option>
         <option value="Video/Demo" ?selected=${form.contentType === 'Video/Demo'}>Video/Demo</option>
       </sl-select>
-    </div>
-  `;
-}
-
-export function renderForm(form, handleInput, { marketoPOIOptions }) {
-  return html`
-    <div class="form-row">
-      <h2>Form</h2>
       <sl-select
         .value=${form.gated}
         name="gated"
@@ -36,7 +28,17 @@ export function renderForm(form, handleInput, { marketoPOIOptions }) {
           <option value="Ungated" ?selected=${form.gated === 'Ungated'}>Ungated</option>
           <option value="Gated" ?selected=${form.gated === 'Gated'}>Gated</option>
       </sl-select>
-      ${form.gated === 'Gated' ? html`
+      <sl-input type="text" name="marqueeHeadline" .value=${form.marqueeHeadline} placeholder="Marquee Headline" label="Marquee Headline" @input=${handleInput}></sl-input>
+      <sl-input type="text" disabled name="url" .value=${form.url} placeholder="/resources/..." label="URL" @input=${handleInput}></sl-input>
+    </div>
+  `;
+}
+
+export function renderForm(form, handleInput, { marketoPOIOptions }) {
+  return html`
+    <div class="form-row">
+    ${form.gated === 'Gated' ? html`
+      <h2>Form</h2>
       <sl-select 
         .value=${form.formTemplate} 
         name="formTemplate" 
@@ -71,19 +73,17 @@ export function renderForm(form, handleInput, { marketoPOIOptions }) {
 }
 
 export function renderMarquee(form, handleInput, handleImageChange) {
-  // TODO: Get Eyebrow copy
   return html`
     <div class="form-row">
       <h2>Marquee</h2>
       <sl-select .value=${form.marqueeEyebrow} name="marqueeEyebrow" label="Marquee Eyebrow" placeholder="Marquee Eyebrow" @change=${handleInput}>
         <option value=${form.marqueeEyebrow}>${form.marqueeEyebrow}</option>
       </sl-select>
-      <sl-input type="text" name="marqueeHeadline" .value=${form.marqueeHeadline} placeholder="Marquee Headline" label="Marquee Headline" @input=${handleInput}></sl-input>
       <sl-input type="text" name="marqueeDescription" .value=${form.marqueeDescription} placeholder="Marquee Description" label="Marquee Description" @input=${handleInput}></sl-input>
       <div class="image-dropzone-container">
         <label>Marquee Image</label>
         <div class="dropzone-wrapper">
-          <image-dropzone .file=${form.marqueeImage} @image-change=${handleImageChange}>
+          <image-dropzone name="marqueeImage" .file=${form.marqueeImage} @image-change=${handleImageChange}>
             <label slot="img-label">Upload Marquee Image</label>
           </image-dropzone>
         </div>
@@ -100,7 +100,7 @@ export function renderBody(form, handleInput, handleImageChange) {
         <div class="image-dropzone-container">
         <label>Body Image</label>
         <div class="dropzone-wrapper">
-          <image-dropzone .file=${form.bodyImage} @image-change=${handleImageChange}>
+          <image-dropzone name="bodyImage" .file=${form.bodyImage} @image-change=${handleImageChange}>
             <label slot="img-label">Upload Body Image</label>
           </image-dropzone>
         </div>
@@ -117,7 +117,7 @@ export function renderCard(form, handleInput, handleImageChange) {
       <sl-input type="text" name="cardDescription" .value=${form.cardDescription} placeholder="Card Description" label="Card Description" @input=${handleInput}></sl-input>
       <div class="image-dropzone-container">
         <label>Card Image</label>
-        <image-dropzone .file=${form.cardImage} @image-change=${handleImageChange}>
+        <image-dropzone name="cardImage" .file=${form.cardImage} @image-change=${handleImageChange}>
           <label slot="img-label">Upload Card Image</label>
         </image-dropzone>
       </div>
@@ -179,21 +179,9 @@ export function renderAssetDelivery(form, handleInput) {
   return html`
     <div class="form-row">
       <h2>Asset Delivery</h2>
-      ${form.contentType.includes('video') ? html`
+      ${(form.contentType || '').toLowerCase().includes('video') ? html`
         <sl-input type="text" name="videoAsset" .value=${form.videoAsset} placeholder="https://video.tv.adobe.com/v/..." label="Video Asset" @input=${handleInput}></sl-input>`
     : html`<sl-input type="file" name="pdfAsset" label="Upload PDF Asset" @input=${handleInput}></sl-input>`}
-    </div>
-  `;
-}
-
-export function renderUrl(form, handleInput) {
-  const pathPlaceholder = `/resources/${form.marqueeHeadline ? form.marqueeHeadline.toLowerCase().replace(/\s+/g, '-') : ''}.html`;
-  form.url = pathPlaceholder;
-
-  return html`
-    <div class="form-row">
-      <h2>URL</h2>
-      <sl-input type="text" name="url" .value=${form.url} placeholder="${form.marqueeHeadline ? pathPlaceholder : ''}" label="URL" @input=${handleInput}></sl-input>
     </div>
   `;
 }
