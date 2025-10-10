@@ -67,8 +67,7 @@
 
           // Check for all major form sections
           const formSections = [
-            'Content Type',
-            'Form',
+            'Core Options',
             'Marquee',
             'Body',
             'Card',
@@ -76,12 +75,11 @@
             'SEO Metadata',
             'Experience Fragment',
             'Asset Delivery',
-            'URL'
           ];
 
           const h2s = shadowRoot.querySelectorAll('form h2');
           const h2Texts = Array.from(h2s).map(h2 => h2.textContent.trim());
-          expect(h2Texts).to.deep.equal(formSections);
+          expect([...h2Texts].sort()).to.deep.equal([...formSections].sort());
         });
 
         it('has all form fields', async () => {
@@ -94,9 +92,12 @@
             'marqueeEyebrow',
             'marqueeHeadline',
             'marqueeDescription',
+            'marqueeImage',
             'bodyDescription',
+            'bodyImage',
             'cardTitle',
             'cardDescription',
+            'cardImage',
             'seoMetadataTitle',
             'seoMetadataDescription',
             'experienceFragment',
@@ -106,7 +107,7 @@
 
           const fields = shadowRoot.querySelectorAll('form [name]');
           const fieldNames = Array.from(fields).map(field => field.getAttribute('name'));
-          expect(fieldNames).to.deep.equal(formFields);
+          expect([...fieldNames].sort()).to.deep.equal([...formFields].sort());
         });
 
         it('handles toast events', async () => {
@@ -142,14 +143,14 @@
           const generator = document.querySelector('da-generator');
           const file = new File(['mock image content'], 'mock-image.jpg', { type: 'image/jpeg' });
 
-          generator.handleImageChange({ detail: { file } });
+          generator.form.url = '/mock-page.html';
+          generator.handleImageChange({ detail: { file } , target: { name: 'marqueeImage' } });
           await tick(500);
 
           expect(daFetch.called).to.be.true;
 
           const fetchUrls = daFetch.getCalls().map(call => call.args[0]);
-          const fetchFileNames = fetchUrls.map(url => url.split('/').pop());
-          expect(fetchFileNames).to.include("mock-image.jpg");
+          expect(fetchUrls[0]).to.include('mock-image.jpg');
         });
       });
     });

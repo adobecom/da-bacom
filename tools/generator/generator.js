@@ -1,10 +1,7 @@
 export const utf8ToB64 = (str) => window.btoa(unescape(encodeURIComponent(str)));
 export const b64ToUtf8 = (str) => decodeURIComponent(escape(window.atob(str)));
 
-const DA_ORIGIN = 'https://admin.da.live';
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-const ORG = 'adobecom';
-const REPO = 'da-bacom';
 
 // Template questions
 // Should we have Asset H2?
@@ -20,12 +17,6 @@ export function marketoUrl(state) {
   return `${url}#${utf8ToB64(JSON.stringify(state))}`;
 }
 
-async function fetchTemplate(daPath) {
-  const res = await fetch(daPath);
-  if (!res.ok) throw new Error(`Failed to fetch template: ${res.statusText}`);
-  return res.text();
-}
-
 function placeholderToFieldName(templateField) {
   return templateField.charAt(0).toLowerCase() + templateField.split('-').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join('').slice(1);
 }
@@ -38,32 +29,21 @@ export function findPlaceholders(templateStr) {
 
 export function applyTemplateData(templateStr, data) {
   const fields = findPlaceholders(templateStr);
-  return fields.reduce((text, field) => {
+  const html = fields.reduce((text, field) => {
     const fieldName = placeholderToFieldName(field);
-    if (!data[fieldName]) return text;
-    return text.replaceAll(`{{${field}}}`, data[fieldName]);
+    const fieldValue = data[fieldName];
+    if (!fieldValue) return text;
+    if (field.includes('image') && fieldValue.startsWith('http')) {
+      const imgHtml = `<img src="${fieldValue}" alt="${fieldName}" />`;
+      return text.replaceAll(`{{${field}}}`, imgHtml);
+    }
+    if (field.includes('url') && fieldValue.startsWith('http')) {
+      const urlHtml = `<a href="${fieldValue}" target="_blank">${fieldValue}</a>`;
+      return text.replaceAll(`{{${field}}}`, urlHtml);
+    }
+    return text.replaceAll(`{{${field}}}`, fieldValue);
   }, templateStr);
-}
-
-async function uploadTemplatedText(daPath, templatedText) {
-  const formData = new FormData();
-  const blob = new Blob([templatedText], { type: 'text/html' });
-  formData.set('data', blob);
-  const updateRes = await fetch(daPath, { method: 'POST', body: formData });
-  if (!updateRes.ok) throw new Error(`Failed to update template: ${updateRes.statusText}`);
-}
-
-export async function template(path, data) {
-  const daPath = `${DA_ORIGIN}/source/${ORG}/${REPO}${path}`;
-  const text = await fetchTemplate(daPath);
-  const templatedText = applyTemplateData(text, data);
-  await uploadTemplatedText(daPath, templatedText);
-}
-
-export async function replaceTemplate(data) {
-  const templatePaths = ['/index.html', '/nav.html', '/footer.html'];
-
-  await Promise.all(templatePaths.map((path) => template(path, data)));
+  return html;
 }
 
 export function getStorageItem(key, defaultValue = null) {

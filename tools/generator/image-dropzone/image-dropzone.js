@@ -52,6 +52,7 @@ export default class ImageDropzone extends LitElement {
     file: { type: Object, reflect: true },
     handleImage: { type: Function },
     handleDelete: { type: Function },
+    name: { type: String },
   };
 
   static styles = style;
@@ -61,6 +62,7 @@ export default class ImageDropzone extends LitElement {
     this.file = null;
     this.handleImage = () => {};
     this.handleDelete = this.handleDelete || null;
+    this.name = '';
   }
 
   cleanupFile() {
