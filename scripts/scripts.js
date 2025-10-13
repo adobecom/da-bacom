@@ -244,7 +244,7 @@ async function loadPage() {
     EVENT_BLOCKS,
   } = eventUtils;
 
-  const isEventMetadata = getMetadata('event-details-page') === 'yes';
+  const isEventMetadata = getMetadata('event-id');
   if (getMetadata('template') === '404') window.SAMPLE_PAGEVIEWS_AT_RATE = 'high';
 
   const metaCta = document.querySelector('meta[name="chat-cta"]');
