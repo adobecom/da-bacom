@@ -50,11 +50,11 @@ const TEMPLATE_MAP = {
   },
   report: {
     gated: '/tools/page-builder/landing-pages/one-page-gated-lp-placeholders',
-    ungated: '/tools/page-builder/prd-template-basic-ungated',
+    ungated: '/tools/page-builder/landing-pages/sdk-indexed-placeholders',
   },
   'video/demo': {
     gated: '/tools/page-builder/prd-template-basic',
-    ungated: '/tools/page-builder/prd-template-video',
+    ungated: '/tools/page-builder/landing-pages/ungated-video-landing-page-placeholders',
   },
   infographic: {
     gated: '/tools/page-builder/prd-template-basic',
@@ -454,7 +454,6 @@ class LandingPageForm extends LitElement {
 
     const templateUrl = `${AEM_LIVE}${templatePath}${PREVIEW_PARAMS}`;
     const viewUrl = this.form.url ? `${AEM_LIVE}${this.form.url.replace('.html', '')}` : `${AEM_LIVE}${templatePath}`;
-    const editUrl = this.form.url ? `${DA_EDIT}${this.form.url.replace('.html', '')}` : `${DA_EDIT}${templatePath}`;
     const showGenerated = this.previewMode === 'generated';
     const iframeSrc = showGenerated ? PREVIEW_PATH : templateUrl;
 
@@ -463,23 +462,22 @@ class LandingPageForm extends LitElement {
       <div class="builder-container">
         <form @submit=${this.handleSubmit}>
     ${renderContentType(this.form, this.handleInput)}
-    ${renderForm(this.form, this.handleInput, { marketoPOIOptions: this.marketoPOIOptions })}
-    ${renderMarquee(this.form, this.handleInput, this.handleImageChange.bind(this))}
-    ${renderBody(this.form, this.handleInput, this.handleImageChange.bind(this))}
-    ${renderCard(this.form, this.handleInput, this.handleImageChange.bind(this))}
-    ${renderCaas(this.form, this.handleInput, { contentTypeOptions: this.contentTypeOptions, primaryProductOptions: this.primaryProductOptions })}
-    ${renderSeo(this.form, this.handleInput)}
-    ${renderExperienceFragment(this.form, this.handleInput)}
-    ${renderAssetDelivery(this.form, this.handleInput)}
+    ${templatePath && this.form.marqueeHeadline ? html`
+      ${renderForm(this.form, this.handleInput, { marketoPOIOptions: this.marketoPOIOptions })}
+      ${renderMarquee(this.form, this.handleInput, this.handleImageChange.bind(this))}
+      ${renderBody(this.form, this.handleInput, this.handleImageChange.bind(this))}
+      ${renderCard(this.form, this.handleInput, this.handleImageChange.bind(this))}
+      ${renderCaas(this.form, this.handleInput, { contentTypeOptions: this.contentTypeOptions, primaryProductOptions: this.primaryProductOptions })}
+      ${renderSeo(this.form, this.handleInput)}
+      ${renderExperienceFragment(this.form, this.handleInput)}
+      ${renderAssetDelivery(this.form, this.handleInput)}
+    ` : html`<p>Please enter a content type and marquee headline to continue.</p>`}
           <div class="submit-row">
-            <sl-button ?disabled=${!isFormComplete} type="submit">
+            <sl-button ?disabled=${!isFormComplete} type="submit" @click=${this.handleSubmit}>
             Generate
             </sl-button>
-            <sl-button class="warning" ?disabled=${!this.hasEdit} @click=${() => window.open(editUrl, '_blank')}>
-            Edit Page
-            </sl-button>
             <sl-button ?disabled=${!this.hasPreview} @click=${() => window.open(viewUrl, '_blank')}>
-            View Page
+            Preview Page
             </sl-button>
             <sl-button class="reset" @click=${this.resetForm}>
             Reset Form
@@ -488,14 +486,10 @@ class LandingPageForm extends LitElement {
         </form>
         <div class="preview">
           <div class="preview-header">
-            <h2>Preview</h2>
-            <div class="preview-switcher">
-              <sl-button size="small" class=${showGenerated ? 'default' : 'primary'} @click=${() => this.setPreviewMode('template')}>Template</sl-button>
-              <sl-button size="small" class=${showGenerated ? 'primary' : 'default'} @click=${() => this.setPreviewMode('generated')}>Generated</sl-button>
-            </div>
+            <h2>Template</h2>
           </div>
           ${templatePath ? html`
-            ${showGenerated ? html`<p>Live generated preview</p>` : html`<p>${this.form.contentType} ${this.form.gated}: <a href=${viewUrl} target="_blank">${templatePath}</a></p>`}
+            ${showGenerated ? html`<p>Live generated preview: (${this.form.contentType} ${this.form.gated})</p>` : html`<p>${this.form.contentType} ${this.form.gated}: <a href=${viewUrl} target="_blank">${templatePath}</a></p>`}
             <iframe ${ref(this.iframeRef)} src="${iframeSrc}"></iframe>
           ` : html`<p>Please select a content type and gated option to preview.</p>`}
         </div>
