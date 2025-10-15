@@ -51,8 +51,11 @@
     if (localeMatch) {
       sitemapPath = `/${localeMatch}/sitemap.xml`;
     }
+
+    console.log(`${origin}${sitemapPath}`)
     
     try {
+      
       const response = await fetch(`${origin}${sitemapPath}`);
       if (!response.ok) {
         console.warn('Failed to fetch sitemap:', response.status);
