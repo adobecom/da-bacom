@@ -16,7 +16,6 @@ test.describe('BACOM Stats Block Test Suite', () => {
       await test.step('Selecting a stats link', async () => {
         await stats.clickStatsLink();
         await page.waitForTimeout(2000);
-        // await page.waitForURL((url) => url !== testPage, { timeout: 5000 });
         await expect(page.url()).not.toBe(testPage);
       });
 
@@ -27,6 +26,7 @@ test.describe('BACOM Stats Block Test Suite', () => {
 
       await test.step('Selecting a solutions link', async () => {
         await stats.clickSolutionsLink();
+        await page.waitForTimeout(2000);
         await expect(page.url()).not.toBe(testPage);
       });
     },
