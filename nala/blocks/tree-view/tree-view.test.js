@@ -31,6 +31,7 @@ test.describe('BACOM Tree-View Block Test Suite', () => {
       await test.step('Verifying the ability to click the links inside the accordion', async () => {
         await expect(treeView.firstAccordionFirstItem).toBeVisible();
         await treeView.firstAccordionFirstItem.click();
+        await page.waitForTimeout(2000);
         expect(page.url()).not.toBe(testPage);
       });
     },
