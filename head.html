@@ -170,14 +170,13 @@
     const [ locale ] = Object.keys(localeKeys).filter((key) => pathname.includes(`/${key}/`));
     const languageKey = locale ? Object.values(locale)[0] :  window.navigator.language'
     
-
     const dynamicSchema = {
       "@context": "https://schema.org",
       "@type": "WebPage",
       "url": window.location.href, // url of the page
       "@id": window.location.href, // url of the page
       "name": document.title.split('|')[0], // title of the page
-      "inLanguage": languageKey // language of the page
+      "inLanguage": languageKey, // language of the page
       "audience": {
         "@type": "Audience",
         "geographicArea": {
