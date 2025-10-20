@@ -179,7 +179,7 @@ export function renderAssetDelivery(form, uploadFile) {
   return html`
     <div class="form-row">
       <h2>Asset Delivery</h2>
-      ${(form.contentType || '').toLowerCase().includes('video') ? html`
+      ${form.contentType?.toLowerCase().includes('video') ? html`
         <sl-input type="text" name="videoAsset" .value=${form.videoAsset} placeholder="https://video.tv.adobe.com/v/..." label="Video Asset" @input=${uploadFile}></sl-input>`
     : html`<sl-input type="file" name="pdfAsset" label="Upload PDF Asset" @input=${uploadFile}></sl-input>`}
     </div>

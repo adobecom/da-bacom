@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 /* eslint-disable class-methods-use-this */
 /* eslint-disable import/no-unresolved */
+/* eslint-disable no-console */
 import 'components';
 import getStyle from 'styles';
 import DA_SDK from 'da-sdk';
@@ -290,12 +291,9 @@ class LandingPageForm extends LitElement {
     const detail = e.detail || {};
     const toast = createToast(detail.message, detail.type, detail.timeout);
     document.body.appendChild(toast);
-    // eslint-disable-next-line no-console
     if (detail.type === 'error') {
-      // eslint-disable-next-line no-console
       console.error('Error:', detail.message);
       if (DEBUG) {
-        // eslint-disable-next-line no-console
         console.trace();
       }
     }
@@ -369,13 +367,12 @@ class LandingPageForm extends LitElement {
 
   async handleSubmit(e) {
     e.preventDefault();
-    // TODO: Validate form data
+    // TODO: Validate form data and required fields
     if (!this.isFormComplete()) {
       document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Please complete all required fields' } }));
       return;
     }
     if (DEBUG) {
-      // eslint-disable-next-line no-console
       console.table(this.form);
     }
     await this.getTemplateContent();
