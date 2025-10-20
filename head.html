@@ -65,83 +65,188 @@
     }, []);
 
     document.head.querySelector('title').after(xDefault, enUs, ...links);
-  }  
-  document.querySelector('[type="application/ld+json"]').remove();
-  const schema = {
-    "@context": "https://schema.org",
-    "@type": ["WebPage", "WebSite"],
-    "url": window.location.href, // url of the page
-    "@id": window.location.href, // url of the page
-    "name": document.title.split('|')[0], // title of the page
-    "inLanguage": window.navigator.language, // language of the page
-    "audience": {
-      "@type": "Audience",
-      "geographicArea": {
-        "@type": "AdministrativeArea",
-        "address": {
-          "@type": "PostalAddress",
-          "addressCountry": window.navigator.language.split('-')[1] // set part of ietf, I think
-        }
-      }
-    },
-    "isPartOf": {
-      "@type": "WebSite",
-      "url": "https://business.adobe.com/",
-      "name": "Adobe for Business",
-      "@id": "https://business.adobe.com/",
-      "isPartOf": {
-        "@type": "WebSite",
-        "url": "https://www.adobe.com",
-        "name": "Adobe",
-        "@id": "https://www.adobe.com",
-        "publisher": {
-          "@type": "Corporation",
-          "name": "Adobe",
-          "@id": "https://www.adobe.com/#organization",
-          "sameAs": [
-            "https://en.wikipedia.org/wiki/Adobe",
-            "https://twitter.com/Adobe",
-            "https://www.linkedin.com/company/adobe",
-            "https://www.crunchbase.com/organization/adobe-systems"
-          ],
-          "legalName": "Adobe Inc.",
-          "url": "https://www.adobe.com/",
-          "brand": [
-            {
-              "@type": "Brand",
-              "name": "Adobe Creative Cloud",
-              "alternateName": "Creative Cloud",
-              "url": "https://www.adobe.com/&&/creativecloud.html",
-              "sameAs": "https://www.wikidata.org/entity/Q14636918"
-            },
-            {
-              "@type": "Brand",
-              "name": "Adobe for Business",
-              "alternateName": "Experience Cloud",
-              "url": "{placeholder}",
-              "sameAs": "https://www.wikidata.org/entity/Q16927817"
-            },
-            {
-              "@type": "Brand",
-              "name": "Adobe Document Cloud",
-              "alternateName": "Document Cloud",
-              "url": "https://www.adobe.com/&&/documentcloud.html",
-              "sameAs": "https://www.wikidata.org/entity/Q2823478"
-            }
-          ]
+  }
+
+  const schema = document.querySelector('[type="application/ld+json"]');
+
+  if (!schema) {
+    const localeKeys = {
+      '': 'en-US',
+      ae_ar: 'ar',
+      ae_en: 'en',
+      africa: 'en',
+      ar: 'es-AR',
+      at: 'de-AT',
+      au: 'en-AU',
+      be_en: 'en-BE',
+      be_fr: 'fr-BE',
+      be_nl: 'nl-BE',
+      bg: 'bg-BG',
+      br: 'pt-BR',
+      ca_fr: 'fr-CA',
+      ca: 'en-CA',
+      ch_de: 'de-CH',
+      ch_fr: 'fr-CH',
+      ch_it: 'it-CH',
+      cl: 'es-CL',
+      cn: 'zh-CN',
+      co: 'es-CO',
+      cr: 'es-419',
+      cy_en: 'en-CY',
+      cz: 'cs-CZ',
+      de: 'de-DE',
+      dk: 'da-DK',
+      ec: 'es-419',
+      ee: 'et-EE',
+      eg_ar: 'ar',
+      eg_en: 'en-GB',
+      el: 'el',
+      es: 'es-ES',
+      fi: 'fi-FI',
+      fr: 'fr-FR',
+      gr_el: 'el',
+      gr_en: 'en-GR',
+      gt: 'es-419',
+      hk_en: 'en-HK',
+      hk_zh: 'zh-HK',
+      hu: 'hu-HU',
+      id_en: 'en',
+      id_id: 'id',
+      ie: 'en-GB',
+      il_en: 'en-IL',
+      il_he: 'he',
+      in_hi: 'hi',
+      in: 'en-IN',
+      it: 'it-IT',
+      jp: 'ja-JP',
+      kr: 'ko-KR',
+      kw_ar: 'ar',
+      kw_en: 'en-GB',
+      la: 'es-LA',
+      langstore: 'en-US',
+      lt: 'lt-LT',
+      lu_de: 'de-LU',
+      lu_en: 'en-LU',
+      lu_fr: 'fr-LU',
+      lv: 'lv-LV',
+      mena_ar: 'ar',
+      mena_en: 'en',
+      mt: 'en-MT',
+      mx: 'es-MX',
+      my_en: 'en-GB',
+      my_ms: 'ms',
+      ng: 'en-GB',
+      nl: 'nl-NL',
+      no: 'no-NO',
+      nz: 'en-GB',
+      pe: 'es-PE',
+      ph_en: 'en',
+      ph_fil: 'fil-PH',
+      pl: 'pl-PL',
+      pr: 'es-419',
+      pt: 'pt-PT',
+      qa_ar: 'ar',
+      qa_en: 'en-GB',
+      ro: 'ro-RO',
+      ru: 'ru-RU',
+      sa_ar: 'ar',
+      sa_en: 'en',
+      se: 'sv-SE',
+      sg: 'en-SG',
+      si: 'sl-SI',
+      sk: 'sk-SK',
+      th_en: 'en',
+      th_th: 'th',
+      tr: 'tr-TR',
+      tw: 'zh-TW',
+      ua: 'uk-UA',
+      uk: 'en-GB',
+      vn_en: 'en-GB',
+      vn_vi: 'vi',
+      za: 'en-GB'
+    };
+
+    const { pathname } = window.location
+    const [ locale ] = Object.keys(localeKeys).filter((key) => pathname.includes(`/${key}/`));
+    const languageKey = locale ? Object.values(locale)[0] :  window.navigator.language'
+    
+
+    const dynamicSchema = {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "url": window.location.href, // url of the page
+      "@id": window.location.href, // url of the page
+      "name": document.title.split('|')[0], // title of the page
+      "inLanguage": languageKey // language of the page
+      "audience": {
+        "@type": "Audience",
+        "geographicArea": {
+          "@type": "AdministrativeArea",
+          "address": {
+            "@type": "PostalAddress",
+            "addressCountry": languageKey.split('-')[1] // set part of ietf, I think
+          }
         }
       },
-      "mainEntityOfPage": {
-        "@type": ["WebPage", "WebSite"],
-        "@id": window.location.href // url of the page
+      "isPartOf": {
+        "@type": "WebSite",
+        "url": "https://business.adobe.com/",
+        "name": "Adobe for Business",
+        "@id": "https://business.adobe.com/",
+        "isPartOf": {
+          "@type": "WebSite",
+          "url": "https://www.adobe.com",
+          "name": "Adobe",
+          "@id": "https://www.adobe.com",
+          "publisher": {
+            "@type": "Corporation",
+            "name": "Adobe",
+            "@id": "https://www.adobe.com/#organization",
+            "sameAs": [
+              "https://en.wikipedia.org/wiki/Adobe",
+              "https://twitter.com/Adobe",
+              "https://www.linkedin.com/company/adobe",
+              "https://www.crunchbase.com/organization/adobe-systems"
+            ],
+            "legalName": "Adobe Inc.",
+            "url": "https://www.adobe.com/",
+            "brand": [
+              {
+                "@type": "Brand",
+                "name": "Adobe Creative Cloud",
+                "alternateName": "Creative Cloud",
+                "url": "https://www.adobe.com/&&/creativecloud.html",
+                "sameAs": "https://www.wikidata.org/entity/Q14636918"
+              },
+              {
+                "@type": "Brand",
+                "name": "Adobe for Business",
+                "alternateName": "Experience Cloud",
+                "url": window.location.href,
+                "sameAs": "https://www.wikidata.org/entity/Q16927817"
+              },
+              {
+                "@type": "Brand",
+                "name": "Adobe Document Cloud",
+                "alternateName": "Document Cloud",
+                "url": "https://www.adobe.com/&&/documentcloud.html",
+                "sameAs": "https://www.wikidata.org/entity/Q2823478"
+              }
+            ]
+          }
+        },
+        "mainEntityOfPage": {
+          "@type": "WebPage",
+          "@id": window.location.href // url of the page
+        }
       }
     }
-  }
-  const scriptTag = document.createElement('script');
-  scriptTag.setAttribute('type', 'application/ld+json');
-  scriptTag.innerText = JSON.stringify(schema);
-  document.head.append(scriptTag);
 
+    const scriptTag = document.createElement('script');
+    scriptTag.setAttribute('type', 'application/ld+json');
+    scriptTag.innerText = JSON.stringify(schema);
+    document.head.append(scriptTag);
+  }
 </script>
 <script src="/scripts/scripts.js" type="module"></script>
 <style>body { display: none; }</style>
