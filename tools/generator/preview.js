@@ -50,7 +50,6 @@ function updateTemplate() {
   document.body.innerHTML = nextDoc.body.innerHTML;
   previousHtml = newHtml;
 
-  // TODO: Update Images
   addSectionBreaks();
   highlightSections(changedSections);
 }

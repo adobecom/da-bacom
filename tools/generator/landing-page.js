@@ -1,20 +1,22 @@
 /* eslint-disable max-len */
 /* eslint-disable class-methods-use-this */
 /* eslint-disable import/no-unresolved */
+/* eslint-disable no-console */
 import 'components';
 import getStyle from 'styles';
 import DA_SDK from 'da-sdk';
 import { LitElement, html, createRef, ref } from 'da-lit';
 import { createToast, TOAST_TYPES } from './toast/toast.js';
-import { getSource, saveImage } from './da-utils.js';
+import { getSource, saveSource, saveImage } from './da-utils.js';
+import { fetchMarketoPOIOptions, fetchContentTypeOptions, fetchPrimaryProductOptions } from './data-sources.js';
 import {
   getStorageItem,
   setStorageItem,
   getCachedData,
   setCachedData,
   marketoUrl,
+  applyTemplateData,
 } from './generator.js';
-import { fetchMarketoPOIOptions, fetchContentTypeOptions, fetchPrimaryProductOptions } from './data-sources.js';
 import {
   renderContentType,
   renderForm,
@@ -25,12 +27,11 @@ import {
   renderSeo,
   renderExperienceFragment,
   renderAssetDelivery,
-  renderUrl,
 } from './form-sections.js';
 
 const style = await getStyle(import.meta.url.split('?')[0]);
 
-const AEM_PAGE = 'https://main--da-bacom--adobecom.aem.live';
+const AEM_LIVE = 'https://main--da-bacom--adobecom.aem.live';
 const DA_EDIT = 'https://da.live/edit#/adobecom/da-bacom';
 const PREVIEW_PARAMS = '?martech=off&dapreview=on';
 const FORM_STORAGE_KEY = 'landing-page-builder';
@@ -38,7 +39,9 @@ const OPTIONS_LOADING = [{ value: 'loading', label: 'Loading...' }];
 const OPTIONS_ERROR = [{ value: 'error', label: 'Error loading options' }];
 const PREVIEW_MODE_STORAGE_KEY = 'landing-page-preview-mode';
 const PREVIEW_PATH = '/tools/generator/preview.html';
+const DRAFT_PATH = '/drafts/page-builder/resources/';
 const IFRAME_DELAY = 300;
+const DEBUG = window.location.search.includes('debug');
 
 const TEMPLATE_MAP = {
   guide: {
@@ -46,7 +49,7 @@ const TEMPLATE_MAP = {
     ungated: '/tools/page-builder/prd-template-basic-ungated',
   },
   report: {
-    gated: '/tools/page-builder/prd-template-basic',
+    gated: '/tools/page-builder/landing-pages/one-page-gated-lp-placeholders',
     ungated: '/tools/page-builder/prd-template-basic-ungated',
   },
   'video/demo': {
@@ -59,6 +62,8 @@ const TEMPLATE_MAP = {
   },
 };
 
+const IMAGES = ['marqueeImage', 'bodyImage', 'cardImage'];
+
 const FORM_SCHEMA = {
   contentType: '',
   gated: '',
@@ -70,8 +75,10 @@ const FORM_SCHEMA = {
   marqueeDescription: '',
   marqueeImage: null,
   bodyDescription: '',
+  bodyImage: null,
   cardTitle: '',
   cardDescription: '',
+  cardImage: null,
   contentTypeCaas: '',
   primaryProduct: '',
   seoMetadataTitle: '',
@@ -114,11 +121,14 @@ class LandingPageForm extends LitElement {
     this.currentTemplateKey = null;
     this.previewMode = this.getInitialPreviewMode();
     this.debouncedUpdatePreview = debounce(this.updatePreview.bind(this), IFRAME_DELAY);
+    this.hasEdit = false;
+    this.hasPreview = false;
   }
 
   resetForm() {
     this.form = { ...FORM_SCHEMA };
     localStorage.removeItem(FORM_STORAGE_KEY);
+    localStorage.removeItem(PREVIEW_MODE_STORAGE_KEY);
     if (this.isInitialized) {
       this.requestUpdate();
     }
@@ -126,10 +136,12 @@ class LandingPageForm extends LitElement {
 
   saveFormState() {
     const formToSave = { ...this.form };
-    // TODO: Handle other images
-    if (formToSave.marqueeImage?.url?.startsWith('blob:')) {
-      formToSave.marqueeImage = null;
-    }
+    IMAGES.forEach((image) => {
+      if (!hasOwnProperty.call(formToSave, image)) return;
+      if (formToSave[image]?.url?.startsWith('blob:')) {
+        formToSave[image] = null;
+      }
+    });
     setStorageItem(FORM_STORAGE_KEY, formToSave);
   }
 
@@ -210,7 +222,6 @@ class LandingPageForm extends LitElement {
     const templatePath = TEMPLATE_MAP[contentTypeKey]?.[gatedKey];
     this.template = await getSource(templatePath);
     this.templateHTML = this.template?.body?.innerHTML;
-    this.getMarqueeImage();
     return this.templateHTML;
   }
 
@@ -246,6 +257,7 @@ class LandingPageForm extends LitElement {
 
     await this.getTemplateContent();
     const template = this.templateHTML;
+    if (!template) return;
     const iframeEl = this.iframeRef?.value;
     if (!iframeEl || !iframeEl.contentWindow) return;
     const placeholders = this.templatePlaceholders(this.form);
@@ -255,39 +267,23 @@ class LandingPageForm extends LitElement {
   handleInput = (e) => {
     if (!this.isInitialized) return;
 
-    const { name, value, files } = e.target;
+    const { name, value } = e.target;
     const newForm = { ...this.form };
 
     if (name === 'contentType') {
       newForm.marqueeEyebrow = value;
     }
-    if (files && files.length) {
-      const [file] = files;
-      newForm[name] = file;
-    } else {
-      newForm[name] = value;
+
+    if (name === 'marqueeHeadline') {
+      const pageName = value.toLowerCase().trim().replace(/[^a-z0-9\-\s_/]/g, '').replace(/[\s_/]+/g, '-');
+      newForm.url = `${DRAFT_PATH}${pageName}.html`;
     }
 
+    newForm[name] = value;
     this.form = newForm;
     this.saveFormState();
     this.debouncedUpdatePreview();
   };
-
-  getMarqueeImage() {
-    const template = this.template?.body;
-    if (!template) return;
-
-    // TODO: Handle other images
-    const marquee = template.querySelector('.marquee');
-    const marqueeImage = marquee?.querySelector('img');
-    if (marqueeImage?.src) {
-      this.form.marqueeImage = {
-        url: marqueeImage.src,
-        name: marqueeImage.alt || 'Marquee Image',
-      };
-    }
-    this.requestUpdate();
-  }
 
   handleToast(e) {
     e.stopPropagation();
@@ -295,13 +291,18 @@ class LandingPageForm extends LitElement {
     const detail = e.detail || {};
     const toast = createToast(detail.message, detail.type, detail.timeout);
     document.body.appendChild(toast);
-    // eslint-disable-next-line no-console
-    if (detail.type === 'error') console.error('Error:', detail.message, console.trace());
+    if (detail.type === 'error') {
+      console.error('Error:', detail.message);
+      if (DEBUG) {
+        console.trace();
+      }
+    }
   }
 
   disconnectedCallback() {
     document.removeEventListener('show-toast', this.handleToast);
     window.removeEventListener('message', this.handleMessage);
+    if (this.headAbortController) { try { this.headAbortController.abort(); } catch { /* no-op */ } }
     Object.values(this.form).forEach((value) => {
       if (value?.url && value.url.startsWith('blob:')) {
         URL.revokeObjectURL(value.url);
@@ -328,50 +329,63 @@ class LandingPageForm extends LitElement {
     }
   };
 
+  // eslint-disable-next-line no-unused-vars
   async uploadFile(file, path) {
-    try {
-      const imageUrl = await saveImage(path, file);
-      if (!imageUrl) throw new Error('Failed to upload file');
-
-      return imageUrl;
-    } catch (e) {
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Failed to upload file' } }));
-      return null;
-    }
+    document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Not implemented' } }));
   }
 
   handleImageChange(e) {
-    if (this.form.marqueeImage?.url && this.form.marqueeImage.url.startsWith('blob:')) {
-      URL.revokeObjectURL(this.form.marqueeImage.url);
+    const { name } = e?.target || {};
+    if (!name || !hasOwnProperty.call(this.form, name)) return;
+    if (this.form[name]?.url && this.form[name].url.startsWith('blob:')) {
+      URL.revokeObjectURL(this.form[name].url);
     }
-    this.form.marqueeImage = { url: '', name: '' };
+    this.form[name] = { url: '', name: '' };
     const { file } = e.detail;
-    if (!file) return;
+    if (!file) {
+      this.saveFormState();
+      this.debouncedUpdatePreview();
+      return;
+    }
 
-    // TODO: update template after page generation to correct path
-    const path = '/tools/page-builder/.prd-template/';
-    this.uploadFile(file, path)
+    if (!this.form.url) {
+      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Page URL is not set' } }));
+      return;
+    }
+    saveImage(this.form.url, file)
       .then((url) => {
         if (!url) return;
-        this.form.marqueeImage = { url, name: file.name };
-        document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Image Uploaded' } }));
+        this.form[name] = { url, name: file.name };
+        document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.SUCCESS, message: 'Image Uploaded', timeout: 5000 } }));
       }).catch((error) => {
-        document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: `Upload failed: ${error.message}` } }));
+        document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: `Upload failed: ${error.message}` } }));
+      }).finally(() => {
+        this.saveFormState();
+        this.debouncedUpdatePreview();
       });
-    this.saveFormState();
-    this.debouncedUpdatePreview();
   }
 
   async handleSubmit(e) {
     e.preventDefault();
-    // TODO: Validate form data
+    // TODO: Validate form data and required fields
     if (!this.isFormComplete()) {
       document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Please complete all required fields' } }));
       return;
     }
-    // TODO: Create page in DA and upload assets, uploadTemplatedText
-    // eslint-disable-next-line no-console
-    console.table(this.form);
+    if (DEBUG) {
+      console.table(this.form);
+    }
+    await this.getTemplateContent();
+    const placeholders = this.templatePlaceholders(this.form);
+    const generatedPage = applyTemplateData(this.templateHTML, placeholders);
+    try {
+      const sourcePath = await saveSource(this.form.url, generatedPage);
+      this.hasEdit = true;
+      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.SUCCESS, message: `Page saved to ${sourcePath}`, timeout: 5000 } }));
+      this.requestUpdate();
+    } catch (error) {
+      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: `Failed to save page: ${error.message}` } }));
+    }
   }
 
   getTemplatePath() {
@@ -389,7 +403,8 @@ class LandingPageForm extends LitElement {
     const required = ['contentType', 'gated', 'url'];
     const hasRequired = required.every((field) => this.form[field]);
 
-    if (this.form.contentType === 'video/demo' && !this.form.videoAsset) {
+    const typeKey = (this.form.contentType || '').toLowerCase();
+    if (typeKey === 'video/demo' && !this.form.videoAsset) {
       return false;
     }
 
@@ -400,17 +415,16 @@ class LandingPageForm extends LitElement {
     const isFormComplete = this.isFormComplete();
     const templatePath = this.getTemplatePath();
 
-    const templateUrl = `${AEM_PAGE}${templatePath}${PREVIEW_PARAMS}`;
-    // TODO: Update URLs based on created page
-    const viewUrl = `${AEM_PAGE}${templatePath}`;
-    const editUrl = `${DA_EDIT}${templatePath}`;
-    const isGenerated = this.previewMode === 'generated';
-    const iframeSrc = isGenerated ? PREVIEW_PATH : templateUrl;
+    const templateUrl = `${AEM_LIVE}${templatePath}${PREVIEW_PARAMS}`;
+    const viewUrl = this.form.url ? `${AEM_LIVE}${this.form.url.replace('.html', '')}` : `${AEM_LIVE}${templatePath}`;
+    const editUrl = this.form.url ? `${DA_EDIT}${this.form.url.replace('.html', '')}` : `${DA_EDIT}${templatePath}`;
+    const showGenerated = this.previewMode === 'generated';
+    const iframeSrc = showGenerated ? PREVIEW_PATH : templateUrl;
 
     return html`
       <h1>Landing Page Builder</h1>
       <div class="builder-container">
-        <form>
+        <form @submit=${this.handleSubmit}>
     ${renderContentType(this.form, this.handleInput)}
     ${renderForm(this.form, this.handleInput, { marketoPOIOptions: this.marketoPOIOptions })}
     ${renderMarquee(this.form, this.handleInput, this.handleImageChange.bind(this))}
@@ -419,17 +433,16 @@ class LandingPageForm extends LitElement {
     ${renderCaas(this.form, this.handleInput, { contentTypeOptions: this.contentTypeOptions, primaryProductOptions: this.primaryProductOptions })}
     ${renderSeo(this.form, this.handleInput)}
     ${renderExperienceFragment(this.form, this.handleInput)}
-    ${renderAssetDelivery(this.form, this.handleInput)}
-    ${renderUrl(this.form, this.handleInput)}
+    ${renderAssetDelivery(this.form, this.uploadFile)}
           <div class="submit-row">
-            <sl-button type="submit" @click=${this.handleSubmit} ?disabled=${!isFormComplete}>
+            <sl-button ?disabled=${!isFormComplete} type="submit">
             Generate
             </sl-button>
-            <sl-button @click=${() => window.open(viewUrl, '_blank')} ?disabled=${!isFormComplete}>
-            View Page
+            <sl-button class="warning" ?disabled=${!this.hasEdit} @click=${() => window.open(editUrl, '_blank')}>
+            Edit Page
             </sl-button>
-            <sl-button class="warning" @click=${() => window.open(editUrl, '_blank')} ?disabled=${!isFormComplete}>
-            Edit Content
+            <sl-button ?disabled=${!this.hasPreview} @click=${() => window.open(viewUrl, '_blank')}>
+            View Page
             </sl-button>
             <sl-button class="reset" @click=${this.resetForm}>
             Reset Form
@@ -440,12 +453,12 @@ class LandingPageForm extends LitElement {
           <div class="preview-header">
             <h2>Preview</h2>
             <div class="preview-switcher">
-              <sl-button size="small" class=${isGenerated ? 'default' : 'primary'} @click=${() => this.setPreviewMode('template')}>Template</sl-button>
-              <sl-button size="small" class=${isGenerated ? 'primary' : 'default'} @click=${() => this.setPreviewMode('generated')}>Generated</sl-button>
+              <sl-button size="small" class=${showGenerated ? 'default' : 'primary'} @click=${() => this.setPreviewMode('template')}>Template</sl-button>
+              <sl-button size="small" class=${showGenerated ? 'primary' : 'default'} @click=${() => this.setPreviewMode('generated')}>Generated</sl-button>
             </div>
           </div>
           ${templatePath ? html`
-            ${isGenerated ? html`<p>Live generated preview</p>` : html`<p>${this.form.contentType} ${this.form.gated}: <a href=${viewUrl} target="_blank">${templatePath}</a></p>`}
+            ${showGenerated ? html`<p>Live generated preview</p>` : html`<p>${this.form.contentType} ${this.form.gated}: <a href=${viewUrl} target="_blank">${templatePath}</a></p>`}
             <iframe ${ref(this.iframeRef)} src="${iframeSrc}"></iframe>
           ` : html`<p>Please select a content type and gated option to preview.</p>`}
         </div>
