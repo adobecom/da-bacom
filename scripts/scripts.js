@@ -282,12 +282,11 @@ async function loadPage() {
   loadLana({ clientId: 'bacom', tags: 'info', endpoint: 'https://business.adobe.com/lana/ll', endpointStage: 'https://business.stage.adobe.com/lana/ll' });
   transformExlLinks(getLocale(CONFIG.locales));
 
-  if (isEventMetadata) {
-    const { eventsDelayedActions } = await import(`${EVENT_LIBS}/libs.js`);
-    eventsDelayedActions();
-  }
-
   await loadArea();
+
+  if (isEventMetadata) {
+    const { eventsDelayedActions } = import(`${EVENT_LIBS}/libs.js`).then(() => eventsDelayedActions());
+  }
 
   if (document.querySelector('meta[name="aa-university"]')) {
     const { default: registerAAUniversity } = await import('./aa-university.js');
