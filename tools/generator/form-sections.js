@@ -3,9 +3,9 @@
 import { html, nothing } from 'da-lit';
 import './image-dropzone/image-dropzone.js';
 
-export function renderContentType(form, handleInput) {
+export function renderContentType(form, handleInput, isLocked = false) {
   return html`
-    <div class="form-row">
+    <div class="form-row core-options ${isLocked ? 'locked' : ''}">
       <h2>Core Options</h2>
       <sl-select
         .value=${form.contentType}
@@ -29,7 +29,7 @@ export function renderContentType(form, handleInput) {
           <option value="Gated" ?selected=${form.gated === 'Gated'}>Gated</option>
       </sl-select>
       <sl-input type="text" name="marqueeHeadline" .value=${form.marqueeHeadline} placeholder="Marquee Headline" label="Marquee Headline" @input=${handleInput}></sl-input>
-      <sl-input type="text" disabled name="url" .value=${form.url} placeholder="/resources/..." label="URL" @input=${handleInput}></sl-input>
+      <sl-input type="text" name="url" .value=${form.url} placeholder="/resources/..." label="URL" @input=${handleInput}></sl-input>
     </div>
   `;
 }
@@ -164,24 +164,66 @@ export function renderSeo(form, handleInput) {
 }
 
 export function renderExperienceFragment(form, handleInput) {
-  // TODO: Get Fragment list
+  const fragments = [
+    { value: '', label: '--Select--' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/generic', label: 'Generic' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/generic-cc', label: 'Generic CC' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/generic-dx', label: 'Generic DX' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/advertising', label: 'Advertising' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/analytics', label: 'Analytics' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/audience-manager', label: 'Audience Manager' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/campaign', label: 'Campaign' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/commerce', label: 'Commerce' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/connect', label: 'Connect' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/content-supply-chain', label: 'Content Supply Chain' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/customer-journey-analytics', label: 'Customer Journey Analytics' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/experience-manager-assets', label: 'Experience Manager Assets' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/experience-manager-forms', label: 'Experience Manager Forms' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/experience-manager-guides', label: 'Experience Manager Guides' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/experience-manager-sites', label: 'Experience Manager Sites' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/genstudio', label: 'Genstudio' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/ajo', label: 'AJO' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/ajo-b2b', label: 'AJO B2B' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/learning-manager', label: 'Learning Manager' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/llm-optimizer', label: 'LLM Optimizer' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/marketo-engage', label: 'Marketo Engage' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/mix-modeler', label: 'Mix Modeler' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/rtcdp', label: 'RTCDP' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/target', label: 'Target' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/workfront', label: 'Workfront' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/acrobat', label: 'Acrobat' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/adobe-sign', label: 'Adobe Sign' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/creative-cloud-for-enterprise', label: 'Creative Cloud for Enterprise' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/adobe-express', label: 'Adobe Express' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/firefly', label: 'Firefly' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/frame-io', label: 'Frame.io' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/adobe-stock', label: 'Adobe Stock' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/substance', label: 'Substance' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/automotive-mobility', label: 'Automotive Mobility' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/consumer-goods', label: 'Consumer Goods' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/financial-services', label: 'Financial Services' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/government', label: 'Government' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/healthcare', label: 'Healthcare' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/high-tech', label: 'High Tech' },
+    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/manufacturing', label: 'Manufacturing' },
+  ];
   return html`
     <div class="form-row">
       <h2>Experience Fragment</h2>
       <sl-select .value=${form.experienceFragment} name="experienceFragment" label="Experience Fragment" @change=${handleInput}>
-        <option value="TODO">TODO: Show Experience Fragment from a predefined list</option>
+        ${(fragments || []).map((item) => html`<option value=${item.value} ?selected=${form.experienceFragment === item.value}>${item.label}</option>`)}
       </sl-select>
     </div>
   `;
 }
 
-export function renderAssetDelivery(form, uploadFile) {
+export function renderAssetDelivery(form, handleInput) {
   return html`
     <div class="form-row">
       <h2>Asset Delivery</h2>
-      ${form.contentType?.toLowerCase().includes('video') ? html`
-        <sl-input type="text" name="videoAsset" .value=${form.videoAsset} placeholder="https://video.tv.adobe.com/v/..." label="Video Asset" @input=${uploadFile}></sl-input>`
-    : html`<sl-input type="file" name="pdfAsset" label="Upload PDF Asset" @input=${uploadFile}></sl-input>`}
+      ${(form.contentType || '').toLowerCase().includes('video') ? html`
+        <sl-input type="text" name="videoAsset" .value=${form.videoAsset} placeholder="https://video.tv.adobe.com/v/..." label="Video Asset" @input=${handleInput}></sl-input>`
+    : html`<sl-input type="file" name="pdfAsset" label="Upload PDF Asset" @input=${handleInput}></sl-input>`}
     </div>
   `;
 }
