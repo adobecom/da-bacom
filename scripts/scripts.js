@@ -300,6 +300,18 @@ async function loadPage() {
 }
 loadPage();
 
+(async function loadSidekick() {
+  const sidekick = async () => { await import('./sidekick.js'); };
+  if (document.querySelector('aem-sidekick')) {
+    import('./sidekick.js');
+    return;
+  }
+
+  document.addEventListener('sidekick-ready', () => {
+    import('./sidekick.js');
+  });
+}());
+
 // DA Live Preview
 (async function loadDa() {
   if (!new URL(window.location.href).searchParams.get('dapreview')) return;

@@ -1,6 +1,7 @@
 # Notes on the sidekick / DA library
 
-The DA config controls the tools in the DA library for this site, not the sidekick/config.json .
+The DA config controls the tools in the DA library for this site, not the sidekick/config.json.
+https://docs.da.live/administrators/reference/aem-config-service
 
 ## Editing the DA Library
 To edit the DA library tools, go to https://da.live/config#/adobecom/da-bacom/ and edit the "library" sheet. 
