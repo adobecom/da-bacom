@@ -3,18 +3,22 @@ export const b64ToUtf8 = (str) => decodeURIComponent(escape(window.atob(str)));
 
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-// Template questions
-// Should we have Asset H2?
-// Should we have Form Title and Description?
+const DEFAULT_MARKETO_STATE = {
+  'form id': '2277',
+  'marketo munckin': '360-KCI-804',
+  'marketo host': 'engage.adobe.com',
+  'form type': 'marketo_form',
+  'form.success.type': 'message',
+  'form.success.content': 'Thank you',
+};
 
 export function withTimeout(promise, ms) {
   return Promise.race([promise, new Promise((_, reject) => { setTimeout(() => reject(new Error('timeout')), ms); })]);
 }
 
-// TODO: Use default URL or generated URL
 export function marketoUrl(state) {
   const url = 'https://milo.adobe.com/tools/marketo';
-  return `${url}#${utf8ToB64(JSON.stringify(state))}`;
+  return `${url}#${utf8ToB64(JSON.stringify({ ...DEFAULT_MARKETO_STATE, ...state }))}`;
 }
 
 function placeholderToFieldName(templateField) {

@@ -1,13 +1,15 @@
 /* eslint-disable max-len */
+/* eslint-disable no-console */
 /* eslint-disable class-methods-use-this */
 /* eslint-disable import/no-unresolved */
 import 'components';
 import getStyle from 'styles';
 import DA_SDK from 'da-sdk';
+import { initIms } from 'da-fetch';
 import { LitElement, html, createRef, ref, nothing } from 'da-lit';
 import { createToast, TOAST_TYPES } from './toast/toast.js';
 import { getSource, saveSource, saveImage } from './da-utils.js';
-import { fetchMarketoPOIOptions, fetchContentTypeOptions, fetchPrimaryProductOptions } from './data-sources.js';
+import { fetchMarketoPOIOptions, fetchContentTypeOptions, fetchPrimaryProductOptions, fetchPageOptions } from './data-sources.js';
 import {
   getStorageItem,
   setStorageItem,
@@ -28,6 +30,8 @@ import {
   renderAssetDelivery,
 } from './form-sections.js';
 
+await DA_SDK;
+
 const style = await getStyle(import.meta.url.split('?')[0]);
 
 const ADMIN_URL = 'https://admin.hlx.page';
@@ -41,22 +45,14 @@ const DRAFT_PATH = '/drafts/page-builder/';
 const DEBUG = window.location.search.includes('debug');
 
 const TEMPLATE_MAP = {
-  guide: {
-    gated: '/tools/page-builder/prd-template-basic',
-    ungated: '/tools/page-builder/prd-template-basic-ungated',
-  },
-  report: {
-    gated: '/tools/page-builder/landing-pages/one-page-gated-lp-placeholders',
-    ungated: '/tools/page-builder/landing-pages/sdk-indexed-placeholders',
-  },
-  'video/demo': {
-    gated: '/tools/page-builder/prd-template-basic',
-    ungated: '/tools/page-builder/landing-pages/ungated-video-landing-page-placeholders',
-  },
-  infographic: {
-    gated: '/tools/page-builder/prd-template-basic',
-    ungated: '/tools/page-builder/prd-template-basic-ungated',
-  },
+  'guide-gated': '/tools/page-builder/prd-template-basic',
+  'guide-ungated': '/tools/page-builder/prd-template-basic-ungated',
+  'report-gated': '/tools/page-builder/landing-pages/one-page-gated-lp-placeholders',
+  'report-ungated': '/tools/page-builder/landing-pages/sdk-indexed-placeholders',
+  'video/demo-gated': '/tools/page-builder/prd-template-basic',
+  'video/demo-ungated': '/tools/page-builder/landing-pages/ungated-video-landing-page-placeholders',
+  'infographic-gated': '/tools/page-builder/prd-template-basic',
+  'infographic-ungated': '/tools/page-builder/prd-template-basic-ungated',
 };
 
 const IMAGES = ['marqueeImage', 'bodyImage', 'cardImage'];
@@ -192,18 +188,20 @@ class LandingPageForm extends LitElement {
   async connectedCallback() {
     super.connectedCallback();
     document.addEventListener('show-toast', this.handleToast);
+    const token = await initIms();
+    this.token = token?.accessToken?.token;
+    this.options = await fetchPageOptions();
     this.loadFormState();
     this.coreLocked = this.form.contentType && this.form.gated && this.form.marqueeHeadline;
 
     try {
-      if (!this.context || !this.token) throw new Error('Failed to get context or token');
+      if (!this.token) throw new Error('Failed to get token');
 
       [this.marketoPOIOptions, this.contentTypeOptions, this.primaryProductOptions] = await Promise.all([
-        ['marketo-poi', fetchMarketoPOIOptions, []],
-        ['caas-content-types', fetchContentTypeOptions, [this.context, this.token]],
-        ['caas-primary-products', fetchPrimaryProductOptions, [this.context, this.token]],
-      ].map(([cacheKey, fetchFn, args]) => this.fetchCachedOptions(cacheKey, fetchFn, ...args).catch(() => OPTIONS_ERROR)));
-
+        this.fetchCachedOptions('cached-marketo-poi', fetchMarketoPOIOptions).catch(() => OPTIONS_ERROR),
+        this.fetchCachedOptions('cached-caas-content-types', fetchContentTypeOptions, this.token).catch(() => OPTIONS_ERROR),
+        this.fetchCachedOptions('cached-caas-primary-products', fetchPrimaryProductOptions, this.token).catch(() => OPTIONS_ERROR),
+      ]);
       if (this.form.url) {
         const sourceResult = await getSource(this.form.url);
         this.hasEdit = sourceResult?.body?.innerHTML !== null;
@@ -216,20 +214,33 @@ class LandingPageForm extends LitElement {
     }
   }
 
-  async getTemplateContent() {
+  getTemplatePath(templateKey) {
+    if (this.options?.templateMap) {
+      const customTemplate = this.options.templateMap.find(
+        (template) => template.value === templateKey,
+      );
+      if (customTemplate?.label) return customTemplate.label;
+    }
+
+    return TEMPLATE_MAP[templateKey] || '';
+  }
+
+  getTemplate() {
     const { contentType, gated } = this.form;
-    if (!contentType || !gated) return '';
+    if (!contentType || !gated) return { templateKey: '', templatePath: '' };
+    const templateKey = `${contentType.toLowerCase()}-${gated.toLowerCase()}`;
+    const templatePath = this.getTemplatePath(templateKey);
 
-    const contentTypeKey = contentType.toLowerCase();
-    const gatedKey = gated.toLowerCase();
-    const templateKey = `${contentTypeKey}-${gatedKey}`;
+    return { templateKey, templatePath };
+  }
 
+  async getTemplateContent() {
+    const { templateKey, templatePath } = this.getTemplate();
     if (this.currentTemplateKey === templateKey) {
       return this.templateHTML;
     }
 
     this.currentTemplateKey = templateKey;
-    const templatePath = TEMPLATE_MAP[contentTypeKey]?.[gatedKey];
     this.template = await getSource(templatePath);
     this.templateHTML = this.template?.body?.innerHTML;
     return this.templateHTML;
@@ -238,14 +249,8 @@ class LandingPageForm extends LitElement {
   templatePlaceholders(form) {
     // TODO: Update dynamic placeholders
     const state = {
-      'form id': '2277',
-      'marketo munckin': '360-KCI-804',
-      'marketo host': 'engage.adobe.com',
-      'form type': 'marketo_form',
       'program.campaignids.sfdc': form.campaignId,
       'program.poi': form.marketoPOI,
-      'form.success.type': 'message',
-      'form.success.content': 'Thank you',
     };
 
     return {
@@ -300,22 +305,19 @@ class LandingPageForm extends LitElement {
     this.coreLocked = false;
   };
 
-  handleToast(e) {
+  handleToast = (e) => {
     e.stopPropagation();
     e.preventDefault();
     const detail = e.detail || {};
     const toast = createToast(detail.message, detail.type, detail.timeout);
     document.body.appendChild(toast);
-    // eslint-disable-next-line no-console
     if (detail.type === 'error') {
-      // eslint-disable-next-line no-console
       console.error('Error:', detail.message);
       if (DEBUG) {
-        // eslint-disable-next-line no-console
         console.trace();
       }
     }
-  }
+  };
 
   disconnectedCallback() {
     document.removeEventListener('show-toast', this.handleToast);
@@ -377,7 +379,6 @@ class LandingPageForm extends LitElement {
       return;
     }
     if (DEBUG) {
-      // eslint-disable-next-line no-console
       console.table(this.form);
     }
     await this.getTemplateContent();
@@ -410,17 +411,6 @@ class LandingPageForm extends LitElement {
     }
   }
 
-  getTemplatePath() {
-    const { contentType, gated } = this.form;
-    if (!contentType || !gated) return '';
-
-    const contentTypeKey = contentType.toLowerCase();
-    const gatedKey = gated.toLowerCase();
-
-    const template = TEMPLATE_MAP[contentTypeKey]?.[gatedKey];
-    return template ? `${template}` : '';
-  }
-
   isFormComplete() {
     const required = ['contentType', 'gated', 'url'];
     const hasRequired = required.every((field) => this.form[field]);
@@ -435,7 +425,7 @@ class LandingPageForm extends LitElement {
 
   render() {
     const isFormComplete = this.isFormComplete();
-    const templatePath = this.getTemplatePath();
+    const { templatePath } = this.getTemplate();
     const iframeSrc = `${AEM_LIVE}${templatePath}${PREVIEW_PARAMS}`;
     const canConfirm = this.form.contentType && this.form.gated && this.form.marqueeHeadline;
 
@@ -450,8 +440,8 @@ class LandingPageForm extends LitElement {
             ${renderBody(this.form, this.handleInput, this.handleImageChange.bind(this))}
             ${renderCard(this.form, this.handleInput, this.handleImageChange.bind(this))}
             ${renderCaas(this.form, this.handleInput, { contentTypeOptions: this.contentTypeOptions, primaryProductOptions: this.primaryProductOptions })}
-            ${renderSeo(this.form, this.handleInput)}
-            ${renderExperienceFragment(this.form, this.handleInput)}
+            ${renderSeo(this.form, this.handleInput, { primaryProductNameOptions: this.options?.primaryProductName })}
+            ${renderExperienceFragment(this.form, this.handleInput, { fragmentOptions: this.options?.experienceFragment })}
             ${renderAssetDelivery(this.form, this.handleInput)}
             <div class="submit-row">
               <sl-button ?disabled=${!isFormComplete} type="submit" @click=${this.handleSubmit}>
@@ -490,13 +480,3 @@ class LandingPageForm extends LitElement {
 }
 
 if (!customElements.get('da-generator')) customElements.define('da-generator', LandingPageForm);
-
-export default async function init(el) {
-  const { context, token } = await DA_SDK;
-  const bulk = document.createElement('da-generator');
-  bulk.context = context;
-  bulk.token = token;
-  el.append(bulk);
-}
-
-init(document.querySelector('main'));
