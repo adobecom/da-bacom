@@ -129,6 +129,24 @@
           const fetchUrls = daFetch.getCalls().map(call => call.args[0]);
           expect(fetchUrls[0]).to.include('mock-image.jpg');
         });
+
+        it('shows error on submit when required fields are missing', async () => {
+            const generator = document.querySelector('da-generator');
+            const shadowRoot = generator.shadowRoot;
+
+            generator.form.contentType = 'Guide';
+            generator.form.gated = 'Ungated';
+
+            await generator.updateComplete;
+
+            const form = shadowRoot.querySelector('form');
+            const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
+            form.dispatchEvent(submitEvent);
+
+            await tick(100);
+
+            expect(generator.missingFields).to.not.deep.equal({});
+          });
       });
     });
   </script>

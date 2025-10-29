@@ -9,8 +9,25 @@
   align-items: center;
 }
 
+.img-file-input-wrapper.error {
+  border-color: #d73220;
+}
+
 .solid-border {
   border: 2px solid #B6B6B6;
+}
+
+.solid-border.error {
+  border-color: #d73220;
+}
+
+.error-message {
+  display: block;
+  color: #d73220;
+  font-size: 12px;
+  margin-top: 4px;
+  font-weight: 400;
+  text-align: left;
 }
 
 .img-file-input-wrapper .preview-wrapper {
