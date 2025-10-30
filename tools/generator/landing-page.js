@@ -381,13 +381,14 @@ class LandingPageForm extends LitElement {
     if (DEBUG) {
       console.table(this.form);
     }
+    document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.INFO, message: 'Saving page...', timeout: 5000 } }));
     await this.getTemplateContent();
     const placeholders = this.templatePlaceholders(this.form);
     const generatedPage = applyTemplateData(this.templateHTML, placeholders);
     try {
       const sourcePath = await saveSource(this.form.url, generatedPage);
-      this.hasEdit = true;
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.SUCCESS, message: `Page saved to ${sourcePath}`, timeout: 5000 } }));
+      this.hasEdit = !!sourcePath;
+      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.SUCCESS, message: `Page saved ${this.hasEdit}`, timeout: 5000 } }));
       this.requestUpdate();
     } catch (error) {
       document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: `Failed to save page: ${error.message}` } }));
@@ -395,6 +396,7 @@ class LandingPageForm extends LitElement {
   }
 
   async handlePreview() {
+    document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.INFO, message: 'Previewing page...', timeout: 5000 } }));
     const path = this.form.url.replace('.html', '');
     const previewApi = `${ADMIN_URL}/preview/adobecom/da-bacom/main${path}`;
     const previewApiResponse = await fetch(previewApi, { method: 'POST' });

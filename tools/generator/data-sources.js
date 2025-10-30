@@ -8,6 +8,7 @@ const COLLECTION_NAME = 'dx-tags/dx-caas';
 const JCR_TITLE = 'jcr:title';
 const CAAS_CONTENT_TYPE = 'caas:content-type';
 const CAAS_PRODUCTS = 'caas:products';
+const PROJECT = { org: 'adobecom', repo: 'da-bacom' };
 
 function dispatchError(message) {
   const error = new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message } });
@@ -25,7 +26,7 @@ function normalizeOption(item, valueKey, labelKey) {
 async function getCaasCollections(token) {
   const authOptions = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
 
-  const aemConfig = await getAemRepo(authOptions);
+  const aemConfig = await getAemRepo(PROJECT, authOptions);
   if (!aemConfig?.aemRepo) throw new Error('AEM repository not available');
 
   const namespaces = aemConfig.namespaces?.split(',').map((ns) => ns.trim()) || [];

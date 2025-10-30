@@ -10,7 +10,7 @@ import {
 } from '../tags/tag-utils.js';
 
 const style = await getStyle(import.meta.url);
-const { token } = await DA_SDK.catch(() => null);
+const { context, token } = await DA_SDK.catch(() => null);
 const options = { headers: { Authorization: `Bearer ${token}` } };
 const collectionName = 'dx-tags/dx-caas';
 const jcrTitle = 'jcr:title';
@@ -18,7 +18,7 @@ const caasContentType = 'caas:content-type';
 const caasProducts = 'caas:products';
 
 async function processRootTags(opts) {
-  const aemConfig = await getAemRepo(opts).catch(() => null);
+  const aemConfig = await getAemRepo(context, opts).catch(() => null);
   const errorEvent = (message) => {
     const error = new CustomEvent('caasOptionsError', { details: { message } });
     document.dispatchEvent(error);

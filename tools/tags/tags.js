@@ -33,7 +33,7 @@ function showError(message, link = null) {
   }
 
   const opts = { headers: { Authorization: `Bearer ${token}` } };
-  const aemConfig = await getAemRepo(opts).catch(() => null);
+  const aemConfig = await getAemRepo(context, opts).catch(() => null);
   if (!aemConfig || !aemConfig.aemRepo) {
     showError('Failed to retrieve config. ', `https://da.live/config#/${context.org}/${context.repo}/`);
     return;
