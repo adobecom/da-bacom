@@ -13,11 +13,6 @@ function getDaPath(path, isHtml) {
   return `${DA_ORIGIN}/source/${ORG}/${REPO}${path.replace('.html', '')}`;
 }
 
-function getAssetPath(path) {
-  const assetPath = `${path.replace('.html', '')}/`;
-  return assetPath.split('/').map((part, index, arr) => (index === arr.length - 2 ? `.${part}` : part)).join('/');
-}
-
 export async function getSource(path) {
   const daPath = getDaPath(path, true);
   const opts = { method: 'GET', headers: { accept: '*/*' } };
@@ -71,8 +66,7 @@ export async function saveSource(path, document) {
 }
 
 export async function saveImage(path, file) {
-  const assetPath = getAssetPath(path);
-  const daPath = getDaPath(`${assetPath}${file.name}`, false);
+  const daPath = getDaPath(`${path}${file.name}`, false);
   const formData = new FormData();
   const opts = { method: 'PUT', body: formData };
 

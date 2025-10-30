@@ -32,12 +32,12 @@ export function applyTemplateData(templateStr, data) {
   const html = fields.reduce((text, field) => {
     const fieldName = placeholderToFieldName(field);
     const fieldValue = data[fieldName];
-    if (!fieldValue) return text;
+    if (!fieldValue) return text.replaceAll(`{{${field}}}`, '');
     if (field.includes('image') && fieldValue.startsWith('http')) {
       const imgHtml = `<img src="${fieldValue}" alt="${fieldName}" />`;
       return text.replaceAll(`{{${field}}}`, imgHtml);
     }
-    if (field.includes('url') && fieldValue.startsWith('http')) {
+    if ((field.includes('url') || field.includes('fragment')) && fieldValue.startsWith('http')) {
       const urlHtml = `<a href="${fieldValue}" target="_blank">${fieldValue}</a>`;
       return text.replaceAll(`{{${field}}}`, urlHtml);
     }
