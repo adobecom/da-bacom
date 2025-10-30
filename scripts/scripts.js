@@ -271,7 +271,7 @@ async function loadPage() {
       externalLibs: [
         {
           base: EVENT_LIBS,
-          blocks: EVENT_BLOCKS, // or your custom EVENT_BLOCKS_OVERRIDE
+          blocks: eventUtils?.EVENT_BLOCKS, // or your custom EVENT_BLOCKS_OVERRIDE
         },
       ],
     };
