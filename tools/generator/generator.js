@@ -47,7 +47,7 @@ export function applyTemplateData(templateStr, data) {
     }
     return text.replaceAll(`{{${field}}}`, fieldValue);
   }, templateStr);
-  return html;
+  return html.replaceAll('template-', '');
 }
 
 export function getStorageItem(key, defaultValue = null) {

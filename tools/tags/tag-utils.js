@@ -1,8 +1,6 @@
 /* eslint-disable import/no-unresolved */
 import { DA_ORIGIN } from 'https://da.live/nx/public/utils/constants.js';
 
-const ORG = 'adobecom';
-const REPO = 'da-bacom';
 const cache = new Map();
 
 export const tagPathConfig = {
@@ -15,8 +13,8 @@ export function setTagPathConfig({ root, ext }) {
   tagPathConfig.ext = ext;
 }
 
-export async function getAemRepo(opts) {
-  const configUrl = `${DA_ORIGIN}/config/${ORG}/${REPO}`;
+export async function getAemRepo(project, opts) {
+  const configUrl = `${DA_ORIGIN}/config/${project.org}/${project.repo}`;
   const resp = await fetch(configUrl, opts);
   if (!resp.ok) return null;
   const json = await resp.json();

@@ -257,7 +257,7 @@ class LandingPageForm extends LitElement {
       ...form,
       marketoDataUrl: marketoUrl(state),
       poi: form.marketoPOI,
-      primaryProductName: form.primaryProduct,
+      caasPrimaryProduct: form.primaryProduct,
       caasContentType: form.contentTypeCaas,
       cardDate: new Date().toISOString().split('T')[0],
       marqueeImage: form.marqueeImage?.url,
@@ -378,16 +378,17 @@ class LandingPageForm extends LitElement {
       document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Please complete all required fields' } }));
       return;
     }
-    if (DEBUG) {
-      console.table(this.form);
-    }
+    document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.INFO, message: 'Saving page...', timeout: 5000 } }));
     await this.getTemplateContent();
     const placeholders = this.templatePlaceholders(this.form);
+    if (DEBUG) {
+      console.table(placeholders);
+    }
     const generatedPage = applyTemplateData(this.templateHTML, placeholders);
     try {
       const sourcePath = await saveSource(this.form.url, generatedPage);
-      this.hasEdit = true;
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.SUCCESS, message: `Page saved to ${sourcePath}`, timeout: 5000 } }));
+      this.hasEdit = !!sourcePath;
+      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.SUCCESS, message: `Page saved ${this.hasEdit}`, timeout: 5000 } }));
       this.requestUpdate();
     } catch (error) {
       document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: `Failed to save page: ${error.message}` } }));
@@ -395,6 +396,7 @@ class LandingPageForm extends LitElement {
   }
 
   async handlePreview() {
+    document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.INFO, message: 'Previewing page...', timeout: 5000 } }));
     const path = this.form.url.replace('.html', '');
     const previewApi = `${ADMIN_URL}/preview/adobecom/da-bacom/main${path}`;
     const previewApiResponse = await fetch(previewApi, { method: 'POST' });
@@ -403,9 +405,8 @@ class LandingPageForm extends LitElement {
       return;
     }
     const previewApiData = await previewApiResponse.json();
-    const previewUrl = previewApiData.preview.url;
-    if (previewUrl) {
-      window.open(previewUrl, '_blank');
+    if (previewApiData?.preview?.status === 200) {
+      window.open(previewApiData.preview.url, '_blank');
     } else {
       document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Failed to open preview' } }));
     }
