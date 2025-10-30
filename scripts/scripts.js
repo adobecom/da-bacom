@@ -240,7 +240,7 @@ async function loadPage() {
     try {
       eventUtils = await import(`${EVENT_LIBS}/libs.js`);
     } catch (e) {
-      window?.lana?.log(e);
+      window?.lana?.log(`Could not import event-libs. ${e}`, { tags: 'event-libs' });
     }
   }
 
