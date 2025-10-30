@@ -145,26 +145,6 @@ const CONFIG = {
   atvCaptionsKey: 'bacom',
 };
 
-export const EVENT_LIBS = (() => {
-  const version = 'v1';
-  const { hostname, search } = window.location;
-
-  if (!(hostname.includes('.hlx.') || hostname.includes('.aem.') || hostname.includes('local'))) {
-    return '/event-libs';
-  }
-
-  const branch = new URLSearchParams(search).get('eventlibs') || 'main';
-  if (branch === 'local') {
-    return `http://localhost:3868/event-libs/${version}`;
-  }
-
-  if (branch.includes('--')) {
-    return `https://${branch}.aem.live/event-libs/${version}`;
-  }
-
-  return `https://${branch}--event-libs--adobecom.aem.live/event-libs/${version}`;
-})();
-
 const eagerLoad = (img) => {
   img?.setAttribute('loading', 'eager');
   img?.setAttribute('fetchpriority', 'high');
@@ -229,22 +209,9 @@ export function transformExlLinks(locale) {
 }
 
 async function loadPage() {
-  const [miloUtils, eventUtils] = await Promise.all([
-    import(`${LIBS}/utils/utils.js`),
-    import(`${EVENT_LIBS}/libs.js`),
-  ]);
-
   const {
     loadArea, loadLana, setConfig, createTag, getMetadata, getLocale,
-  } = miloUtils;
-
-  const {
-    setEventConfig,
-    decorateEvent,
-    EVENT_BLOCKS,
-  } = eventUtils;
-
-  const isEventMetadata = getMetadata('event-id');
+  } = await import(`${LIBS}/utils/utils.js`);
   if (getMetadata('template') === '404') window.SAMPLE_PAGEVIEWS_AT_RATE = 'high';
 
   const metaCta = document.querySelector('meta[name="chat-cta"]');
@@ -264,29 +231,10 @@ async function loadPage() {
     if (lastSection) lastSection.insertAdjacentElement('beforeend', a);
   }
 
-  const eventConfigItems = {
-    decorateArea: () => decorateEvent(document),
-    externalLibs: [
-      {
-        base: EVENT_LIBS,
-        blocks: EVENT_BLOCKS, // or your custom EVENT_BLOCKS_OVERRIDE
-      },
-    ],
-  };
-
-  setConfig({ ...CONFIG, ...eventConfigItems, miloLibs: LIBS });
-  setEventConfig({ cmsType: 'DA' }, CONFIG);
-
-  if (isEventMetadata) decorateEvent(document);
-
+  setConfig({ ...CONFIG, miloLibs: LIBS });
   loadLana({ clientId: 'bacom', tags: 'info', endpoint: 'https://business.adobe.com/lana/ll', endpointStage: 'https://business.stage.adobe.com/lana/ll' });
   transformExlLinks(getLocale(CONFIG.locales));
-
   await loadArea();
-
-  if (isEventMetadata) {
-    const { eventsDelayedActions } = import(`${EVENT_LIBS}/libs.js`).then(() => eventsDelayedActions());
-  }
 
   if (document.querySelector('meta[name="aa-university"]')) {
     const { default: registerAAUniversity } = await import('./aa-university.js');
@@ -302,6 +250,7 @@ async function loadPage() {
   });
   observer.observe({ type: 'resource', buffered: true });
 }
+
 loadPage();
 
 // DA Live Preview
