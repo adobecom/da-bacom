@@ -229,22 +229,21 @@ export function transformExlLinks(locale) {
 }
 
 async function loadPage() {
-  const [miloUtils, eventUtils] = await Promise.all([
-    import(`${LIBS}/utils/utils.js`),
-    import(`${EVENT_LIBS}/libs.js`),
-  ]);
-
   const {
     loadArea, loadLana, setConfig, createTag, getMetadata, getLocale,
-  } = miloUtils;
+  } = await import(`${LIBS}/utils/utils.js`);
 
-  const {
-    setEventConfig,
-    decorateEvent,
-    EVENT_BLOCKS,
-  } = eventUtils;
+  let eventUtils;
+  const eventMD = getMetadata('event-id');
 
-  const isEventMetadata = getMetadata('event-id');
+  if (eventMD) {
+    try {
+      eventUtils = await import(`${EVENT_LIBS}/libs.js`);
+    } catch (e) {
+      window?.lana?.log(e);
+    }
+  }
+
   if (getMetadata('template') === '404') window.SAMPLE_PAGEVIEWS_AT_RATE = 'high';
 
   const metaCta = document.querySelector('meta[name="chat-cta"]');
@@ -264,28 +263,32 @@ async function loadPage() {
     if (lastSection) lastSection.insertAdjacentElement('beforeend', a);
   }
 
-  const eventConfigItems = {
-    decorateArea: () => decorateEvent(document),
-    externalLibs: [
-      {
-        base: EVENT_LIBS,
-        blocks: EVENT_BLOCKS, // or your custom EVENT_BLOCKS_OVERRIDE
-      },
-    ],
-  };
+  let eventConfigItems;
+
+  if (eventUtils) {
+    eventConfigItems = {
+      decorateArea: () => eventUtils?.decorateEvent(document),
+      externalLibs: [
+        {
+          base: EVENT_LIBS,
+          blocks: EVENT_BLOCKS, // or your custom EVENT_BLOCKS_OVERRIDE
+        },
+      ],
+    };
+  }
 
   setConfig({ ...CONFIG, ...eventConfigItems, miloLibs: LIBS });
-  setEventConfig({ cmsType: 'DA' }, CONFIG);
 
-  if (isEventMetadata) decorateEvent(document);
+  if (eventMD && eventUtils?.setEventConfig) eventUtils.setEventConfig({ cmsType: 'DA' }, CONFIG);
+  if (eventMD && eventUtils?.decorateEvent) eventUtils.decorateEvent(document);
 
   loadLana({ clientId: 'bacom', tags: 'info', endpoint: 'https://business.adobe.com/lana/ll', endpointStage: 'https://business.stage.adobe.com/lana/ll' });
   transformExlLinks(getLocale(CONFIG.locales));
 
   await loadArea();
 
-  if (isEventMetadata) {
-    const { eventsDelayedActions } = import(`${EVENT_LIBS}/libs.js`).then(() => eventsDelayedActions());
+  if (eventMD && eventUtils?.eventsDelayedActions) {
+    eventUtils.eventsDelayedActions();
   }
 
   if (document.querySelector('meta[name="aa-university"]')) {
