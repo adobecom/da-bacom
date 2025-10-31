@@ -36,6 +36,7 @@ const style = await getStyle(import.meta.url.split('?')[0]);
 
 const ADMIN_URL = 'https://admin.hlx.page';
 const AEM_LIVE = 'https://main--da-bacom--adobecom.aem.live';
+const AEM_PAGE = 'https://main--da-bacom--adobecom.aem.page';
 const PREVIEW_PARAMS = '?martech=off&dapreview=on';
 const FORM_STORAGE_KEY = 'landing-page-builder';
 const OPTIONS_LOADING = [{ value: 'loading', label: 'Loading...' }];
@@ -80,6 +81,15 @@ const FORM_SCHEMA = {
   videoAsset: '',
   url: '',
 };
+
+const delay = (milliseconds) => new Promise((resolve) => { setTimeout(resolve, milliseconds); });
+
+function showToast(message, type, timeout) {
+  document.dispatchEvent(new CustomEvent('show-toast', { detail: { type, message, timeout } }));
+  if (DEBUG && type === 'error') {
+    console.trace();
+  }
+}
 
 function computeAssetDirFromUrl(url) {
   let path = '/tools/page-builder/.prd-template/';
@@ -156,7 +166,7 @@ class LandingPageForm extends LitElement {
       if (!savedForm) return;
       this.form = { ...FORM_SCHEMA, ...savedForm };
     } catch (error) {
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Failed to load saved form data' } }));
+      showToast('Failed to load saved form data', TOAST_TYPES.ERROR);
     }
   }
 
@@ -209,7 +219,7 @@ class LandingPageForm extends LitElement {
       this.isInitialized = true;
       this.requestUpdate();
     } catch (error) {
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: `Error loading options: ${error.message}` } }));
+      showToast(`Error loading options: ${error.message}`, TOAST_TYPES.ERROR);
       this.requestUpdate();
     }
   }
@@ -293,7 +303,7 @@ class LandingPageForm extends LitElement {
     e.stopPropagation();
     const { contentType, gated, marqueeHeadline } = this.form;
     if (!contentType || !gated || !marqueeHeadline) {
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Please fill in all core options before confirming' } }));
+      showToast('Please fill in all core options before confirming', TOAST_TYPES.ERROR);
       return;
     }
     this.coreLocked = true;
@@ -313,15 +323,11 @@ class LandingPageForm extends LitElement {
     document.body.appendChild(toast);
     if (detail.type === 'error') {
       console.error('Error:', detail.message);
-      if (DEBUG) {
-        console.trace();
-      }
     }
   };
 
   disconnectedCallback() {
     document.removeEventListener('show-toast', this.handleToast);
-    if (this.headAbortController) { try { this.headAbortController.abort(); } catch { /* no-op */ } }
     Object.values(this.form).forEach((value) => {
       if (value?.url && value.url.startsWith('blob:')) {
         URL.revokeObjectURL(value.url);
@@ -338,7 +344,7 @@ class LandingPageForm extends LitElement {
 
       return imageUrl;
     } catch (e) {
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Failed to upload file' } }));
+      showToast('Failed to upload file', TOAST_TYPES.ERROR);
       return null;
     }
   }
@@ -363,53 +369,74 @@ class LandingPageForm extends LitElement {
       .then((url) => {
         if (!url) return;
         this.form[name] = { url, name: file.name };
-        document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Image Uploaded', timeout: 5000 } }));
+        showToast('Image Uploaded', 'success', 5000);
       }).catch((error) => {
-        document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: `Upload failed: ${error.message}` } }));
+        showToast(`Upload failed: ${error.message}`, 'error');
       }).finally(() => {
         this.saveFormState();
       });
+  }
+
+  async generatePage() {
+    await this.getTemplateContent();
+    const placeholders = this.templatePlaceholders(this.form);
+    const generatedPage = applyTemplateData(this.templateHTML, placeholders);
+    try {
+      await saveSource(this.form.url, generatedPage);
+      this.hasEdit = true;
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  async updatePreview() {
+    const path = this.form.url.replace('.html', '');
+    const previewApi = `${ADMIN_URL}/preview/adobecom/da-bacom/main${path}`;
+    let previewUrl = `${AEM_PAGE}${path}`;
+    const previewApiResponse = await fetch(previewApi, { method: 'POST' });
+    if (!previewApiResponse.ok) {
+      window.open(previewUrl, '_blank');
+      return false;
+    }
+    const previewApiData = await previewApiResponse.json();
+    if (previewApiData?.preview?.status === 200) {
+      previewUrl = previewApiData.preview.url;
+      const iframe = this.iframeRef?.value;
+      iframe.src = `${previewUrl}${PREVIEW_PARAMS}`;
+    } else {
+      window.open(previewUrl, '_blank');
+      return false;
+    }
+    return true;
   }
 
   async handleSubmit(e) {
     e.preventDefault();
     // TODO: Validate form data
     if (!this.isFormComplete()) {
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Please complete all required fields' } }));
+      showToast('Please complete all required fields', TOAST_TYPES.ERROR);
       return;
     }
     if (DEBUG) {
       console.table(this.form);
     }
-    document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.INFO, message: 'Saving page...', timeout: 5000 } }));
-    await this.getTemplateContent();
-    const placeholders = this.templatePlaceholders(this.form);
-    const generatedPage = applyTemplateData(this.templateHTML, placeholders);
-    try {
-      const sourcePath = await saveSource(this.form.url, generatedPage);
-      this.hasEdit = !!sourcePath;
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.SUCCESS, message: `Page saved ${this.hasEdit}`, timeout: 5000 } }));
-      this.requestUpdate();
-    } catch (error) {
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: `Failed to save page: ${error.message}` } }));
-    }
-  }
 
-  async handlePreview() {
-    document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.INFO, message: 'Previewing page...', timeout: 5000 } }));
-    const path = this.form.url.replace('.html', '');
-    const previewApi = `${ADMIN_URL}/preview/adobecom/da-bacom/main${path}`;
-    const previewApiResponse = await fetch(previewApi, { method: 'POST' });
-    if (!previewApiResponse.ok) {
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Failed to get preview' } }));
-      return;
-    }
-    const previewApiData = await previewApiResponse.json();
-    const previewUrl = previewApiData.preview.url;
-    if (previewUrl) {
-      window.open(previewUrl, '_blank');
+    showToast('Saving page...', 'info', 5000);
+    const saveSuccess = await this.generatePage();
+    if (saveSuccess) {
+      showToast('Page saved', 'success', 5000);
     } else {
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Failed to open preview' } }));
+      showToast('Failed to save page', TOAST_TYPES.ERROR);
+    }
+    await delay(1000);
+
+    showToast('Updating preview...', TOAST_TYPES.INFO, 5000);
+    const previewSuccess = await this.updatePreview();
+    if (previewSuccess) {
+      showToast('Preview updated', 'success', 5000);
+    } else {
+      showToast('Failed to update preview', TOAST_TYPES.ERROR);
     }
   }
 
@@ -447,10 +474,7 @@ class LandingPageForm extends LitElement {
             ${renderAssetDelivery(this.form, this.handleInput)}
             <div class="submit-row">
               <sl-button ?disabled=${!isFormComplete} type="submit" @click=${this.handleSubmit}>
-                Generate
-              </sl-button>
-              <sl-button ?disabled=${!isFormComplete && !this.hasEdit} @click=${this.handlePreview}>
-                Preview Page
+                Save & Preview
               </sl-button>
               <sl-button class="reset" @click=${this.resetForm}>
                 Reset Form
