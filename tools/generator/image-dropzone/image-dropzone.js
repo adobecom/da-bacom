@@ -158,7 +158,7 @@ export default class ImageDropzone extends LitElement {
     const hasError = this.error && this.error.length > 0;
     return html`
       ${this.file?.url ? html`
-      <div class="img-file-input-wrapper solid-border ${hasError ? 'error' : ''}">
+      <div class="img-file-input-wrapper solid-border">
         <div class="preview-wrapper">
           <div class="preview-img-placeholder">
             <img src="${this.file.url}" alt="preview image">

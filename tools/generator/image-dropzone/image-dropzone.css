@@ -17,10 +17,6 @@
   border: 2px solid #B6B6B6;
 }
 
-.solid-border.error {
-  border-color: #d73220;
-}
-
 .error-message {
   display: block;
   color: #d73220;

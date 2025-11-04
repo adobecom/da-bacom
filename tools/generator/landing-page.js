@@ -361,10 +361,7 @@ class LandingPageForm extends LitElement {
       return;
     }
 
-    // Clear error for this field when user uploads image
-    if (this.missingFields[name]) {
-      this.missingFields = { ...this.missingFields, [name]: false };
-    }
+    if (this.missingFields[name]) this.missingFields[name] = false;
 
     // Update template after page generation to correct path
     const path = computeAssetDirFromUrl(this.form.url);
