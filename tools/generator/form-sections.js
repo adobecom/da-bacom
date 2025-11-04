@@ -3,6 +3,29 @@
 import { html, nothing } from 'da-lit';
 import './image-dropzone/image-dropzone.js';
 
+function optionsSelect(form, handleInput, optionName, optionLabel, options) {
+  if (!options || options.length <= 1) {
+    const value = options?.[0]?.value || '';
+    const label = options?.[0]?.label || 'No options available';
+    return html`<sl-select
+      .value=${value}
+      name="${optionName}"
+      label="${optionLabel}"
+      disabled>
+        <option value="${value}">${label}</option>
+    </sl-select>`;
+  }
+
+  return html`<sl-select
+    .value=${form[optionName]}
+    name="${optionName}"
+    label="${optionLabel}"
+    @change=${handleInput}>
+      <option value="" ?selected=${form[optionName] === ''}>--Select--</option>
+      ${options.map((item) => html`<option value="${item.value}" ?selected=${form[optionName] === item.value}>${item.label}</option>`)}
+  </sl-select>`;
+}
+
 export function renderContentType(form, handleInput, isLocked = false) {
   return html`
     <div class="form-row core-options ${isLocked ? 'locked' : ''}">
@@ -35,6 +58,7 @@ export function renderContentType(form, handleInput, isLocked = false) {
 }
 
 export function renderForm(form, handleInput, { marketoPOIOptions }) {
+  // TODO: Identify additional form options, e.g. Title and Description
   return html`
     <div class="form-row">
     ${form.gated === 'Gated' ? html`
@@ -58,15 +82,7 @@ export function renderForm(form, handleInput, { marketoPOIOptions }) {
         label="Campaign ID" 
         @input=${handleInput}>
       </sl-input>
-      ${marketoPOIOptions?.length > 1 ? html`<sl-select
-        .value=${form.marketoPOI}
-        name="marketoPOI"
-        label="Marketo Product of Interest"
-        @change=${handleInput}>
-        <option value="" ?selected=${form.marketoPOI === ''}>--Select--</option>
-        ${(marketoPOIOptions || []).map((item) => html`<option value=${item.value} ?selected=${form.marketoPOI === item.value}>${item.label}</option>`)}
-        </sl-select>
-      ` : html`<sl-input type="text" label="Marketo Product of Interest" value=${marketoPOIOptions[0]?.label} disabled></sl-input>`}`
+      ${optionsSelect(form, handleInput, 'marketoPOI', 'Marketo Product of Interest', marketoPOIOptions)}`
     : nothing}
     </div>
   `;
@@ -129,90 +145,28 @@ export function renderCaas(form, handleInput, { contentTypeOptions, primaryProdu
   return html`
     <div class="form-row">
       <h2>CaaS Content</h2>
-        ${contentTypeOptions?.length > 1 ? html`<sl-select
-          .value=${form.contentTypeCaas}
-          name="contentTypeCaas"
-          label="Content Type"
-          key="${contentTypeOptions?.length}-options"
-          @change=${handleInput}>
-            <option value="" ?selected=${form.contentTypeCaas === ''}>--Select--</option>
-            ${(contentTypeOptions || []).map((item) => html`<option value=${item.value} ?selected=${form.contentTypeCaas === item.value}>${item.label}</option>`)}
-        </sl-select>`
-    : html`<sl-input type="text" label="Content Type" value=${contentTypeOptions[0]?.label} disabled></sl-input>`}
-        ${primaryProductOptions?.length > 1 ? html`<sl-select
-            .value=${form.primaryProduct}
-            name="primaryProduct"
-            label="Primary Product"
-            key="${primaryProductOptions?.length}-options"
-            @change=${handleInput}>
-              <option value="" ?selected=${form.primaryProduct === ''}>--Select--</option>
-              ${(primaryProductOptions || []).map((item) => html`<option value=${item.value} ?selected=${form.primaryProduct === item.value}>${item.label}</option>`)}
-        </sl-select>`
-    : html`<sl-input type="text" label="Primary Product" value=${primaryProductOptions[0]?.label} disabled></sl-input>`}
+      ${optionsSelect(form, handleInput, 'contentTypeCaas', 'Content Type', contentTypeOptions)}
+      ${optionsSelect(form, handleInput, 'primaryProduct', 'Primary Product', primaryProductOptions)}
     </div>
   `;
 }
 
-export function renderSeo(form, handleInput) {
+export function renderSeo(form, handleInput, { primaryProductNameOptions }) {
   return html`
     <div class="form-row">
-      <h2>SEO Metadata</h2>
+      <h2>Metadata</h2>
       <sl-input type="text" name="seoMetadataTitle" .value=${form.seoMetadataTitle} placeholder="Max 70 characters" label="SEO Metadata Title" @input=${handleInput}></sl-input>
       <sl-input type="text" name="seoMetadataDescription" .value=${form.seoMetadataDescription} placeholder="Max 155 characters" label="SEO Metadata Description" @input=${handleInput}></sl-input>
+      ${optionsSelect(form, handleInput, 'primaryProductName', 'Primary Product Name', primaryProductNameOptions)}
     </div>
   `;
 }
 
-export function renderExperienceFragment(form, handleInput) {
-  const fragments = [
-    { value: '', label: '--Select--' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/generic', label: 'Generic' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/generic-cc', label: 'Generic CC' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/generic-dx', label: 'Generic DX' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/advertising', label: 'Advertising' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/analytics', label: 'Analytics' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/audience-manager', label: 'Audience Manager' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/campaign', label: 'Campaign' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/commerce', label: 'Commerce' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/connect', label: 'Connect' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/content-supply-chain', label: 'Content Supply Chain' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/customer-journey-analytics', label: 'Customer Journey Analytics' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/experience-manager-assets', label: 'Experience Manager Assets' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/experience-manager-forms', label: 'Experience Manager Forms' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/experience-manager-guides', label: 'Experience Manager Guides' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/experience-manager-sites', label: 'Experience Manager Sites' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/genstudio', label: 'Genstudio' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/ajo', label: 'AJO' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/ajo-b2b', label: 'AJO B2B' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/learning-manager', label: 'Learning Manager' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/llm-optimizer', label: 'LLM Optimizer' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/marketo-engage', label: 'Marketo Engage' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/mix-modeler', label: 'Mix Modeler' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/rtcdp', label: 'RTCDP' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/target', label: 'Target' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/workfront', label: 'Workfront' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/acrobat', label: 'Acrobat' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/adobe-sign', label: 'Adobe Sign' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/creative-cloud-for-enterprise', label: 'Creative Cloud for Enterprise' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/adobe-express', label: 'Adobe Express' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/firefly', label: 'Firefly' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/frame-io', label: 'Frame.io' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/adobe-stock', label: 'Adobe Stock' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/substance', label: 'Substance' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/automotive-mobility', label: 'Automotive Mobility' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/consumer-goods', label: 'Consumer Goods' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/financial-services', label: 'Financial Services' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/government', label: 'Government' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/healthcare', label: 'Healthcare' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/high-tech', label: 'High Tech' },
-    { value: 'https://main--da-bacom--adobecom.aem.page/fragments/resources/cards/thank-you-collections/manufacturing', label: 'Manufacturing' },
-  ];
+export function renderExperienceFragment(form, handleInput, { fragmentOptions }) {
   return html`
     <div class="form-row">
       <h2>Experience Fragment</h2>
-      <sl-select .value=${form.experienceFragment} name="experienceFragment" label="Experience Fragment" @change=${handleInput}>
-        ${(fragments || []).map((item) => html`<option value=${item.value} ?selected=${form.experienceFragment === item.value}>${item.label}</option>`)}
-      </sl-select>
+      ${optionsSelect(form, handleInput, 'experienceFragment', 'Experience Fragment', fragmentOptions)}
     </div>
   `;
 }

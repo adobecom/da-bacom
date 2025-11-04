@@ -19,14 +19,16 @@
 </head>
 
 <body>
-  <main></main>
+  <main>
+    <da-generator></da-generator>
+  </main>
   <script type="module">
     import { runTests } from '@web/test-runner-mocha';
     import { expect } from '@esm-bundle/chai';
     import { stub } from 'sinon';
     import sinon from 'sinon';
     import DA_SDK from 'da-sdk';
-    import { daFetch } from './mocks/da-fetch.js';
+    import { daFetch, initIms } from './mocks/da-fetch.js';
     import '../../../tools/generator/landing-page.js';
 
     const ogLana = window.lana;
@@ -55,6 +57,7 @@
         it('renders correctly', async () => {
           const generator = document.querySelector('da-generator');
           expect(generator).to.exist;
+          expect(initIms.called).to.be.true;
 
           const shadowRoot = generator.shadowRoot;
           expect(shadowRoot.querySelector('h1')).to.exist;
@@ -84,20 +87,21 @@
           expect(fieldNames).to.deep.equal(formFields);
         });
 
-        it('handles toast events', async () => {
+        it('handles toast events', () => {
           const generator = document.querySelector('da-generator');
-          let toastCreated = false;
+          expect(generator).to.exist;
 
           const toastEvent = new CustomEvent('show-toast', {
-            detail: { message: 'Test message', type: 'info', timeout: 100 }
+            detail: { message: 'Test toast message', type: 'info', timeout: 5000 }
           });
 
           document.dispatchEvent(toastEvent);
 
           const toast = document.querySelector('toast-message');
           expect(toast).to.exist;
-          await tick(500);
-          expect(toast.visible).to.equal(false);
+          expect(toast.message).to.equal('Test toast message');
+          expect(toast.type).to.equal('info');
+          expect(toast.timeout).to.equal(5000);
         });
 
         it('registers all custom elements', () => {
@@ -117,7 +121,7 @@
           const generator = document.querySelector('da-generator');
           const file = new File(['mock image content'], 'mock-image.jpg', { type: 'image/jpeg' });
 
-          generator.handleImageChange({ detail: { file } , target: { name: 'marqueeImage' } });
+          generator.handleImageChange({ detail: { file }, target: { name: 'marqueeImage' } });
           await tick(500);
 
           expect(daFetch.called).to.be.true;

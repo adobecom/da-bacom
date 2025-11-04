@@ -1,6 +1,7 @@
 import sinon from 'sinon';
 
 export const daFetch = sinon.stub();
+export const initIms = sinon.stub();
 
 daFetch.callsFake(async (url, options = {}) => {
   const method = options.method || 'GET';
@@ -66,4 +67,4 @@ export const replaceHtml = (html, org, repo) => html.replace(/href="([^"]*?)"/g,
   return match;
 });
 
-export default { daFetch, replaceHtml };
+initIms.callsFake(async () => ({ accessToken: { token: 'mock-token' } }));

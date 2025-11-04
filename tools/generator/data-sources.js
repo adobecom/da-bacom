@@ -2,11 +2,13 @@
 import { getTags, getAemRepo, getRootTags } from '../tags/tag-utils.js';
 import { TOAST_TYPES } from './toast/toast.js';
 
+const OPTIONS_URL = 'https://main--da-bacom--adobecom.aem.live/tools/landing-page.json';
 const POI_URL = 'https://milo.adobe.com/tools/marketo-options.json';
 const COLLECTION_NAME = 'dx-tags/dx-caas';
 const JCR_TITLE = 'jcr:title';
 const CAAS_CONTENT_TYPE = 'caas:content-type';
 const CAAS_PRODUCTS = 'caas:products';
+const PROJECT = { org: 'adobecom', repo: 'da-bacom' };
 
 function dispatchError(message) {
   const error = new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message } });
@@ -14,15 +16,17 @@ function dispatchError(message) {
 }
 
 function normalizeOption(item, valueKey, labelKey) {
-  const value = item[valueKey];
-  const label = item[labelKey];
+  const valueEntry = Object.entries(item).find(([k]) => k.toLowerCase() === valueKey.toLowerCase());
+  const labelEntry = Object.entries(item).find(([k]) => k.toLowerCase() === labelKey.toLowerCase());
+  const value = valueEntry ? valueEntry[1] : undefined;
+  const label = labelEntry ? labelEntry[1] : undefined;
   return (value && label) ? { value, label } : null;
 }
 
-async function getCaasCollections(context, token) {
+async function getCaasCollections(token) {
   const authOptions = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
 
-  const aemConfig = await getAemRepo(context, authOptions);
+  const aemConfig = await getAemRepo(PROJECT, authOptions);
   if (!aemConfig?.aemRepo) throw new Error('AEM repository not available');
 
   const namespaces = aemConfig.namespaces?.split(',').map((ns) => ns.trim()) || [];
@@ -67,9 +71,9 @@ export async function fetchMarketoPOIOptions() {
   }
 }
 
-export async function fetchContentTypeOptions(context, token) {
+export async function fetchContentTypeOptions(token) {
   try {
-    const { contentTypes } = await getCaasCollections(context, token);
+    const { contentTypes } = await getCaasCollections(token);
     return contentTypes.map((tag) => normalizeOption(tag, 'title', 'name')).filter(Boolean);
   } catch (error) {
     dispatchError(`Content Type Options: ${error.message}`);
@@ -77,12 +81,29 @@ export async function fetchContentTypeOptions(context, token) {
   }
 }
 
-export async function fetchPrimaryProductOptions(context, token) {
+export async function fetchPrimaryProductOptions(token) {
   try {
-    const { primaryProducts } = await getCaasCollections(context, token);
+    const { primaryProducts } = await getCaasCollections(token);
     return primaryProducts.map((tag) => normalizeOption(tag, 'title', 'name')).filter(Boolean);
   } catch (error) {
     dispatchError(`Primary Product Options: ${error.message}`);
     return [];
+  }
+}
+
+export async function fetchPageOptions() {
+  try {
+    const response = await fetch(OPTIONS_URL);
+    if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    const json = await response.json();
+    const options = {};
+    json[':names'].forEach((name) => {
+      if (name.startsWith(':')) return;
+      options[name] = json[name]?.data?.map((item) => normalizeOption(item, 'Key', 'Value')).filter(Boolean);
+    });
+    return options;
+  } catch (error) {
+    dispatchError(`Page Options: ${error.message}`);
+    return {};
   }
 }

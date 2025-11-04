@@ -7,7 +7,6 @@
 h1 {
   font-size: var(--type-heading-xxl-size);
   line-height: var(--spectrum-line-height-100);
-  margin: 0 0 6px;
 }
 
 h2 {
@@ -35,7 +34,11 @@ p {
 }
 
 .form-row {
-  margin-bottom: 32px;
+  margin-bottom: 26px;
+}
+
+.form-row > * {
+  margin-bottom: 8px;
 }
 
 .submit-row {

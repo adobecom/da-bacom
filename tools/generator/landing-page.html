@@ -17,13 +17,14 @@
       }
     }
   </script>
-  <script src="https://da.live/nx/utils/sdk.js" type="module"></script>
-  <script src="/tools/generator/landing-page.js" type="module"></script>
+  <link rel="modulepreload" href="https://da.live/nx/utils/sdk.js">
+  <script src="./landing-page.js" type="module"></script>
   <link rel="icon" href="data:,">
 </head>
 
 <body style="background: #fff;">
   <main>
+    <da-generator></da-generator>
   </main>
 </body>
 
