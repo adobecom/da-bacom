@@ -441,6 +441,7 @@ class LandingPageForm extends LitElement {
       'contentTypeCaas',
       'seoMetadataTitle',
       'seoMetadataDescription',
+      'primaryProductName',
       'experienceFragment',
     ];
 

@@ -88,7 +88,7 @@ export function renderForm(form, handleInput, { marketoPOIOptions, hasError = ()
         error=${hasError('campaignId')}
         @input=${handleInput}>
       </sl-input>
-      ${optionsSelect(form, handleInput, 'marketoPOI', 'Marketo Product of Interest', marketoPOIOptions, hasError)}`
+      ${optionsSelect(form, handleInput, 'marketoPOI', 'Marketo Product of Interest*', marketoPOIOptions, hasError)}`
     : nothing}
     </div>
   `;
@@ -151,8 +151,8 @@ export function renderCaas(form, handleInput, { contentTypeOptions, primaryProdu
   return html`
     <div class="form-row">
       <h2>CaaS Content</h2>
-      ${optionsSelect(form, handleInput, 'contentTypeCaas', 'Content Type', contentTypeOptions, hasError)}
-      ${optionsSelect(form, handleInput, 'primaryProduct', 'Primary Product', primaryProductOptions, hasError)}
+      ${optionsSelect(form, handleInput, 'contentTypeCaas', 'Content Type*', contentTypeOptions, hasError)}
+      ${optionsSelect(form, handleInput, 'primaryProduct', 'Primary Product', primaryProductOptions)}
     </div>
   `;
 }
@@ -163,7 +163,7 @@ export function renderSeo(form, handleInput, { primaryProductNameOptions }, hasE
       <h2>Metadata</h2>
       <sl-input type="text" name="seoMetadataTitle" .value=${form.seoMetadataTitle} placeholder="Max 70 characters" label="SEO Metadata Title*" error=${hasError('seoMetadataTitle')} @input=${handleInput}></sl-input>
       <sl-input type="text" name="seoMetadataDescription" .value=${form.seoMetadataDescription} placeholder="Max 155 characters" label="SEO Metadata Description*" error=${hasError('seoMetadataDescription')} @input=${handleInput}></sl-input>
-      ${optionsSelect(form, handleInput, 'primaryProductName', 'Primary Product Name', primaryProductNameOptions, hasError)}
+      ${optionsSelect(form, handleInput, 'primaryProductName', 'Primary Product Name*', primaryProductNameOptions, hasError)}
     </div>
   `;
 }
@@ -172,7 +172,7 @@ export function renderExperienceFragment(form, handleInput, { fragmentOptions },
   return html`
     <div class="form-row">
       <h2>Experience Fragment</h2>
-      ${optionsSelect(form, handleInput, 'experienceFragment', 'Experience Fragment', fragmentOptions, hasError)}
+      ${optionsSelect(form, handleInput, 'experienceFragment', 'Experience Fragment*', fragmentOptions, hasError)}
     </div>
   `;
 }
