@@ -1,3 +1,7 @@
+h1 {
+  padding: 20px;
+}
+
 .builder-form form {
   display: flex;
   flex-direction: column;
