@@ -113,22 +113,13 @@ export class MdForm extends LitElement {
 
   setSelectOptions() {
     if (!this._metadataOptions?.data?.length) return [];
+    const data = this._metadataOptions?.data;
 
-    const firstItem = this._metadataOptions.data[0];
-    const keys = Object.keys(firstItem);
-    const selectOptions = keys.map((key) => ({ keyName: key, values: [] }));
-    const fieldKeys = [];
-
-    this._metadataOptions.data.forEach((item) => {
-      keys.forEach((key) => {
-        if (item[key]) {
-          selectOptions.find((option) => option.keyName === key).values.push(item[key]);
-        }
-        if (!fieldKeys.includes(key)) {
-          fieldKeys.push(key);
-        }
-      });
-    });
+    const fieldKeys = Object.keys(data[0]);
+    const selectOptions = fieldKeys.map((key) => ({
+      keyName: key,
+      values: data.map((obj) => obj[key] ?? ''),
+    }));
 
     return [selectOptions, fieldKeys];
   }
