@@ -19,10 +19,10 @@ on:
   workflow_dispatch:
     inputs:
       cpCode:
-        description: 'CP Code: Prod - 1318762 / Stage - 1318533'
+        description: 'CP Code: Prod - 1378128 / Stage - 1369625'
         type: string
         required: true
-        default: '1318762'
+        default: '1378128'
       network:
         description: 'Network'
         type: choice
