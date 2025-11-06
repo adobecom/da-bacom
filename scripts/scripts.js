@@ -253,6 +253,88 @@ async function loadPage() {
 
 loadPage();
 
+// Sitemap test
+const urlParams = new URLSearchParams(window.location.search);
+const useSitemap = urlParams.has('sitemap');
+
+const LOCALES = Object.keys(CONFIG.locales);
+
+function buildLink(language, url) {
+  const link = document.createElement('link');
+  link.setAttribute('rel', 'alternate');
+  link.setAttribute('hreflang', language);
+  link.setAttribute('href', url);
+  return link;
+}
+
+async function fetchAndParseSitemap() {
+  const sitemapOrigin = 'https://business.adobe.com';
+  const { origin, pathname } = window.location;
+
+  let sitemapPath = '/sitemap.xml';
+  const localeMatch = LOCALES.find((locale) => pathname.startsWith(`/${locale}/`));
+
+  if (localeMatch) {
+    sitemapPath = `/${localeMatch}/sitemap.xml`;
+  }
+
+  try {
+    const response = await fetch(`${origin}${sitemapPath}`);
+    if (!response.ok) {
+      console.warn('Failed to fetch sitemap:', response.status);
+      return;
+    }
+
+    const xmlText = await response.text();
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+    const parseError = xmlDoc.querySelector('parsererror');
+    if (parseError) {
+      return;
+    }
+
+    const urlElements = xmlDoc.querySelectorAll('url');
+    let currentUrlElement = null;
+    const currentPageUrl = pathname !== '/' ? `${sitemapOrigin}${pathname}.html` : `${sitemapOrigin}/`;
+
+    for (const urlElement of urlElements) {
+      const loc = urlElement.querySelector('loc')?.textContent;
+      if (loc === currentPageUrl || loc === currentPageUrl.replace(/\/$/, '')) {
+        currentUrlElement = urlElement;
+        break;
+      }
+    }
+
+    if (!currentUrlElement) {
+      console.warn('Current page not found in sitemap');
+      return;
+    }
+
+    const alternateLinks = currentUrlElement.querySelectorAll('link[rel="alternate"]');
+    const linkElements = [];
+
+    alternateLinks.forEach((altLink) => {
+      const hreflang = altLink.getAttribute('hreflang');
+      const href = altLink.getAttribute('href');
+
+      if (hreflang && href) {
+        linkElements.push(buildLink(hreflang, href));
+      }
+    });
+
+    const titleElement = document.head.querySelector('title');
+    if (linkElements.length > 0 && titleElement) {
+      titleElement.after(...linkElements);
+    }
+  } catch (error) {
+    console.error('Error fetching or parsing sitemap:', error);
+  }
+}
+
+if (useSitemap) {
+  fetchAndParseSitemap();
+}
+
 // DA Live Preview
 (async function loadDa() {
   if (!new URL(window.location.href).searchParams.get('dapreview')) return;
