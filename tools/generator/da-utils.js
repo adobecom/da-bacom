@@ -5,12 +5,16 @@ import { DA_ORIGIN } from 'constants';
 const ORG = 'adobecom';
 const REPO = 'da-bacom';
 
-function getDaPath(path) {
-  return `${DA_ORIGIN}/source/${ORG}/${REPO}${path}`;
+function getDaPath(path, isHtml) {
+  if (isHtml) {
+    const htmlPath = path.endsWith('.html') ? path : `${path}.html`;
+    return `${DA_ORIGIN}/source/${ORG}/${REPO}${htmlPath}`;
+  }
+  return `${DA_ORIGIN}/source/${ORG}/${REPO}${path.replace('.html', '')}`;
 }
 
 export async function getSource(path) {
-  const daPath = `${getDaPath(path)}.html`;
+  const daPath = getDaPath(path, true);
   const opts = { method: 'GET', headers: { accept: '*/*' } };
 
   try {
@@ -31,9 +35,15 @@ export async function getSource(path) {
 }
 
 export async function saveSource(path, document) {
-  const main = document.querySelector('main');
+  let parsedDocument = document;
+  if (typeof parsedDocument === 'string') {
+    const parser = new DOMParser();
+    parsedDocument = parser.parseFromString(parsedDocument, 'text/html');
+  }
+
+  const main = parsedDocument.querySelector('main');
   const text = main.innerHTML;
-  const daPath = `${getDaPath(path)}.html`;
+  const daPath = getDaPath(path, true);
   const body = replaceHtml(text, ORG, REPO);
   const blob = new Blob([body], { type: 'text/html' });
   const formData = new FormData();
@@ -56,7 +66,7 @@ export async function saveSource(path, document) {
 }
 
 export async function saveImage(path, file) {
-  const daPath = getDaPath(`${path}${file.name}`);
+  const daPath = getDaPath(`${path}${file.name}`, false);
   const formData = new FormData();
   const opts = { method: 'PUT', body: formData };
 
@@ -71,9 +81,6 @@ export async function saveImage(path, file) {
     /* c8 ignore next 7 */
     return null;
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.log(`Couldn't save ${path}${file.name}`, error);
-
-    return null;
+    throw new Error(`Couldn't save ${path}${file.name}`, error);
   }
 }

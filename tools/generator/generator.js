@@ -1,84 +1,86 @@
-import { LIBS } from '../../scripts/scripts.js';
+export const utf8ToB64 = (str) => window.btoa(unescape(encodeURIComponent(str)));
+export const b64ToUtf8 = (str) => decodeURIComponent(escape(window.atob(str)));
 
-const { utf8ToB64 } = await import(`${LIBS}/utils/utils.js`);
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-const DA_ORIGIN = 'https://admin.da.live';
-const ORG = 'adobecom';
-const REPO = 'da-bacom';
-
-// Template questions
-// Should we have Asset H2?
-// Should we have Form Title and Description?
-const templatedFields = {
-  contentType: '{{content-type}}',
-  gated: '{{gated}}',
-  formTemplate: '{{form-template}}',
-  formDescription: '{{form-description}}',
-  formSuccessType: '{{form-success-type}}',
-  formSuccessSection: '{{form-success-section}}',
-  formSuccessContent: '{{form-success-content}}',
-  campaignId: '{{campaign-id}}',
-  poi: '{{poi}}',
-  marqueeEyebrow: '{{marquee-eyebrow}}',
-  marqueeHeadline: '{{marquee-headline}}',
-  marqueeDescription: '{{marquee-description}}',
-  marqueeImage: '{{marquee-image}}',
-  bodyDescription: '{{body-description}}',
-  bodyImage: '{{body-image}}',
-  cardTitle: '{{card-title}}',
-  cardDescription: '{{card-description}}',
-  cardImage: '{{card-image}}',
-  cardDate: '{{card-date}}',
-  caasContentType: '{{caas-content-type}}',
-  caasPrimaryProduct: '{{caas-primary-product}}',
-  primaryProductName: '{{primary-product-name}}',
-  seoMetadataTitle: '{{seo-metadata-title}}',
-  seoMetadataDescription: '{{seo-metadata-description}}',
-  experienceFragment: '{{experience-fragment}}',
-  assetDelivery: '{{asset-delivery}}',
-  pdfAsset: '{{pdf-asset}}',
-  marketoDataUrl: '{{marketo-data-url}}',
+const DEFAULT_MARKETO_STATE = {
+  'form id': '2277',
+  'marketo munckin': '360-KCI-804',
+  'marketo host': 'engage.adobe.com',
+  'form type': 'marketo_form',
+  'form.success.type': 'message',
+  'form.success.content': 'Thank you',
 };
 
-// TODO: Use default URL or generated URL
+export function withTimeout(promise, ms) {
+  return Promise.race([promise, new Promise((_, reject) => { setTimeout(() => reject(new Error('timeout')), ms); })]);
+}
+
 export function marketoUrl(state) {
   const url = 'https://milo.adobe.com/tools/marketo';
-  return `${url}#${utf8ToB64(JSON.stringify(state))}`;
+  return `${url}#${utf8ToB64(JSON.stringify({ ...DEFAULT_MARKETO_STATE, ...state }))}`;
 }
 
-async function fetchTemplate(daPath) {
-  const res = await fetch(daPath);
-  if (!res.ok) throw new Error(`Failed to fetch template: ${res.statusText}`);
-  return res.text();
+function placeholderToFieldName(templateField) {
+  return templateField.charAt(0).toLowerCase() + templateField.split('-').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join('').slice(1);
 }
 
-export function applyTemplateFields(templateString, data) {
-  return Object.entries(templatedFields).reduce(
-    (text, [key, placeholder]) => {
-      if (!data[key]) return text;
-      return text.replaceAll(placeholder, data[key]);
-    },
-    templateString,
-  );
+export function findPlaceholders(templateStr) {
+  const regex = /\{\{(.*?)\}\}/g;
+  const fields = templateStr.match(regex) || [];
+  return fields.map((field) => field.replace('{{', '').replace('}}', ''));
 }
 
-async function uploadTemplatedText(daPath, templatedText) {
-  const formData = new FormData();
-  const blob = new Blob([templatedText], { type: 'text/html' });
-  formData.set('data', blob);
-  const updateRes = await fetch(daPath, { method: 'POST', body: formData });
-  if (!updateRes.ok) throw new Error(`Failed to update template: ${updateRes.statusText}`);
+export function applyTemplateData(templateStr, data) {
+  const fields = findPlaceholders(templateStr);
+  const html = fields.reduce((text, field) => {
+    const fieldName = placeholderToFieldName(field);
+    const fieldValue = data[fieldName];
+    if (!fieldValue) return text.replaceAll(`{{${field}}}`, '');
+    if (field.includes('image') && fieldValue.startsWith('http')) {
+      const imgHtml = `<img src="${fieldValue}" alt="${fieldName}" />`;
+      return text.replaceAll(`{{${field}}}`, imgHtml);
+    }
+    if ((field.includes('url') || field.includes('fragment')) && fieldValue.startsWith('http')) {
+      const urlHtml = `<a href="${fieldValue}" target="_blank">${fieldValue}</a>`;
+      return text.replaceAll(`{{${field}}}`, urlHtml);
+    }
+    return text.replaceAll(`{{${field}}}`, fieldValue);
+  }, templateStr);
+  return html.replaceAll('template-', '');
 }
 
-export async function template(path, data) {
-  const daPath = `${DA_ORIGIN}/source/${ORG}/${REPO}${path}`;
-  const text = await fetchTemplate(daPath);
-  const templatedText = applyTemplateFields(text, data);
-  await uploadTemplatedText(daPath, templatedText);
+export function getStorageItem(key, defaultValue = null) {
+  try {
+    const item = localStorage.getItem(key);
+    return item ? JSON.parse(item) : defaultValue;
+  } catch {
+    return defaultValue;
+  }
 }
 
-export async function replaceTemplate(data) {
-  const templatePaths = ['/index.html', '/nav.html', '/footer.html'];
+export function setStorageItem(key, value) {
+  if (!value || (Array.isArray(value) && value.length === 0)) return;
+  localStorage.setItem(key, JSON.stringify(value));
+}
 
-  await Promise.all(templatePaths.map((path) => template(path, data)));
+export function getCachedData(key) {
+  try {
+    const cached = getStorageItem(key);
+    if (cached && cached.timestamp && (Date.now() - cached.timestamp < CACHE_TTL)) {
+      return cached.data;
+    }
+    if (cached) {
+      localStorage.removeItem(key);
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export function setCachedData(key, data) {
+  if (!data || (Array.isArray(data) && data.length === 0)) return data;
+  setStorageItem(key, { data, timestamp: Date.now() });
+  return data;
 }

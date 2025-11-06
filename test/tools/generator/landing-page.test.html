@@ -19,14 +19,16 @@
 </head>
 
 <body>
-  <main></main>
+  <main>
+    <da-generator></da-generator>
+  </main>
   <script type="module">
     import { runTests } from '@web/test-runner-mocha';
     import { expect } from '@esm-bundle/chai';
     import { stub } from 'sinon';
     import sinon from 'sinon';
     import DA_SDK from 'da-sdk';
-    import { daFetch } from './mocks/da-fetch.js';
+    import { daFetch, initIms } from './mocks/da-fetch.js';
     import '../../../tools/generator/landing-page.js';
 
     const ogLana = window.lana;
@@ -55,6 +57,7 @@
         it('renders correctly', async () => {
           const generator = document.querySelector('da-generator');
           expect(generator).to.exist;
+          expect(initIms.called).to.be.true;
 
           const shadowRoot = generator.shadowRoot;
           expect(shadowRoot.querySelector('h1')).to.exist;
@@ -64,13 +67,8 @@
         it('renders all form sections', async () => {
           const generator = document.querySelector('da-generator');
           const shadowRoot = generator.shadowRoot;
-
-          // Check for all major form sections
-          expect(shadowRoot.querySelector('sl-select[name="contentType"]')).to.exist;
-          expect(shadowRoot.querySelector('sl-select[name="gated"]')).to.exist;
-          expect(shadowRoot.querySelector('sl-input[name="marqueeHeadline"]')).to.exist;
-          expect(shadowRoot.querySelector('sl-input[name="campaignId"]')).to.exist;
-          expect(shadowRoot.querySelector('image-dropzone')).to.exist;
+          const h2 = shadowRoot.querySelector('form h2');
+          expect(h2.textContent.trim()).to.equal('Core Options');
         });
 
         it('has all form fields', async () => {
@@ -80,38 +78,30 @@
           const formFields = [
             'contentType',
             'gated',
-            'formTemplate',
-            'campaignId',
             'marqueeHeadline',
-            'marqueeDescription',
-            'bodyDescription',
-            'cardTitle',
-            'cardDescription',
-            'seoMetadataTitle',
-            'seoMetadataDescription',
             'url'
           ];
 
-          formFields.forEach(fieldName => {
-            const field = shadowRoot.querySelector(`[name="${fieldName}"]`);
-            expect(field, `Field ${fieldName} exist`).to.exist;
-          });
+          const fields = shadowRoot.querySelectorAll('form [name]');
+          const fieldNames = Array.from(fields).map(field => field.getAttribute('name'));
+          expect(fieldNames).to.deep.equal(formFields);
         });
 
-        it('handles toast events', async () => {
+        it('handles toast events', () => {
           const generator = document.querySelector('da-generator');
-          let toastCreated = false;
+          expect(generator).to.exist;
 
           const toastEvent = new CustomEvent('show-toast', {
-            detail: { message: 'Test message', type: 'info', timeout: 100 }
+            detail: { message: 'Test toast message', type: 'info', timeout: 5000 }
           });
 
-          generator.dispatchEvent(toastEvent);
+          document.dispatchEvent(toastEvent);
 
           const toast = document.querySelector('toast-message');
           expect(toast).to.exist;
-          await tick(500);
-          expect(toast.visible).to.equal(false);
+          expect(toast.message).to.equal('Test toast message');
+          expect(toast.type).to.equal('info');
+          expect(toast.timeout).to.equal(5000);
         });
 
         it('registers all custom elements', () => {
@@ -131,22 +121,13 @@
           const generator = document.querySelector('da-generator');
           const file = new File(['mock image content'], 'mock-image.jpg', { type: 'image/jpeg' });
 
-          generator.handleImageChange({ detail: { file } });
+          generator.handleImageChange({ detail: { file }, target: { name: 'marqueeImage' } });
           await tick(500);
 
           expect(daFetch.called).to.be.true;
 
-          // Get all the URLs that were fetched
-          const fetchCalls = daFetch.getCalls();
-          const fetchUrls = fetchCalls.map((call) => call.args[0]);
-
-          expect(fetchUrls).to.deep.equal([
-            "https://admin.da.live/source/adobecom/da-bacom/drafts/bmarshal/generator.html",
-            "https://admin.da.live/source/adobecom/da-bacom/drafts/bmarshal/.generator/mock-image.jpg",
-            "https://admin.da.live/source/adobecom/da-bacom/drafts/bmarshal/generator.html"
-          ]);
-
-          expect(generator.marqueeImage).to.deep.equal({ url: '/test/tools/generator/mocks/mock-image.jpg', name: 'mock-image.jpg' });
+          const fetchUrls = daFetch.getCalls().map(call => call.args[0]);
+          expect(fetchUrls[0]).to.include('mock-image.jpg');
         });
       });
     });

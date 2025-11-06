@@ -52,6 +52,7 @@ export default class ImageDropzone extends LitElement {
     file: { type: Object, reflect: true },
     handleImage: { type: Function },
     handleDelete: { type: Function },
+    name: { type: String },
   };
 
   static styles = style;
@@ -61,6 +62,7 @@ export default class ImageDropzone extends LitElement {
     this.file = null;
     this.handleImage = () => {};
     this.handleDelete = this.handleDelete || null;
+    this.name = '';
   }
 
   cleanupFile() {
@@ -79,7 +81,7 @@ export default class ImageDropzone extends LitElement {
     const [file] = files;
 
     if (!isImageSizeValid(file, MAX_FILE_SIZE)) {
-      this.dispatchEvent(new CustomEvent('show-toast', {
+      document.dispatchEvent(new CustomEvent('show-toast', {
         detail: { type: 'error', message: 'File size should be less than 25MB', timeout: 0 },
         bubbles: true,
         composed: true,
@@ -95,7 +97,7 @@ export default class ImageDropzone extends LitElement {
       this.file.url = URL.createObjectURL(file);
       this.requestUpdate();
     } else {
-      this.dispatchEvent(new CustomEvent('show-toast', {
+      document.dispatchEvent(new CustomEvent('show-toast', {
         detail: { type: 'error', message: 'Invalid file type. The image file should be in one of the following format: .jpeg, .jpg, .png, .svg', timeout: 0 },
         bubbles: true,
         composed: true,
@@ -170,3 +172,5 @@ export default class ImageDropzone extends LitElement {
     </div>`;
   }
 }
+
+if (!customElements.get('image-dropzone')) customElements.define('image-dropzone', ImageDropzone);

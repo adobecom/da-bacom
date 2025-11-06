@@ -28,8 +28,6 @@
     const ogCreateObjectURL = URL.createObjectURL;
     const ogRevokeObjectURL = URL.revokeObjectURL;
 
-    customElements.define('image-dropzone', ImageDropzone);
-
     const createMockFile = (name, type, size, content = 'mock content') => {
       const blob = new Blob([content], { type });
       Object.defineProperty(blob, 'name', {
@@ -116,7 +114,7 @@
           const imageDropzone = document.querySelector('image-dropzone');
 
           let toastEvent;
-          imageDropzone.addEventListener('show-toast', (e) => { toastEvent = e; });
+          document.addEventListener('show-toast', (e) => { toastEvent = e; });
 
           const oversizedFile = createMockImageFile('large.png', 'image/png', 30000000); // 30MB
           await imageDropzone.setFile([oversizedFile]);
@@ -130,7 +128,7 @@
           const imageDropzone = document.querySelector('image-dropzone');
 
           let toastEvent;
-          imageDropzone.addEventListener('show-toast', (e) => { toastEvent = e; });
+          document.addEventListener('show-toast', (e) => { toastEvent = e; });
 
           const invalidFile = createMockFile('document.pdf', 'application/pdf', 1000);
           await imageDropzone.setFile([invalidFile]);
