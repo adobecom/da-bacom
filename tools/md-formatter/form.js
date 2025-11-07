@@ -3,7 +3,7 @@
 /* eslint-disable import/no-unresolved */
 import 'https://da.live/nx/public/sl/components.js';
 import getStyle from 'https://da.live/nx/utils/styles.js';
-import { LitElement, html } from 'https://da.live/nx/deps/lit/lit-core.min.js';
+import { LitElement, html } from 'da-lit';
 import DA_SDK from 'https://da.live/nx/utils/sdk.js';
 
 const close = html`

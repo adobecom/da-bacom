@@ -24,11 +24,10 @@ const mockMetadataOptions = {
   ],
 };
 
-const delay = (milliseconds) => new Promise((resolve) => { setTimeout(resolve, milliseconds); });
-
 describe('MdForm', () => {
   let fetchStub;
-  let originalSdk;
+
+  const delay = (ms) => new Promise((resolve) => { setTimeout(resolve, ms); });
 
   beforeEach(async () => {
     document.body.innerHTML = '';
@@ -39,16 +38,10 @@ describe('MdForm', () => {
       ok: true,
       json: async () => mockMetadataOptions,
     });
-
-    // Store original DA_SDK if it exists
-    originalSdk = window.DA_SDK;
   });
 
   afterEach(() => {
     fetchStub.restore();
-    if (originalSdk) {
-      window.DA_SDK = originalSdk;
-    }
   });
 
   const init = async () => {
