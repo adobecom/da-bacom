@@ -150,7 +150,7 @@ export const EVENT_LIBS = (() => {
   const { hostname, search } = window.location;
 
   if (!(hostname.includes('.hlx.') || hostname.includes('.aem.') || hostname.includes('local'))) {
-    return '/event-libs';
+    return `/event-libs/${version}`;
   }
 
   const branch = new URLSearchParams(search).get('eventlibs') || 'main';
