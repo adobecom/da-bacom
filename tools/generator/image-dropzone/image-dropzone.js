@@ -53,6 +53,7 @@ export default class ImageDropzone extends LitElement {
     handleImage: { type: Function },
     handleDelete: { type: Function },
     name: { type: String },
+    error: { type: String },
   };
 
   static styles = style;
@@ -63,6 +64,7 @@ export default class ImageDropzone extends LitElement {
     this.handleImage = () => {};
     this.handleDelete = this.handleDelete || null;
     this.name = '';
+    this.error = '';
   }
 
   cleanupFile() {
@@ -153,7 +155,9 @@ export default class ImageDropzone extends LitElement {
   }
 
   render() {
-    return this.file?.url ? html`
+    const hasError = this.error && this.error.length > 0;
+    return html`
+      ${this.file?.url ? html`
       <div class="img-file-input-wrapper solid-border">
         <div class="preview-wrapper">
           <div class="preview-img-placeholder">
@@ -162,14 +166,16 @@ export default class ImageDropzone extends LitElement {
           <img src="/tools/generator/image-dropzone/delete.svg" alt="delete icon" class="icon icon-delete" @click=${this.handleDelete ? this.handleDelete : this.deleteImage}>
         </div>
       </div>`
-      : html`
-    <div class="img-file-input-wrapper">
+    : html`
+    <div class="img-file-input-wrapper ${hasError ? 'error' : ''}">
       <label class="img-file-input-label" @dragover=${this.handleDragover} @dragleave=${this.handleDragleave} @drop=${this.handleImageDrop}>
         <input type="file" class="img-file-input" accept="image/png, image/jpeg, image/jpg, image/svg+xml" @change=${this.onImageChange}>
         <img src="/tools/generator/image-dropzone/image-add.svg" alt="add image icon" class="icon icon-image-add">
         <slot name="img-label"></slot>
       </label>
-    </div>`;
+    </div>`}
+      ${hasError ? html`<div class="error-message">${this.error}</div>` : ''}
+    `;
   }
 }
 

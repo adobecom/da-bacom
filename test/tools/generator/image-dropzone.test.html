@@ -289,6 +289,16 @@
 
           expect(changeEvent).to.be.undefined;
         });
+
+        it('displays error message when error property is set', async () => {
+          const imageDropzone = document.querySelector('image-dropzone');
+          imageDropzone.error = 'This field is required.';
+          await imageDropzone.updateComplete;
+
+          const errorMessage = imageDropzone.shadowRoot.querySelector('.error-message');
+          expect(errorMessage).to.exist;
+          expect(errorMessage.textContent).to.equal('This field is required.');
+        });
       });
     });
   </script>

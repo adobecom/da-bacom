@@ -72,6 +72,12 @@ p {
   transition: all 0.3s ease;
 }
 
+.image-dropzone-container .error-message {
+  font-size: var(--s2-body-xs-size);
+  color: var(--s2-red-900);
+  margin: 0;
+}
+
 .preview p {
   margin: 0;
 }
