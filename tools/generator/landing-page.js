@@ -100,6 +100,7 @@ class LandingPageForm extends LitElement {
       primaryProductOptions: { type: Array },
       isInitialized: { type: Boolean },
       coreLocked: { type: Boolean },
+      missingFields: { type: Object },
     };
   }
 
@@ -116,6 +117,7 @@ class LandingPageForm extends LitElement {
     this.previewMode = this.getInitialPreviewMode();
     this.hasEdit = false;
     this.coreLocked = false;
+    this.missingFields = {};
   }
 
   handleIframeLoad = () => {
@@ -132,6 +134,7 @@ class LandingPageForm extends LitElement {
   resetForm() {
     this.form = { ...FORM_SCHEMA };
     this.coreLocked = false;
+    this.missingFields = {};
     localStorage.removeItem(FORM_STORAGE_KEY);
     localStorage.removeItem(PREVIEW_MODE_STORAGE_KEY);
     if (this.isInitialized) {
@@ -284,6 +287,8 @@ class LandingPageForm extends LitElement {
       newForm.url = `${DRAFT_PATH}${contentType}/${pageName}.html`;
     }
 
+    if (this.missingFields[name]) this.missingFields[name] = false;
+
     this.form = newForm;
     this.saveFormState();
   };
@@ -356,6 +361,8 @@ class LandingPageForm extends LitElement {
       return;
     }
 
+    if (this.missingFields[name]) this.missingFields[name] = false;
+
     // Update template after page generation to correct path
     const path = computeAssetDirFromUrl(this.form.url);
     // TODO: Check if path is ready to be uploaded to
@@ -373,9 +380,16 @@ class LandingPageForm extends LitElement {
 
   async handleSubmit(e) {
     e.preventDefault();
-    // TODO: Validate form data
     if (!this.isFormComplete()) {
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Please complete all required fields' } }));
+      const required = this.getRequiredFields();
+      const newMissingFields = {};
+      required.forEach((field) => {
+        if (!this.form[field]) {
+          newMissingFields[field] = true;
+        }
+      });
+      this.missingFields = { ...this.missingFields, ...newMissingFields };
+      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Please complete all required fields', timeout: 5000 } }));
       return;
     }
     document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.INFO, message: 'Saving page...', timeout: 5000 } }));
@@ -412,16 +426,47 @@ class LandingPageForm extends LitElement {
     }
   }
 
-  isFormComplete() {
-    const required = ['contentType', 'gated', 'url'];
-    const hasRequired = required.every((field) => this.form[field]);
+  getRequiredFields() {
+    const required = [
+      'contentType',
+      'gated',
+      'url',
+      'marqueeEyebrow',
+      'marqueeHeadline',
+      'marqueeImage',
+      'bodyDescription',
+      'cardTitle',
+      'cardDescription',
+      'cardImage',
+      'contentTypeCaas',
+      'seoMetadataTitle',
+      'seoMetadataDescription',
+      'primaryProductName',
+      'experienceFragment',
+    ];
 
-    const typeKey = (this.form.contentType || '').toLowerCase();
-    if (typeKey === 'video/demo' && !this.form.videoAsset) {
-      return false;
+    if (this.form.gated === 'Gated') {
+      required.push('formTemplate', 'campaignId', 'marketoPOI');
     }
 
+    const typeKey = (this.form.contentType || '').toLowerCase();
+    if (typeKey === 'video/demo') {
+      required.push('videoAsset');
+    } else {
+      required.push('pdfAsset');
+    }
+
+    return required;
+  }
+
+  isFormComplete() {
+    const required = this.getRequiredFields();
+    const hasRequired = required.every((field) => this.form[field]);
     return hasRequired;
+  }
+
+  hasError(fieldName) {
+    return this.missingFields[fieldName] && !this.form[fieldName] ? 'This field is required.' : '';
   }
 
   render() {
@@ -429,26 +474,27 @@ class LandingPageForm extends LitElement {
     const { templatePath } = this.getTemplate();
     const iframeSrc = `${AEM_LIVE}${templatePath}${PREVIEW_PARAMS}`;
     const canConfirm = this.form.contentType && this.form.gated && this.form.marqueeHeadline;
+    const hasError = this.hasError.bind(this);
 
     return html`
       <h1>Landing Page Builder</h1>
       <div class="builder-container">
         <form @submit=${this.handleSubmit}>
-          ${renderContentType(this.form, this.handleInput, this.coreLocked)}
+          ${renderContentType(this.form, this.handleInput, this.coreLocked, hasError)}
           ${this.coreLocked ? html`
-            ${renderForm(this.form, this.handleInput, { marketoPOIOptions: this.marketoPOIOptions })}
-            ${renderMarquee(this.form, this.handleInput, this.handleImageChange.bind(this))}
-            ${renderBody(this.form, this.handleInput, this.handleImageChange.bind(this))}
-            ${renderCard(this.form, this.handleInput, this.handleImageChange.bind(this))}
-            ${renderCaas(this.form, this.handleInput, { contentTypeOptions: this.contentTypeOptions, primaryProductOptions: this.primaryProductOptions })}
-            ${renderSeo(this.form, this.handleInput, { primaryProductNameOptions: this.options?.primaryProductName })}
-            ${renderExperienceFragment(this.form, this.handleInput, { fragmentOptions: this.options?.experienceFragment })}
-            ${renderAssetDelivery(this.form, this.handleInput)}
+            ${renderForm(this.form, this.handleInput, { marketoPOIOptions: this.marketoPOIOptions, hasError })}
+            ${renderMarquee(this.form, this.handleInput, this.handleImageChange.bind(this), hasError)}
+            ${renderBody(this.form, this.handleInput, this.handleImageChange.bind(this), hasError)}
+            ${renderCard(this.form, this.handleInput, this.handleImageChange.bind(this), hasError)}
+            ${renderCaas(this.form, this.handleInput, { contentTypeOptions: this.contentTypeOptions, primaryProductOptions: this.primaryProductOptions, hasError })}
+            ${renderSeo(this.form, this.handleInput, { primaryProductNameOptions: this.options?.primaryProductName }, hasError)}
+            ${renderExperienceFragment(this.form, this.handleInput, { fragmentOptions: this.options?.experienceFragment }, hasError)}
+            ${renderAssetDelivery(this.form, this.handleInput, hasError)}
             <div class="submit-row">
-              <sl-button ?disabled=${!isFormComplete} type="submit" @click=${this.handleSubmit}>
+              <sl-button type="submit" @click=${this.handleSubmit}>
                 Generate
               </sl-button>
-              <sl-button ?disabled=${!isFormComplete && !this.hasEdit} @click=${this.handlePreview}>
+              <sl-button ?disabled=${!isFormComplete || !this.hasEdit} @click=${this.handlePreview}>
                 Preview Page
               </sl-button>
               <sl-button class="reset" @click=${this.resetForm}>
