@@ -36,7 +36,7 @@
     return link;
   }
 
-  const userAgentMeta = document.querySelector('meta[name="hrefLinksUserAgents"]');
+  const userAgentMeta = document.querySelector('meta[name="hreflinksuseragents"]');
   const allowedAgents = userAgentMeta && userAgentMeta.contet.split(',');
   const userAgentString = window.navigator.userAgent;
   console.log(userAgentMeta, allowedAgents, userAgentString)
