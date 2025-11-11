@@ -145,26 +145,6 @@ const CONFIG = {
   atvCaptionsKey: 'bacom',
 };
 
-export const EVENT_LIBS = (() => {
-  const version = 'v1';
-  const { hostname, search } = window.location;
-
-  if (!(hostname.includes('.hlx.') || hostname.includes('.aem.') || hostname.includes('local'))) {
-    return `/event-libs/${version}`;
-  }
-
-  const branch = new URLSearchParams(search).get('eventlibs') || 'main';
-  if (branch === 'local') {
-    return `http://localhost:3868/event-libs/${version}`;
-  }
-
-  if (branch.includes('--')) {
-    return `https://${branch}.aem.live/event-libs/${version}`;
-  }
-
-  return `https://${branch}--event-libs--adobecom.aem.live/event-libs/${version}`;
-})();
-
 const eagerLoad = (img) => {
   img?.setAttribute('loading', 'eager');
   img?.setAttribute('fetchpriority', 'high');
@@ -228,6 +208,19 @@ export function transformExlLinks(locale) {
   });
 }
 
+export const EVENT_LIBS = (() => {
+  const version = 'v1';
+  const { hostname, search } = window.location;
+
+  if (!['.aem.', '.hlx.', 'local'].some((i) => hostname.includes(i))) return `/event-libs/${version}`;
+  const branch = new URLSearchParams(search).get('eventlibs') || 'main';
+  if (branch === 'local') return `http://localhost:3868/event-libs/${version}`;
+  if (branch.includes('--')) return `https://${branch}.aem.live/event-libs/${version}`;
+  return `https://${branch}--event-libs--adobecom.aem.live/event-libs/${version}`;
+})();
+
+let eventsError;
+
 async function loadPage() {
   const {
     loadArea, loadLana, setConfig, createTag, getMetadata, getLocale,
@@ -240,7 +233,7 @@ async function loadPage() {
     try {
       eventUtils = await import(`${EVENT_LIBS}/libs.js`);
     } catch (e) {
-      window?.lana?.log(`Could not import event-libs. ${e}`, { tags: 'event-libs' });
+      eventsError = [`Could not import event-libs. ${e}`, { tags: 'event-libs' }];
     }
   }
 
@@ -271,7 +264,7 @@ async function loadPage() {
       externalLibs: [
         {
           base: EVENT_LIBS,
-          blocks: eventUtils?.EVENT_BLOCKS, // or your custom EVENT_BLOCKS_OVERRIDE
+          blocks: eventUtils.EVENT_BLOCKS, // or your custom EVENT_BLOCKS_OVERRIDE
         },
       ],
     };
@@ -313,3 +306,5 @@ loadPage();
   // eslint-disable-next-line import/no-unresolved
   import('https://da.live/scripts/dapreview.js').then(({ default: daPreview }) => daPreview(loadPage));
 }());
+
+if (eventsError) window.lana?.log([eventsError[0], eventsError[1]]);
