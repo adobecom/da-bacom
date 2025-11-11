@@ -37,7 +37,7 @@
   }
 
   const userAgentMeta = document.querySelector('meta[name="hreflinksuseragents"]');
-  const allowedAgents = userAgentMeta && userAgentMeta.contet.split(',');
+  const allowedAgents = userAgentMeta && userAgentMeta.content.split(',');
   const userAgentString = window.navigator.userAgent;
   console.log(userAgentMeta, allowedAgents, userAgentString)
   let isAllowedAgent = allowedAgents.some((agent) => userAgentString.includes(agent));
