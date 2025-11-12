@@ -28,7 +28,7 @@ function optionsSelect(form, handleInput, optionName, optionLabel, options, hasE
   </sl-select>`;
 }
 
-export function renderContentType(form, handleInput, isLocked = false, hasError = () => '') {
+export function renderContentType(form, handleInput, regionOptions, isLocked = false, hasError = () => '') {
   return html`
     <div class="form-row core-options ${isLocked ? 'locked' : ''}">
       <h2>Core Options</h2>
@@ -55,6 +55,7 @@ export function renderContentType(form, handleInput, isLocked = false, hasError 
           <option value="Ungated" ?selected=${form.gated === 'Ungated'}>Ungated</option>
           <option value="Gated" ?selected=${form.gated === 'Gated'}>Gated</option>
       </sl-select>
+      ${optionsSelect(form, handleInput, 'region', 'Region*', regionOptions, hasError)}
       <sl-input type="text" name="marqueeHeadline" .value=${form.marqueeHeadline} placeholder="Marquee Headline*" label="Marquee Headline*" error=${hasError('marqueeHeadline')} @input=${handleInput}></sl-input>
       <sl-input type="text" name="url" .value=${form.url} placeholder="/resources/..." label="URL*" error=${hasError('url')} @input=${handleInput}></sl-input>
     </div>
