@@ -29,9 +29,25 @@ function optionsSelect(form, handleInput, optionName, optionLabel, options, hasE
 }
 
 export function renderContentType(form, handleInput, regionOptions, isLocked = false, hasError = () => '') {
+  // todo no gated video/demo
+  // no long page
+  // single page only
+  // programatic thank you message - on the block level
+  // mainly for guides and reports - need to get text
+  // infographics are not usualy gated
   return html`
     <div class="form-row core-options ${isLocked ? 'locked' : ''}">
       <h2>Core Options</h2>
+      <sl-select
+        .value=${form.gated}
+        name="gated"
+        label="Gated / Ungated*"
+        error=${hasError('gated')}
+        @change=${handleInput}>
+          <option value="" ?selected=${form.gated === ''}>--Select--</option>
+          <option value="Ungated" ?selected=${form.gated === 'Ungated'}>Ungated</option>
+          <option value="Gated" ?selected=${form.gated === 'Gated'}>Gated</option>
+      </sl-select>
       <sl-select
         .value=${form.contentType}
         name="contentType"
@@ -44,16 +60,6 @@ export function renderContentType(form, handleInput, regionOptions, isLocked = f
         <option value="Infographic" ?selected=${form.contentType === 'Infographic'}>Infographic</option>
         <option value="Report" ?selected=${form.contentType === 'Report'}>Report</option>
         <option value="Video/Demo" ?selected=${form.contentType === 'Video/Demo'}>Video/Demo</option>
-      </sl-select>
-      <sl-select
-        .value=${form.gated}
-        name="gated"
-        label="Gated / Ungated*"
-        error=${hasError('gated')}
-        @change=${handleInput}>
-          <option value="" ?selected=${form.gated === ''}>--Select--</option>
-          <option value="Ungated" ?selected=${form.gated === 'Ungated'}>Ungated</option>
-          <option value="Gated" ?selected=${form.gated === 'Gated'}>Gated</option>
       </sl-select>
       ${optionsSelect(form, handleInput, 'region', 'Region*', regionOptions, hasError)}
       <sl-input type="text" name="marqueeHeadline" .value=${form.marqueeHeadline} placeholder="Marquee Headline*" label="Marquee Headline*" error=${hasError('marqueeHeadline')} @input=${handleInput}></sl-input>

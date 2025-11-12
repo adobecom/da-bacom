@@ -36,6 +36,7 @@ const style = await getStyle(import.meta.url.split('?')[0]);
 
 const ADMIN_URL = 'https://admin.hlx.page';
 const AEM_LIVE = 'https://main--da-bacom--adobecom.aem.live';
+const AEM_PAGE = 'https://main--da-bacom--adobecom.aem.page';
 const PREVIEW_PARAMS = '?martech=off&dapreview=on';
 const FORM_STORAGE_KEY = 'landing-page-builder';
 const OPTIONS_LOADING = [{ value: 'loading', label: 'Loading...' }];
@@ -81,6 +82,15 @@ const FORM_SCHEMA = {
   videoAsset: '',
   url: '',
 };
+
+const delay = (milliseconds) => new Promise((resolve) => { setTimeout(resolve, milliseconds); });
+
+function showToast(message, type, timeout) {
+  document.dispatchEvent(new CustomEvent('show-toast', { detail: { type, message, timeout } }));
+  if (DEBUG && type === 'error') {
+    console.trace();
+  }
+}
 
 function computeAssetDirFromUrl(url) {
   let path = '/tools/page-builder/.prd-template/';
@@ -160,7 +170,7 @@ class LandingPageForm extends LitElement {
       if (!savedForm) return;
       this.form = { ...FORM_SCHEMA, ...savedForm };
     } catch (error) {
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Failed to load saved form data' } }));
+      showToast('Failed to load saved form data', TOAST_TYPES.ERROR);
     }
   }
 
@@ -213,7 +223,7 @@ class LandingPageForm extends LitElement {
       this.isInitialized = true;
       this.requestUpdate();
     } catch (error) {
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: `Error loading options: ${error.message}` } }));
+      showToast(`Error loading options: ${error.message}`, TOAST_TYPES.ERROR);
       this.requestUpdate();
     }
   }
@@ -252,6 +262,8 @@ class LandingPageForm extends LitElement {
 
   templatePlaceholders(form) {
     // TODO: Update dynamic placeholders
+    // Please share your contact information to get the [report, eBook, guide, infographic, whitepaper, etc.].
+    // Thank you. Your [report, guide] is ready below.
     const state = {
       'program.campaignids.sfdc': form.campaignId,
       'program.poi': form.marketoPOI,
@@ -309,7 +321,7 @@ class LandingPageForm extends LitElement {
     e.stopPropagation();
     const { contentType, gated, marqueeHeadline } = this.form;
     if (!contentType || !gated || !marqueeHeadline) {
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Please fill in all core options before confirming' } }));
+      showToast('Please fill in all core options before confirming', TOAST_TYPES.ERROR);
       return;
     }
     this.coreLocked = true;
@@ -337,7 +349,6 @@ class LandingPageForm extends LitElement {
 
   disconnectedCallback() {
     document.removeEventListener('show-toast', this.handleToast);
-    if (this.headAbortController) { try { this.headAbortController.abort(); } catch { /* no-op */ } }
     Object.values(this.form).forEach((value) => {
       if (value?.url && value.url.startsWith('blob:')) {
         URL.revokeObjectURL(value.url);
@@ -354,7 +365,7 @@ class LandingPageForm extends LitElement {
 
       return imageUrl;
     } catch (e) {
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Failed to upload file' } }));
+      showToast('Failed to upload file', TOAST_TYPES.ERROR);
       return null;
     }
   }
@@ -381,29 +392,15 @@ class LandingPageForm extends LitElement {
       .then((url) => {
         if (!url) return;
         this.form[name] = { url, name: file.name };
-        document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Image Uploaded', timeout: 5000 } }));
+        showToast('Image Uploaded', 'success', 5000);
       }).catch((error) => {
-        document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: `Upload failed: ${error.message}` } }));
+        showToast(`Upload failed: ${error.message}`, 'error');
       }).finally(() => {
         this.saveFormState();
       });
   }
 
-  async handleSubmit(e) {
-    e.preventDefault();
-    if (!this.isFormComplete()) {
-      const required = this.getRequiredFields();
-      const newMissingFields = {};
-      required.forEach((field) => {
-        if (!this.form[field]) {
-          newMissingFields[field] = true;
-        }
-      });
-      this.missingFields = { ...this.missingFields, ...newMissingFields };
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Please complete all required fields', timeout: 5000 } }));
-      return;
-    }
-    document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.INFO, message: 'Saving page...', timeout: 5000 } }));
+  async savePage() {
     await this.getTemplateContent();
     const placeholders = this.templatePlaceholders(this.form);
     if (DEBUG) {
@@ -413,28 +410,27 @@ class LandingPageForm extends LitElement {
     try {
       const sourcePath = await saveSource(this.form.url, generatedPage);
       this.hasEdit = !!sourcePath;
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.SUCCESS, message: `Page saved ${this.hasEdit}`, timeout: 5000 } }));
       this.requestUpdate();
+      return true;
     } catch (error) {
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: `Failed to save page: ${error.message}` } }));
+      return false;
     }
   }
 
-  async handlePreview() {
-    document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.INFO, message: 'Previewing page...', timeout: 5000 } }));
+  async previewPage() {
     const path = this.form.url.replace('.html', '');
     const previewApi = `${ADMIN_URL}/preview/adobecom/da-bacom/main${path}`;
     const previewApiResponse = await fetch(previewApi, { method: 'POST' });
     if (!previewApiResponse.ok) {
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Failed to get preview' } }));
-      return;
+      return false;
     }
     const previewApiData = await previewApiResponse.json();
     if (previewApiData?.preview?.status === 200) {
       window.open(previewApiData.preview.url, '_blank');
     } else {
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Failed to open preview' } }));
+      return false;
     }
+    return true;
   }
 
   getRequiredFields() {
@@ -465,7 +461,7 @@ class LandingPageForm extends LitElement {
     if (typeKey === 'video/demo') {
       required.push('videoAsset');
     } else {
-      required.push('pdfAsset');
+      // required.push('pdfAsset');
     }
 
     return required;
@@ -481,8 +477,39 @@ class LandingPageForm extends LitElement {
     return this.missingFields[fieldName] && !this.form[fieldName] ? 'This field is required.' : '';
   }
 
+  async handleSubmit(e) {
+    e.preventDefault();
+    if (!this.isFormComplete()) {
+      const required = this.getRequiredFields();
+      const newMissingFields = {};
+      required.forEach((field) => {
+        if (!this.form[field]) {
+          newMissingFields[field] = true;
+        }
+      });
+      this.missingFields = { ...this.missingFields, ...newMissingFields };
+      showToast('Please complete all required fields', TOAST_TYPES.ERROR, 5000);
+      return;
+    }
+
+    showToast('Saving page...', TOAST_TYPES.INFO, 5000);
+    const saveSuccess = await this.savePage();
+    if (!saveSuccess) {
+      showToast('Failed to save page', TOAST_TYPES.ERROR, 5000);
+      return;
+    }
+    showToast('Page saved', TOAST_TYPES.SUCCESS, 5000);
+    await delay(1000);
+    showToast('Updating preview...', TOAST_TYPES.INFO, 5000);
+    const previewSuccess = await this.previewPage();
+    if (!previewSuccess) {
+      showToast('Failed to update preview', TOAST_TYPES.ERROR, 5000);
+      return;
+    }
+    showToast('Preview updated', TOAST_TYPES.SUCCESS, 5000);
+  }
+
   render() {
-    const isFormComplete = this.isFormComplete();
     const { templatePath } = this.getTemplate();
     const iframeSrc = `${AEM_LIVE}${templatePath}${PREVIEW_PARAMS}`;
     const canConfirm = this.form.url !== '';
@@ -504,10 +531,7 @@ class LandingPageForm extends LitElement {
             ${renderAssetDelivery(this.form, this.handleInput, hasError)}
             <div class="submit-row">
               <sl-button type="submit" @click=${this.handleSubmit}>
-                Generate
-              </sl-button>
-              <sl-button ?disabled=${!isFormComplete || !this.hasEdit} @click=${this.handlePreview}>
-                Preview Page
+                Save & Preview
               </sl-button>
               <sl-button class="reset" @click=${this.resetForm}>
                 Reset Form
