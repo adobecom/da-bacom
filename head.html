@@ -70,7 +70,7 @@
   const schema = document.querySelector('[type="application/ld+json"]');
 
   if (!schema) {  
-    const dynamicSchema = {
+    const schema = {
       "@context": "https://schema.org",
       "@type": "WebPage",
       "name": document.title?.split('|')[0] || 'Adobe for Business' , // title of the page
