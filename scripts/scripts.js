@@ -260,7 +260,7 @@ async function loadPage() {
 
   if (eventUtils) {
     eventConfigItems = {
-      decorateArea: () => eventUtils?.decorateEvent(document),
+      decorateArea: (area = document) => eventUtils?.decorateEvent(area),
       externalLibs: [
         {
           base: EVENT_LIBS,
