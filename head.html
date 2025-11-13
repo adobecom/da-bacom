@@ -66,6 +66,22 @@
 
     document.head.querySelector('title').after(xDefault, enUs, ...links);
   }
+
+  const schema = document.querySelector('[type="application/ld+json"]');
+
+  if (!schema) {  
+    const schema = {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": 'Adobe for Business', 
+      "url": window.location.href 
+    }
+
+    const scriptTag = document.createElement('script');
+    scriptTag.setAttribute('type', 'application/ld+json');
+    scriptTag.innerText = JSON.stringify(schema);
+    document.head.append(scriptTag);
+  }
 </script>
 <script src="/scripts/scripts.js" type="module"></script>
 <style>body { display: none; }</style>
