@@ -172,7 +172,7 @@ export const getLCPImages = (doc) => {
   return [lcpSection.querySelector('img') || doc.querySelector('img')];
 };
 
-(function loadLCPImage() {
+(async function loadLCPImage() {
   const lcpImages = getLCPImages(document);
   lcpImages?.forEach(eagerLoad);
 }());
