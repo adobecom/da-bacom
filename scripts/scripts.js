@@ -208,10 +208,35 @@ export function transformExlLinks(locale) {
   });
 }
 
+export const EVENT_LIBS = (() => {
+  const version = 'v1';
+  const { hostname, search } = window.location;
+
+  if (!['.aem.', '.hlx.', 'local'].some((i) => hostname.includes(i))) return `/event-libs/${version}`;
+  const branch = new URLSearchParams(search).get('eventlibs') || 'main';
+  if (branch === 'local') return `http://localhost:3868/event-libs/${version}`;
+  if (branch.includes('--')) return `https://${branch}.aem.live/event-libs/${version}`;
+  return `https://${branch}--event-libs--adobecom.aem.live/event-libs/${version}`;
+})();
+
+let eventsError;
+
 async function loadPage() {
   const {
     loadArea, loadLana, setConfig, createTag, getMetadata, getLocale,
   } = await import(`${LIBS}/utils/utils.js`);
+
+  let eventUtils;
+  const eventMD = getMetadata('event-id');
+
+  if (eventMD) {
+    try {
+      eventUtils = await import(`${EVENT_LIBS}/libs.js`);
+    } catch (e) {
+      eventsError = [`Could not import event-libs. ${e}`, { tags: 'event-libs' }];
+    }
+  }
+
   if (getMetadata('template') === '404') window.SAMPLE_PAGEVIEWS_AT_RATE = 'high';
 
   const metaCta = document.querySelector('meta[name="chat-cta"]');
@@ -231,10 +256,33 @@ async function loadPage() {
     if (lastSection) lastSection.insertAdjacentElement('beforeend', a);
   }
 
-  setConfig({ ...CONFIG, miloLibs: LIBS });
+  let eventConfigItems;
+
+  if (eventUtils) {
+    eventConfigItems = {
+      decorateArea: (area = document) => eventUtils?.decorateEvent(area),
+      externalLibs: [
+        {
+          base: EVENT_LIBS,
+          blocks: eventUtils.EVENT_BLOCKS, // or your custom EVENT_BLOCKS_OVERRIDE
+        },
+      ],
+    };
+  }
+
+  setConfig({ ...CONFIG, ...eventConfigItems, miloLibs: LIBS });
+
+  if (eventMD && eventUtils?.setEventConfig) eventUtils.setEventConfig({ cmsType: 'DA' }, CONFIG);
+  if (eventMD && eventUtils?.decorateEvent) eventUtils.decorateEvent(document);
+
   loadLana({ clientId: 'bacom', tags: 'info', endpoint: 'https://business.adobe.com/lana/ll', endpointStage: 'https://business.stage.adobe.com/lana/ll' });
   transformExlLinks(getLocale(CONFIG.locales));
+
   await loadArea();
+
+  if (eventMD && eventUtils?.eventsDelayedActions) {
+    eventUtils.eventsDelayedActions();
+  }
 
   if (document.querySelector('meta[name="aa-university"]')) {
     const { default: registerAAUniversity } = await import('./aa-university.js');
@@ -250,7 +298,6 @@ async function loadPage() {
   });
   observer.observe({ type: 'resource', buffered: true });
 }
-
 loadPage();
 
 // DA Live Preview
@@ -259,3 +306,5 @@ loadPage();
   // eslint-disable-next-line import/no-unresolved
   import('https://da.live/scripts/dapreview.js').then(({ default: daPreview }) => daPreview(loadPage));
 }());
+
+if (eventsError) window.lana?.log([eventsError[0], eventsError[1]]);
