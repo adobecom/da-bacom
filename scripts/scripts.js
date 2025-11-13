@@ -172,7 +172,7 @@ export const getLCPImages = (doc) => {
   return [lcpSection.querySelector('img') || doc.querySelector('img')];
 };
 
-(async function loadLCPImage() {
+(function loadLCPImage() {
   const lcpImages = getLCPImages(document);
   lcpImages?.forEach(eagerLoad);
 }());
@@ -260,7 +260,7 @@ async function loadPage() {
 
   if (eventUtils) {
     eventConfigItems = {
-      decorateArea: () => eventUtils?.decorateEvent(document),
+      decorateArea: (area = document) => eventUtils?.decorateEvent(area),
       externalLibs: [
         {
           base: EVENT_LIBS,
