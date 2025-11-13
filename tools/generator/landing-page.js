@@ -41,7 +41,7 @@ const FORM_STORAGE_KEY = 'landing-page-builder';
 const OPTIONS_LOADING = [{ value: 'loading', label: 'Loading...' }];
 const OPTIONS_ERROR = [{ value: 'error', label: 'Error loading options' }];
 const PREVIEW_MODE_STORAGE_KEY = 'landing-page-preview-mode';
-const DRAFT_PATH = '/drafts/page-builder/';
+const DRAFT_PATH = '/drafts/landing-page-builder/';
 const DEBUG = window.location.search.includes('debug');
 
 const TEMPLATE_MAP = {
@@ -60,6 +60,7 @@ const IMAGES = ['marqueeImage', 'bodyImage', 'cardImage'];
 const FORM_SCHEMA = {
   contentType: '',
   gated: '',
+  region: '',
   formTemplate: '',
   campaignId: '',
   marketoPOI: '',
@@ -195,7 +196,7 @@ class LandingPageForm extends LitElement {
     this.token = token?.accessToken?.token;
     this.options = await fetchPageOptions();
     this.loadFormState();
-    this.coreLocked = this.form.contentType && this.form.gated && this.form.marqueeHeadline;
+    this.coreLocked = this.form.url !== '';
 
     try {
       if (!this.token) throw new Error('Failed to get token');
@@ -269,6 +270,18 @@ class LandingPageForm extends LitElement {
     };
   }
 
+  generateUrl(form) {
+    if (form.marqueeHeadline && form.contentType && form.gated && form.region) {
+      const pageName = form.marqueeHeadline?.toLowerCase().trim().replace(/[^a-z0-9\-\s_/]/g, '').replace(/[\s_/]+/g, '-') || '';
+      const contentType = form.contentType?.toLowerCase().replace('/', '-') || '';
+      const region = form.region.replace(/\/$/, '') || '';
+      const year = new Date().getFullYear();
+      const month = new Date().getMonth() + 1;
+      return `${region}${DRAFT_PATH}${contentType}/${year}/${month}/${pageName}.html`;
+    }
+    return '';
+  }
+
   handleInput = (e) => {
     if (!this.isInitialized) return;
 
@@ -281,10 +294,8 @@ class LandingPageForm extends LitElement {
 
     newForm[name] = value;
 
-    if (name === 'marqueeHeadline' || name === 'contentType') {
-      const pageName = newForm.marqueeHeadline?.toLowerCase().trim().replace(/[^a-z0-9\-\s_/]/g, '').replace(/[\s_/]+/g, '-') || '';
-      const contentType = newForm.contentType?.toLowerCase().replace('/', '-') || '';
-      newForm.url = `${DRAFT_PATH}${contentType}/${pageName}.html`;
+    if (['marqueeHeadline', 'contentType', 'gated', 'region'].includes(name)) {
+      newForm.url = this.generateUrl(newForm);
     }
 
     if (this.missingFields[name]) this.missingFields[name] = false;
@@ -430,6 +441,7 @@ class LandingPageForm extends LitElement {
     const required = [
       'contentType',
       'gated',
+      'region',
       'url',
       'marqueeEyebrow',
       'marqueeHeadline',
@@ -473,14 +485,14 @@ class LandingPageForm extends LitElement {
     const isFormComplete = this.isFormComplete();
     const { templatePath } = this.getTemplate();
     const iframeSrc = `${AEM_LIVE}${templatePath}${PREVIEW_PARAMS}`;
-    const canConfirm = this.form.contentType && this.form.gated && this.form.marqueeHeadline;
+    const canConfirm = this.form.url !== '';
     const hasError = this.hasError.bind(this);
 
     return html`
       <h1>Landing Page Builder</h1>
       <div class="builder-container">
         <form @submit=${this.handleSubmit}>
-          ${renderContentType(this.form, this.handleInput, this.coreLocked, hasError)}
+          ${renderContentType(this.form, this.handleInput, this.options?.regions, this.coreLocked, hasError)}
           ${this.coreLocked ? html`
             ${renderForm(this.form, this.handleInput, { marketoPOIOptions: this.marketoPOIOptions, hasError })}
             ${renderMarquee(this.form, this.handleInput, this.handleImageChange.bind(this), hasError)}
