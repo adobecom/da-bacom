@@ -82,6 +82,8 @@ const FORM_SCHEMA = {
   url: '',
 };
 
+const delay = (milliseconds) => new Promise((resolve) => { setTimeout(resolve, milliseconds); });
+
 function computeAssetDirFromUrl(url) {
   let path = '/tools/page-builder/.prd-template/';
   if (!url) return path;
@@ -337,7 +339,6 @@ class LandingPageForm extends LitElement {
 
   disconnectedCallback() {
     document.removeEventListener('show-toast', this.handleToast);
-    if (this.headAbortController) { try { this.headAbortController.abort(); } catch { /* no-op */ } }
     Object.values(this.form).forEach((value) => {
       if (value?.url && value.url.startsWith('blob:')) {
         URL.revokeObjectURL(value.url);
@@ -389,6 +390,41 @@ class LandingPageForm extends LitElement {
       });
   }
 
+  async savePage() {
+    document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.INFO, message: 'Saving page...', timeout: 5000 } }));
+    await this.getTemplateContent();
+    const placeholders = this.templatePlaceholders(this.form);
+    if (DEBUG) {
+      console.table(placeholders);
+    }
+    const generatedPage = applyTemplateData(this.templateHTML, placeholders);
+    try {
+      const sourcePath = await saveSource(this.form.url, generatedPage);
+      this.hasEdit = !!sourcePath;
+      this.requestUpdate();
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  async previewPage() {
+    document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.INFO, message: 'Previewing page...', timeout: 5000 } }));
+    const path = this.form.url.replace('.html', '');
+    const previewApi = `${ADMIN_URL}/preview/adobecom/da-bacom/main${path}`;
+    const previewApiResponse = await fetch(previewApi, { method: 'POST' });
+    if (!previewApiResponse.ok) {
+      return false;
+    }
+    const previewApiData = await previewApiResponse.json();
+    if (previewApiData?.preview?.status === 200) {
+      window.open(previewApiData.preview.url, '_blank');
+    } else {
+      return false;
+    }
+    return true;
+  }
+
   async handleSubmit(e) {
     e.preventDefault();
     if (!this.isFormComplete()) {
@@ -403,38 +439,22 @@ class LandingPageForm extends LitElement {
       document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Please complete all required fields', timeout: 5000 } }));
       return;
     }
-    document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.INFO, message: 'Saving page...', timeout: 5000 } }));
-    await this.getTemplateContent();
-    const placeholders = this.templatePlaceholders(this.form);
-    if (DEBUG) {
-      console.table(placeholders);
-    }
-    const generatedPage = applyTemplateData(this.templateHTML, placeholders);
-    try {
-      const sourcePath = await saveSource(this.form.url, generatedPage);
-      this.hasEdit = !!sourcePath;
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.SUCCESS, message: `Page saved ${this.hasEdit}`, timeout: 5000 } }));
-      this.requestUpdate();
-    } catch (error) {
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: `Failed to save page: ${error.message}` } }));
-    }
-  }
 
-  async handlePreview() {
-    document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.INFO, message: 'Previewing page...', timeout: 5000 } }));
-    const path = this.form.url.replace('.html', '');
-    const previewApi = `${ADMIN_URL}/preview/adobecom/da-bacom/main${path}`;
-    const previewApiResponse = await fetch(previewApi, { method: 'POST' });
-    if (!previewApiResponse.ok) {
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Failed to get preview' } }));
+    document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.INFO, message: 'Saving page...', timeout: 5000 } }));
+    const saveSuccess = await this.savePage();
+    if (!saveSuccess) {
+      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Failed to save page', timeout: 5000 } }));
       return;
     }
-    const previewApiData = await previewApiResponse.json();
-    if (previewApiData?.preview?.status === 200) {
-      window.open(previewApiData.preview.url, '_blank');
-    } else {
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Failed to open preview' } }));
+    document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.SUCCESS, message: 'Page saved', timeout: 5000 } }));
+    await delay(1000);
+    document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.INFO, message: 'Updating preview...', timeout: 5000 } }));
+    const previewSuccess = await this.previewPage();
+    if (!previewSuccess) {
+      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Failed to update preview', timeout: 5000 } }));
+      return;
     }
+    document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.SUCCESS, message: 'Preview updated', timeout: 5000 } }));
   }
 
   getRequiredFields() {
@@ -482,14 +502,13 @@ class LandingPageForm extends LitElement {
   }
 
   render() {
-    const isFormComplete = this.isFormComplete();
     const { templatePath } = this.getTemplate();
     const iframeSrc = `${AEM_LIVE}${templatePath}${PREVIEW_PARAMS}`;
     const canConfirm = this.form.url !== '';
     const hasError = this.hasError.bind(this);
 
     return html`
-      <h1>Landing Page Builder</h1>
+      <h1>Landing Page Builder - UAT</h1>
       <div class="builder-container">
         <form @submit=${this.handleSubmit}>
           ${renderContentType(this.form, this.handleInput, this.options?.regions, this.coreLocked, hasError)}
@@ -504,10 +523,7 @@ class LandingPageForm extends LitElement {
             ${renderAssetDelivery(this.form, this.handleInput, hasError)}
             <div class="submit-row">
               <sl-button type="submit" @click=${this.handleSubmit}>
-                Generate
-              </sl-button>
-              <sl-button ?disabled=${!isFormComplete || !this.hasEdit} @click=${this.handlePreview}>
-                Preview Page
+                Save & Preview
               </sl-button>
               <sl-button class="reset" @click=${this.resetForm}>
                 Reset Form
