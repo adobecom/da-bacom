@@ -67,21 +67,19 @@
     document.head.querySelector('title').after(xDefault, enUs, ...links);
   }
 
-  const schema = document.querySelector('[type="application/ld+json"]');
+  const sheetSchema = document.querySelector('[type="application/ld+json"]');
 
-  if (!schema) {  
-    const schema = {
-      "@context": "https://schema.org",
-      "@type": "WebPage",
-      "name": 'Adobe for Business', 
-      "url": window.location.href 
-    }
-
-    const scriptTag = document.createElement('script');
-    scriptTag.setAttribute('type', 'application/ld+json');
-    scriptTag.innerText = JSON.stringify(schema);
-    document.head.append(scriptTag);
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": 'Adobe for Business', 
+    "url": window.location.href 
   }
+
+  const jsonLD = document.createElement('script');
+  jsonLD.setAttribute('type', 'application/ld+json');
+  scriptTag.innerText = JSON.stringify(schema);
+  sheetSchema ? sheetSchema.after(jsonLD) : document.head.append(jsonLD);
 </script>
 <script src="/scripts/scripts.js" type="module"></script>
 <style>body { display: none; }</style>
