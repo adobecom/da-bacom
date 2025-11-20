@@ -52,6 +52,8 @@
           clock.restore();
 
           document.querySelectorAll('toast-message').forEach(el => el.remove());
+          const generator = document.querySelector('da-generator');
+          generator.resetForm();
         });
 
         it('renders correctly', async () => {
@@ -78,6 +80,7 @@
           const formFields = [
             'contentType',
             'gated',
+            'region',
             'marqueeHeadline',
             'url'
           ];
@@ -147,6 +150,70 @@
 
             expect(generator.missingFields).to.not.deep.equal({});
           });
+
+        it('generates and formats URLs correctly', () => {
+          const generator = document.querySelector('da-generator');
+          const year = new Date().getFullYear();
+          const month = new Date().getMonth() + 1;
+
+          const testCases = [
+            { input: {}, expected: '' },
+            { input: { marqueeHeadline: 'Test' }, expected: '' },
+            { input: { marqueeHeadline: 'Test', contentType: 'Guide' }, expected: '' },
+            { input: { marqueeHeadline: 'Test', contentType: 'Guide', gated: 'Gated' }, expected: '' },
+            {
+              input: { marqueeHeadline: 'Test Landing Page', contentType: 'Guide', gated: 'Gated', region: '/' },
+              expected: `/drafts/landing-page-builder/guide/${year}/${month}/test-landing-page.html`
+            },
+            {
+              input: { marqueeHeadline: 'Test: Landing @ Page! (2025)', contentType: 'Guide', gated: 'Gated', region: '/jp/' },
+              expected: `/jp/drafts/landing-page-builder/guide/${year}/${month}/test-landing-page-2025.html`
+            },
+            {
+              input: { marqueeHeadline: 'Test   Multiple    Spaces__and_underscores', contentType: 'Guide', gated: 'Gated', region: '/kr/' },
+              expected: `/kr/drafts/landing-page-builder/guide/${year}/${month}/test-multiple-spaces-and-underscores.html`
+            },
+            {
+              input: { marqueeHeadline: 'Test/Landing/Page', contentType: 'Guide', gated: 'Gated', region: '/au/' },
+              expected: `/au/drafts/landing-page-builder/guide/${year}/${month}/test-landing-page.html`
+            },
+            {
+              input: { marqueeHeadline: 'Test Page', contentType: 'Report', gated: 'Gated', region: '/' },
+              expected: `/drafts/landing-page-builder/report/${year}/${month}/test-page.html`
+            },
+            {
+              input: { marqueeHeadline: 'Test Page', contentType: 'Guide', gated: 'Ungated', region: '/' },
+              expected: `/drafts/landing-page-builder/guide/${year}/${month}/test-page.html`
+            }
+          ];
+
+          testCases.forEach(({ input, expected }) => {
+            const url = generator.generateUrl(input);
+            expect(url).to.equal(expected);
+          });
+        });
+
+        it('updates URL dynamically when form fields change', () => {
+          const generator = document.querySelector('da-generator');
+          generator.isInitialized = true;
+          const fieldTests = [
+            { field: 'marqueeHeadline', value: 'Updated Headline', expectedIncludes: 'updated-headline' },
+            { field: 'contentType', value: 'Report', expectedIncludes: '/report/' },
+            { field: 'region', value: '/jp/', expectedIncludes: '/jp/drafts/' }
+          ];
+
+          for (const { field, value, expectedIncludes } of fieldTests) {
+            generator.form = {
+              marqueeHeadline: 'Test Page',
+              contentType: 'Guide',
+              gated: 'Gated',
+              region: '/'
+            }
+            generator.handleInput({ target: { name: field, value } });
+
+            expect(generator.form.url).to.include(expectedIncludes);
+          }
+        });
       });
     });
   </script>
