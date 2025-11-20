@@ -64,7 +64,7 @@ async function getMarketoPOI() {
 export async function fetchMarketoPOIOptions() {
   try {
     const poiData = await getMarketoPOI();
-    return poiData.map((item) => normalizeOption(item, 'Value', 'Key')).filter(Boolean);
+    return poiData.map((item) => normalizeOption(item, 'Key', 'Value')).filter(Boolean);
   } catch (error) {
     dispatchError(`Marketo POI Options: ${error.message}`);
     return [];
