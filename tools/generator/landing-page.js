@@ -559,7 +559,7 @@ class LandingPageForm extends LitElement {
     const hasError = this.hasError.bind(this);
 
     return html`
-      <h1>Landing Page Builder ${BRANCH ? `- (${BRANCH.toUpperCase()})` : ''}</h1>
+      <h1>Landing Page Builder ${BRANCH ? `- ${BRANCH.toUpperCase()}` : ''}</h1>
       <div class="builder-container">
         <form @submit=${this.handleSubmit}>
           ${renderContentType(this.form, this.handleInput, this.options?.regions, this.coreLocked, hasError)}
