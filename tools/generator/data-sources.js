@@ -1,6 +1,7 @@
 /* eslint-disable no-underscore-dangle, import/no-unresolved */
 import { getTags, getAemRepo, getRootTags } from '../tags/tag-utils.js';
 import { TOAST_TYPES } from './toast/toast.js';
+import { DEFAULT_CONTENT_TYPES, DEFAULT_PRIMARY_PRODUCTS } from './default-tags.js';
 
 const OPTIONS_URL = 'https://main--da-bacom--adobecom.aem.live/tools/landing-page.json';
 const POI_URL = 'https://milo.adobe.com/tools/marketo-options.json';
@@ -13,6 +14,11 @@ const PROJECT = { org: 'adobecom', repo: 'da-bacom' };
 function dispatchError(message) {
   const error = new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message } });
   document.dispatchEvent(error);
+}
+
+function dispatchInfo(message) {
+  const info = new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.INFO, message, timeout: 10000 } });
+  document.dispatchEvent(info);
 }
 
 function normalizeOption(item, valueKey, labelKey) {
@@ -76,8 +82,8 @@ export async function fetchContentTypeOptions(token) {
     const { contentTypes } = await getCaasCollections(token);
     return contentTypes.map((tag) => normalizeOption(tag, 'title', 'name')).filter(Boolean);
   } catch (error) {
-    dispatchError(`Content Type Options: ${error.message}`);
-    return [];
+    dispatchInfo('Could not access content type tags, using backup options');
+    return DEFAULT_CONTENT_TYPES;
   }
 }
 
@@ -86,8 +92,8 @@ export async function fetchPrimaryProductOptions(token) {
     const { primaryProducts } = await getCaasCollections(token);
     return primaryProducts.map((tag) => normalizeOption(tag, 'title', 'name')).filter(Boolean);
   } catch (error) {
-    dispatchError(`Primary Product Options: ${error.message}`);
-    return [];
+    dispatchInfo('Could not access primary product tags, using backup options');
+    return DEFAULT_PRIMARY_PRODUCTS;
   }
 }
 
