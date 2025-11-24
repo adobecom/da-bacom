@@ -8,7 +8,7 @@ import DA_SDK from 'da-sdk';
 import { initIms } from 'da-fetch';
 import { LitElement, html, createRef, ref, nothing } from 'da-lit';
 import { createToast, TOAST_TYPES } from './toast/toast.js';
-import { getSource, saveSource, saveImage } from './da-utils.js';
+import { getSource, saveSource, saveFile } from './da-utils.js';
 import { fetchMarketoPOIOptions, fetchContentTypeOptions, fetchPrimaryProductOptions, fetchPageOptions } from './data-sources.js';
 import {
   getStorageItem,
@@ -33,6 +33,7 @@ import {
 await DA_SDK;
 
 const style = await getStyle(import.meta.url.split('?')[0]);
+const searchParams = new URLSearchParams(window.location.search);
 
 const ADMIN_URL = 'https://admin.hlx.page';
 const AEM_LIVE = 'https://main--da-bacom--adobecom.aem.live';
@@ -42,7 +43,8 @@ const OPTIONS_LOADING = [{ value: 'loading', label: 'Loading...' }];
 const OPTIONS_ERROR = [{ value: 'error', label: 'Error loading options' }];
 const PREVIEW_MODE_STORAGE_KEY = 'landing-page-preview-mode';
 const DRAFT_PATH = '/drafts/landing-page-builder/';
-const DEBUG = window.location.search.includes('debug');
+const BRANCH = searchParams.get('ref') || '';
+const DEBUG = searchParams.get('debug') || false;
 
 const TEMPLATE_MAP = {
   'guide-gated': '/tools/page-builder/prd-template-basic',
@@ -56,6 +58,7 @@ const TEMPLATE_MAP = {
 };
 
 const IMAGES = ['marqueeImage', 'bodyImage', 'cardImage'];
+const FILES = ['pdfAsset'];
 
 const FORM_SCHEMA = {
   contentType: '',
@@ -79,6 +82,7 @@ const FORM_SCHEMA = {
   seoMetadataDescription: '',
   experienceFragment: '',
   videoAsset: '',
+  pdfAsset: null,
   url: '',
 };
 
@@ -147,10 +151,10 @@ class LandingPageForm extends LitElement {
 
   saveFormState() {
     const formToSave = { ...this.form };
-    IMAGES.forEach((image) => {
-      if (!hasOwnProperty.call(formToSave, image)) return;
-      if (formToSave[image]?.url?.startsWith('blob:')) {
-        formToSave[image] = null;
+    [...IMAGES, ...FILES].forEach((field) => {
+      if (!hasOwnProperty.call(formToSave, field)) return;
+      if (formToSave[field]?.url?.startsWith('blob:')) {
+        formToSave[field] = null;
       }
     });
     setStorageItem(FORM_STORAGE_KEY, formToSave);
@@ -270,6 +274,8 @@ class LandingPageForm extends LitElement {
       marqueeImage: form.marqueeImage?.url,
       bodyImage: form.bodyImage?.url,
       cardImage: form.cardImage?.url,
+      pdfAsset: form.pdfAsset?.url,
+      pdfAssetName: form.pdfAsset?.name,
     };
   }
 
@@ -349,16 +355,20 @@ class LandingPageForm extends LitElement {
     super.disconnectedCallback();
   }
 
-  async uploadFile(file, path) {
-    try {
-      const imageUrl = await saveImage(path, file);
-      if (!imageUrl) throw new Error('Failed to upload file');
+  async uploadImage(file, path) {
+    const result = await saveFile(path, file);
+    const url = result?.source?.contentUrl;
+    if (!url) throw new Error('Failed to upload image');
 
-      return imageUrl;
-    } catch (e) {
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Failed to upload file' } }));
-      return null;
-    }
+    return url;
+  }
+
+  async uploadFile(file, path) {
+    const result = await saveFile(path, file);
+    const url = result?.aem?.previewUrl;
+    if (!url) throw new Error('Failed to upload file');
+
+    return url;
   }
 
   handleImageChange(e) {
@@ -379,7 +389,7 @@ class LandingPageForm extends LitElement {
     // Update template after page generation to correct path
     const path = computeAssetDirFromUrl(this.form.url);
     // TODO: Check if path is ready to be uploaded to
-    this.uploadFile(file, path)
+    this.uploadImage(file, path)
       .then((url) => {
         if (!url) return;
         this.form[name] = { url, name: file.name };
@@ -389,6 +399,46 @@ class LandingPageForm extends LitElement {
       }).finally(() => {
         this.saveFormState();
       });
+  }
+
+  async handlePdfChange(e) {
+    const input = e.currentTarget || e.target;
+    const file = input?.files?.[0];
+
+    if (!file) {
+      this.form.pdfAsset = null;
+      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.INFO, message: 'PDF cleared', timeout: 3000 } }));
+
+      this.saveFormState();
+      this.requestUpdate();
+      return;
+    }
+
+    if (file.type !== 'application/pdf') {
+      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Please upload a PDF file' } }));
+      input.value = '';
+      return;
+    }
+
+    if (this.missingFields.pdfAsset) this.missingFields.pdfAsset = false;
+    const path = computeAssetDirFromUrl(this.form.url);
+    document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.INFO, message: 'Uploading PDF...', timeout: 3000 } }));
+
+    try {
+      const url = await this.uploadFile(file, path);
+      if (!url) {
+        throw new Error('Upload failed');
+      }
+
+      this.form.pdfAsset = { url, name: file.name };
+      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.SUCCESS, message: 'PDF uploaded successfully', timeout: 5000 } }));
+    } catch (error) {
+      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: `PDF upload failed: ${error.message}` } }));
+      input.value = '';
+    } finally {
+      this.saveFormState();
+      this.requestUpdate();
+    }
   }
 
   async savePage() {
@@ -509,7 +559,7 @@ class LandingPageForm extends LitElement {
     const hasError = this.hasError.bind(this);
 
     return html`
-      <h1>Landing Page Builder - UAT</h1>
+      <h1>Landing Page Builder ${BRANCH ? `- (${BRANCH.toUpperCase()})` : ''}</h1>
       <div class="builder-container">
         <form @submit=${this.handleSubmit}>
           ${renderContentType(this.form, this.handleInput, this.options?.regions, this.coreLocked, hasError)}
@@ -521,7 +571,7 @@ class LandingPageForm extends LitElement {
             ${renderCaas(this.form, this.handleInput, { contentTypeOptions: this.contentTypeOptions, primaryProductOptions: this.primaryProductOptions, hasError })}
             ${renderSeo(this.form, this.handleInput, { primaryProductNameOptions: this.options?.primaryProductName }, hasError)}
             ${renderExperienceFragment(this.form, this.handleInput, { fragmentOptions: this.options?.experienceFragment }, hasError)}
-            ${renderAssetDelivery(this.form, this.handleInput, hasError)}
+            ${renderAssetDelivery(this.form, this.handleInput, this.handlePdfChange.bind(this), hasError)}
             <div class="submit-row">
               <sl-button type="submit" @click=${this.handleSubmit}>
                 Save & Preview

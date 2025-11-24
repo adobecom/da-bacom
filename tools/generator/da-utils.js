@@ -65,7 +65,7 @@ export async function saveSource(path, document) {
   return null;
 }
 
-export async function saveImage(path, file) {
+export async function saveFile(path, file) {
   const daPath = getDaPath(`${path}${file.name}`, false);
   const formData = new FormData();
   const opts = { method: 'PUT', body: formData };
@@ -76,7 +76,10 @@ export async function saveImage(path, file) {
 
     if (resp.ok) {
       const json = await resp.json();
-      return json?.source?.contentUrl;
+      const liveUrl = json?.aem?.liveUrl.replace('hlx.page', 'aem.page').replace('hlx.live', 'aem.live');
+      const previewUrl = json?.aem?.previewUrl.replace('hlx.page', 'aem.page').replace('hlx.live', 'aem.live');
+
+      return { source: json?.source, aem: { liveUrl, previewUrl } };
     }
     /* c8 ignore next 7 */
     return null;
