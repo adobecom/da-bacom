@@ -76,7 +76,6 @@ export function renderForm(form, handleInput, { marketoPOIOptions, hasError = ()
         error=${hasError('formTemplate')}
         @change=${handleInput}>
           <option value="" ?selected=${form.formTemplate === ''}>--Select--</option>
-          <option value="Long" ?selected=${form.formTemplate === 'Long'}>Long</option>
           <option value="Medium" ?selected=${form.formTemplate === 'Medium'}>Medium</option>
           <option value="Short" ?selected=${form.formTemplate === 'Short'}>Short</option>
       </sl-select>

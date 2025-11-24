@@ -64,10 +64,10 @@ export function setStorageItem(key, value) {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
-export function getCachedData(key) {
+export function getCachedData(key, cacheTTL = CACHE_TTL) {
   try {
     const cached = getStorageItem(key);
-    if (cached && cached.timestamp && (Date.now() - cached.timestamp < CACHE_TTL)) {
+    if (cached && cached.timestamp && (Date.now() - cached.timestamp < cacheTTL)) {
       return cached.data;
     }
     if (cached) {

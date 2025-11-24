@@ -202,12 +202,11 @@ class LandingPageForm extends LitElement {
 
     try {
       if (!this.token) throw new Error('Failed to get token');
+      // removed cached layer for uta testing
+      this.marketoPOIOptions = await fetchMarketoPOIOptions().catch(() => OPTIONS_ERROR);
+      this.contentTypeOptions = await fetchContentTypeOptions(this.token).catch(() => OPTIONS_ERROR);
+      this.primaryProductOptions = await fetchPrimaryProductOptions(this.token).catch(() => OPTIONS_ERROR);
 
-      [this.marketoPOIOptions, this.contentTypeOptions, this.primaryProductOptions] = await Promise.all([
-        this.fetchCachedOptions('cached-marketo-poi', fetchMarketoPOIOptions).catch(() => OPTIONS_ERROR),
-        this.fetchCachedOptions('cached-caas-content-types', fetchContentTypeOptions, this.token).catch(() => OPTIONS_ERROR),
-        this.fetchCachedOptions('cached-caas-primary-products', fetchPrimaryProductOptions, this.token).catch(() => OPTIONS_ERROR),
-      ]);
       if (this.form.url) {
         const sourceResult = await getSource(this.form.url);
         this.hasEdit = sourceResult?.body?.innerHTML !== null;
@@ -263,6 +262,8 @@ class LandingPageForm extends LitElement {
       ...form,
       marketoDataUrl: marketoUrl(state),
       poi: form.marketoPOI,
+      formDescription: `Please share your contact information to get the ${form.contentType.toLowerCase()}.`,
+      formSuccessContent: `Thank you. Your ${form.contentType.toLowerCase()} is ready below.`,
       caasPrimaryProduct: form.primaryProduct,
       caasContentType: form.contentTypeCaas,
       cardDate: new Date().toISOString().split('T')[0],
