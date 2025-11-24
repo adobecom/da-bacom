@@ -177,13 +177,37 @@ export function renderExperienceFragment(form, handleInput, { fragmentOptions },
   `;
 }
 
-export function renderAssetDelivery(form, handleInput, hasError = () => '') {
+export function renderAssetDelivery(form, handleInput, handlePdfChange, hasError = () => '') {
+  const pdfError = hasError('pdfAsset');
   return html`
     <div class="form-row">
       <h2>Asset Delivery</h2>
       ${(form.contentType || '').toLowerCase().includes('video') ? html`
         <sl-input type="text" name="videoAsset" .value=${form.videoAsset} placeholder="https://video.tv.adobe.com/v/..." label="Video Asset*" error=${hasError('videoAsset')} @input=${handleInput}></sl-input>`
-    : html`<sl-input type="file" name="pdfAsset" label="Upload PDF Asset*" error=${hasError('pdfAsset')} @input=${handleInput}></sl-input>`}
+    : html`
+        <div class="pdf-upload-container">
+          <label class="pdf-label ${pdfError ? 'error' : ''}">
+            Upload PDF Asset*
+          </label>
+          ${form.pdfAsset?.name ? html`
+            <p class="file-info">
+              <span>${form.pdfAsset.name}</span>
+              <span>
+                <a href="${form.pdfAsset.url}" target="_blank" rel="noopener noreferrer">View</a>
+                <a href="#" @click=${handlePdfChange}>Clear</a>
+              </span>
+            </p>
+          ` : html`
+            <input 
+              type="file" 
+              name="pdfAsset" 
+              class="pdf-file-input"
+              accept=".pdf,application/pdf"
+              @change=${handlePdfChange}>
+              ${pdfError ? html`<div class="error-message">${pdfError}</div>` : nothing}
+            `}
+        </div>
+      `}
     </div>
   `;
 }

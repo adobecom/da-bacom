@@ -113,3 +113,76 @@ p {
   margin: 0;
   font-style: italic;
 }
+
+.pdf-upload-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pdf-upload-container .pdf-label {
+  font-size: var(--s2-body-xs-size);
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 500;
+  color: #505050;
+}
+
+.pdf-upload-container .pdf-label.error {
+  color: var(--s2-red-900);
+}
+
+.pdf-upload-container .pdf-file-input {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: white;
+  cursor: pointer;
+}
+
+.pdf-upload-container .pdf-file-input:hover {
+  border-color: #999;
+}
+
+.pdf-upload-container .pdf-file-input:focus {
+  outline: none;
+  border-color: #0265dc;
+  box-shadow: 0 0 0 1px #0265dc;
+}
+
+.pdf-upload-container .error-message {
+  font-size: var(--s2-body-xs-size);
+  color: var(--s2-red-900);
+  margin: 0;
+  margin-top: -4px;
+}
+
+.pdf-upload-container .file-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  background-color: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 4px;
+  font-size: 14px;
+  margin: 0;
+}
+
+.pdf-upload-container .file-info span {
+  white-space: nowrap;
+}
+
+.pdf-upload-container .file-info a {
+  color: #0265dc;
+  text-decoration: none;
+  font-weight: 500;
+  white-space: nowrap;
+  margin: 0 4px;
+}
+
+.pdf-upload-container .file-info a:hover {
+  text-decoration: underline;
+}
