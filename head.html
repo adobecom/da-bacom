@@ -28,43 +28,87 @@
   [miloStyles, miloUtils, miloDecorate].forEach((tag) => tag.setAttribute('rel', 'preload'));
   document.head.append(miloStyles, miloUtils, miloDecorate);
 
-  // example string: ae_ar: ae; ae_en: en; be_en: en-BE
-  function parseHrefLangString(str) {
-    if (!str) return [];
-    return str.split(';').map(langPair => {
-      const [locale, lang] = langPair.split(':');
-      return { locale: locale.trim(), lang: lang.trim() };
-    });
-  }
-
   function buildLink(language, url) {
     const link = document.createElement('link');
     link.setAttribute('rel', 'alternate');
-    link.setAttribute('hreflang', language?.toLowerCase());
+    link.setAttribute('hreflang', language);
     link.setAttribute('href', url);
     return link;
   }
 
-  const hrefLangMeta = document.querySelector('meta[name="hreflang"]');
-  
-  if (hrefLangMeta) {
+  const userAgentMeta = document.querySelector('meta[name="hreflinksuseragents"]');
+  const allowedAgents = userAgentMeta && userAgentMeta.content.split(',');
+  const userAgentString = window.navigator.userAgent;
+  const isAllowedAgent = allowedAgents && allowedAgents.some((agent) => userAgentString.includes(agent.trim()));
+
+  const LOCALES = ['ae_ar', 'ae_en', 'africa', 'ar', 'at', 'au', 'be_en', 'be_fr', 'be_nl', 'bg', 'br', 'ca_fr', 'ca', 'ch_de', 'ch_fr', 'ch_it', 'cl', 'cn', 'co', 'cr', 'cy_en', 'cz', 'de', 'dk', 'ec', 'ee', 'eg_ar', 'eg_en', 'el', 'es', 'fi', 'fr', 'gr_el', 'gr_en', 'gt', 'hk_en', 'hk_zh', 'hu', 'id_en', 'id_id', 'ie', 'il_en', 'il_he', 'in_hi', 'in', 'it', 'jp', 'kr', 'kw_ar', 'kw_en', 'la', 'langstore', 'lt', 'lu_de', 'lu_en', 'lu_fr', 'lv', 'mena_ar', 'mena_en', 'mt', 'mx', 'my_en', 'my_ms', 'ng', 'nl', 'no', 'nz', 'pe', 'ph_en', 'ph_fil', 'pl', 'pr', 'pt', 'qa_ar', 'qa_en', 'ro', 'ru', 'sa_ar', 'sa_en', 'se', 'sg', 'si', 'sk', 'th_en', 'th_th', 'tr', 'tw', 'ua', 'uk', 'vn_en', 'vn_vi', 'za'];
+
+  async function fetchAndParseSitemap() {
+    const sitemapOrigin = 'https://business.adobe.com';
     const { origin, pathname } = window.location;
-    const defaults = [{locale: '', lang: 'x-default'}, {locale: '', lang: 'en-us'}]
-    const localeMap = parseHrefLangString(hrefLangMeta.content);
-    const pageLocale = localeMap.reduce((rdx, pair) => {
-      if (pathname.includes(`/${pair.locale.toLowerCase()}/`)) rdx += pair.locale;
-      return rdx;
-    }, '');
-    const defaultPath = pageLocale ? pathname.replace(`/${pageLocale}`, '') : pathname;
-    const xDefault = buildLink('x-default', `${origin}${defaultPath}`);
-    const enUs = buildLink('en-us', `${origin}${defaultPath}`);
 
-    const links = localeMap.reduce((rdx, { locale, lang }) => {
-      rdx.push(buildLink(lang, `${origin}/${locale}${defaultPath}`))
-      return rdx;
-    }, []);
+    let sitemapPath = '/sitemap.xml';
+    const localeMatch = LOCALES.find(locale => pathname.startsWith(`/${locale}/`));
 
-    document.head.querySelector('title').after(xDefault, enUs, ...links);
+    if (localeMatch) {
+      sitemapPath = `/${localeMatch}/sitemap.xml`;
+    }
+    
+    try {
+      const response = await fetch(`${origin}${sitemapPath}`);
+      if (!response.ok) {
+        console.warn('Failed to fetch sitemap:', response.status);
+        return;
+      }
+      
+      const xmlText = await response.text();
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+      const parseError = xmlDoc.querySelector('parsererror');
+      if (parseError) {
+        return;
+      }
+      
+      const urlElements = xmlDoc.querySelectorAll('url');
+      let currentUrlElement = null;
+      const currentPageUrl = pathname !== '/' ? `${sitemapOrigin}${pathname}.html` : `${sitemapOrigin}/`;
+
+      for (const urlElement of urlElements) {
+        const loc = urlElement.querySelector('loc')?.textContent;
+        if (loc === currentPageUrl || loc === currentPageUrl.replace(/\/$/, '')) {
+          currentUrlElement = urlElement;
+          break;
+        }
+      }
+      
+      if (!currentUrlElement) {
+        console.warn('Current page not found in sitemap');
+        return;
+      }
+      
+      const alternateLinks = currentUrlElement.querySelectorAll('link[rel="alternate"]');
+      const linkElements = [];
+
+      alternateLinks.forEach(altLink => {
+        const hreflang = altLink.getAttribute('hreflang');
+        const href = altLink.getAttribute('href');
+        
+        if (hreflang && href) {
+          linkElements.push(buildLink(hreflang, href));
+        }
+      });
+      
+       const titleElement = document.head.querySelector('title');
+      if (linkElements.length > 0 && titleElement) {
+        titleElement.after(...linkElements);
+      }
+    } catch (error) {
+      console.error('Error fetching or parsing sitemap:', error);
+    }
+  }
+  
+  if (isAllowedAgent) {
+    fetchAndParseSitemap();
   }
 </script>
 <script src="/scripts/scripts.js" type="module"></script>
