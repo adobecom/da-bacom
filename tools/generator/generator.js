@@ -42,7 +42,8 @@ export function applyTemplateData(templateStr, data) {
       return text.replaceAll(`{{${field}}}`, imgHtml);
     }
     if ((field.includes('url') || field.includes('fragment') || field.includes('asset')) && fieldValue.startsWith('http')) {
-      const urlHtml = `<a href="${fieldValue}" target="_blank">${fieldValue}</a>`;
+      const urlText = data[`${fieldName}Name`] || fieldValue;
+      const urlHtml = `<a href="${fieldValue}" target="_blank">${urlText}</a>`;
       return text.replaceAll(`{{${field}}}`, urlHtml);
     }
     return text.replaceAll(`{{${field}}}`, fieldValue);
