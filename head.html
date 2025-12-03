@@ -122,7 +122,7 @@
 
   const jsonLD = document.createElement('script');
   jsonLD.setAttribute('type', 'application/ld+json');
-  scriptTag.innerText = JSON.stringify(schema);
+  jsonLD.innerText = JSON.stringify(schema);
   sheetSchema ? sheetSchema.after(jsonLD) : document.head.append(jsonLD);
 </script>
 <script src="/scripts/scripts.js" type="module"></script>
