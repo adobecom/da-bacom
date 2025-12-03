@@ -7,9 +7,9 @@ import getStyle from 'styles';
 import DA_SDK from 'da-sdk';
 import { initIms } from 'da-fetch';
 import { LitElement, html, createRef, ref, nothing } from 'da-lit';
+import { LIBS } from '../../scripts/scripts.js';
 import { createToast, TOAST_TYPES } from './toast/toast.js';
-import { getSource, saveSource, saveFile } from './da-utils.js';
-import { fetchMarketoPOIOptions, fetchContentTypeOptions, fetchPrimaryProductOptions, fetchPageOptions } from './data-sources.js';
+import { getSource, saveSource, saveFile, getSheets } from './da-utils.js';
 import {
   getStorageItem,
   setStorageItem,
@@ -45,6 +45,13 @@ const PREVIEW_MODE_STORAGE_KEY = 'landing-page-preview-mode';
 const DRAFT_PATH = '/drafts/landing-page-builder/';
 const BRANCH = searchParams.get('ref') || '';
 const DEBUG = searchParams.get('debug') || false;
+const DATA_PATH = '/tools/page-builder/landing-page/data/';
+const DATA_SOURCES = {
+  MARKETO_POI: 'marketo-poi-options.json',
+  MARKETO_TEMPLATE_RULES: 'marketo-template-rules.json',
+  CAAS_COLLECTIONS: 'caas-collections.json',
+  PAGE_OPTIONS: 'page-options.json',
+};
 
 const TEMPLATE_MAP = {
   'guide-gated': '/tools/page-builder/prd-template-basic',
@@ -59,6 +66,21 @@ const TEMPLATE_MAP = {
 
 const IMAGES = ['marqueeImage', 'bodyImage', 'cardImage'];
 const FILES = ['pdfAsset'];
+
+const FORM_TEMPLATE_MAP = {
+  Medium: 'flex_event',
+  Short: 'flex_content',
+};
+
+const TEMPLATE_RULE_MAPPING = {
+  formVersion: 'form.id',
+  purpose: 'form.purpose',
+  formSuccessType: 'form.success.type',
+  field_visibility: 'field_visibility',
+  field_filters: 'field_filters',
+  auto_complete: 'auto_complete',
+  enrichment_fields: 'enrichment_fields',
+};
 
 const FORM_SCHEMA = {
   contentType: '',
@@ -200,16 +222,19 @@ class LandingPageForm extends LitElement {
     document.addEventListener('show-toast', this.handleToast);
     const token = await initIms();
     this.token = token?.accessToken?.token;
-    this.options = await fetchPageOptions();
     this.loadFormState();
     this.coreLocked = this.form.url !== '';
 
     try {
       if (!this.token) throw new Error('Failed to get token');
-      // removed cached layer for uta testing
-      this.marketoPOIOptions = await fetchMarketoPOIOptions().catch(() => OPTIONS_ERROR);
-      this.contentTypeOptions = await fetchContentTypeOptions(this.token).catch(() => OPTIONS_ERROR);
-      this.primaryProductOptions = await fetchPrimaryProductOptions(this.token).catch(() => OPTIONS_ERROR);
+
+      this.options = await getSheets(`${DATA_PATH}${DATA_SOURCES.PAGE_OPTIONS}`) ?? {};
+      const marketoPOIData = await getSheets(`${DATA_PATH}${DATA_SOURCES.MARKETO_POI}`) ?? null;
+      this.marketoPOIOptions = marketoPOIData?.data ?? OPTIONS_ERROR;
+      const caasCollections = await getSheets(`${DATA_PATH}${DATA_SOURCES.CAAS_COLLECTIONS}`) ?? null;
+      this.contentTypeOptions = caasCollections?.contentTypes ?? OPTIONS_ERROR;
+      this.primaryProductOptions = caasCollections?.primaryProducts ?? OPTIONS_ERROR;
+      this.templateRules = await getSheets(`${DATA_PATH}${DATA_SOURCES.MARKETO_TEMPLATE_RULES}`) ?? null;
 
       if (this.form.url) {
         const sourceResult = await getSource(this.form.url);
@@ -255,28 +280,79 @@ class LandingPageForm extends LitElement {
     return this.templateHTML;
   }
 
-  templatePlaceholders(form) {
-    // TODO: Update dynamic placeholders
-    const state = {
+  getMarketoState(form) {
+    const marketoState = {
       'program.campaignids.sfdc': form.campaignId,
       'program.poi': form.marketoPOI,
     };
 
-    return {
+    const applyRulesToState = (rules) => {
+      Object.entries(TEMPLATE_RULE_MAPPING).forEach(([key, prop]) => {
+        rules
+          .filter((r) => r.value === key || r.value.startsWith(`${key}.`))
+          .forEach((rule) => {
+            marketoState[rule.value.replace(key, prop)] = rule.label;
+          });
+      });
+    };
+
+    if (form.gated === 'Gated' && form.formTemplate) {
+      const templateKey = FORM_TEMPLATE_MAP[form.formTemplate];
+      const selectedRules = this.templateRules[templateKey] || null;
+      marketoState['form.template'] = templateKey;
+      if (selectedRules) {
+        applyRulesToState(selectedRules);
+      }
+    }
+    if (DEBUG) console.table(marketoState);
+
+    return marketoState;
+  }
+
+  async templatePlaceholders(form) {
+    const { getConfig } = await import(`${LIBS}/utils/utils.js`);
+    const { replaceKeyArray } = await import(`${LIBS}/features/placeholders.js`);
+    const config = getConfig();
+
+    const marketoState = this.getMarketoState(form);
+    const [formDescription, formSuccessContent] = await replaceKeyArray(
+      [
+        `Please share your contact information to get the ${form.contentType.toLowerCase()}.`,
+        `Thank you. Your ${form.contentType.toLowerCase()} is ready below.`,
+      ],
+      config,
+    );
+
+    const dateStr = new Date().toLocaleString('us-EN', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: false,
+    });
+
+    const placeholders = {
       ...form,
-      marketoDataUrl: marketoUrl(state),
+      marketoDataUrl: marketoUrl(marketoState),
+      marketoDataUrlName: `Marketo Configurator ${dateStr}`,
       poi: form.marketoPOI,
-      formDescription: `Please share your contact information to get the ${form.contentType.toLowerCase()}.`,
-      formSuccessContent: `Thank you. Your ${form.contentType.toLowerCase()} is ready below.`,
+      formDescription,
+      formSuccessContent,
       caasPrimaryProduct: form.primaryProduct,
       caasContentType: form.contentTypeCaas,
       cardDate: new Date().toISOString().split('T')[0],
       marqueeImage: form.marqueeImage?.url,
       bodyImage: form.bodyImage?.url,
       cardImage: form.cardImage?.url,
-      pdfAsset: form.pdfAsset?.url,
-      pdfAssetName: form.pdfAsset?.name,
     };
+
+    if (form.pdfAsset) {
+      placeholders.pdfAsset = form.pdfAsset?.url;
+      placeholders.pdfAssetName = form.pdfAsset?.name;
+    }
+    return placeholders;
   }
 
   generateUrl(form) {
@@ -444,7 +520,7 @@ class LandingPageForm extends LitElement {
   async savePage() {
     document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.INFO, message: 'Saving page...', timeout: 5000 } }));
     await this.getTemplateContent();
-    const placeholders = this.templatePlaceholders(this.form);
+    const placeholders = await this.templatePlaceholders(this.form);
     if (DEBUG) {
       console.table(placeholders);
     }
