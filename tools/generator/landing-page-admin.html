@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Landing Page Builder Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://da.live/nx/styles/nexter.css">
+  <link rel="stylesheet" href="./landing-page-admin.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "da-sdk": "https://da.live/nx/utils/sdk.js",
+        "da-lit": "https://da.live/deps/lit/dist/index.js",
+        "da-fetch": "https://da.live/nx/utils/daFetch.js",
+        "constants": "https://da.live/nx/public/utils/constants.js",
+        "styles": "https://da.live/nx/utils/styles.js",
+        "components": "https://da.live/nx/public/sl/components.js"
+      }
+    }
+  </script>
+  <link rel="modulepreload" href="https://da.live/nx/utils/sdk.js">
+  <script src="./landing-page-admin.js" type="module"></script>
+  <link rel="icon" href="data:,">
+</head>
+
+<body style="background: #f5f5f5;">
+  <main>
+    <da-builder-admin></da-builder-admin>
+  </main>
+</body>
+
+</html>

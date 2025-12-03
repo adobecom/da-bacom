@@ -148,11 +148,13 @@ export function renderCard(form, handleInput, handleImageChange, hasError = () =
 }
 
 export function renderCaas(form, handleInput, { contentTypeOptions, primaryProductOptions, hasError = () => '' }) {
+  // TODO: Multiple select for PPO
   return html`
     <div class="form-row">
       <h2>CaaS Content</h2>
       ${optionsSelect(form, handleInput, 'contentTypeCaas', 'Content Type*', contentTypeOptions, hasError)}
       ${optionsSelect(form, handleInput, 'primaryProduct', 'Primary Product', primaryProductOptions)}
+      ${optionsSelect(form, handleInput, 'industry', 'Industry', primaryProductOptions)}
     </div>
   `;
 }
@@ -169,6 +171,7 @@ export function renderSeo(form, handleInput, { primaryProductNameOptions }, hasE
 }
 
 export function renderExperienceFragment(form, handleInput, { fragmentOptions }, hasError = () => '') {
+  // Recommend for you cards
   return html`
     <div class="form-row">
       <h2>Experience Fragment</h2>
