@@ -8,7 +8,7 @@ import DA_SDK from 'da-sdk';
 import { initIms } from 'da-fetch';
 import { LitElement, html, createRef, ref, nothing } from 'da-lit';
 import { createToast, TOAST_TYPES } from './toast/toast.js';
-import { getSource, saveSource, saveImage } from './da-utils.js';
+import { getSource, saveSource, saveFile } from './da-utils.js';
 import { fetchMarketoPOIOptions, fetchContentTypeOptions, fetchPrimaryProductOptions, fetchPageOptions } from './data-sources.js';
 import {
   getStorageItem,
@@ -33,6 +33,7 @@ import {
 await DA_SDK;
 
 const style = await getStyle(import.meta.url.split('?')[0]);
+const searchParams = new URLSearchParams(window.location.search);
 
 const ADMIN_URL = 'https://admin.hlx.page';
 const AEM_LIVE = 'https://main--da-bacom--adobecom.aem.live';
@@ -42,7 +43,8 @@ const OPTIONS_LOADING = [{ value: 'loading', label: 'Loading...' }];
 const OPTIONS_ERROR = [{ value: 'error', label: 'Error loading options' }];
 const PREVIEW_MODE_STORAGE_KEY = 'landing-page-preview-mode';
 const DRAFT_PATH = '/drafts/landing-page-builder/';
-const DEBUG = window.location.search.includes('debug');
+const BRANCH = searchParams.get('ref') || '';
+const DEBUG = searchParams.get('debug') || false;
 
 const TEMPLATE_MAP = {
   'guide-gated': '/tools/page-builder/prd-template-basic',
@@ -56,6 +58,7 @@ const TEMPLATE_MAP = {
 };
 
 const IMAGES = ['marqueeImage', 'bodyImage', 'cardImage'];
+const FILES = ['pdfAsset'];
 
 const FORM_SCHEMA = {
   contentType: '',
@@ -79,8 +82,11 @@ const FORM_SCHEMA = {
   seoMetadataDescription: '',
   experienceFragment: '',
   videoAsset: '',
+  pdfAsset: null,
   url: '',
 };
+
+const delay = (milliseconds) => new Promise((resolve) => { setTimeout(resolve, milliseconds); });
 
 function computeAssetDirFromUrl(url) {
   let path = '/tools/page-builder/.prd-template/';
@@ -145,10 +151,10 @@ class LandingPageForm extends LitElement {
 
   saveFormState() {
     const formToSave = { ...this.form };
-    IMAGES.forEach((image) => {
-      if (!hasOwnProperty.call(formToSave, image)) return;
-      if (formToSave[image]?.url?.startsWith('blob:')) {
-        formToSave[image] = null;
+    [...IMAGES, ...FILES].forEach((field) => {
+      if (!hasOwnProperty.call(formToSave, field)) return;
+      if (formToSave[field]?.url?.startsWith('blob:')) {
+        formToSave[field] = null;
       }
     });
     setStorageItem(FORM_STORAGE_KEY, formToSave);
@@ -200,12 +206,11 @@ class LandingPageForm extends LitElement {
 
     try {
       if (!this.token) throw new Error('Failed to get token');
+      // removed cached layer for uta testing
+      this.marketoPOIOptions = await fetchMarketoPOIOptions().catch(() => OPTIONS_ERROR);
+      this.contentTypeOptions = await fetchContentTypeOptions(this.token).catch(() => OPTIONS_ERROR);
+      this.primaryProductOptions = await fetchPrimaryProductOptions(this.token).catch(() => OPTIONS_ERROR);
 
-      [this.marketoPOIOptions, this.contentTypeOptions, this.primaryProductOptions] = await Promise.all([
-        this.fetchCachedOptions('cached-marketo-poi', fetchMarketoPOIOptions).catch(() => OPTIONS_ERROR),
-        this.fetchCachedOptions('cached-caas-content-types', fetchContentTypeOptions, this.token).catch(() => OPTIONS_ERROR),
-        this.fetchCachedOptions('cached-caas-primary-products', fetchPrimaryProductOptions, this.token).catch(() => OPTIONS_ERROR),
-      ]);
       if (this.form.url) {
         const sourceResult = await getSource(this.form.url);
         this.hasEdit = sourceResult?.body?.innerHTML !== null;
@@ -261,12 +266,16 @@ class LandingPageForm extends LitElement {
       ...form,
       marketoDataUrl: marketoUrl(state),
       poi: form.marketoPOI,
+      formDescription: `Please share your contact information to get the ${form.contentType.toLowerCase()}.`,
+      formSuccessContent: `Thank you. Your ${form.contentType.toLowerCase()} is ready below.`,
       caasPrimaryProduct: form.primaryProduct,
       caasContentType: form.contentTypeCaas,
       cardDate: new Date().toISOString().split('T')[0],
       marqueeImage: form.marqueeImage?.url,
       bodyImage: form.bodyImage?.url,
       cardImage: form.cardImage?.url,
+      pdfAsset: form.pdfAsset?.url,
+      pdfAssetName: form.pdfAsset?.name,
     };
   }
 
@@ -337,7 +346,6 @@ class LandingPageForm extends LitElement {
 
   disconnectedCallback() {
     document.removeEventListener('show-toast', this.handleToast);
-    if (this.headAbortController) { try { this.headAbortController.abort(); } catch { /* no-op */ } }
     Object.values(this.form).forEach((value) => {
       if (value?.url && value.url.startsWith('blob:')) {
         URL.revokeObjectURL(value.url);
@@ -347,16 +355,20 @@ class LandingPageForm extends LitElement {
     super.disconnectedCallback();
   }
 
-  async uploadFile(file, path) {
-    try {
-      const imageUrl = await saveImage(path, file);
-      if (!imageUrl) throw new Error('Failed to upload file');
+  async uploadImage(file, path) {
+    const result = await saveFile(path, file);
+    const url = result?.source?.contentUrl;
+    if (!url) throw new Error('Failed to upload image');
 
-      return imageUrl;
-    } catch (e) {
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Failed to upload file' } }));
-      return null;
-    }
+    return url;
+  }
+
+  async uploadFile(file, path) {
+    const result = await saveFile(path, file);
+    const url = result?.aem?.previewUrl;
+    if (!url) throw new Error('Failed to upload file');
+
+    return url;
   }
 
   handleImageChange(e) {
@@ -377,7 +389,7 @@ class LandingPageForm extends LitElement {
     // Update template after page generation to correct path
     const path = computeAssetDirFromUrl(this.form.url);
     // TODO: Check if path is ready to be uploaded to
-    this.uploadFile(file, path)
+    this.uploadImage(file, path)
       .then((url) => {
         if (!url) return;
         this.form[name] = { url, name: file.name };
@@ -387,6 +399,81 @@ class LandingPageForm extends LitElement {
       }).finally(() => {
         this.saveFormState();
       });
+  }
+
+  async handlePdfChange(e) {
+    const input = e.currentTarget || e.target;
+    const file = input?.files?.[0];
+
+    if (!file) {
+      this.form.pdfAsset = null;
+      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.INFO, message: 'PDF cleared', timeout: 3000 } }));
+
+      this.saveFormState();
+      this.requestUpdate();
+      return;
+    }
+
+    if (file.type !== 'application/pdf') {
+      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Please upload a PDF file' } }));
+      input.value = '';
+      return;
+    }
+
+    if (this.missingFields.pdfAsset) this.missingFields.pdfAsset = false;
+    const path = computeAssetDirFromUrl(this.form.url);
+    document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.INFO, message: 'Uploading PDF...', timeout: 3000 } }));
+
+    try {
+      const url = await this.uploadFile(file, path);
+      if (!url) {
+        throw new Error('Upload failed');
+      }
+
+      this.form.pdfAsset = { url, name: file.name };
+      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.SUCCESS, message: 'PDF uploaded successfully', timeout: 5000 } }));
+    } catch (error) {
+      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: `PDF upload failed: ${error.message}` } }));
+      input.value = '';
+    } finally {
+      this.saveFormState();
+      this.requestUpdate();
+    }
+  }
+
+  async savePage() {
+    document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.INFO, message: 'Saving page...', timeout: 5000 } }));
+    await this.getTemplateContent();
+    const placeholders = this.templatePlaceholders(this.form);
+    if (DEBUG) {
+      console.table(placeholders);
+    }
+    const generatedPage = applyTemplateData(this.templateHTML, placeholders);
+    try {
+      const sourcePath = await saveSource(this.form.url, generatedPage);
+      this.hasEdit = !!sourcePath;
+      this.requestUpdate();
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  async previewPage() {
+    document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.INFO, message: 'Previewing page...', timeout: 5000 } }));
+    const path = this.form.url.replace('.html', '');
+    const previewApi = `${ADMIN_URL}/preview/adobecom/da-bacom/main${path}`;
+    const previewApiResponse = await fetch(previewApi, { method: 'POST' });
+    if (!previewApiResponse.ok) {
+      return false;
+    }
+    const previewApiData = await previewApiResponse.json();
+    if (previewApiData?.preview?.status === 200) {
+      window.open(previewApiData.preview.url, '_blank');
+    } else {
+      return false;
+    }
+    return true;
   }
 
   async handleSubmit(e) {
@@ -403,38 +490,22 @@ class LandingPageForm extends LitElement {
       document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Please complete all required fields', timeout: 5000 } }));
       return;
     }
-    document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.INFO, message: 'Saving page...', timeout: 5000 } }));
-    await this.getTemplateContent();
-    const placeholders = this.templatePlaceholders(this.form);
-    if (DEBUG) {
-      console.table(placeholders);
-    }
-    const generatedPage = applyTemplateData(this.templateHTML, placeholders);
-    try {
-      const sourcePath = await saveSource(this.form.url, generatedPage);
-      this.hasEdit = !!sourcePath;
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.SUCCESS, message: `Page saved ${this.hasEdit}`, timeout: 5000 } }));
-      this.requestUpdate();
-    } catch (error) {
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: `Failed to save page: ${error.message}` } }));
-    }
-  }
 
-  async handlePreview() {
-    document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.INFO, message: 'Previewing page...', timeout: 5000 } }));
-    const path = this.form.url.replace('.html', '');
-    const previewApi = `${ADMIN_URL}/preview/adobecom/da-bacom/main${path}`;
-    const previewApiResponse = await fetch(previewApi, { method: 'POST' });
-    if (!previewApiResponse.ok) {
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Failed to get preview' } }));
+    document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.INFO, message: 'Saving page...', timeout: 5000 } }));
+    const saveSuccess = await this.savePage();
+    if (!saveSuccess) {
+      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Failed to save page', timeout: 5000 } }));
       return;
     }
-    const previewApiData = await previewApiResponse.json();
-    if (previewApiData?.preview?.status === 200) {
-      window.open(previewApiData.preview.url, '_blank');
-    } else {
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Failed to open preview' } }));
+    document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.SUCCESS, message: 'Page saved', timeout: 5000 } }));
+    await delay(1000);
+    document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.INFO, message: 'Updating preview...', timeout: 5000 } }));
+    const previewSuccess = await this.previewPage();
+    if (!previewSuccess) {
+      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Failed to update preview', timeout: 5000 } }));
+      return;
     }
+    document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.SUCCESS, message: 'Preview updated', timeout: 5000 } }));
   }
 
   getRequiredFields() {
@@ -482,14 +553,13 @@ class LandingPageForm extends LitElement {
   }
 
   render() {
-    const isFormComplete = this.isFormComplete();
     const { templatePath } = this.getTemplate();
     const iframeSrc = `${AEM_LIVE}${templatePath}${PREVIEW_PARAMS}`;
     const canConfirm = this.form.url !== '';
     const hasError = this.hasError.bind(this);
 
     return html`
-      <h1>Landing Page Builder</h1>
+      <h1>Landing Page Builder ${BRANCH ? `- ${BRANCH.toUpperCase()}` : ''}</h1>
       <div class="builder-container">
         <form @submit=${this.handleSubmit}>
           ${renderContentType(this.form, this.handleInput, this.options?.regions, this.coreLocked, hasError)}
@@ -501,13 +571,10 @@ class LandingPageForm extends LitElement {
             ${renderCaas(this.form, this.handleInput, { contentTypeOptions: this.contentTypeOptions, primaryProductOptions: this.primaryProductOptions, hasError })}
             ${renderSeo(this.form, this.handleInput, { primaryProductNameOptions: this.options?.primaryProductName }, hasError)}
             ${renderExperienceFragment(this.form, this.handleInput, { fragmentOptions: this.options?.experienceFragment }, hasError)}
-            ${renderAssetDelivery(this.form, this.handleInput, hasError)}
+            ${renderAssetDelivery(this.form, this.handleInput, this.handlePdfChange.bind(this), hasError)}
             <div class="submit-row">
               <sl-button type="submit" @click=${this.handleSubmit}>
-                Generate
-              </sl-button>
-              <sl-button ?disabled=${!isFormComplete || !this.hasEdit} @click=${this.handlePreview}>
-                Preview Page
+                Save & Preview
               </sl-button>
               <sl-button class="reset" @click=${this.resetForm}>
                 Reset Form

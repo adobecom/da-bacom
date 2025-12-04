@@ -41,7 +41,7 @@ export function applyTemplateData(templateStr, data) {
       const imgHtml = `<img src="${fieldValue}" alt="${fieldName}" />`;
       return text.replaceAll(`{{${field}}}`, imgHtml);
     }
-    if ((field.includes('url') || field.includes('fragment')) && fieldValue.startsWith('http')) {
+    if ((field.includes('url') || field.includes('fragment') || field.includes('asset')) && fieldValue.startsWith('http')) {
       const urlHtml = `<a href="${fieldValue}" target="_blank">${fieldValue}</a>`;
       return text.replaceAll(`{{${field}}}`, urlHtml);
     }
@@ -64,10 +64,10 @@ export function setStorageItem(key, value) {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
-export function getCachedData(key) {
+export function getCachedData(key, cacheTTL = CACHE_TTL) {
   try {
     const cached = getStorageItem(key);
-    if (cached && cached.timestamp && (Date.now() - cached.timestamp < CACHE_TTL)) {
+    if (cached && cached.timestamp && (Date.now() - cached.timestamp < cacheTTL)) {
       return cached.data;
     }
     if (cached) {
