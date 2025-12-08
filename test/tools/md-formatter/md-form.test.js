@@ -103,7 +103,7 @@ describe('MdForm', () => {
     const propertySelect = mdForm.shadowRoot.querySelector('.select-property');
     propertySelect.value = 'Product';
     propertySelect.dispatchEvent(new Event('change'));
-    await delay(50);
+    await delay(10);
 
     expect(mdForm._currentPropertySelect).to.equal('Product');
     expect(mdForm._currentValueList).to.have.lengthOf(3);
@@ -119,7 +119,7 @@ describe('MdForm', () => {
     const propertySelect = mdForm.shadowRoot.querySelector('.select-property');
     propertySelect.value = 'Platform';
     propertySelect.dispatchEvent(new Event('change'));
-    await delay(50);
+    await delay(10);
 
     expect(valueSelect.disabled).to.be.false;
   });
@@ -137,7 +137,7 @@ describe('MdForm', () => {
     const valueSelect = mdForm.shadowRoot.querySelector('.key-value-select .select-value');
     valueSelect.value = 'Photoshop';
     valueSelect.dispatchEvent(new Event('change'));
-    await delay(50);
+    await delay(10);
 
     // Click add button
     const addButton = mdForm.shadowRoot.querySelector('.key-value-select button');
@@ -164,7 +164,7 @@ describe('MdForm', () => {
     const valueSelect = mdForm.shadowRoot.querySelector('.key-value-select .select-value');
     valueSelect.value = 'Desktop';
     valueSelect.dispatchEvent(new Event('change'));
-    await delay(50);
+    await delay(10);
 
     const addButton = mdForm.shadowRoot.querySelector('.key-value-select button');
     addButton.click();
@@ -187,16 +187,16 @@ describe('MdForm', () => {
     const propertySelect = mdForm.shadowRoot.querySelector('.select-property');
     propertySelect.value = 'Audience';
     propertySelect.dispatchEvent(new Event('change'));
-    await delay(50);
+    await delay(10);
 
     const valueSelect = mdForm.shadowRoot.querySelector('.key-value-select .select-value');
     valueSelect.value = 'Professional';
     valueSelect.dispatchEvent(new Event('change'));
-    await delay(50);
+    await delay(10);
 
     const addButton = mdForm.shadowRoot.querySelector('.key-value-select button');
     addButton.click();
-    await delay(50);
+    await delay(10);
 
     expect(mdForm._addedFields).to.have.lengthOf(1);
 
@@ -219,19 +219,19 @@ describe('MdForm', () => {
       const propertySelect = mdForm.shadowRoot.querySelector('.select-property');
       propertySelect.value = field;
       propertySelect.dispatchEvent(new Event('change'));
-      await delay(50);
+      await delay(10);
 
       const valueSelect = mdForm.shadowRoot.querySelector('.key-value-select .select-value');
       const options = Array.from(valueSelect.querySelectorAll('option'));
       if (options.length > 1) {
         valueSelect.value = options[1].value;
         valueSelect.dispatchEvent(new Event('change'));
-        await delay(50);
+        await delay(10);
       }
 
       const addButton = mdForm.shadowRoot.querySelector('.key-value-select button');
       addButton.click();
-      await delay(50);
+      await delay(10);
     }
 
     const propertySelect = mdForm.shadowRoot.querySelector('.select-property');
@@ -258,7 +258,7 @@ describe('MdForm', () => {
     const propertySelect = mdForm.shadowRoot.querySelector('.select-property');
     propertySelect.value = 'Platform';
     propertySelect.dispatchEvent(new Event('change'));
-    await delay(50);
+    await delay(10);
 
     expect(mdForm._currentPropertySelect).to.equal('Platform');
     expect(mdForm._currentValueList.length).to.be.greaterThan(0);
@@ -266,11 +266,11 @@ describe('MdForm', () => {
     const valueSelect = mdForm.shadowRoot.querySelector('.key-value-select .select-value');
     valueSelect.value = 'Desktop';
     valueSelect.dispatchEvent(new Event('change'));
-    await delay(50);
+    await delay(10);
 
     const addButton = mdForm.shadowRoot.querySelector('.key-value-select button');
     addButton.click();
-    await delay(50);
+    await delay(10);
 
     expect(mdForm._currentPropertySelect).to.equal('');
     expect(mdForm._currentValueList).to.have.lengthOf(0);
@@ -285,14 +285,14 @@ describe('MdForm', () => {
     const propertySelect = mdForm.shadowRoot.querySelector('.select-property');
     propertySelect.value = 'Product';
     propertySelect.dispatchEvent(new Event('change'));
-    await delay(50);
+    await delay(10);
 
     expect(addButton.disabled).to.be.true;
 
     const valueSelect = mdForm.shadowRoot.querySelector('.key-value-select .select-value');
     valueSelect.value = 'Photoshop';
     valueSelect.dispatchEvent(new Event('change'));
-    await delay(50);
+    await delay(10);
 
     expect(addButton.disabled).to.be.false;
   });
