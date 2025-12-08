@@ -71,7 +71,8 @@
       
       const urlElements = xmlDoc.querySelectorAll('url');
       let currentUrlElement = null;
-      const currentPageUrl = pathname !== '/' ? `${sitemapOrigin}${pathname}.html` : `${sitemapOrigin}/`;
+      const correctedPath = pathname.includes('html') ? pathname : `${pathname}.html`
+      const currentPageUrl = pathname !== '/' ? `${sitemapOrigin}${correctedPath}` : `${sitemapOrigin}/`;
 
       for (const urlElement of urlElements) {
         const loc = urlElement.querySelector('loc')?.textContent;
@@ -115,7 +116,7 @@
 
   const schema = {
     "@context": "https://schema.org",
-    "@type": "WebPage",
+    "@type": "WebSite",
     "name": 'Adobe for Business', 
     "url": window.location.href 
   }
