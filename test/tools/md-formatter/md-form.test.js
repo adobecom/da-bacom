@@ -136,6 +136,7 @@ describe('MdForm', () => {
     // Select value
     const valueSelect = mdForm.shadowRoot.querySelector('.key-value-select .select-value');
     valueSelect.value = 'Photoshop';
+    valueSelect.dispatchEvent(new Event('change'));
     await delay(50);
 
     // Click add button
@@ -162,6 +163,8 @@ describe('MdForm', () => {
 
     const valueSelect = mdForm.shadowRoot.querySelector('.key-value-select .select-value');
     valueSelect.value = 'Desktop';
+    valueSelect.dispatchEvent(new Event('change'));
+    await delay(50);
 
     const addButton = mdForm.shadowRoot.querySelector('.key-value-select button');
     addButton.click();
@@ -188,6 +191,8 @@ describe('MdForm', () => {
 
     const valueSelect = mdForm.shadowRoot.querySelector('.key-value-select .select-value');
     valueSelect.value = 'Professional';
+    valueSelect.dispatchEvent(new Event('change'));
+    await delay(50);
 
     const addButton = mdForm.shadowRoot.querySelector('.key-value-select button');
     addButton.click();
@@ -220,6 +225,8 @@ describe('MdForm', () => {
       const options = Array.from(valueSelect.querySelectorAll('option'));
       if (options.length > 1) {
         valueSelect.value = options[1].value;
+        valueSelect.dispatchEvent(new Event('change'));
+        await delay(50);
       }
 
       const addButton = mdForm.shadowRoot.querySelector('.key-value-select button');
@@ -258,6 +265,8 @@ describe('MdForm', () => {
 
     const valueSelect = mdForm.shadowRoot.querySelector('.key-value-select .select-value');
     valueSelect.value = 'Desktop';
+    valueSelect.dispatchEvent(new Event('change'));
+    await delay(50);
 
     const addButton = mdForm.shadowRoot.querySelector('.key-value-select button');
     addButton.click();
@@ -276,6 +285,13 @@ describe('MdForm', () => {
     const propertySelect = mdForm.shadowRoot.querySelector('.select-property');
     propertySelect.value = 'Product';
     propertySelect.dispatchEvent(new Event('change'));
+    await delay(50);
+
+    expect(addButton.disabled).to.be.true;
+
+    const valueSelect = mdForm.shadowRoot.querySelector('.key-value-select .select-value');
+    valueSelect.value = 'Photoshop';
+    valueSelect.dispatchEvent(new Event('change'));
     await delay(50);
 
     expect(addButton.disabled).to.be.false;
