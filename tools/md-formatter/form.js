@@ -3,7 +3,7 @@
 /* eslint-disable import/no-unresolved */
 import 'https://da.live/nx/public/sl/components.js';
 import getStyle from 'https://da.live/nx/utils/styles.js';
-import { LitElement, html } from 'da-lit';
+import { LitElement, html, nothing } from 'da-lit';
 import DA_SDK from 'https://da.live/nx/utils/sdk.js';
 
 const close = html`
@@ -80,6 +80,7 @@ export class MdForm extends LitElement {
     _selectOptions: { type: Array },
     _currentPropertySelect: { state: true },
     _currentValueList: { state: true },
+    _currentValueSelect: { state: true },
     _addedFields: { type: Array },
   };
 
@@ -96,6 +97,7 @@ export class MdForm extends LitElement {
     this._availabileFieldKeys = [];
     this._selectOptions = [];
     this._currentPropertySelect = '';
+    this._currentValueSelect = '';
     this._currentValueList = [];
     this._addedFields = [];
   }
@@ -145,6 +147,7 @@ export class MdForm extends LitElement {
     availableCopy.splice(addedPropIndex, 1);
     this._availabileFieldKeys = availableCopy;
     this._currentPropertySelect = '';
+    this._currentValueSelect = '';
     this._currentValueList = [];
   }
 
@@ -157,6 +160,7 @@ export class MdForm extends LitElement {
     this._addedFields = addedFieldsCopy;
     this._availabileFieldKeys = [...this._availabileFieldKeys, key];
     this._currentPropertySelect = '';
+    this._currentValueSelect = '';
     this._currentValueList = [];
   }
 
@@ -167,6 +171,15 @@ export class MdForm extends LitElement {
     this._currentPropertySelect = selectedProperty;
     const [list] = this._selectOptions.filter((option) => option.keyName === selectedProperty);
     this._currentValueList = list?.values;
+    const selectSection = e.target.closest('.key-value-select');
+    const valueSelect = selectSection.querySelector('.select-value');
+    valueSelect.selectedIndex = 0;
+    this._currentValueSelect = '';
+  }
+
+  handleValueSelect(e) {
+    e.preventDefault();
+    this._currentValueSelect = e.target.value;
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -205,11 +218,11 @@ export class MdForm extends LitElement {
           <option value="select-key" .value="" ?selected=${!this._currentPropertySelect}>Select property</option>
           ${this._availabileFieldKeys.map((property) => html`<option value=${property}>${property}</option>`)}
         </select>
-        <select class="select-value" ?disabled=${!this._currentPropertySelect}>
+        <select class="select-value" ?disabled=${!this._currentPropertySelect} @change="${this.handleValueSelect}">
           <option value="select-key" .value="">select value</option>
-          ${this._currentValueList && this._currentValueList.map((value) => html`<option value=${value}>${value}</option>`)}
+          ${this._currentValueList && this._currentValueList.map((value) => (value !== '' ? html`<option value=${value}>${value}</option>` : nothing))}
         </select>
-        <button ?disabled=${!this._currentPropertySelect} @click=${this.handleAdd}>${add}</button>
+        <button ?disabled=${!this._currentValueSelect || this._currentValueSelect === 'select-key'} @click=${this.handleAdd}>${add}</button>
       </section>
     `;
   }
