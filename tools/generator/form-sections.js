@@ -2,6 +2,7 @@
 /* eslint-disable import/no-unresolved */
 import { html, nothing } from 'da-lit';
 import './image-dropzone/image-dropzone.js';
+import './multi-select/multi-select.js';
 
 function optionsSelect(form, handleInput, optionName, optionLabel, options, hasError = () => '') {
   if (!options || options.length <= 1) {
@@ -147,12 +148,12 @@ export function renderCard(form, handleInput, handleImageChange, hasError = () =
   `;
 }
 
-export function renderCaas(form, handleInput, { contentTypeOptions, primaryProductOptions, hasError = () => '' }) {
+export function renderCaas(form, handleInput, { primaryProductOptions, industryOptions }) {
   return html`
     <div class="form-row">
       <h2>CaaS Content</h2>
-      ${optionsSelect(form, handleInput, 'contentTypeCaas', 'Content Type*', contentTypeOptions, hasError)}
-      ${optionsSelect(form, handleInput, 'primaryProduct', 'Primary Product', primaryProductOptions)}
+      <multi-select name="primaryProducts" label="Product(s)" .value=${form.primaryProducts || []} .options=${primaryProductOptions || []} @change=${handleInput}></multi-select>
+      ${optionsSelect(form, handleInput, 'caasIndustry', 'Industry', industryOptions || [])}
     </div>
   `;
 }
