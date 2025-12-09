@@ -63,7 +63,7 @@ export function renderContentType(form, handleInput, regionOptions, isLocked = f
 }
 
 export function renderForm(form, handleInput, { marketoPOIOptions, hasError = () => '' }) {
-  // TODO: Identify additional form options, e.g. Title and Description
+  // https://wiki.corp.adobe.com/display/adobedotcom/BACOM+Marketo+Forms+Hub
   return html`
     <div class="form-row">
     ${form.gated === 'Gated' ? html`
