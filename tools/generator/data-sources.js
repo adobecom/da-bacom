@@ -1,7 +1,7 @@
 /* eslint-disable no-underscore-dangle, import/no-unresolved */
 import { getTags, getAemRepo, getRootTags } from '../tags/tag-utils.js';
 import { TOAST_TYPES } from './toast/toast.js';
-import { DEFAULT_CONTENT_TYPES, DEFAULT_PRIMARY_PRODUCTS } from './default-tags.js';
+import { DEFAULT_PRIMARY_PRODUCTS } from './default-tags.js';
 
 const OPTIONS_URL = 'https://main--da-bacom--adobecom.aem.live/tools/landing-page.json';
 const POI_URL = 'https://milo.adobe.com/tools/marketo-options.json';
@@ -9,6 +9,7 @@ const COLLECTION_NAME = 'dx-tags/dx-caas';
 const JCR_TITLE = 'jcr:title';
 const CAAS_CONTENT_TYPE = 'caas:content-type';
 const CAAS_PRODUCTS = 'caas:products';
+const CAAS_INDUSTRY = 'caas:industry';
 const PROJECT = { org: 'adobecom', repo: 'da-bacom' };
 
 function dispatchError(message) {
@@ -49,10 +50,12 @@ async function getCaasCollections(token) {
 
   const contentTypeFilter = (tag) => tag.details[JCR_TITLE]?.includes(CAAS_CONTENT_TYPE);
   const productFilter = (tag) => tag.details[JCR_TITLE]?.includes(CAAS_PRODUCTS);
+  const industryFilter = (tag) => tag.details[JCR_TITLE]?.includes(CAAS_INDUSTRY);
 
   const result = {
     contentTypes: targetCollection.filter(contentTypeFilter),
     primaryProducts: targetCollection.filter(productFilter),
+    industries: targetCollection.filter(industryFilter),
   };
   return result;
 }
@@ -77,16 +80,6 @@ export async function fetchMarketoPOIOptions() {
   }
 }
 
-export async function fetchContentTypeOptions(token) {
-  try {
-    const { contentTypes } = await getCaasCollections(token);
-    return contentTypes.map((tag) => normalizeOption(tag, 'title', 'name')).filter(Boolean);
-  } catch (error) {
-    dispatchInfo('Could not access content type tags, using backup options');
-    return DEFAULT_CONTENT_TYPES;
-  }
-}
-
 export async function fetchPrimaryProductOptions(token) {
   try {
     const { primaryProducts } = await getCaasCollections(token);
@@ -94,6 +87,16 @@ export async function fetchPrimaryProductOptions(token) {
   } catch (error) {
     dispatchInfo('Could not access primary product tags, using backup options');
     return DEFAULT_PRIMARY_PRODUCTS;
+  }
+}
+
+export async function fetchIndustryOptions(token) {
+  try {
+    const { industries } = await getCaasCollections(token);
+    return industries.map((tag) => normalizeOption(tag, 'title', 'name')).filter(Boolean);
+  } catch (error) {
+    dispatchError(`Industry Options: ${error.message}`);
+    return [];
   }
 }
 
