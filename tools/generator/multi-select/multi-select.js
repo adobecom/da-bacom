@@ -1,4 +1,4 @@
-/* eslint-disable max-len, import/no-unresolved, no-underscore-dangle */
+/* eslint-disable import/no-unresolved, no-underscore-dangle */
 import { LitElement, html } from 'da-lit';
 import getStyle from 'styles';
 
@@ -77,12 +77,8 @@ class MultiSelect extends LitElement {
   toggleOption(optionValue, e) {
     e.stopPropagation();
 
-    let newValue;
-    if (this.isSelected(optionValue)) {
-      newValue = this.value.filter((v) => v !== optionValue);
-    } else {
-      newValue = [...this.value, optionValue];
-    }
+    const newValue = this.isSelected(optionValue) ? this.value.filter((v) => v !== optionValue)
+      : [...this.value, optionValue];
 
     this.handleValueChange(newValue);
   }
