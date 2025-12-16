@@ -9,7 +9,7 @@ import { initIms } from 'da-fetch';
 import { LitElement, html, createRef, ref, nothing } from 'da-lit';
 import { createToast, TOAST_TYPES } from './toast/toast.js';
 import { getSource, saveSource, saveFile } from './da-utils.js';
-import { fetchMarketoPOIOptions, fetchContentTypeOptions, fetchPrimaryProductOptions, fetchPageOptions } from './data-sources.js';
+import { fetchMarketoPOIOptions, fetchPrimaryProductOptions, fetchIndustryOptions, fetchPageOptions } from './data-sources.js';
 import {
   getStorageItem,
   setStorageItem,
@@ -77,7 +77,8 @@ const FORM_SCHEMA = {
   cardDescription: '',
   cardImage: null,
   contentTypeCaas: '',
-  primaryProduct: '',
+  primaryProducts: [],
+  industry: '',
   seoMetadataTitle: '',
   seoMetadataDescription: '',
   experienceFragment: '',
@@ -103,8 +104,8 @@ class LandingPageForm extends LitElement {
     return {
       form: { type: Object },
       marketoPOIOptions: { type: Array },
-      contentTypeOptions: { type: Array },
       primaryProductOptions: { type: Array },
+      industryOptions: { type: Array },
       isInitialized: { type: Boolean },
       coreLocked: { type: Boolean },
       missingFields: { type: Object },
@@ -115,8 +116,8 @@ class LandingPageForm extends LitElement {
     super();
     this.form = { ...FORM_SCHEMA };
     this.marketoPOIOptions = OPTIONS_LOADING;
-    this.contentTypeOptions = OPTIONS_LOADING;
     this.primaryProductOptions = OPTIONS_LOADING;
+    this.industryOptions = OPTIONS_LOADING;
     this.isInitialized = false;
     this.iframeRef = createRef();
     this.template = null;
@@ -208,8 +209,8 @@ class LandingPageForm extends LitElement {
       if (!this.token) throw new Error('Failed to get token');
       // removed cached layer for uta testing
       this.marketoPOIOptions = await fetchMarketoPOIOptions().catch(() => OPTIONS_ERROR);
-      this.contentTypeOptions = await fetchContentTypeOptions(this.token).catch(() => OPTIONS_ERROR);
       this.primaryProductOptions = await fetchPrimaryProductOptions(this.token).catch(() => OPTIONS_ERROR);
+      this.industryOptions = await fetchIndustryOptions(this.token).catch(() => OPTIONS_ERROR);
 
       if (this.form.url) {
         const sourceResult = await getSource(this.form.url);
@@ -255,6 +256,16 @@ class LandingPageForm extends LitElement {
     return this.templateHTML;
   }
 
+  getCaasContentType(form) {
+    const contentTypeMap = {
+      Guide: 'caas:content-type/guide',
+      Infographic: 'caas:content-type/infographic',
+      Report: 'caas:content-type/report',
+      'Video/Demo': 'caas:content-type/demos-and-video',
+    };
+    return contentTypeMap[form.contentType] || '';
+  }
+
   templatePlaceholders(form) {
     // TODO: Update dynamic placeholders
     const state = {
@@ -268,8 +279,8 @@ class LandingPageForm extends LitElement {
       poi: form.marketoPOI,
       formDescription: `Please share your contact information to get the ${form.contentType.toLowerCase()}.`,
       formSuccessContent: `Thank you. Your ${form.contentType.toLowerCase()} is ready below.`,
-      caasPrimaryProduct: form.primaryProduct,
-      caasContentType: form.contentTypeCaas,
+      caasPrimaryProducts: Array.isArray(form.primaryProducts) ? form.primaryProducts.join(', ') : form.primaryProducts,
+      caasContentType: this.getCaasContentType(form),
       cardDate: new Date().toISOString().split('T')[0],
       marqueeImage: form.marqueeImage?.url,
       bodyImage: form.bodyImage?.url,
@@ -294,7 +305,8 @@ class LandingPageForm extends LitElement {
   handleInput = (e) => {
     if (!this.isInitialized) return;
 
-    const { name, value } = e.target;
+    const name = e.detail?.name || e.target.name;
+    const value = e.detail?.value !== undefined ? e.detail.value : e.target.value;
     const newForm = { ...this.form };
 
     if (name === 'contentType') {
@@ -482,7 +494,9 @@ class LandingPageForm extends LitElement {
       const required = this.getRequiredFields();
       const newMissingFields = {};
       required.forEach((field) => {
-        if (!this.form[field]) {
+        const value = this.form[field];
+        const isEmpty = Array.isArray(value) ? value.length === 0 : !value;
+        if (isEmpty) {
           newMissingFields[field] = true;
         }
       });
@@ -521,7 +535,6 @@ class LandingPageForm extends LitElement {
       'cardTitle',
       'cardDescription',
       'cardImage',
-      'contentTypeCaas',
       'seoMetadataTitle',
       'seoMetadataDescription',
       'primaryProductName',
@@ -544,12 +557,18 @@ class LandingPageForm extends LitElement {
 
   isFormComplete() {
     const required = this.getRequiredFields();
-    const hasRequired = required.every((field) => this.form[field]);
+    const hasRequired = required.every((field) => {
+      const value = this.form[field];
+      if (Array.isArray(value)) return value.length > 0;
+      return !!value;
+    });
     return hasRequired;
   }
 
   hasError(fieldName) {
-    return this.missingFields[fieldName] && !this.form[fieldName] ? 'This field is required.' : '';
+    const value = this.form[fieldName];
+    const isEmpty = Array.isArray(value) ? value.length === 0 : !value;
+    return this.missingFields[fieldName] && isEmpty ? 'This field is required.' : '';
   }
 
   render() {
@@ -568,7 +587,7 @@ class LandingPageForm extends LitElement {
             ${renderMarquee(this.form, this.handleInput, this.handleImageChange.bind(this), hasError)}
             ${renderBody(this.form, this.handleInput, this.handleImageChange.bind(this), hasError)}
             ${renderCard(this.form, this.handleInput, this.handleImageChange.bind(this), hasError)}
-            ${renderCaas(this.form, this.handleInput, { contentTypeOptions: this.contentTypeOptions, primaryProductOptions: this.primaryProductOptions, hasError })}
+            ${renderCaas(this.form, this.handleInput, { primaryProductOptions: this.primaryProductOptions, industryOptions: this.industryOptions })}
             ${renderSeo(this.form, this.handleInput, { primaryProductNameOptions: this.options?.primaryProductName }, hasError)}
             ${renderExperienceFragment(this.form, this.handleInput, { fragmentOptions: this.options?.experienceFragment }, hasError)}
             ${renderAssetDelivery(this.form, this.handleInput, this.handlePdfChange.bind(this), hasError)}
