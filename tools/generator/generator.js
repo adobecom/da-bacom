@@ -1,8 +1,6 @@
 export const utf8ToB64 = (str) => window.btoa(unescape(encodeURIComponent(str)));
 export const b64ToUtf8 = (str) => decodeURIComponent(escape(window.atob(str)));
 
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-
 const DEFAULT_MARKETO_STATE = {
   'form id': '2277',
   'marketo munckin': '360-KCI-804',
@@ -42,7 +40,8 @@ export function applyTemplateData(templateStr, data) {
       return text.replaceAll(`{{${field}}}`, imgHtml);
     }
     if ((field.includes('url') || field.includes('fragment') || field.includes('asset')) && fieldValue.startsWith('http')) {
-      const urlHtml = `<a href="${fieldValue}" target="_blank">${fieldValue}</a>`;
+      const urlText = data[`${fieldName}Name`] || fieldValue;
+      const urlHtml = `<a href="${fieldValue}" target="_blank">${urlText}</a>`;
       return text.replaceAll(`{{${field}}}`, urlHtml);
     }
     return text.replaceAll(`{{${field}}}`, fieldValue);
@@ -62,25 +61,4 @@ export function getStorageItem(key, defaultValue = null) {
 export function setStorageItem(key, value) {
   if (!value || (Array.isArray(value) && value.length === 0)) return;
   localStorage.setItem(key, JSON.stringify(value));
-}
-
-export function getCachedData(key, cacheTTL = CACHE_TTL) {
-  try {
-    const cached = getStorageItem(key);
-    if (cached && cached.timestamp && (Date.now() - cached.timestamp < cacheTTL)) {
-      return cached.data;
-    }
-    if (cached) {
-      localStorage.removeItem(key);
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-export function setCachedData(key, data) {
-  if (!data || (Array.isArray(data) && data.length === 0)) return data;
-  setStorageItem(key, { data, timestamp: Date.now() });
-  return data;
 }
