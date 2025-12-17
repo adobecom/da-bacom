@@ -10,7 +10,6 @@ import { LitElement, html, createRef, ref, nothing } from 'da-lit';
 import { LIBS } from '../../scripts/scripts.js';
 import { createToast, TOAST_TYPES } from './toast/toast.js';
 import { getSource, saveSource, saveFile, getSheets } from './da-utils.js';
-import { fetchPrimaryProductOptions, fetchIndustryOptions, fetchPageOptions } from './data-sources.js';
 import {
   getStorageItem,
   setStorageItem,
@@ -210,24 +209,28 @@ class LandingPageForm extends LitElement {
     document.addEventListener('show-toast', this.handleToast);
     const token = await initIms();
     this.token = token?.accessToken?.token;
-    this.options = await fetchPageOptions();
     this.loadFormState();
     this.coreLocked = this.form.url !== '';
 
     try {
       if (!this.token) throw new Error('Failed to get token');
 
-      this.primaryProductOptions = await fetchPrimaryProductOptions(this.token).catch(() => OPTIONS_ERROR);
-      this.industryOptions = await fetchIndustryOptions(this.token).catch(() => OPTIONS_ERROR);
       const [
+        options,
         marketoPOIData,
+        caasCollections,
         templateRules,
       ] = await Promise.all([
+        getSheets(`${DATA_PATH}${DATA_SOURCES.PAGE_OPTIONS}`),
         getSheets(`${DATA_PATH}${DATA_SOURCES.MARKETO_POI}`),
+        getSheets(`${DATA_PATH}${DATA_SOURCES.CAAS_COLLECTIONS}`),
         getSheets(`${DATA_PATH}${DATA_SOURCES.MARKETO_TEMPLATE_RULES}`),
       ]);
 
+      this.options = options ?? {};
       this.marketoPOIOptions = marketoPOIData?.data ?? OPTIONS_ERROR;
+      this.primaryProductOptions = caasCollections?.primaryProducts ?? OPTIONS_ERROR;
+      this.industryOptions = caasCollections?.industries ?? OPTIONS_ERROR;
       this.templateRules = templateRules ?? null;
 
       this.isInitialized = true;

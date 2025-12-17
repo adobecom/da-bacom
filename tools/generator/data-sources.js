@@ -1,7 +1,4 @@
-/* eslint-disable no-underscore-dangle, import/no-unresolved */
 import { getTags, getAemRepo, getRootTags } from '../tags/tag-utils.js';
-import { TOAST_TYPES } from './toast/toast.js';
-import { DEFAULT_PRIMARY_PRODUCTS } from './default-tags.js';
 
 const OPTIONS_URL = 'https://main--da-bacom--adobecom.aem.live/tools/landing-page.json';
 const POI_URL = 'https://milo.adobe.com/tools/marketo-options.json';
@@ -11,16 +8,9 @@ const CAAS_CONTENT_TYPE = 'caas:content-type';
 const CAAS_PRODUCTS = 'caas:products';
 const CAAS_INDUSTRY = 'caas:industry';
 const PROJECT = { org: 'adobecom', repo: 'da-bacom' };
-
-function dispatchError(message) {
-  const error = new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message } });
-  document.dispatchEvent(error);
-}
-
-function dispatchInfo(message) {
-  const info = new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.INFO, message, timeout: 10000 } });
-  document.dispatchEvent(info);
-}
+const MARKETO_RULES_ORIGIN = 'https://post-rules--da-marketo--adobecom.aem.live';
+const MARKETO_RULES_URL = `${MARKETO_RULES_ORIGIN}/tools/marketo-rules/marketo.html`;
+const MARKETO_RULES_TIMEOUT = 5000;
 
 function normalizeOption(item, valueKey, labelKey) {
   const valueEntry = Object.entries(item).find(([k]) => k.toLowerCase() === valueKey.toLowerCase());
@@ -30,7 +20,7 @@ function normalizeOption(item, valueKey, labelKey) {
   return (value && label) ? { value, label } : null;
 }
 
-async function getCaasCollections(token) {
+async function fetchCaasCollections(token) {
   const authOptions = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
 
   const aemConfig = await getAemRepo(PROJECT, authOptions);
@@ -60,43 +50,37 @@ async function getCaasCollections(token) {
   return result;
 }
 
+export async function getCaasOptions(token) {
+  try {
+    const collections = await fetchCaasCollections(token);
+
+    return {
+      contentTypes: collections.contentTypes.map((tag) => normalizeOption(tag, 'title', 'name')).filter(Boolean),
+      primaryProducts: collections.primaryProducts.map((tag) => normalizeOption(tag, 'title', 'name')).filter(Boolean),
+      industries: collections.industries.map((tag) => normalizeOption(tag, 'title', 'name')).filter(Boolean),
+    };
+  } catch (error) {
+    throw new Error(`CAAS Collections: ${error.message}`);
+  }
+}
+
 async function getMarketoPOI() {
   const response = await fetch(POI_URL);
   if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 
-  const data = await response.json();
+  const json = await response.json();
   const validItem = (item) => item.Key?.length && item.Value?.length;
-  const result = data.poi?.data?.filter(validItem) || [];
+  const result = json.poi?.data?.filter(validItem) || [];
   return result;
 }
 
 export async function fetchMarketoPOIOptions() {
   try {
     const poiData = await getMarketoPOI();
-    return poiData.map((item) => normalizeOption(item, 'Key', 'Value')).filter(Boolean);
+    const data = poiData.map((item) => normalizeOption(item, 'Key', 'Value')).filter(Boolean);
+    return { data };
   } catch (error) {
-    dispatchError(`Marketo POI Options: ${error.message}`);
-    return [];
-  }
-}
-
-export async function fetchPrimaryProductOptions(token) {
-  try {
-    const { primaryProducts } = await getCaasCollections(token);
-    return primaryProducts.map((tag) => normalizeOption(tag, 'title', 'name')).filter(Boolean);
-  } catch (error) {
-    dispatchInfo('Could not access primary product tags, using backup options');
-    return DEFAULT_PRIMARY_PRODUCTS;
-  }
-}
-
-export async function fetchIndustryOptions(token) {
-  try {
-    const { industries } = await getCaasCollections(token);
-    return industries.map((tag) => normalizeOption(tag, 'title', 'name')).filter(Boolean);
-  } catch (error) {
-    dispatchError(`Industry Options: ${error.message}`);
-    return [];
+    throw new Error(`Marketo POI Options: ${error.message}`);
   }
 }
 
@@ -112,7 +96,103 @@ export async function fetchPageOptions() {
     });
     return options;
   } catch (error) {
-    dispatchError(`Page Options: ${error.message}`);
-    return {};
+    throw new Error(`Page Options: ${error.message}`);
   }
+}
+
+function extractRuleValue(rule) {
+  if (!rule) return '';
+  if (Array.isArray(rule)) {
+    return rule[0]?.split(':')?.[0] || '';
+  }
+  return rule;
+}
+
+export function flattenTemplateRules(rules) {
+  const result = {};
+
+  const simpleProps = ['formVersion', 'purpose', 'formSuccessType'];
+  const objectProps = ['field_visibility', 'field_filters'];
+  const arrayProps = ['auto_complete', 'enrichment_fields'];
+
+  rules.forEach((ruleObj) => {
+    const templateName = Object.keys(ruleObj)[0];
+    const templateData = ruleObj[templateName];
+    if (!templateData) return;
+
+    const sheetData = [];
+
+    simpleProps.forEach((prop) => {
+      sheetData.push({
+        value: prop,
+        label: extractRuleValue(templateData[prop]),
+      });
+    });
+
+    objectProps.forEach((propName) => {
+      if (templateData[propName]) {
+        Object.entries(templateData[propName]).forEach(([fieldName, fieldRule]) => {
+          sheetData.push({
+            value: `${propName}.${fieldName}`,
+            label: extractRuleValue(fieldRule),
+          });
+        });
+      }
+    });
+
+    arrayProps.forEach((propName) => {
+      if (Array.isArray(templateData[propName])) {
+        templateData[propName].forEach((field, index) => {
+          sheetData.push({
+            value: `${propName}.${index}`,
+            label: field,
+          });
+        });
+      }
+    });
+
+    result[templateName] = sheetData;
+  });
+
+  return result;
+}
+
+export async function fetchMarketoTemplateRules() {
+  const iframe = document.createElement('iframe');
+  iframe.src = MARKETO_RULES_URL;
+  iframe.setAttribute('aria-hidden', 'true');
+  iframe.style.cssText = 'position:fixed;bottom:0;right:0;width:800px;height:600px;opacity:0;pointer-events:none;z-index:-1;';
+
+  let timeoutId;
+  let messageHandler;
+
+  const cleanup = () => {
+    clearTimeout(timeoutId);
+    window.removeEventListener('message', messageHandler);
+    if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+  };
+
+  return new Promise((resolve, reject) => {
+    messageHandler = (event) => {
+      if (event.origin !== MARKETO_RULES_ORIGIN) return;
+      if (event.data.type !== 'templateRules') return;
+
+      cleanup();
+
+      if (!event.data.data) {
+        reject(new Error('Marketo Template Rules: Data not available'));
+        return;
+      }
+
+      resolve(flattenTemplateRules(event.data.data));
+    };
+
+    timeoutId = setTimeout(() => {
+      cleanup();
+      reject(new Error('Marketo Template Rules: Request timed out'));
+    }, MARKETO_RULES_TIMEOUT);
+
+    window.addEventListener('message', messageHandler);
+    document.body.appendChild(iframe);
+  });
 }
