@@ -130,8 +130,9 @@
 
           expect(daFetch.called).to.be.true;
 
-          const fetchUrls = daFetch.getCalls().map(call => call.args[0]);
-          expect(fetchUrls[0]).to.include('mock-image.jpg');
+          const uploadCalls = daFetch.getCalls().filter(call => call.args[1]?.method === 'PUT');
+          expect(uploadCalls.length).to.be.greaterThan(0);
+          expect(uploadCalls[0].args[0]).to.include('mock-image.jpg');
         });
 
         it('shows error on submit when required fields are missing', async () => {

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /* eslint-disable import/no-unresolved */
 import { daFetch, replaceHtml } from 'da-fetch';
 import { DA_ORIGIN } from 'constants';
@@ -6,11 +7,36 @@ const ORG = 'adobecom';
 const REPO = 'da-bacom';
 
 function getDaPath(path, isHtml) {
-  if (isHtml) {
-    const htmlPath = path.endsWith('.html') ? path : `${path}.html`;
-    return `${DA_ORIGIN}/source/${ORG}/${REPO}${htmlPath}`;
+  const basePath = path.replace(/\.html$/, '');
+  const htmlPath = isHtml ? `${basePath}.html` : basePath;
+  return `${DA_ORIGIN}/source/${ORG}/${REPO}${htmlPath}`;
+}
+
+function sheetData(json) {
+  if (json[':type'] === 'sheet') return { data: json.data ?? [] };
+  if (json[':type'] === 'multi-sheet') {
+    return json[':names'].sort().reduce((sheets, name) => {
+      sheets[name] = json[name]?.data ?? [];
+      return sheets;
+    }, {});
   }
-  return `${DA_ORIGIN}/source/${ORG}/${REPO}${path.replace('.html', '')}`;
+  return {};
+}
+
+export async function getSheets(path) {
+  const daPath = getDaPath(path, false);
+  const opts = { method: 'GET', headers: { accept: 'application/json' } };
+
+  try {
+    const response = await daFetch(daPath, opts);
+    if (response.ok) {
+      const json = await response.json();
+      return sheetData(json);
+    }
+  } catch (error) {
+    console.error(`Error fetching stored data from ${path}:`, error);
+  }
+  return null;
 }
 
 export async function getSource(path) {
@@ -28,7 +54,6 @@ export async function getSource(path) {
     }
   /* c8 ignore next 5 */
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.log(`Error fetching document ${daPath}`, error);
   }
   return null;
@@ -47,9 +72,9 @@ export async function saveSource(path, document) {
   const body = replaceHtml(text, ORG, REPO);
   const blob = new Blob([body], { type: 'text/html' });
   const formData = new FormData();
+  formData.append('data', blob);
   const opts = { method: 'PUT', body: formData };
 
-  formData.append('data', blob);
   try {
     const daResp = await daFetch(daPath, opts);
     if (daResp.ok) {
@@ -59,7 +84,6 @@ export async function saveSource(path, document) {
     }
   /* c8 ignore next 5 */
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.log(`Couldn't save ${daPath}`, error);
   }
   return null;

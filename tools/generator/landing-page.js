@@ -7,14 +7,13 @@ import getStyle from 'styles';
 import DA_SDK from 'da-sdk';
 import { initIms } from 'da-fetch';
 import { LitElement, html, createRef, ref, nothing } from 'da-lit';
+import { LIBS } from '../../scripts/scripts.js';
 import { createToast, TOAST_TYPES } from './toast/toast.js';
-import { getSource, saveSource, saveFile } from './da-utils.js';
-import { fetchMarketoPOIOptions, fetchPrimaryProductOptions, fetchIndustryOptions, fetchPageOptions } from './data-sources.js';
+import { getSource, saveSource, saveFile, getSheets } from './da-utils.js';
+import { fetchPrimaryProductOptions, fetchIndustryOptions, fetchPageOptions } from './data-sources.js';
 import {
   getStorageItem,
   setStorageItem,
-  getCachedData,
-  setCachedData,
   marketoUrl,
   applyTemplateData,
 } from './generator.js';
@@ -45,6 +44,13 @@ const PREVIEW_MODE_STORAGE_KEY = 'landing-page-preview-mode';
 const DRAFT_PATH = '/drafts/landing-page-builder/';
 const BRANCH = searchParams.get('ref') || '';
 const DEBUG = searchParams.get('debug') || false;
+const DATA_PATH = '/tools/page-builder/landing-page/data/';
+const DATA_SOURCES = {
+  MARKETO_POI: 'marketo-poi-options.json',
+  MARKETO_TEMPLATE_RULES: 'marketo-template-rules.json',
+  CAAS_COLLECTIONS: 'caas-collections.json',
+  PAGE_OPTIONS: 'page-options.json',
+};
 
 const TEMPLATE_MAP = {
   'guide-gated': '/tools/page-builder/prd-template-basic',
@@ -59,6 +65,21 @@ const TEMPLATE_MAP = {
 
 const IMAGES = ['marqueeImage', 'bodyImage', 'cardImage'];
 const FILES = ['pdfAsset'];
+
+const FORM_TEMPLATE_MAP = {
+  Medium: 'flex_event',
+  Short: 'flex_content',
+};
+
+const TEMPLATE_RULE_MAPPING = {
+  formVersion: 'form.id',
+  purpose: 'form.purpose',
+  formSuccessType: 'form.success.type',
+  field_visibility: 'field_visibility',
+  field_filters: 'field_filters',
+  auto_complete: 'auto_complete',
+  enrichment_fields: 'enrichment_fields',
+};
 
 const FORM_SCHEMA = {
   contentType: '',
@@ -123,7 +144,6 @@ class LandingPageForm extends LitElement {
     this.template = null;
     this.currentTemplateKey = null;
     this.previewMode = this.getInitialPreviewMode();
-    this.hasEdit = false;
     this.coreLocked = false;
     this.missingFields = {};
   }
@@ -153,7 +173,7 @@ class LandingPageForm extends LitElement {
   saveFormState() {
     const formToSave = { ...this.form };
     [...IMAGES, ...FILES].forEach((field) => {
-      if (!hasOwnProperty.call(formToSave, field)) return;
+      if (!Object.hasOwn(formToSave, field)) return;
       if (formToSave[field]?.url?.startsWith('blob:')) {
         formToSave[field] = null;
       }
@@ -185,17 +205,6 @@ class LandingPageForm extends LitElement {
     this.requestUpdate();
   }
 
-  async fetchCachedOptions(cacheKey, fetchFunction, ...args) {
-    const cached = getCachedData(cacheKey);
-    if (cached) return cached;
-
-    const data = await fetchFunction(...args);
-    if (!data || (Array.isArray(data) && data.length === 0)) {
-      throw new Error('No data received');
-    }
-    return setCachedData(cacheKey, data);
-  }
-
   async connectedCallback() {
     super.connectedCallback();
     document.addEventListener('show-toast', this.handleToast);
@@ -207,15 +216,20 @@ class LandingPageForm extends LitElement {
 
     try {
       if (!this.token) throw new Error('Failed to get token');
-      // removed cached layer for uta testing
-      this.marketoPOIOptions = await fetchMarketoPOIOptions().catch(() => OPTIONS_ERROR);
+
       this.primaryProductOptions = await fetchPrimaryProductOptions(this.token).catch(() => OPTIONS_ERROR);
       this.industryOptions = await fetchIndustryOptions(this.token).catch(() => OPTIONS_ERROR);
+      const [
+        marketoPOIData,
+        templateRules,
+      ] = await Promise.all([
+        getSheets(`${DATA_PATH}${DATA_SOURCES.MARKETO_POI}`),
+        getSheets(`${DATA_PATH}${DATA_SOURCES.MARKETO_TEMPLATE_RULES}`),
+      ]);
 
-      if (this.form.url) {
-        const sourceResult = await getSource(this.form.url);
-        this.hasEdit = sourceResult?.body?.innerHTML !== null;
-      }
+      this.marketoPOIOptions = marketoPOIData?.data ?? OPTIONS_ERROR;
+      this.templateRules = templateRules ?? null;
+
       this.isInitialized = true;
       this.requestUpdate();
     } catch (error) {
@@ -256,38 +270,79 @@ class LandingPageForm extends LitElement {
     return this.templateHTML;
   }
 
-  getCaasContentType(form) {
-    const contentTypeMap = {
-      Guide: 'caas:content-type/guide',
-      Infographic: 'caas:content-type/infographic',
-      Report: 'caas:content-type/report',
-      'Video/Demo': 'caas:content-type/demos-and-video',
-    };
-    return contentTypeMap[form.contentType] || '';
-  }
-
-  templatePlaceholders(form) {
-    // TODO: Update dynamic placeholders
-    const state = {
+  getMarketoState(form) {
+    const marketoState = {
       'program.campaignids.sfdc': form.campaignId,
       'program.poi': form.marketoPOI,
     };
 
-    return {
+    const applyRulesToState = (rules) => {
+      Object.entries(TEMPLATE_RULE_MAPPING).forEach(([key, prop]) => {
+        rules
+          .filter((r) => r.value === key || r.value.startsWith(`${key}.`))
+          .forEach((rule) => {
+            marketoState[rule.value.replace(key, prop)] = rule.label;
+          });
+      });
+    };
+
+    if (form.gated === 'Gated' && form.formTemplate) {
+      const templateKey = FORM_TEMPLATE_MAP[form.formTemplate];
+      const selectedRules = this.templateRules[templateKey] || null;
+      marketoState['form.template'] = templateKey;
+      if (selectedRules) {
+        applyRulesToState(selectedRules);
+      }
+    }
+    if (DEBUG) console.table(marketoState);
+
+    return marketoState;
+  }
+
+  async templatePlaceholders(form) {
+    const { getConfig } = await import(`${LIBS}/utils/utils.js`);
+    const { replaceKeyArray } = await import(`${LIBS}/features/placeholders.js`);
+    const config = getConfig();
+
+    const marketoState = this.getMarketoState(form);
+    const [formDescription, formSuccessContent] = await replaceKeyArray(
+      [
+        `Please share your contact information to get the ${form.contentType.toLowerCase()}.`,
+        `Thank you. Your ${form.contentType.toLowerCase()} is ready below.`,
+      ],
+      config,
+    );
+
+    const dateStr = new Date().toLocaleString('us-EN', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: false,
+    });
+
+    const placeholders = {
       ...form,
-      marketoDataUrl: marketoUrl(state),
+      marketoDataUrl: marketoUrl(marketoState),
+      marketoDataUrlName: `Marketo Configurator ${dateStr}`,
       poi: form.marketoPOI,
-      formDescription: `Please share your contact information to get the ${form.contentType.toLowerCase()}.`,
-      formSuccessContent: `Thank you. Your ${form.contentType.toLowerCase()} is ready below.`,
-      caasPrimaryProducts: Array.isArray(form.primaryProducts) ? form.primaryProducts.join(', ') : form.primaryProducts,
-      caasContentType: this.getCaasContentType(form),
+      formDescription,
+      formSuccessContent,
+      caasPrimaryProduct: form.primaryProduct,
+      caasContentType: form.contentTypeCaas,
       cardDate: new Date().toISOString().split('T')[0],
       marqueeImage: form.marqueeImage?.url,
       bodyImage: form.bodyImage?.url,
       cardImage: form.cardImage?.url,
-      pdfAsset: form.pdfAsset?.url,
-      pdfAssetName: form.pdfAsset?.name,
     };
+
+    if (form.pdfAsset) {
+      placeholders.pdfAsset = form.pdfAsset?.url;
+      placeholders.pdfAssetName = form.pdfAsset?.name;
+    }
+    return placeholders;
   }
 
   generateUrl(form) {
@@ -385,7 +440,7 @@ class LandingPageForm extends LitElement {
 
   handleImageChange(e) {
     const { name } = e?.target || {};
-    if (!name || !hasOwnProperty.call(this.form, name)) return;
+    if (!name || !Object.hasOwn(this.form, name)) return;
     if (this.form[name]?.url && this.form[name].url.startsWith('blob:')) {
       URL.revokeObjectURL(this.form[name].url);
     }
@@ -405,9 +460,9 @@ class LandingPageForm extends LitElement {
       .then((url) => {
         if (!url) return;
         this.form[name] = { url, name: file.name };
-        document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Image Uploaded', timeout: 5000 } }));
+        document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.SUCCESS, message: 'Image Uploaded', timeout: 5000 } }));
       }).catch((error) => {
-        document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: `Upload failed: ${error.message}` } }));
+        document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: `Upload failed: ${error.message}` } }));
       }).finally(() => {
         this.saveFormState();
       });
@@ -454,16 +509,14 @@ class LandingPageForm extends LitElement {
   }
 
   async savePage() {
-    document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.INFO, message: 'Saving page...', timeout: 5000 } }));
     await this.getTemplateContent();
-    const placeholders = this.templatePlaceholders(this.form);
+    const placeholders = await this.templatePlaceholders(this.form);
     if (DEBUG) {
       console.table(placeholders);
     }
     const generatedPage = applyTemplateData(this.templateHTML, placeholders);
     try {
-      const sourcePath = await saveSource(this.form.url, generatedPage);
-      this.hasEdit = !!sourcePath;
+      await saveSource(this.form.url, generatedPage);
       this.requestUpdate();
       return true;
     } catch (error) {
@@ -472,20 +525,34 @@ class LandingPageForm extends LitElement {
   }
 
   async previewPage() {
-    document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.INFO, message: 'Previewing page...', timeout: 5000 } }));
     const path = this.form.url.replace('.html', '');
     const previewApi = `${ADMIN_URL}/preview/adobecom/da-bacom/main${path}`;
     const previewApiResponse = await fetch(previewApi, { method: 'POST' });
     if (!previewApiResponse.ok) {
-      return false;
+      return { success: false };
     }
     const previewApiData = await previewApiResponse.json();
     if (previewApiData?.preview?.status === 200) {
-      window.open(previewApiData.preview.url, '_blank');
-    } else {
-      return false;
+      return { success: true, url: previewApiData.preview.url };
     }
-    return true;
+    return { success: false };
+  }
+
+  async previewPdfAsset() {
+    if (!this.form.pdfAsset?.url) return { success: true, skipped: true };
+
+    const pdfUrl = new URL(this.form.pdfAsset.url);
+    const pdfPath = pdfUrl.pathname;
+
+    const previewApi = `${ADMIN_URL}/preview/adobecom/da-bacom/main${pdfPath}`;
+    const previewApiResponse = await fetch(previewApi, { method: 'POST' });
+
+    if (!previewApiResponse.ok) {
+      return { success: false };
+    }
+
+    const previewApiData = await previewApiResponse.json();
+    return { success: previewApiData?.preview?.status === 200 };
   }
 
   async handleSubmit(e) {
@@ -514,12 +581,26 @@ class LandingPageForm extends LitElement {
     document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.SUCCESS, message: 'Page saved', timeout: 5000 } }));
     await delay(1000);
     document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.INFO, message: 'Updating preview...', timeout: 5000 } }));
-    const previewSuccess = await this.previewPage();
-    if (!previewSuccess) {
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Failed to update preview', timeout: 5000 } }));
+
+    const [pageResult, pdfResult] = await Promise.all([
+      this.previewPage(),
+      this.previewPdfAsset(),
+    ]);
+
+    if (!pageResult.success) {
+      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Failed to preview page', timeout: 5000 } }));
+    }
+    if (!pdfResult.success) {
+      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Failed to preview PDF asset', timeout: 5000 } }));
+    }
+    if (!pageResult.success || !pdfResult.success) {
       return;
     }
+
     document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.SUCCESS, message: 'Preview updated', timeout: 5000 } }));
+    if (pageResult.url) {
+      window.open(pageResult.url, '_blank');
+    }
   }
 
   getRequiredFields() {
