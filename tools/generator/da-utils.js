@@ -12,7 +12,7 @@ function getDaPath(path, isHtml) {
   return `${DA_ORIGIN}/source/${ORG}/${REPO}${htmlPath}`;
 }
 
-function sheetData(json) {
+function getSheetData(json) {
   if (json[':type'] === 'sheet') return { data: json.data ?? [] };
   if (json[':type'] === 'multi-sheet') {
     return json[':names'].sort().reduce((sheets, name) => {
@@ -31,7 +31,7 @@ export async function getSheets(path) {
     const response = await daFetch(daPath, opts);
     if (response.ok) {
       const json = await response.json();
-      return sheetData(json);
+      return getSheetData(json);
     }
   } catch (error) {
     console.error(`Error fetching stored data from ${path}:`, error);
@@ -57,6 +57,68 @@ export async function getSource(path) {
     console.log(`Error fetching document ${daPath}`, error);
   }
   return null;
+}
+
+function createSheetObject(data, sheetName = 'data') {
+  return {
+    total: data.length,
+    limit: data.length,
+    offset: 0,
+    data,
+    ':type': 'sheet',
+    ...(sheetName && { ':sheetname': sheetName }),
+  };
+}
+
+export function toSheetFormat(data) {
+  if (!data) return null;
+
+  if (Array.isArray(data)) {
+    return createSheetObject(data);
+  }
+
+  const sheets = Object.keys(data);
+
+  if (sheets.length === 0) {
+    return createSheetObject([]);
+  }
+
+  if (sheets.length === 1) {
+    const sheetName = sheets[0];
+    const sheetData = Array.isArray(data[sheetName]) ? data[sheetName] : [];
+    return createSheetObject(sheetData, sheetName);
+  }
+
+  const result = {};
+  const includedSheets = [];
+
+  sheets.forEach((sheetName) => {
+    const sheetData = Array.isArray(data[sheetName]) ? data[sheetName] : [];
+    if (sheetData.length > 0) {
+      const sheetObj = createSheetObject(sheetData, sheetName);
+      delete sheetObj[':sheetname'];
+      result[sheetName] = sheetObj;
+      includedSheets.push(sheetName);
+    }
+  });
+
+  result[':type'] = 'multi-sheet';
+  result[':names'] = includedSheets;
+  result[':version'] = 3;
+
+  return result;
+}
+
+export async function saveSheets(path, data) {
+  const daPath = `${DA_ORIGIN}/source/${ORG}/${REPO}${path}`;
+  const formData = new FormData();
+
+  const jsonData = toSheetFormat(data);
+  const blob = new Blob([JSON.stringify(jsonData)], { type: 'application/json' });
+
+  formData.append('data', blob);
+  const opts = { method: 'PUT', body: formData };
+  return daFetch(daPath, opts);
 }
 
 export async function saveSource(path, document) {
