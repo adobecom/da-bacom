@@ -4,6 +4,7 @@
 /* eslint-disable import/no-unresolved */
 import 'components';
 import getStyle from 'styles';
+import getSvg from 'https://da.live/nx/public/utils/svg.js';
 import DA_SDK from 'da-sdk';
 import { initIms } from 'da-fetch';
 import { LitElement, html, nothing } from 'da-lit';
@@ -35,6 +36,10 @@ const DATA_PATH = '/tools/page-builder/landing-page/data/';
 const EDIT_PATH = 'https://da.live/sheet#/adobecom/da-bacom/';
 const TOAST_DEFAULT_TIMEOUT = 5000;
 
+const ICONS = [
+  'https://da.live/nx/public/icons/Smock_Close_18_N.svg',
+];
+
 const DATA_SOURCES = [
   { name: 'Marketo POI', id: 'marketo-poi', path: 'marketo-poi-options.json', fetchFn: fetchMarketoPOIOptions },
   { name: 'Marketo Template Rules', id: 'marketo-template-rules', path: 'marketo-template-rules.json', fetchFn: fetchMarketoTemplateRules },
@@ -45,15 +50,13 @@ const DATA_SOURCES = [
 class PageBuilderAdmin extends LitElement {
   static styles = style;
 
-  static get properties() {
-    return {
-      dataSources: { type: Array },
-      editingSource: { type: String },
-      activeSheet: { type: String },
-      mergedItems: { type: Array },
-      isSaving: { type: Boolean },
-    };
-  }
+  static properties = {
+    dataSources: { type: Array },
+    editingSource: { type: String },
+    activeSheet: { type: String },
+    mergedItems: { type: Array },
+    isSaving: { type: Boolean },
+  };
 
   constructor() {
     super();
@@ -69,6 +72,7 @@ class PageBuilderAdmin extends LitElement {
   async connectedCallback() {
     super.connectedCallback();
     document.addEventListener('show-toast', this.handleToast);
+    getSvg({ parent: this.shadowRoot, paths: ICONS });
     const token = await initIms();
     this.token = token?.accessToken?.token;
     await this.loadAllDataSources();
@@ -184,9 +188,11 @@ class PageBuilderAdmin extends LitElement {
       const { data, status: sheetStatus } = this.processData(liveData, storedData, metadata);
 
       let overallStatus = SHEET_STATES.SYNCED;
-      if (!liveData) overallStatus = SHEET_STATES.LIVE_NOT_FOUND;
-      else if (!storedData) overallStatus = SHEET_STATES.STORED_NOT_FOUND;
-      else {
+      if (!liveData) {
+        overallStatus = SHEET_STATES.LIVE_NOT_FOUND;
+      } else if (!storedData) {
+        overallStatus = SHEET_STATES.STORED_NOT_FOUND;
+      } else {
         const blockedSet = getBlockedSheets(metadata);
         const hasOutOfSync = Object.entries(sheetStatus).some(
           ([name, s]) => !blockedSet.has(name)
@@ -307,18 +313,18 @@ class PageBuilderAdmin extends LitElement {
   }
 
   syncItems(items) {
-    const syncable = items.filter((i) => i.live && !i.blocked && [ITEM_STATES.NEW, ITEM_STATES.DRIFTED].includes(i.state));
-    const stale = items.filter((i) => i.state === ITEM_STATES.STALE);
+    const syncableItems = items.filter((i) => i.live && !i.blocked && [ITEM_STATES.NEW, ITEM_STATES.DRIFTED].includes(i.state));
+    const staleItems = items.filter((i) => i.state === ITEM_STATES.STALE);
 
-    syncable.forEach((item) => {
+    syncableItems.forEach((item) => {
       Object.assign(item, { currentValue: item.live.value, currentLabel: item.live.label, state: ITEM_STATES.SYNCED });
       this.pendingChanges.add(item.itemKey);
     });
 
-    if (stale.length) {
-      const staleKeys = new Set(stale.map((i) => i.itemKey));
+    if (staleItems.length) {
+      const staleKeys = new Set(staleItems.map((i) => i.itemKey));
       this.mergedItems = this.mergedItems.filter((i) => !staleKeys.has(i.itemKey));
-      stale.forEach((i) => this.pendingChanges.add(i.itemKey));
+      staleItems.forEach((i) => this.pendingChanges.add(i.itemKey));
     }
     this.requestUpdate();
   }
@@ -418,15 +424,19 @@ class PageBuilderAdmin extends LitElement {
   }
 
   renderStatusBadge(status) {
-    const config = STATUS_CONFIG[status] || { label: 'Unknown', class: 'status-error', icon: '?' };
-    return html`<span class="status-badge ${config.class}">${config.icon} ${config.label}</span>`;
+    const config = STATUS_CONFIG[status] || { label: 'Unknown', class: 'status-error' };
+    return html`<span class="status-badge ${config.class}">${config.label}</span>`;
   }
 
   getSyncSummary(source) {
     if (!source.sheetStatus) return null;
     const blockedSheets = getBlockedSheets(source.metadata);
 
-    let synced = 0; let newCount = 0; let drifted = 0; let stale = 0; let blocked = 0;
+    let synced = 0;
+    let newCount = 0;
+    let drifted = 0;
+    let stale = 0;
+    let blocked = 0;
     Object.entries(source.sheetStatus).forEach(([name, s]) => {
       if (blockedSheets.has(name)) {
         blocked += s.itemCounts.total || 0;
@@ -476,7 +486,7 @@ class PageBuilderAdmin extends LitElement {
         </div>
         <div class="card-actions">
           <sl-button variant="primary" size="small" ?disabled=${source.status === SHEET_STATES.LOADING} @click=${() => this.handleEdit(source.id)}>Manage</sl-button>
-          <sl-button variant="text" size="small" ?disabled=${source.status === SHEET_STATES.LOADING} @click=${() => this.loadDataSource(source.id)}>↻ Refresh</sl-button>
+          <sl-button variant="text" size="small" ?disabled=${source.status === SHEET_STATES.LOADING} @click=${() => this.loadDataSource(source.id)}>Refresh</sl-button>
         </div>
       </div>
     `;
@@ -493,10 +503,10 @@ class PageBuilderAdmin extends LitElement {
           <p class="editor-description">${Object.keys(source.data).length} sheet(s) • ${this.pendingChanges.size} pending change(s)</p>
         </div>
         <div class="header-right">
-          <sl-button size="small" @click=${() => window.open(`${EDIT_PATH}${DATA_PATH.slice(1)}${source.path.replace('.json', '')}`, '_blank')}>📄 View Data</sl-button>
-          <sl-button size="small" @click=${() => window.open(`${EDIT_PATH}${DATA_PATH.slice(1)}${source.path.replace('.json', '-meta')}`, '_blank')}>📋 View Meta</sl-button>
+          <sl-button size="small" @click=${() => window.open(`${EDIT_PATH}${DATA_PATH.slice(1)}${source.path.replace('.json', '')}`, '_blank')}>View Data</sl-button>
+          <sl-button size="small" @click=${() => window.open(`${EDIT_PATH}${DATA_PATH.slice(1)}${source.path.replace('.json', '-meta')}`, '_blank')}>View Meta</sl-button>
           <sl-button size="small" variant="primary" ?disabled=${this.isSaving || this.pendingChanges.size === 0} @click=${this.handleSave}>${this.isSaving ? 'Saving...' : 'Save'}</sl-button>
-          <button class="close-btn" @click=${this.handleCancelEdit}>✕</button>
+          <button class="close-btn" @click=${this.handleCancelEdit}><svg class="icon"><use href="#spectrum-close"/></svg></button>
         </div>
       </div>
     `;
@@ -509,18 +519,27 @@ class PageBuilderAdmin extends LitElement {
     return 'synced';
   }
 
+  getSheetStatusMessage(statusClass, stats) {
+    switch (statusClass) {
+      case 'blocked': return 'This sheet is locked and will not be synced';
+      case 'needs-attention': return `${stats.new + stats.drifted + stats.stale} item(s) need attention`;
+      case 'has-edits': return `${stats.blocked} item(s) blocked from sync`;
+      default: return 'All items synced';
+    }
+  }
+
   renderSheetTabs(source, sheets) {
     const showScroll = sheets.length > 5;
     return html`
       <div class="sheet-tabs-container ${showScroll ? 'has-scroll' : ''}">
-        ${showScroll ? html`<button class="tab-scroll-btn left" @click=${() => this.shadowRoot?.querySelector('.sheet-tabs')?.scrollBy({ left: -200, behavior: 'smooth' })}>‹</button>` : nothing}
+        ${showScroll ? html`<button class="tab-scroll-btn left" aria-label="Scroll left" @click=${() => this.shadowRoot?.querySelector('.sheet-tabs')?.scrollBy({ left: -200, behavior: 'smooth' })}></button>` : nothing}
         <div class="sheet-tabs">
           ${sheets.map((sheet) => {
     const items = this.mergedItems.filter((m) => m.sheetName === sheet);
     return html`<button class="sheet-tab ${this.activeSheet === sheet ? 'active' : ''} ${this.getSheetStatusClass(items, this.isSheetBlocked(sheet))}" @click=${() => this.handleSheetChange(sheet)}>${sheet}<span class="tab-count">${items.length}</span></button>`;
   })}
         </div>
-        ${showScroll ? html`<button class="tab-scroll-btn right" @click=${() => this.shadowRoot?.querySelector('.sheet-tabs')?.scrollBy({ left: 200, behavior: 'smooth' })}>›</button>` : nothing}
+        ${showScroll ? html`<button class="tab-scroll-btn right" aria-label="Scroll right" @click=${() => this.shadowRoot?.querySelector('.sheet-tabs')?.scrollBy({ left: 200, behavior: 'smooth' })}></button>` : nothing}
       </div>
     `;
   }
@@ -543,9 +562,9 @@ class PageBuilderAdmin extends LitElement {
         </div>
         <div class="toolbar-right">
           ${hasSheets ? html`
-            <sl-button size="small" variant="primary" ?disabled=${isBlocked} @click=${this.handleSyncSheet}>⚡ Sync Sheet</sl-button>
-            <sl-button size="small" variant="${isBlocked ? 'success' : 'default'}" @click=${this.handleToggleSheetBlock}>${isBlocked ? '🔓 Unblock' : '🔒 Block'}</sl-button>
-          ` : html`<sl-button size="small" variant="primary" @click=${this.handleSyncAll}>⚡ Sync All</sl-button>`}
+            <sl-button size="small" variant="primary" ?disabled=${isBlocked} @click=${this.handleSyncSheet}>Sync Sheet</sl-button>
+            <sl-button size="small" variant="${isBlocked ? 'success' : 'default'}" @click=${this.handleToggleSheetBlock}>${isBlocked ? 'Unblock' : 'Block'}</sl-button>
+          ` : html`<sl-button size="small" variant="primary" @click=${this.handleSyncAll}>Sync All</sl-button>`}
         </div>
       </div>
     `;
@@ -571,11 +590,9 @@ class PageBuilderAdmin extends LitElement {
   }
 
   renderItemList(items) {
-    const isBlocked = this.isSheetBlocked(this.activeSheet);
-    if (items.length === 0) return html`<div class="empty-state"><div class="empty-icon">📝</div><h3>No items in this sheet</h3></div>`;
+    if (items.length === 0) return html`<div class="empty-state"><h3>No items in this sheet</h3></div>`;
 
     return html`
-      ${isBlocked ? html`<div class="blocked-sheet-banner">🔒 This sheet is locked and will not be synced</div>` : nothing}
       <div class="item-list-container">
         <div class="item-header">
           <div class="item-col item-state">Status</div>
@@ -594,7 +611,10 @@ class PageBuilderAdmin extends LitElement {
 
     const sheets = Object.keys(source.data);
     const items = this.getCurrentSheetItems();
-    const stats = computeSheetStats(items, this.isSheetBlocked(this.activeSheet));
+    const isBlocked = this.isSheetBlocked(this.activeSheet);
+    const stats = computeSheetStats(items, isBlocked);
+    const statusClass = this.getSheetStatusClass(items, isBlocked);
+    const statusMessage = this.getSheetStatusMessage(statusClass, stats);
 
     return html`
       <div class="editor-overlay">
@@ -602,7 +622,10 @@ class PageBuilderAdmin extends LitElement {
           ${this.renderEditorHeader(source)}
           ${sheets.length > 0 ? this.renderSheetTabs(source, sheets) : nothing}
           ${this.renderToolbar(stats, sheets.length > 0)}
-          <div class="editor-body">${this.renderItemList(items)}</div>
+          <div class="sheet-status-bar ${statusClass}">${statusMessage}</div>
+          <div class="editor-body">
+            ${this.renderItemList(items)}
+          </div>
         </div>
       </div>
     `;
@@ -614,7 +637,7 @@ class PageBuilderAdmin extends LitElement {
 
     if (isLoading) return html`<div class="status-banner loading">Loading data sources...</div>`;
     if (outOfSync > 0) return html`<div class="status-banner warning">${outOfSync} data source${outOfSync > 1 ? 's need' : ' needs'} sync</div>`;
-    return html`<div class="status-banner success">✓ All data sources synced</div>`;
+    return html`<div class="status-banner success">All data sources synced</div>`;
   }
 
   render() {

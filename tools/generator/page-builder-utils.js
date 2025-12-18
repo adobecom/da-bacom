@@ -18,12 +18,12 @@ export const SHEET_STATES = {
 };
 
 export const STATUS_CONFIG = {
-  [SHEET_STATES.LOADING]: { label: 'Loading...', class: 'status-loading', icon: '⏳' },
-  [SHEET_STATES.SYNCED]: { label: 'Synced', class: 'status-synced', icon: '✓' },
-  [SHEET_STATES.OUT_OF_SYNC]: { label: 'Needs Sync', class: 'status-out-of-sync', icon: '⚠' },
-  [SHEET_STATES.STORED_NOT_FOUND]: { label: 'Not Saved', class: 'status-not-found', icon: '✕' },
-  [SHEET_STATES.LIVE_NOT_FOUND]: { label: 'Source Error', class: 'status-error', icon: '⚠' },
-  [SHEET_STATES.ERROR]: { label: 'Error', class: 'status-error', icon: '⚠' },
+  [SHEET_STATES.LOADING]: { label: 'Loading...', class: 'status-loading' },
+  [SHEET_STATES.SYNCED]: { label: 'Synced', class: 'status-synced' },
+  [SHEET_STATES.OUT_OF_SYNC]: { label: 'Needs Sync', class: 'status-out-of-sync' },
+  [SHEET_STATES.STORED_NOT_FOUND]: { label: 'Not Saved', class: 'status-not-found' },
+  [SHEET_STATES.LIVE_NOT_FOUND]: { label: 'Source Error', class: 'status-error' },
+  [SHEET_STATES.ERROR]: { label: 'Error', class: 'status-error' },
 };
 
 export const ITEM_STATE_LABELS = {

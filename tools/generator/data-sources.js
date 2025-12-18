@@ -8,7 +8,7 @@ const CAAS_CONTENT_TYPE = 'caas:content-type';
 const CAAS_PRODUCTS = 'caas:products';
 const CAAS_INDUSTRY = 'caas:industry';
 const PROJECT = { org: 'adobecom', repo: 'da-bacom' };
-const MARKETO_RULES_ORIGIN = 'https://post-rules--da-marketo--adobecom.aem.live';
+const MARKETO_RULES_ORIGIN = 'https://main--da-marketo--adobecom.aem.live';
 const MARKETO_RULES_URL = `${MARKETO_RULES_ORIGIN}/tools/marketo-rules/marketo.html`;
 const MARKETO_RULES_TIMEOUT = 5000;
 

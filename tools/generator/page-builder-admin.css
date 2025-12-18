@@ -20,15 +20,15 @@
   --color-info-bg: #e3f2fd;
 }
 
-* {
-  box-sizing: border-box;
+svg {
+  display: none;
 }
 
 .admin-container {
   padding: 2rem;
   max-width: 1400px;
   margin: 0 auto;
-  font-family: 'Adobe Clean', adobe-clean, sans-serif;
+  font-family: var(--body-font-family);
 }
 
 .admin-header {
@@ -176,7 +176,7 @@
 }
 
 .card-body {
-  min-height: 112px;
+  min-height: 80px;
   padding: 1rem 1.25rem;
   flex: 1;
   display: flex;
@@ -290,11 +290,20 @@
 .close-btn {
   background: none;
   border: none;
-  font-size: 1.5rem;
   color: var(--color-text-muted);
   cursor: pointer;
   padding: 0.25rem;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-btn .icon {
+  display: block;
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: currentcolor;
 }
 
 .close-btn:hover {
@@ -313,9 +322,29 @@
   border: none;
   padding: 0 0.75rem;
   cursor: pointer;
-  font-size: 1.25rem;
   color: var(--color-text-muted);
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tab-scroll-btn::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border: solid currentcolor;
+  border-width: 0 2px 2px 0;
+}
+
+.tab-scroll-btn.left::after {
+  transform: rotate(135deg);
+  margin-left: 2px;
+}
+
+.tab-scroll-btn.right::after {
+  transform: rotate(-45deg);
+  margin-right: 2px;
 }
 
 .tab-scroll-btn:hover {
@@ -447,13 +476,35 @@
   font-weight: 400;
 }
 
-.blocked-sheet-banner {
-  background: #fff5f5;
-  border: 1px solid #ffcdd2;
-  border-left: 4px solid var(--color-error-border);
-  color: var(--color-error);
-  padding: 0.625rem 1.5rem;
+.sheet-status-bar {
+  padding: 0.5rem 2rem;
   font-size: 0.8125rem;
+  font-weight: 500;
+  border-left: 4px solid;
+}
+
+.sheet-status-bar.synced {
+  background: var(--color-success-bg);
+  border-left-color: var(--color-success-border);
+  color: var(--color-success);
+}
+
+.sheet-status-bar.needs-attention {
+  background: var(--color-warning-bg);
+  border-left-color: var(--color-warning);
+  color: var(--color-warning-text);
+}
+
+.sheet-status-bar.has-edits {
+  background: #f3e5f5;
+  border-left-color: #9c27b0;
+  color: #7b1fa2;
+}
+
+.sheet-status-bar.blocked {
+  background: var(--color-error-bg);
+  border-left-color: var(--color-error-border);
+  color: var(--color-error);
 }
 
 .editor-body {
@@ -621,11 +672,6 @@
   min-height: 300px;
 }
 
-.empty-icon {
-  font-size: 3rem;
-  opacity: 0.5;
-}
-
 .empty-state h3 {
   margin: 0;
   font-size: 1.25rem;
@@ -702,11 +748,6 @@
 .item-list::-webkit-scrollbar-thumb {
   background: #c1c1c1;
   border-radius: 4px;
-}
-
-.editor-body::-webkit-scrollbar-thumb:hover,
-.item-list::-webkit-scrollbar-thumb:hover {
-  background: #a1a1a1;
 }
 
 @media (max-width: 768px) {

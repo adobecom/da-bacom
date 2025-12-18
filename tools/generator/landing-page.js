@@ -39,7 +39,6 @@ const PREVIEW_PARAMS = '?martech=off&dapreview=on';
 const FORM_STORAGE_KEY = 'landing-page-builder';
 const OPTIONS_LOADING = [{ value: 'loading', label: 'Loading...' }];
 const OPTIONS_ERROR = [{ value: 'error', label: 'Error loading options' }];
-const PREVIEW_MODE_STORAGE_KEY = 'landing-page-preview-mode';
 const DRAFT_PATH = '/drafts/landing-page-builder/';
 const BRANCH = searchParams.get('ref') || '';
 const DEBUG = searchParams.get('debug') || false;
@@ -120,17 +119,15 @@ function computeAssetDirFromUrl(url) {
 class LandingPageForm extends LitElement {
   static styles = style;
 
-  static get properties() {
-    return {
-      form: { type: Object },
-      marketoPOIOptions: { type: Array },
-      primaryProductOptions: { type: Array },
-      industryOptions: { type: Array },
-      isInitialized: { type: Boolean },
-      coreLocked: { type: Boolean },
-      missingFields: { type: Object },
-    };
-  }
+  static properties = {
+    form: { type: Object },
+    marketoPOIOptions: { type: Array },
+    primaryProductOptions: { type: Array },
+    industryOptions: { type: Array },
+    isInitialized: { type: Boolean },
+    coreLocked: { type: Boolean },
+    missingFields: { type: Object },
+  };
 
   constructor() {
     super();
@@ -142,7 +139,6 @@ class LandingPageForm extends LitElement {
     this.iframeRef = createRef();
     this.template = null;
     this.currentTemplateKey = null;
-    this.previewMode = this.getInitialPreviewMode();
     this.coreLocked = false;
     this.missingFields = {};
   }
@@ -163,7 +159,6 @@ class LandingPageForm extends LitElement {
     this.coreLocked = false;
     this.missingFields = {};
     localStorage.removeItem(FORM_STORAGE_KEY);
-    localStorage.removeItem(PREVIEW_MODE_STORAGE_KEY);
     if (this.isInitialized) {
       this.requestUpdate();
     }
@@ -188,20 +183,6 @@ class LandingPageForm extends LitElement {
     } catch (error) {
       document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Failed to load saved form data' } }));
     }
-  }
-
-  getInitialPreviewMode() {
-    const saved = getStorageItem(PREVIEW_MODE_STORAGE_KEY);
-    if (saved === 'generated' || saved === 'template') return saved;
-    return 'template';
-  }
-
-  setPreviewMode(mode) {
-    if (mode !== 'template' && mode !== 'generated') return;
-    if (this.previewMode === mode) return;
-    this.previewMode = mode;
-    setStorageItem(PREVIEW_MODE_STORAGE_KEY, mode);
-    this.requestUpdate();
   }
 
   async connectedCallback() {
@@ -302,6 +283,16 @@ class LandingPageForm extends LitElement {
     return marketoState;
   }
 
+  getCaasContentType(form) {
+    const contentTypeMap = {
+      Guide: 'caas:content-type/guide',
+      Infographic: 'caas:content-type/infographic',
+      Report: 'caas:content-type/report',
+      'Video/Demo': 'caas:content-type/demos-and-video',
+    };
+    return contentTypeMap[form.contentType] || '';
+  }
+
   async templatePlaceholders(form) {
     const { getConfig } = await import(`${LIBS}/utils/utils.js`);
     const { replaceKeyArray } = await import(`${LIBS}/features/placeholders.js`);
@@ -333,8 +324,8 @@ class LandingPageForm extends LitElement {
       poi: form.marketoPOI,
       formDescription,
       formSuccessContent,
-      caasPrimaryProduct: form.primaryProduct,
-      caasContentType: form.contentTypeCaas,
+      caasPrimaryProducts: Array.isArray(form.primaryProducts) ? form.primaryProducts.join(', ') : form.primaryProducts,
+      caasContentType: this.getCaasContentType(form),
       cardDate: new Date().toISOString().split('T')[0],
       marqueeImage: form.marqueeImage?.url,
       bodyImage: form.bodyImage?.url,
