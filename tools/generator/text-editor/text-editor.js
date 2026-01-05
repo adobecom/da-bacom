@@ -1,6 +1,4 @@
-/* eslint-disable no-underscore-dangle */
-/* eslint-disable import/no-unresolved */
-/* eslint-disable class-methods-use-this */
+/* eslint-disable no-underscore-dangle, import/no-unresolved, class-methods-use-this */
 import { LitElement, html, nothing, createRef, ref } from 'da-lit';
 import getStyle from 'styles';
 
@@ -132,7 +130,7 @@ class TextEditor extends LitElement {
             class="toolbar-btn bold ${tags.includes('strong') || tags.includes('b') ? 'is-active' : ''}"
             @mousedown=${(e) => e.preventDefault()}
             @click=${(e) => this.handleButtonClick(e, 'strong')}
-            title="Bold (Ctrl+B / Cmd+B)"
+            title="Bold"
             aria-label="Bold (Ctrl+B)">
           </button>
           <button
@@ -140,7 +138,7 @@ class TextEditor extends LitElement {
             class="toolbar-btn italic ${tags.includes('em') || tags.includes('i') ? 'is-active' : ''}"
             @mousedown=${(e) => e.preventDefault()}
             @click=${(e) => this.handleButtonClick(e, 'em')}
-            title="Italic (Ctrl+I / Cmd+I)"
+            title="Italic"
             aria-label="Italic (Ctrl+I)">
           </button>
           <button

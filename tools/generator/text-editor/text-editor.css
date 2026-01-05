@@ -3,13 +3,11 @@
   position: relative;
 }
 
-.text-editor {
-  label {
-    font-size: var(--s2-body-xs-size);
-    display: block;
-    color: var(--s2-gray-700);
-    margin-bottom: 4px;
-  }
+.text-editor label {
+  font-size: var(--s2-body-xs-size);
+  display: block;
+  color: var(--s2-gray-700);
+  margin-bottom: 4px;
 }
 
 .editor-toolbar {
