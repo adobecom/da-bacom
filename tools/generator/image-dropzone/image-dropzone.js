@@ -44,9 +44,10 @@ async function isImageTypeValid(file) {
   return validTypes.includes(currentFileType);
 }
 
-export function isImageSizeValid(file, maxSize) {
+function isImageSizeValid(file, maxSize) {
   return file.size <= maxSize;
 }
+
 export default class ImageDropzone extends LitElement {
   static properties = {
     file: { type: Object, reflect: true },

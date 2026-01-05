@@ -60,6 +60,14 @@ export function renderContentType(form, handleInput, regionOptions, isLocked = f
       ${optionsSelect(form, handleInput, 'region', 'Region*', regionOptions, hasError)}
       <sl-input type="text" name="marqueeHeadline" .value=${form.marqueeHeadline} placeholder="Marquee Headline*" label="Marquee Headline*" error=${hasError('marqueeHeadline')} @input=${handleInput}></sl-input>
       <sl-input type="text" name="url" .value=${form.url} placeholder="/resources/..." label="URL*" error=${hasError('url')} @input=${handleInput}></sl-input>
+      ${form.contentType && form.gated && form.templatePath ? html`
+        <label class="template-preview-label">
+          Template Preview: 
+          <a href="https://main--da-bacom--adobecom.aem.live${form.templatePath}" target="_blank" rel="noopener noreferrer">
+            https://main--da-bacom--adobecom.aem.live${form.templatePath}
+          </a>
+        </label>
+      ` : nothing}
     </div>
   `;
 }
