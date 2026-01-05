@@ -1,7 +1,7 @@
 :host {
   display: block;
   max-width: var(--grid-container-width);
-  margin: var(--spacing-800) auto var(--spacing-800) auto;
+  margin: var(--spacing-800) auto;
 }
 
 h1 {
@@ -20,9 +20,9 @@ p {
 }
 
 .builder-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
 }
 
 .builder-container form {
@@ -91,12 +91,6 @@ p {
   border: none;
   box-shadow: #b5b5b5 0 0 20px 0;
   overflow: hidden;
-}
-
-.preview-switcher {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 12px;
 }
 
 .core-options.locked {

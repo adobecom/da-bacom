@@ -10,7 +10,6 @@ import { LitElement, html, createRef, ref, nothing } from 'da-lit';
 import { LIBS } from '../../scripts/scripts.js';
 import { createToast, TOAST_TYPES } from './toast/toast.js';
 import { getSource, saveSource, saveFile, getSheets } from './da-utils.js';
-import { fetchPrimaryProductOptions, fetchIndustryOptions, fetchPageOptions } from './data-sources.js';
 import {
   getStorageItem,
   setStorageItem,
@@ -40,7 +39,6 @@ const PREVIEW_PARAMS = '?martech=off&dapreview=on';
 const FORM_STORAGE_KEY = 'landing-page-builder';
 const OPTIONS_LOADING = [{ value: 'loading', label: 'Loading...' }];
 const OPTIONS_ERROR = [{ value: 'error', label: 'Error loading options' }];
-const PREVIEW_MODE_STORAGE_KEY = 'landing-page-preview-mode';
 const DRAFT_PATH = '/drafts/landing-page-builder/';
 const BRANCH = searchParams.get('ref') || '';
 const DEBUG = searchParams.get('debug') || false;
@@ -121,17 +119,15 @@ function computeAssetDirFromUrl(url) {
 class LandingPageForm extends LitElement {
   static styles = style;
 
-  static get properties() {
-    return {
-      form: { type: Object },
-      marketoPOIOptions: { type: Array },
-      primaryProductOptions: { type: Array },
-      industryOptions: { type: Array },
-      isInitialized: { type: Boolean },
-      coreLocked: { type: Boolean },
-      missingFields: { type: Object },
-    };
-  }
+  static properties = {
+    form: { type: Object },
+    marketoPOIOptions: { type: Array },
+    primaryProductOptions: { type: Array },
+    industryOptions: { type: Array },
+    isInitialized: { type: Boolean },
+    coreLocked: { type: Boolean },
+    missingFields: { type: Object },
+  };
 
   constructor() {
     super();
@@ -143,7 +139,6 @@ class LandingPageForm extends LitElement {
     this.iframeRef = createRef();
     this.template = null;
     this.currentTemplateKey = null;
-    this.previewMode = this.getInitialPreviewMode();
     this.coreLocked = false;
     this.missingFields = {};
   }
@@ -164,7 +159,6 @@ class LandingPageForm extends LitElement {
     this.coreLocked = false;
     this.missingFields = {};
     localStorage.removeItem(FORM_STORAGE_KEY);
-    localStorage.removeItem(PREVIEW_MODE_STORAGE_KEY);
     if (this.isInitialized) {
       this.requestUpdate();
     }
@@ -191,43 +185,33 @@ class LandingPageForm extends LitElement {
     }
   }
 
-  getInitialPreviewMode() {
-    const saved = getStorageItem(PREVIEW_MODE_STORAGE_KEY);
-    if (saved === 'generated' || saved === 'template') return saved;
-    return 'template';
-  }
-
-  setPreviewMode(mode) {
-    if (mode !== 'template' && mode !== 'generated') return;
-    if (this.previewMode === mode) return;
-    this.previewMode = mode;
-    setStorageItem(PREVIEW_MODE_STORAGE_KEY, mode);
-    this.requestUpdate();
-  }
-
   async connectedCallback() {
     super.connectedCallback();
     document.addEventListener('show-toast', this.handleToast);
     const token = await initIms();
     this.token = token?.accessToken?.token;
-    this.options = await fetchPageOptions();
     this.loadFormState();
     this.coreLocked = this.form.url !== '';
 
     try {
       if (!this.token) throw new Error('Failed to get token');
 
-      this.primaryProductOptions = await fetchPrimaryProductOptions(this.token).catch(() => OPTIONS_ERROR);
-      this.industryOptions = await fetchIndustryOptions(this.token).catch(() => OPTIONS_ERROR);
       const [
+        options,
         marketoPOIData,
+        caasCollections,
         templateRules,
       ] = await Promise.all([
+        getSheets(`${DATA_PATH}${DATA_SOURCES.PAGE_OPTIONS}`),
         getSheets(`${DATA_PATH}${DATA_SOURCES.MARKETO_POI}`),
+        getSheets(`${DATA_PATH}${DATA_SOURCES.CAAS_COLLECTIONS}`),
         getSheets(`${DATA_PATH}${DATA_SOURCES.MARKETO_TEMPLATE_RULES}`),
       ]);
 
+      this.options = options ?? {};
       this.marketoPOIOptions = marketoPOIData?.data ?? OPTIONS_ERROR;
+      this.primaryProductOptions = caasCollections?.primaryProducts ?? OPTIONS_ERROR;
+      this.industryOptions = caasCollections?.industries ?? OPTIONS_ERROR;
       this.templateRules = templateRules ?? null;
 
       this.isInitialized = true;
@@ -299,6 +283,16 @@ class LandingPageForm extends LitElement {
     return marketoState;
   }
 
+  getCaasContentType(form) {
+    const contentTypeMap = {
+      Guide: 'caas:content-type/guide',
+      Infographic: 'caas:content-type/infographic',
+      Report: 'caas:content-type/report',
+      'Video/Demo': 'caas:content-type/demos-and-video',
+    };
+    return contentTypeMap[form.contentType] || '';
+  }
+
   async templatePlaceholders(form) {
     const { getConfig } = await import(`${LIBS}/utils/utils.js`);
     const { replaceKeyArray } = await import(`${LIBS}/features/placeholders.js`);
@@ -330,8 +324,8 @@ class LandingPageForm extends LitElement {
       poi: form.marketoPOI,
       formDescription,
       formSuccessContent,
-      caasPrimaryProduct: form.primaryProduct,
-      caasContentType: form.contentTypeCaas,
+      caasPrimaryProducts: Array.isArray(form.primaryProducts) ? form.primaryProducts.join(', ') : form.primaryProducts,
+      caasContentType: this.getCaasContentType(form),
       cardDate: new Date().toISOString().split('T')[0],
       marqueeImage: form.marqueeImage?.url,
       bodyImage: form.bodyImage?.url,
