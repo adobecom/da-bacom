@@ -216,6 +216,36 @@
             expect(generator.form.url).to.include(expectedIncludes);
           }
         });
+
+        it('isEmpty correctly identifies empty values', () => {
+          const generator = document.querySelector('da-generator');
+          
+          const testCases = [
+            { input: '', expected: true, description: 'empty string' },
+            { input: '   ', expected: true, description: 'whitespace only string' },
+            { input: '<p></p>', expected: true, description: 'empty HTML tags' },
+            { input: '<p>   </p>', expected: true, description: 'HTML with whitespace' },
+            { input: 'Content', expected: false, description: 'non-empty string' },
+            { input: '<p>Content</p>', expected: false, description: 'HTML with content' },
+            { input: [], expected: true, description: 'empty array' },
+            { input: ['item'], expected: false, description: 'non-empty array' },
+            { input: null, expected: true, description: 'null' },
+            { input: undefined, expected: true, description: 'undefined' },
+            { input: 0, expected: true, description: 'zero' },
+            { input: false, expected: true, description: 'false' },
+            { input: 1, expected: false, description: 'non-zero number' },
+            { input: true, expected: false, description: 'true' },
+            { input: {}, expected: true, description: 'empty object' },
+            { input: { url: '', name: '' }, expected: true, description: 'object with empty values' },
+            { input: { url: 'test.jpg', name: '' }, expected: false, description: 'object with some non-empty values' },
+            { input: { url: 'test.jpg', name: 'test' }, expected: false, description: 'object with non-empty values' }
+          ];
+
+          testCases.forEach(({ input, expected, description }) => {
+            const result = generator.isEmpty(input);
+            expect(result).to.equal(expected, `Failed for ${description}: expected ${expected} but got ${result}`);
+          });
+        });
       });
     });
   </script>
