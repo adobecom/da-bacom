@@ -1,0 +1,265 @@
+<!-- npm run test:file "test/tools/generator/text-editor.test.html" -->
+<html>
+
+<head>
+  <script type="importmap">
+      {
+        "imports": {
+          "da-sdk": "./mocks/da-sdk.js",
+          "da-fetch": "./mocks/da-fetch.js",
+          "da-lit": "https://da.live/deps/lit/dist/index.js",
+          "constants": "https://da.live/nx/public/utils/constants.js",
+          "styles": "https://da.live/nx/utils/styles.js",
+          "components": "https://da.live/nx/public/sl/components.js"
+        }
+      }
+    </script>
+</head>
+
+<body>
+  <script type="module">
+    import { runTests } from '@web/test-runner-mocha';
+    import { expect } from '@esm-bundle/chai';
+    import sinon from 'sinon';
+    import '../../../tools/generator/text-editor/text-editor.js';
+
+    runTests(() => {
+      describe('Text Editor Component', () => {
+        let element;
+        let clock;
+        let execCommandStub;
+        let queryCommandStateStub;
+
+        const tick = async (milliseconds) => {
+          clock.tick(milliseconds);
+          await clock.nextAsync();
+        };
+
+        beforeEach(async () => {
+          clock = sinon.useFakeTimers();
+          document.body.innerHTML = '<text-editor name="test"></text-editor>';
+          execCommandStub = sinon.stub(document, 'execCommand').returns(true);
+          queryCommandStateStub = sinon.stub(document, 'queryCommandState').returns(false);
+          
+          await customElements.whenDefined('text-editor');
+          await tick(100);
+          
+          element = document.querySelector('text-editor');
+          await element.updateComplete;
+        });
+
+        afterEach(() => {
+          clock.restore();
+          execCommandStub.restore();
+          queryCommandStateStub.restore();
+          document.body.innerHTML = '';
+        });
+
+        describe('Rendering', () => {
+          it('renders with correct structure', async () => {
+            expect(element.name).to.equal('test');
+            expect(element.shadowRoot.querySelector('.editor-toolbar')).to.exist;
+            expect(element.shadowRoot.querySelector('.editor-content[contenteditable="true"]')).to.exist;
+            
+            const buttons = element.shadowRoot.querySelectorAll('.toolbar-btn');
+            expect(buttons.length).to.equal(3);
+          });
+
+          it('displays label when provided', async () => {
+            element.label = 'Test Label';
+            await element.updateComplete;
+
+            const label = element.shadowRoot.querySelector('label');
+            expect(label.textContent).to.equal('Test Label');
+            expect(label.getAttribute('for')).to.equal('test');
+          });
+
+          it('displays error state', async () => {
+            element.error = 'Required field';
+            await element.updateComplete;
+
+            expect(element.shadowRoot.querySelector('.inputfield-error').textContent).to.equal('Required field');
+            expect(element.shadowRoot.querySelector('.editor-content.has-error')).to.exist;
+          });
+
+          it('renders initial value', async () => {
+            document.body.innerHTML = '<text-editor value="<strong>Initial</strong>"></text-editor>';
+            await tick(100);
+
+            const newElement = document.querySelector('text-editor');
+            await newElement.updateComplete;
+
+            expect(newElement.shadowRoot.querySelector('.editor-content').innerHTML).to.equal('<strong>Initial</strong>');
+          });
+        });
+
+        describe('Form Integration', () => {
+          it('is form-associated and updates form value', async () => {
+            expect(customElements.get('text-editor').formAssociated).to.be.true;
+            
+            const editor = element.shadowRoot.querySelector('.editor-content');
+            editor.innerHTML = 'New content';
+            editor.dispatchEvent(new Event('input', { bubbles: true }));
+
+            expect(element.value).to.equal('New content');
+          });
+
+          it('provides form reference when inside form', async () => {
+            const form = document.createElement('form');
+            form.innerHTML = '<text-editor name="test"></text-editor>';
+            document.body.appendChild(form);
+            await tick(100);
+
+            const formElement = form.querySelector('text-editor');
+            expect(formElement.form).to.equal(form);
+            
+            form.remove();
+          });
+        });
+
+        describe('Content Handling', () => {
+          it('updates value and dispatches input event', async () => {
+            let capturedEvent = null;
+            element.addEventListener('input', (e) => { capturedEvent = e; });
+
+            const editor = element.shadowRoot.querySelector('.editor-content');
+            editor.innerHTML = 'Updated text';
+            editor.dispatchEvent(new Event('input', { bubbles: true }));
+
+            expect(element.value).to.equal('Updated text');
+            expect(capturedEvent.bubbles).to.be.true;
+            expect(capturedEvent.composed).to.be.true;
+          });
+
+          it('handles paste as plain text', async () => {
+            const editor = element.shadowRoot.querySelector('.editor-content');
+            const pasteEvent = {
+              preventDefault: sinon.spy(),
+              clipboardData: { getData: sinon.stub().returns('Plain text') },
+              target: editor
+            };
+
+            element.handlePaste(pasteEvent);
+
+            expect(pasteEvent.preventDefault.called).to.be.true;
+            expect(execCommandStub.calledWith('insertText', false, 'Plain text')).to.be.true;
+          });
+        });
+
+        describe('Toolbar', () => {
+          it('executes formatting commands', async () => {
+            element.shadowRoot.querySelector('.toolbar-btn.bold').click();
+            expect(execCommandStub.calledWith('bold', false, null)).to.be.true;
+
+            element.shadowRoot.querySelector('.toolbar-btn.italic').click();
+            expect(execCommandStub.calledWith('italic', false, null)).to.be.true;
+
+            element.shadowRoot.querySelector('.toolbar-btn.list').click();
+            expect(execCommandStub.calledWith('insertUnorderedList', false, null)).to.be.true;
+          });
+
+          it('shows active state for applied formatting', async () => {
+            const editor = element.shadowRoot.querySelector('.editor-content');
+            editor.focus();
+
+            queryCommandStateStub.withArgs('bold').returns(true);
+            queryCommandStateStub.withArgs('italic').returns(true);
+            element.requestUpdate();
+            await element.updateComplete;
+
+            expect(element.shadowRoot.querySelector('.toolbar-btn.bold.is-active')).to.exist;
+            expect(element.shadowRoot.querySelector('.toolbar-btn.italic.is-active')).to.exist;
+          });
+
+          it('prevents default on mousedown to maintain focus', async () => {
+            const mousedownEvent = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+            element.shadowRoot.querySelector('.toolbar-btn.bold').dispatchEvent(mousedownEvent);
+
+            expect(mousedownEvent.defaultPrevented).to.be.true;
+          });
+
+          it('has correct accessibility attributes', async () => {
+            const buttons = element.shadowRoot.querySelectorAll('.toolbar-btn');
+            
+            buttons.forEach(button => {
+              expect(button.getAttribute('type')).to.equal('button');
+              expect(button.getAttribute('title')).to.exist;
+              expect(button.getAttribute('aria-label')).to.exist;
+            });
+          });
+        });
+
+        describe('Keyboard Shortcuts', () => {
+          it('handles Ctrl/Cmd+B for bold', async () => {
+            const editor = element.shadowRoot.querySelector('.editor-content');
+            
+            const ctrlEvent = new KeyboardEvent('keydown', { key: 'b', ctrlKey: true, bubbles: true, cancelable: true });
+            editor.dispatchEvent(ctrlEvent);
+            expect(ctrlEvent.defaultPrevented).to.be.true;
+            
+            const metaEvent = new KeyboardEvent('keydown', { key: 'b', metaKey: true, bubbles: true, cancelable: true });
+            editor.dispatchEvent(metaEvent);
+            expect(metaEvent.defaultPrevented).to.be.true;
+            
+            expect(execCommandStub.calledWith('bold', false, null)).to.be.true;
+          });
+
+          it('handles Ctrl/Cmd+I for italic', async () => {
+            const editor = element.shadowRoot.querySelector('.editor-content');
+            
+            const ctrlEvent = new KeyboardEvent('keydown', { key: 'i', ctrlKey: true, bubbles: true, cancelable: true });
+            editor.dispatchEvent(ctrlEvent);
+            expect(ctrlEvent.defaultPrevented).to.be.true;
+            
+            const metaEvent = new KeyboardEvent('keydown', { key: 'i', metaKey: true, bubbles: true, cancelable: true });
+            editor.dispatchEvent(metaEvent);
+            expect(metaEvent.defaultPrevented).to.be.true;
+            
+            expect(execCommandStub.calledWith('italic', false, null)).to.be.true;
+          });
+
+          it('does not prevent default for non-shortcut keys', async () => {
+            const editor = element.shadowRoot.querySelector('.editor-content');
+            const keyEvent = new KeyboardEvent('keydown', { key: 'a', bubbles: true, cancelable: true });
+            
+            editor.dispatchEvent(keyEvent);
+            
+            expect(keyEvent.defaultPrevented).to.be.false;
+          });
+        });
+
+        describe('Tag Detection', () => {
+          it('returns empty array when editor not focused', () => {
+            expect(element.getTags()).to.deep.equal([]);
+          });
+
+          it('detects active formatting tags', async () => {
+            const editor = element.shadowRoot.querySelector('.editor-content');
+            editor.focus();
+
+            queryCommandStateStub.withArgs('bold').returns(true);
+            expect(element.getTags()).to.include('strong');
+
+            queryCommandStateStub.withArgs('italic').returns(true);
+            expect(element.getTags()).to.include('em');
+
+            queryCommandStateStub.withArgs('insertUnorderedList').returns(true);
+            const tags = element.getTags();
+            expect(tags).to.include('ul');
+            expect(tags.length).to.equal(3);
+          });
+        });
+
+        describe('Shadow DOM', () => {
+          it('has createRange polyfill and accessible editor ref', () => {
+            expect(element.shadowRoot.createRange).to.be.a('function');
+            expect(element.shadowRoot.createRange()).to.exist;
+            expect(element.editorRef.value).to.equal(element.shadowRoot.querySelector('.editor-content'));
+          });
+        });
+      });
+    });
+  </script>
+</body>
+
+</html>
