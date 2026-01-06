@@ -235,7 +235,7 @@ class LandingPageForm extends LitElement {
 
   getTemplate() {
     const { contentType, gated } = this.form;
-    if (!contentType || !gated) return { templateKey: '', templatePath: '' };
+    if (this.isEmpty(contentType) || this.isEmpty(gated)) return { templateKey: '', templatePath: '' };
     const templateKey = `${contentType.toLowerCase()}-${gated.toLowerCase()}`;
     const templatePath = this.getTemplatePath(templateKey);
 
@@ -378,7 +378,7 @@ class LandingPageForm extends LitElement {
     e.preventDefault();
     e.stopPropagation();
     const { contentType, gated, marqueeHeadline } = this.form;
-    if (!contentType || !gated || !marqueeHeadline) {
+    if (this.isEmpty(contentType) || this.isEmpty(gated) || this.isEmpty(marqueeHeadline)) {
       document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Please fill in all core options before confirming' } }));
       return;
     }
@@ -556,8 +556,7 @@ class LandingPageForm extends LitElement {
       const newMissingFields = {};
       required.forEach((field) => {
         const value = this.form[field];
-        const isEmpty = Array.isArray(value) ? value.length === 0 : !value;
-        if (isEmpty) {
+        if (this.isEmpty(value)) {
           newMissingFields[field] = true;
         }
       });
@@ -630,20 +629,32 @@ class LandingPageForm extends LitElement {
     return required;
   }
 
+  isEmpty(value) {
+    if (Array.isArray(value)) {
+      return value.length === 0;
+    }
+    if (typeof value === 'object' && value !== null) {
+      return Object.values(value).every((v) => this.isEmpty(v));
+    }
+    if (typeof value === 'string') {
+      const textContent = value.replace(/<[^>]*>/g, '').trim();
+      return !textContent;
+    }
+    return !value;
+  }
+
   isFormComplete() {
     const required = this.getRequiredFields();
     const hasRequired = required.every((field) => {
       const value = this.form[field];
-      if (Array.isArray(value)) return value.length > 0;
-      return !!value;
+      return !this.isEmpty(value);
     });
     return hasRequired;
   }
 
   hasError(fieldName) {
     const value = this.form[fieldName];
-    const isEmpty = Array.isArray(value) ? value.length === 0 : !value;
-    return this.missingFields[fieldName] && isEmpty ? 'This field is required.' : '';
+    return this.missingFields[fieldName] && this.isEmpty(value) ? 'This field is required.' : '';
   }
 
   render() {

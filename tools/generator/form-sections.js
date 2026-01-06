@@ -3,6 +3,7 @@
 import { html, nothing } from 'da-lit';
 import './image-dropzone/image-dropzone.js';
 import './multi-select/multi-select.js';
+import './text-editor/text-editor.js';
 
 function optionsSelect(form, handleInput, optionName, optionLabel, options, hasError = () => '') {
   if (!options || options.length <= 1) {
@@ -119,8 +120,14 @@ export function renderBody(form, handleInput, handleImageChange, hasError = () =
   return html`
     <div class="form-row">
       <h2>Body</h2>
-      <sl-input type="text" name="bodyDescription" .value=${form.bodyDescription} placeholder="Body Description*" label="Body Description*" error=${hasError('bodyDescription')} @input=${handleInput}></sl-input>
-        <div class="image-dropzone-container">
+      <text-editor 
+        name="bodyDescription" 
+        .value=${form.bodyDescription} 
+        label="Body Description*" 
+        error=${hasError('bodyDescription')}
+        @input=${handleInput}>
+      </text-editor>
+      <div class="image-dropzone-container">
         <label>Body Image</label>
         <div class="dropzone-wrapper">
           <image-dropzone name="bodyImage" .file=${form.bodyImage} @image-change=${handleImageChange}>

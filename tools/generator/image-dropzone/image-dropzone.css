@@ -1,7 +1,7 @@
 .img-file-input-wrapper {
   border: 2px dashed #B6B6B6;
   border-radius: 8px;
-  height: 100%;
+  height: 120px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -24,6 +24,10 @@
   margin-top: 4px;
   font-weight: 400;
   text-align: left;
+}
+
+.img-file-input-wrapper:hover {
+  background-color: var(--color-gray-100);
 }
 
 .img-file-input-wrapper .preview-wrapper {
@@ -65,10 +69,6 @@
   padding: 24px;
   height: 100%;
   width: 100%;
-}
-
-.img-file-input-wrapper label:hover {
-  background-color: var(--color-gray-100);
 }
 
 .img-file-input-wrapper input.img-file-input {
