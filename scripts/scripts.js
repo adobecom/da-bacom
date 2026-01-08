@@ -163,6 +163,14 @@ const loadStyle = (path) => {
   document.head.appendChild(link);
 };
 
+const fetchy = async () => {
+  const resp = await fetch('https://business.stage.adobe.com');
+  if (!resp.ok) console.log('issue with request', resp, resp.body);
+  console.log('resp ok', resp, resp.body);
+};
+
+fetchy();
+
 export const getLCPImages = (doc) => {
   const lcpSection = doc.querySelector('.marquee, .hero-marquee, .section-metadata img');
   if (!lcpSection) return [doc.querySelector('img')];
