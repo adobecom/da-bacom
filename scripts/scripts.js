@@ -164,7 +164,7 @@ const loadStyle = (path) => {
 };
 
 const fetchy = async () => {
-  const resp = await fetch('https://business.stage.adobe.com/this/page/does/not/exist');
+  const resp = await fetch('https://business.stage.adobe.com/products/experience-platform/planning-and-measurement.html');
   if (!resp.ok) console.log('issue with request', resp, resp.body);
   console.log('resp ok', resp, resp.body);
 };
