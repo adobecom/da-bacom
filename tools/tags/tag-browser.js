@@ -1,4 +1,4 @@
-/* eslint-disable no-underscore-dangle, import/no-unresolved */
+/* eslint-disable no-underscore-dangle, import/no-unresolved, class-methods-use-this */
 import { LitElement, html, nothing } from 'https://da.live/nx/deps/lit/lit-core.min.js';
 import getStyle from 'https://da.live/nx/utils/styles.js';
 
@@ -14,6 +14,7 @@ class DaTagBrowser extends LitElement {
     _activeTag: { state: true },
     _searchQuery: { state: true },
     _secondaryTags: { state: true },
+    _isLoading: { state: true },
   };
 
   constructor() {
@@ -22,6 +23,7 @@ class DaTagBrowser extends LitElement {
     this._activeTag = {};
     this._searchQuery = '';
     this._secondaryTags = false;
+    this._isLoading = false;
   }
 
   getTagSegments() {
@@ -69,7 +71,9 @@ class DaTagBrowser extends LitElement {
   async handleTagClick(tag, idx) {
     this._activeTag = tag;
     if (!this.getTags) return;
+    this._isLoading = true;
     const newTags = await this.getTags(tag);
+    this._isLoading = false;
     if (!newTags || newTags.length === 0) return;
     this._tags = [...this._tags.toSpliced(idx + 1), newTags];
   }
@@ -95,6 +99,14 @@ class DaTagBrowser extends LitElement {
   filterTags(tags) {
     if (!this._searchQuery) return tags;
     return tags.filter((tag) => tag.title.toLowerCase().includes(this._searchQuery));
+  }
+
+  renderSpinner() {
+    return html`
+      <div class="spinner-overlay">
+        <div class="spinner"></div>
+      </div>
+    `;
   }
 
   renderSearchBar() {
@@ -156,6 +168,7 @@ class DaTagBrowser extends LitElement {
             </li>
           `)}
         </ul>
+        ${this._isLoading ? this.renderSpinner() : nothing}
       </div>
     `;
   }

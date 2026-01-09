@@ -53,5 +53,5 @@ function showError(message, link = null) {
   daTagBrowser.getTags = async (tag) => getTags(tag.path, opts);
   daTagBrowser.tagValue = aemConfig.namespaces ? 'title' : 'path';
   daTagBrowser.actions = actions;
-  document.body.querySelector('main').append(daTagBrowser);
+  document.body.querySelector('main').replaceChildren(daTagBrowser);
 }());
