@@ -127,6 +127,7 @@ const CONFIG = {
   ],
   htmlExclude: [
     /business\.adobe\.com\/(\w\w(_\w\w)?\/)?blog(\/.*)?/,
+    /(\w\w(_\w\w)?\/)?blog(\/.*)?/,
   ],
   useDotHtml: true,
   dynamicNavKey: 'bacom',
@@ -149,6 +150,7 @@ const CONFIG = {
     la: ['bo', 'cr', 'do', 'ec', 'gt', 'pa', 'pr', 'py', 'sv', 'uy', 've'],
     mena_en: ['bh', 'dz', 'iq', 'ir', 'jo', 'lb', 'ly', 'om', 'ps', 'sy', 'tn', 'ye'],
   },
+  lingoProjectSuccessLogging: 'on',
 };
 
 const eagerLoad = (img) => {
