@@ -6,7 +6,7 @@ import 'components';
 import getStyle from 'styles';
 import DA_SDK from 'da-sdk';
 import { initIms } from 'da-fetch';
-import { LitElement, html, createRef, ref, nothing } from 'da-lit';
+import { LitElement, html, nothing } from 'da-lit';
 import { LIBS } from '../../scripts/scripts.js';
 import { createToast, TOAST_TYPES } from './toast/toast.js';
 import { getSource, saveSource, saveFile, getSheets } from './da-utils.js';
@@ -34,8 +34,6 @@ const style = await getStyle(import.meta.url.split('?')[0]);
 const searchParams = new URLSearchParams(window.location.search);
 
 const ADMIN_URL = 'https://admin.hlx.page';
-const AEM_LIVE = 'https://main--da-bacom--adobecom.aem.live';
-const PREVIEW_PARAMS = '?martech=off&dapreview=on';
 const FORM_STORAGE_KEY = 'landing-page-builder';
 const OPTIONS_LOADING = [{ value: 'loading', label: 'Loading...' }];
 const OPTIONS_ERROR = [{ value: 'error', label: 'Error loading options' }];
@@ -95,15 +93,15 @@ const FORM_SCHEMA = {
   cardTitle: '',
   cardDescription: '',
   cardImage: null,
-  contentTypeCaas: '',
   primaryProducts: [],
-  industry: '',
+  caasIndustry: '',
   seoMetadataTitle: '',
   seoMetadataDescription: '',
   experienceFragment: '',
   videoAsset: '',
   pdfAsset: null,
   url: '',
+  templatePath: '',
 };
 
 const delay = (milliseconds) => new Promise((resolve) => { setTimeout(resolve, milliseconds); });
@@ -136,23 +134,11 @@ class LandingPageForm extends LitElement {
     this.primaryProductOptions = OPTIONS_LOADING;
     this.industryOptions = OPTIONS_LOADING;
     this.isInitialized = false;
-    this.iframeRef = createRef();
     this.template = null;
     this.currentTemplateKey = null;
     this.coreLocked = false;
     this.missingFields = {};
   }
-
-  handleIframeLoad = () => {
-    const iframe = this.iframeRef?.value;
-    if (!iframe) return;
-    const channel = new MessageChannel();
-    setTimeout(() => {
-      channel.port1.onmessage = (e) => { iframe.style.height = e.data; };
-      iframe.contentWindow.postMessage({ init: true }, '*', [channel.port2]);
-      channel.port1.postMessage({ get: 'height' });
-    }, 1500);
-  };
 
   resetForm() {
     this.form = { ...FORM_SCHEMA };
@@ -368,6 +354,14 @@ class LandingPageForm extends LitElement {
       newForm.url = this.generateUrl(newForm);
     }
 
+    if (['contentType', 'gated'].includes(name)) {
+      const { contentType, gated } = newForm;
+      if (contentType && gated) {
+        const templateKey = `${contentType.toLowerCase()}-${gated.toLowerCase()}`;
+        newForm.templatePath = this.getTemplatePath(templateKey);
+      }
+    }
+
     if (this.missingFields[name]) this.missingFields[name] = false;
 
     this.form = newForm;
@@ -383,12 +377,6 @@ class LandingPageForm extends LitElement {
       return;
     }
     this.coreLocked = true;
-  };
-
-  handleEditCoreOptions = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    this.coreLocked = false;
   };
 
   handleToast = (e) => {
@@ -449,7 +437,6 @@ class LandingPageForm extends LitElement {
 
     // Update template after page generation to correct path
     const path = computeAssetDirFromUrl(this.form.url);
-    // TODO: Check if path is ready to be uploaded to
     this.uploadImage(file, path)
       .then((url) => {
         if (!url) return;
@@ -658,8 +645,6 @@ class LandingPageForm extends LitElement {
   }
 
   render() {
-    const { templatePath } = this.getTemplate();
-    const iframeSrc = `${AEM_LIVE}${templatePath}${PREVIEW_PARAMS}`;
     const canConfirm = this.form.url !== '';
     const hasError = this.hasError.bind(this);
 
@@ -700,11 +685,6 @@ class LandingPageForm extends LitElement {
             </div>
             `}
         </form>
-        <div class="preview">
-          ${templatePath
-    ? html`<iframe ${ref(this.iframeRef)} src="${iframeSrc}" @load=${this.handleIframeLoad}></iframe>`
-    : html`<p>Please select a content type and gated option to view template.</p>`}
-        </div>
       </div>
     `;
   }
