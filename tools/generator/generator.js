@@ -1,5 +1,4 @@
 export const utf8ToB64 = (str) => window.btoa(unescape(encodeURIComponent(str)));
-export const b64ToUtf8 = (str) => decodeURIComponent(escape(window.atob(str)));
 
 const DEFAULT_MARKETO_STATE = {
   'form id': '2277',
@@ -10,10 +9,6 @@ const DEFAULT_MARKETO_STATE = {
   'form.success.content': 'Thank you',
 };
 
-export function withTimeout(promise, ms) {
-  return Promise.race([promise, new Promise((_, reject) => { setTimeout(() => reject(new Error('timeout')), ms); })]);
-}
-
 export function marketoUrl(state) {
   const url = 'https://milo.adobe.com/tools/marketo';
   return `${url}#${utf8ToB64(JSON.stringify({ ...DEFAULT_MARKETO_STATE, ...state }))}`;
@@ -23,7 +18,7 @@ function placeholderToFieldName(templateField) {
   return templateField.charAt(0).toLowerCase() + templateField.split('-').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join('').slice(1);
 }
 
-export function findPlaceholders(templateStr) {
+function findPlaceholders(templateStr) {
   const regex = /\{\{(.*?)\}\}/g;
   const fields = templateStr.match(regex) || [];
   return fields.map((field) => field.replace('{{', '').replace('}}', ''));

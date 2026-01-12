@@ -13,6 +13,11 @@
   border-color: #d73220;
 }
 
+.img-file-input-wrapper.dragover {
+  background-color: var(--color-gray-200);
+  border-color: #0265dc;
+}
+
 .solid-border {
   border: 2px solid #B6B6B6;
 }
@@ -84,18 +89,4 @@
 .img-file-input-wrapper label p {
   margin: 0;
   font-size: var(--type-body-xs-size);
-}
-
-.img-file-input-wrapper .hidden {
-  display: none;
-}
-
-@media (min-width: 900px) {
-  .image-dropzones {
-    grid-template-columns: 1fr 1fr 1fr;
-  }
-
-  .img-upload-component.hero .image-dropzones {
-    grid-template-columns: 2fr 1fr;
-  }
 }
