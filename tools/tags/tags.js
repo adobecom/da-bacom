@@ -1,9 +1,10 @@
 /* eslint-disable import/no-unresolved */
 import DA_SDK from 'https://da.live/nx/utils/sdk.js';
-import { getAemRepo, getTags, getRootTags } from './tag-utils.js';
+import { getAemRepo, getTags, getRootTags, setTagPathConfig } from './tag-utils.js';
 import './tag-browser.js';
 
 const UI_TAG_PATH = '/ui#/aem/aem/tags';
+const TAG_EXT = '.2.json';
 
 function showError(message, link = null) {
   const mainElement = document.body.querySelector('main');
@@ -38,6 +39,8 @@ function showError(message, link = null) {
     showError('Failed to retrieve config. ', `https://da.live/config#/${context.org}/${context.repo}/`);
     return;
   }
+
+  setTagPathConfig({ root: '/content/cq:tags', ext: TAG_EXT });
 
   const namespaces = aemConfig?.namespaces.split(',').map((namespace) => namespace.trim()) || [];
   const rootTags = await getRootTags(namespaces, aemConfig, opts);
