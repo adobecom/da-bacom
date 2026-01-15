@@ -92,7 +92,7 @@ async function fetchStatus({ org, repo }, locPath) {
   tagBrowser.currLocale = currentLocale;
   tagBrowser.altLocales = langPathList;
 
-  document.body.append(tagBrowser);
+  document.body.querySelector('main').replaceChildren(tagBrowser);
 
   Object.keys(status).forEach((locPath) => {
     fetchStatus(context, locPath).then((stat) => {

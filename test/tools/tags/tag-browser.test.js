@@ -3,24 +3,44 @@ import { expect } from '@esm-bundle/chai';
 import sinon from 'sinon';
 import '../../../tools/tags/tag-browser.js';
 
+const childTags = [
+  {
+    path: '/content/cq:tags/audience/child1.2.json',
+    activeTag: 'audience',
+    name: 'child1',
+    title: 'Child Tag 1',
+    children: [],
+  },
+  {
+    path: '/content/cq:tags/audience/child2.2.json',
+    activeTag: 'audience',
+    name: 'child2',
+    title: 'Child Tag 2',
+    children: [],
+  },
+];
+
 const tags = [
   {
-    path: '/content/cq:tags/audience.1.json',
+    path: '/content/cq:tags/audience.2.json',
     activeTag: '',
     name: 'audience',
     title: 'User Guide Audience',
+    children: childTags,
   },
   {
-    path: '/content/cq:tags/authoring.1.json',
+    path: '/content/cq:tags/authoring.2.json',
     activeTag: '',
     name: 'authoring',
     title: 'Authoring',
+    children: [],
   },
   {
-    path: '/content/cq:tags/caas.1.json',
+    path: '/content/cq:tags/caas.2.json',
     activeTag: '',
     name: 'caas',
     title: 'CaaS',
+    children: [],
   },
 ];
 
@@ -33,7 +53,10 @@ const init = () => {
   document.body.append(daTagBrowser);
   daTagBrowser.rootTags = tags;
   daTagBrowser.actions = { sendText: sinon.spy() };
-  daTagBrowser.getTags = async () => tags;
+  daTagBrowser.getTags = async (tag) => {
+    if (tag.name === 'audience') return childTags;
+    return [];
+  };
   return daTagBrowser;
 };
 
@@ -62,6 +85,9 @@ describe('Locale Selector', () => {
 
     const firstInsert = groups.firstElementChild.querySelector('.tag-insert');
     expect(firstInsert).to.exist;
+
+    const firstNavigate = groups.firstElementChild.querySelector('.tag-navigate');
+    expect(firstNavigate).to.exist;
   });
 
   it('expand tag group', async () => {
@@ -98,7 +124,8 @@ describe('Locale Selector', () => {
     firstTitle.click();
     await delay(100);
 
-    const backButton = tagBrowser.shadowRoot.querySelector('.tag-search button');
+    const backButton = tagBrowser.shadowRoot.querySelector('.tag-back');
+    expect(backButton).to.exist;
     backButton.click();
     await delay(100);
 

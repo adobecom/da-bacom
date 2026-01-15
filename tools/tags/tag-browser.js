@@ -1,8 +1,10 @@
 /* eslint-disable no-underscore-dangle, import/no-unresolved */
 import { LitElement, html, nothing } from 'https://da.live/nx/deps/lit/lit-core.min.js';
 import getStyle from 'https://da.live/nx/utils/styles.js';
+import getSvg from 'https://da.live/nx/utils/svg.js';
 
 const style = await getStyle(import.meta.url);
+const icons = await getSvg({ paths: ['/tools/ui/chevron.svg', '/tools/ui/add-circle.svg'] });
 
 class DaTagBrowser extends LitElement {
   static properties = {
@@ -41,6 +43,7 @@ class DaTagBrowser extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     this.shadowRoot.adoptedStyleSheets = [style];
+    this.shadowRoot.append(...icons);
     this.addEventListener('blur', this.handleBlur, true);
   }
 
@@ -66,12 +69,25 @@ class DaTagBrowser extends LitElement {
     }
   }
 
-  async handleTagClick(tag, idx) {
+  async fetchChildren(tags) {
+    if (!this.getTags || !tags?.length) return;
+
+    const fetchPromises = tags.map(async (tag) => {
+      if (tag.children && tag.children.length > 0) return;
+      const children = await this.getTags(tag).catch(() => null);
+      if (!children?.length) return;
+      tag.children = children;
+      this._tags = [...this._tags];
+    });
+
+    await Promise.all(fetchPromises);
+  }
+
+  handleTagClick(tag, idx) {
     this._activeTag = tag;
-    if (!this.getTags) return;
-    const newTags = await this.getTags(tag);
-    if (!newTags || newTags.length === 0) return;
-    this._tags = [...this._tags.toSpliced(idx + 1), newTags];
+    if (!tag.children || tag.children.length === 0) return;
+    this._tags = [...this._tags.toSpliced(idx + 1), tag.children];
+    this.fetchChildren(tag.children);
   }
 
   handleTagInsert(tag) {
@@ -85,7 +101,7 @@ class DaTagBrowser extends LitElement {
     if (this._tags.length === 0) return;
     this._tags = this._tags.slice(0, -1);
     this._activeTag = this._tags[this._tags.length - 1]
-      .find((tag) => this._activeTag.activeTag.includes(tag.name)) || {};
+      .find((tag) => this._activeTag.activeTag?.includes(tag.name)) || {};
   }
 
   handleSearchInput(event) {
@@ -107,7 +123,11 @@ class DaTagBrowser extends LitElement {
             @input=${this.handleSearchInput} 
             value=${this._searchQuery} 
           />
-          ${(this._tags.length > 1) ? html`<button @click=${this.handleBackClick}>←</button>` : nothing}
+          ${(this._tags.length > 1) ? html`
+            <button class="tag-back" @click=${this.handleBackClick} aria-label="Go back">
+              <svg class="icon"><use href="#spectrum-ChevronDown"/></svg>
+            </button>
+          ` : nothing}
         </div>
       </section>
     `;
@@ -115,20 +135,29 @@ class DaTagBrowser extends LitElement {
 
   renderTag(tag, idx) {
     const active = this.getTagSegments()[idx] === tag.name;
+    const hasChildren = tag.children && tag.children.length > 0;
     return html`
       <li class="tag-group">
         <div class="tag-details">
           <button 
-            class="tag-title ${active ? 'active' : ''}" 
+            class="tag-title ${active ? 'active' : ''} ${hasChildren ? 'has-children' : ''}" 
             @click=${() => this.handleTagClick(tag, idx)}
             aria-pressed="${active}">
             ${tag.title.split('/').pop()}
           </button>
+          ${hasChildren ? html`
+            <button 
+              class="tag-navigate"
+              @click=${() => this.handleTagClick(tag, idx)}
+              aria-label="Navigate to ${tag.title}">
+              <svg class="icon"><use href="#spectrum-ChevronDown"/></svg>
+            </button>
+          ` : nothing}
           <button 
             class="tag-insert"
-            @click=${() => this.handleTagInsert(tag, idx)} 
+            @click=${() => this.handleTagInsert(tag)} 
             aria-label="Insert tag ${tag.title}">
-            →
+            <svg class="icon"><use href="#spectrum-AddCircle"/></svg>
           </button>
         </div>
       </li>
