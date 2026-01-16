@@ -16,9 +16,16 @@
   display: block;
 }
 
+.path-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .path-input-container {
   display: flex;
   align-items: center;
+  flex: 1;
   background: white;
   border: 1px solid var(--s2-gray-400, #ccc);
   border-radius: var(--s2-radius-100, 4px);
@@ -41,6 +48,19 @@
   box-shadow: 0 0 0 1px var(--s2-red-900);
 }
 
+/* State-based border colors */
+.path-input-container.available {
+  border-color: var(--s2-green-900, #12805c);
+}
+
+.path-input-container.conflict {
+  border-color: var(--s2-red-900, #d7373f);
+}
+
+.path-input-container.stale {
+  border-color: var(--s2-orange-900, #e68619);
+}
+
 .path-prefix {
   font-family: monospace;
   font-size: 14px;
@@ -58,7 +78,7 @@
   color: var(--s2-gray-900, #1f2937);
   background: transparent;
   padding: 0 4px;
-  min-width: 120px;
+  min-width: 80px;
   height: 100%;
 }
 
@@ -106,6 +126,10 @@
   background-image: url('/tools/generator/path-input/icons/alert.svg');
 }
 
+.validation-icon.stale::before {
+  background-image: url('/tools/generator/path-input/icons/warning.svg');
+}
+
 @keyframes spin {
   from {
     transform: rotate(0deg);
@@ -113,6 +137,37 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Action Button */
+.path-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  height: 32px;
+  font-size: 13px;
+  font-weight: 500;
+  color: white;
+  background: var(--s2-blue-900, #0265dc);
+  border: none;
+  border-radius: var(--s2-radius-100, 4px);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.path-action-btn:hover {
+  background: var(--s2-blue-1000, #0054b6);
+}
+
+.path-action-btn:active {
+  transform: scale(0.98);
+}
+
+.path-action-btn:focus-visible {
+  outline: 2px solid var(--s2-blue-900, #0265dc);
+  outline-offset: 2px;
 }
 
 .error-message {
