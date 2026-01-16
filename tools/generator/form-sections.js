@@ -4,6 +4,7 @@ import { html, nothing } from 'da-lit';
 import './image-dropzone/image-dropzone.js';
 import './multi-select/multi-select.js';
 import './text-editor/text-editor.js';
+import './path-input/path-input.js';
 
 function optionsSelect(form, handleInput, optionName, optionLabel, options, hasError = () => '') {
   if (!options || options.length <= 1) {
@@ -31,6 +32,16 @@ function optionsSelect(form, handleInput, optionName, optionLabel, options, hasE
 }
 
 export function renderContentType(form, handleInput, regionOptions, isLocked = false, hasError = () => '') {
+  const getPathPrefix = () => {
+    if (!form.region || !form.contentType) return '';
+    const region = form.region.replace(/\/$/, '');
+    const contentType = form.contentType.toLowerCase().replace('/', '-');
+    return `${region}/resources/${contentType}/`;
+  };
+
+  const pathPrefix = getPathPrefix();
+  const pathReady = form.contentType && form.gated && form.region;
+
   return html`
     <div class="form-row core-options ${isLocked ? 'locked' : ''}">
       <h2>Core Options</h2>
@@ -59,12 +70,22 @@ export function renderContentType(form, handleInput, regionOptions, isLocked = f
       </sl-select>
       ${optionsSelect(form, handleInput, 'region', 'Region*', regionOptions, hasError)}
       <sl-input type="text" name="marqueeHeadline" .value=${form.marqueeHeadline} placeholder="Marquee Headline*" label="Marquee Headline*" error=${hasError('marqueeHeadline')} @input=${handleInput}></sl-input>
-      <sl-input type="text" name="url" .value=${form.url} placeholder="/resources/..." label="URL*" error=${hasError('url')} @input=${handleInput}></sl-input>
-      ${form.contentType && form.gated && form.templatePath ? html`
+      <path-input
+        name="pageName"
+          .value=${form.pageName}
+          .prefix=${pathReady ? pathPrefix : 'Select Content Type, Gated/Ungated, and Region to continue'}
+          placeholder=${pathReady ? form.marqueeHeadline : ''}
+          status=${form.pathStatus || 'idle'}
+          ?disabled=${!pathReady}
+          error=${hasError('pageName')}
+          label="Page Path*"
+          @input=${handleInput}
+        ></path-input>
+      ${form.templatePath ? html`
         <label class="template-preview-label">
-          Template Preview: 
+          Template:
           <a href="https://main--da-bacom--adobecom.aem.live${form.templatePath}" target="_blank" rel="noopener noreferrer">
-            https://main--da-bacom--adobecom.aem.live${form.templatePath}
+            ${form.templatePath}
           </a>
         </label>
       ` : nothing}

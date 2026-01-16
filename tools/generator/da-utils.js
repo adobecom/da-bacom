@@ -173,3 +173,22 @@ export async function saveFile(path, file) {
     throw new Error(`Couldn't save ${path}${file.name}`, error);
   }
 }
+
+export async function checkPath(path) {
+  const listUrl = `${DA_ORIGIN}/list/${ORG}/${REPO}${path}`;
+
+  try {
+    const listResponse = await daFetch(listUrl, { method: 'GET' });
+
+    if (!listResponse.ok) {
+      return false;
+    }
+
+    const listData = await listResponse.json();
+    const hasSources = listData.sources && listData.sources.length > 0;
+
+    return hasSources;
+  } catch (error) {
+    throw new Error(`Path conflict check failed for ${path}: ${error}`);
+  }
+}

@@ -1,0 +1,122 @@
+:host {
+  display: block;
+  position: relative;
+}
+
+.path-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.path-label {
+  font-size: var(--s2-body-xs-size);
+  font-weight: 500;
+  color: var(--s2-gray-700, #505050);
+  display: block;
+}
+
+.path-input-container {
+  display: flex;
+  align-items: center;
+  background: white;
+  border: 1px solid var(--s2-gray-400, #ccc);
+  border-radius: var(--s2-radius-100, 4px);
+  padding: 0 12px;
+  height: 32px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.path-input-container:focus-within {
+  outline: none;
+  border-color: var(--s2-blue-900, #0265dc);
+  box-shadow: 0 0 0 1px var(--s2-blue-900, #0265dc);
+}
+
+.path-input-container.error {
+  border-color: var(--s2-red-900);
+}
+
+.path-input-container.error:focus-within {
+  box-shadow: 0 0 0 1px var(--s2-red-900);
+}
+
+.path-prefix {
+  font-family: monospace;
+  font-size: 14px;
+  color: var(--s2-gray-600, #6b7280);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.path-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-family: monospace;
+  font-size: 14px;
+  color: var(--s2-gray-900, #1f2937);
+  background: transparent;
+  padding: 0 4px;
+  min-width: 120px;
+  height: 100%;
+}
+
+.path-input:disabled {
+  color: var(--s2-gray-500, #9ca3af);
+  cursor: not-allowed;
+}
+
+.path-input::placeholder {
+  color: var(--s2-gray-500, #9ca3af);
+  font-style: italic;
+}
+
+/* Validation Icons */
+.validation-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+.validation-icon::before {
+  content: '';
+  display: block;
+  width: 18px;
+  height: 18px;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.validation-icon.checking::before {
+  background-image: url('/tools/generator/path-input/icons/progress.svg');
+  animation: spin 1s linear infinite;
+}
+
+.validation-icon.available::before {
+  background-image: url('/tools/generator/path-input/icons/checkmark.svg');
+}
+
+.validation-icon.conflict::before {
+  background-image: url('/tools/generator/path-input/icons/alert.svg');
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.error-message {
+  font-size: var(--s2-body-xs-size);
+  color: var(--s2-red-900);
+  margin: 0;
+}
