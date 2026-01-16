@@ -31,7 +31,7 @@ function optionsSelect(form, handleInput, optionName, optionLabel, options, hasE
   </sl-select>`;
 }
 
-export function renderContentType(form, handleInput, regionOptions, isLocked = false, hasError = () => '') {
+export function renderContentType(form, handleInput, regionOptions, { isLocked = false, hasError = () => '', onValidateRequest, onStatusChange } = {}) {
   const getPathPrefix = () => {
     if (!form.region || !form.contentType) return '';
     const region = form.region.replace(/\/$/, '');
@@ -72,15 +72,17 @@ export function renderContentType(form, handleInput, regionOptions, isLocked = f
       <sl-input type="text" name="marqueeHeadline" .value=${form.marqueeHeadline} placeholder="Marquee Headline*" label="Marquee Headline*" error=${hasError('marqueeHeadline')} @input=${handleInput}></sl-input>
       <path-input
         name="pageName"
-          .value=${form.pageName}
-          .prefix=${pathReady ? pathPrefix : 'Select Content Type, Gated/Ungated, and Region to continue'}
-          placeholder=${pathReady ? form.marqueeHeadline : ''}
-          status=${form.pathStatus || 'idle'}
-          ?disabled=${!pathReady}
-          error=${hasError('pageName')}
-          label="Page Path*"
-          @input=${handleInput}
-        ></path-input>
+        .value=${form.pageName || ''}
+        .prefix=${pathReady ? pathPrefix : 'Select Content Type, Gated/Ungated, and Region to continue'}
+        .suggestion=${pathReady ? form.marqueeHeadline : ''}
+        status=${form.pathStatus || 'empty'}
+        ?disabled=${!pathReady}
+        error=${hasError('pageName')}
+        label="Page Name*"
+        @input=${handleInput}
+        @validate-request=${onValidateRequest}
+        @status-change=${onStatusChange}
+      ></path-input>
       ${form.templatePath ? html`
         <label class="template-preview-label">
           Template:

@@ -175,8 +175,8 @@ export async function saveFile(path, file) {
 }
 
 export async function checkPath(path) {
-  const listUrl = `${DA_ORIGIN}/list/${ORG}/${REPO}${path}`;
-
+  const parentDir = path.replace(/\/[^/]+$/, '');
+  const listUrl = `${DA_ORIGIN}/list/${ORG}/${REPO}${parentDir}`;
   try {
     const listResponse = await daFetch(listUrl, { method: 'GET' });
 

@@ -9,7 +9,7 @@ import { initIms } from 'da-fetch';
 import { LitElement, html, nothing } from 'da-lit';
 import { LIBS } from '../../scripts/scripts.js';
 import { createToast, TOAST_TYPES } from './toast/toast.js';
-import { getSource, saveSource, saveFile, getSheets } from './da-utils.js';
+import { getSource, saveSource, saveFile, getSheets, checkPath } from './da-utils.js';
 import {
   getStorageItem,
   setStorageItem,
@@ -82,6 +82,8 @@ const FORM_SCHEMA = {
   contentType: '',
   gated: '',
   region: '',
+  pageName: '',
+  pathStatus: 'empty',
   formTemplate: '',
   campaignId: '',
   marketoPOI: '',
@@ -344,6 +346,7 @@ class LandingPageForm extends LitElement {
     if (CORE_FIELDS.includes(name)) {
       if (CORE_FIELDS.some((field) => this.isEmpty(newForm[field]))) {
         newForm.pageName = '';
+        newForm.pathStatus = 'empty';
         this.showForm = false;
       }
     }
@@ -363,15 +366,51 @@ class LandingPageForm extends LitElement {
     this.saveFormState();
   };
 
+  handlePathStatusChange = (e) => {
+    const { status } = e.detail;
+    const updates = { pathStatus: status };
+
+    if (status === 'empty') {
+      updates.pageName = '';
+    }
+
+    this.form = { ...this.form, ...updates };
+  };
+
+  handleValidateRequest = async (e) => {
+    const { fullPath, value } = e.detail;
+
+    try {
+      const exists = await checkPath(fullPath);
+
+      if (exists) {
+        this.form = { ...this.form, pageName: value, pathStatus: 'conflict' };
+        document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.WARNING, message: `Path "${fullPath}" already exists`, timeout: 5000 } }));
+      } else {
+        this.form = { ...this.form, pageName: value, pathStatus: 'available' };
+      }
+    } catch (error) {
+      this.form = { ...this.form, pathStatus: 'empty' };
+      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: `Failed to validate path: ${error.message}` } }));
+    }
+
+    this.saveFormState();
+    this.requestUpdate();
+  };
+
   handleConfirm = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    const { contentType, gated, marqueeHeadline, pageName } = this.form;
+    const { contentType, gated, marqueeHeadline, pageName, pathStatus } = this.form;
     if (this.isEmpty(contentType) || this.isEmpty(gated) || this.isEmpty(marqueeHeadline) || this.isEmpty(pageName)) {
       document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Please fill in all core options before confirming' } }));
       return;
     }
-    // TODO: Add validation for page name
+    // eslint-disable-next-line no-constant-condition
+    if (false && pathStatus !== 'available') {
+      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Please validate the page path before confirming' } }));
+      return;
+    }
     this.showForm = true;
   };
 
@@ -648,7 +687,7 @@ class LandingPageForm extends LitElement {
       <h1>Landing Page Builder ${BRANCH ? `- ${BRANCH.toUpperCase()}` : ''}</h1>
       <div class="builder-container">
         <form @submit=${this.handleSubmit}>
-          ${renderContentType(this.form, this.handleInput, this.options?.regions, this.showForm, hasError)}
+          ${renderContentType(this.form, this.handleInput, this.options?.regions, { isLocked: this.showForm, hasError, onValidateRequest: this.handleValidateRequest, onStatusChange: this.handlePathStatusChange })}
           ${this.showForm ? html`
             ${renderForm(this.form, this.handleInput, { marketoPOIOptions: this.marketoPOIOptions, hasError })}
             ${renderMarquee(this.form, this.handleInput, this.handleImageChange.bind(this), hasError)}
