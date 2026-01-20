@@ -39,12 +39,31 @@ export async function getTags(path, opts) {
   }
   const tags = Object.keys(json).reduce((acc, key) => {
     if (json[key]['jcr:primaryType'] === 'cq:Tag') {
+      const tagPath = `${path.replace(tagPathConfig.ext, '')}/${key}${tagPathConfig.ext}`;
+      const childActiveTag = activeTag ? `${activeTag}/${key}` : key;
+      const details = json[key];
+
+      const children = Object.keys(details).reduce((childAcc, childKey) => {
+        if (details[childKey]?.['jcr:primaryType'] === 'cq:Tag') {
+          childAcc.push({
+            path: `${tagPath.replace(tagPathConfig.ext, '')}/${childKey}${tagPathConfig.ext}`,
+            activeTag: childActiveTag,
+            name: childKey,
+            title: details[childKey]['jcr:title'] || childKey,
+            details: details[childKey],
+            children: [],
+          });
+        }
+        return childAcc;
+      }, []);
+
       acc.push({
-        path: `${path.replace(tagPathConfig.ext, '')}/${key}${tagPathConfig.ext}`,
+        path: tagPath,
         activeTag,
         name: key,
-        title: json[key]['jcr:title'] || key,
-        details: json[key],
+        title: details['jcr:title'] || key,
+        details,
+        children,
       });
     }
     return acc;
@@ -65,14 +84,20 @@ export const getRootTags = async (namespaces, aemConfig, opts) => {
     return getTags(createTagUrl(namespace), opts).catch(() => null);
   }
 
-  return namespaces.map((title) => {
+  const namespacePromises = namespaces.map(async (title) => {
     const namespace = title.toLowerCase().replaceAll(' ', '-');
+    const path = createTagUrl(namespace);
+    const tags = await getTags(path, opts).catch(() => []);
+
     return {
-      path: createTagUrl(namespace),
+      path,
       name: namespace,
       title,
       activeTag: '',
       details: {},
+      children: tags,
     };
   });
+
+  return Promise.all(namespacePromises);
 };
