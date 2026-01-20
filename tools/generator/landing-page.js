@@ -274,14 +274,14 @@ class LandingPageForm extends LitElement {
     return marketoState;
   }
 
-  getCaasContentType(form) {
-    const contentTypeMap = {
+  getCaasContentType(contentType) {
+    const CAAS_CONTENT_TYPE_MAP = {
       Guide: 'caas:content-type/guide',
       Infographic: 'caas:content-type/infographic',
       Report: 'caas:content-type/report',
       'Video/Demo': 'caas:content-type/demos-and-video',
     };
-    return contentTypeMap[form.contentType] || '';
+    return CAAS_CONTENT_TYPE_MAP[contentType] || '';
   }
 
   async templatePlaceholders(form) {
@@ -316,7 +316,7 @@ class LandingPageForm extends LitElement {
       formDescription,
       formSuccessContent,
       caasPrimaryProducts: Array.isArray(form.primaryProducts) ? form.primaryProducts.join(', ') : form.primaryProducts,
-      caasContentType: this.getCaasContentType(form),
+      caasContentType: this.getCaasContentType(form.contentType),
       cardDate: new Date().toISOString().split('T')[0],
       marqueeImage: form.marqueeImage?.url,
       bodyImage: form.bodyImage?.url,
@@ -343,10 +343,12 @@ class LandingPageForm extends LitElement {
 
     newForm[name] = value;
 
-    if (CORE_FIELDS.includes(name)) {
+    if (CORE_FIELDS.includes(name) && name !== 'pageName') {
       if (CORE_FIELDS.some((field) => this.isEmpty(newForm[field]))) {
-        newForm.pageName = '';
+        // Keep pageName - let user recover
+        // But clear URL and mark as empty since we're missing required fields
         newForm.pathStatus = 'empty';
+        newForm.url = '';
         this.showForm = false;
       }
     }
@@ -372,6 +374,9 @@ class LandingPageForm extends LitElement {
 
     if (status === 'empty') {
       updates.pageName = '';
+      updates.url = '';
+    } else if (status === 'stale') {
+      updates.url = '';
     }
 
     this.form = { ...this.form, ...updates };
@@ -384,13 +389,13 @@ class LandingPageForm extends LitElement {
       const exists = await checkPath(fullPath);
 
       if (exists) {
-        this.form = { ...this.form, pageName: value, pathStatus: 'conflict' };
+        this.form = { ...this.form, pageName: value, pathStatus: 'conflict', url: '' };
         document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.WARNING, message: `Path "${fullPath}" already exists`, timeout: 5000 } }));
       } else {
-        this.form = { ...this.form, pageName: value, pathStatus: 'available' };
+        this.form = { ...this.form, pageName: value, pathStatus: 'available', url: `${fullPath}.html` };
       }
     } catch (error) {
-      this.form = { ...this.form, pathStatus: 'empty' };
+      this.form = { ...this.form, pathStatus: 'empty', url: '' };
       document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: `Failed to validate path: ${error.message}` } }));
     }
 
@@ -401,14 +406,9 @@ class LandingPageForm extends LitElement {
   handleConfirm = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    const { contentType, gated, marqueeHeadline, pageName, pathStatus } = this.form;
+    const { contentType, gated, marqueeHeadline, pageName } = this.form;
     if (this.isEmpty(contentType) || this.isEmpty(gated) || this.isEmpty(marqueeHeadline) || this.isEmpty(pageName)) {
       document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Please fill in all core options before confirming' } }));
-      return;
-    }
-    // eslint-disable-next-line no-constant-condition
-    if (false && pathStatus !== 'available') {
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Please validate the page path before confirming' } }));
       return;
     }
     this.showForm = true;
@@ -439,18 +439,10 @@ class LandingPageForm extends LitElement {
     super.disconnectedCallback();
   }
 
-  async uploadImage(file, path) {
+  async uploadAsset(file, path, type = 'image') {
     const result = await saveFile(path, file);
-    const url = result?.source?.contentUrl;
-    if (!url) throw new Error('Failed to upload image');
-
-    return url;
-  }
-
-  async uploadFile(file, path) {
-    const result = await saveFile(path, file);
-    const url = result?.aem?.previewUrl;
-    if (!url) throw new Error('Failed to upload file');
+    const url = type === 'image' ? result?.source?.contentUrl : result?.aem?.previewUrl;
+    if (!url) throw new Error(`Failed to upload ${type}`);
 
     return url;
   }
@@ -470,9 +462,8 @@ class LandingPageForm extends LitElement {
 
     if (this.missingFields[name]) this.missingFields[name] = false;
 
-    // Update template after page generation to correct path
     const path = computeAssetDirFromUrl(this.form.url);
-    this.uploadImage(file, path)
+    this.uploadAsset(file, path, 'image')
       .then((url) => {
         if (!url) return;
         this.form[name] = { url, name: file.name };
@@ -508,7 +499,7 @@ class LandingPageForm extends LitElement {
     document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.INFO, message: 'Uploading PDF...', timeout: 3000 } }));
 
     try {
-      const url = await this.uploadFile(file, path);
+      const url = await this.uploadAsset(file, path, 'file');
       if (!url) {
         throw new Error('Upload failed');
       }
@@ -536,6 +527,7 @@ class LandingPageForm extends LitElement {
       this.requestUpdate();
       return true;
     } catch (error) {
+      console.error('Failed to save page:', error);
       return false;
     }
   }
@@ -549,7 +541,9 @@ class LandingPageForm extends LitElement {
     }
     const previewApiData = await previewApiResponse.json();
     if (previewApiData?.preview?.status === 200) {
-      return { success: true, url: previewApiData.preview.url };
+      // Convert AEM page URL to business.stage.adobe.com
+      const businessStageUrl = previewApiData.preview.url.replace('main--da-bacom--adobecom.aem.page', 'business.stage.adobe.com');
+      return { success: true, url: businessStageUrl };
     }
     return { success: false };
   }
@@ -667,11 +661,7 @@ class LandingPageForm extends LitElement {
 
   isFormComplete() {
     const required = this.getRequiredFields();
-    const hasRequired = required.every((field) => {
-      const value = this.form[field];
-      return !this.isEmpty(value);
-    });
-    return hasRequired;
+    return required.every((field) => !this.isEmpty(this.form[field]));
   }
 
   hasError(fieldName) {

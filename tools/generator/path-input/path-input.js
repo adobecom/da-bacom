@@ -66,33 +66,6 @@ class PathInput extends LitElement {
     return this._internals.form;
   }
 
-  get sanitizedSuggestion() {
-    return this.suggestion ? this.sanitizeInput(this.suggestion) : '';
-  }
-
-  get fullPath() {
-    return `${this.prefix}${this.value}`;
-  }
-
-  get showButton() {
-    if (!this.sanitizedSuggestion || this.disabled) return false;
-
-    if (!this.value) return true;
-
-    const buttonStates = ['conflict', 'stale'];
-    if (buttonStates.includes(this.status)) return true;
-
-    return false;
-  }
-
-  get buttonLabel() {
-    if (this.status === 'stale') return 'Check';
-    if (this.status === 'conflict' && this.value !== this.sanitizedSuggestion) {
-      return 'Check';
-    }
-    return 'Check';
-  }
-
   sanitizeInput(input) {
     if (!input) return '';
     return input
@@ -123,11 +96,10 @@ class PathInput extends LitElement {
     }));
   }
 
-  handleInput(e) {
+  handleInput = (e) => {
     const sanitized = this.sanitizeInput(e.target.value);
     e.target.value = sanitized;
     this.value = sanitized;
-    this._internals.setFormValue(sanitized);
 
     this.dispatchEvent(new CustomEvent('input', {
       bubbles: true,
@@ -141,7 +113,7 @@ class PathInput extends LitElement {
     }
 
     this.startDebounce(sanitized);
-  }
+  };
 
   startDebounce(value) {
     if (this._debounceTimer) {
@@ -154,7 +126,7 @@ class PathInput extends LitElement {
     }, DEBOUNCE_DELAY);
   }
 
-  handleButtonClick(e) {
+  handleButtonClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -162,22 +134,23 @@ class PathInput extends LitElement {
       clearTimeout(this._debounceTimer);
     }
 
-    const valueToValidate = this.status === 'stale' ? this.value : this.sanitizedSuggestion;
+    const isStaleCheck = this.status === 'stale';
+    const sanitizedSuggestion = this.sanitizeInput(this.suggestion ?? '');
+    const valueToValidate = isStaleCheck ? this.value : sanitizedSuggestion;
 
-    if (this.status !== 'stale' && this.value !== this.sanitizedSuggestion) {
-      this.value = this.sanitizedSuggestion;
-      this._internals.setFormValue(this.sanitizedSuggestion);
+    if (!isStaleCheck && this.value !== sanitizedSuggestion) {
+      this.value = sanitizedSuggestion;
 
       this.dispatchEvent(new CustomEvent('input', {
         bubbles: true,
         composed: true,
-        detail: { name: this.name, value: this.sanitizedSuggestion },
+        detail: { name: this.name, value: sanitizedSuggestion },
       }));
     }
 
     this.dispatchStatusChange('checking');
-    this.dispatchValidateRequest(valueToValidate, this.status !== 'stale');
-  }
+    this.dispatchValidateRequest(valueToValidate, !isStaleCheck);
+  };
 
   renderValidationIcon() {
     const iconStates = ['checking', 'available', 'conflict', 'stale'];
@@ -187,7 +160,12 @@ class PathInput extends LitElement {
   }
 
   renderButton() {
-    if (!this.showButton) return nothing;
+    const sanitizedSuggestion = this.sanitizeInput(this.suggestion ?? '');
+    const shouldShow = sanitizedSuggestion
+      && !this.disabled
+      && (!this.value || ['conflict', 'stale'].includes(this.status));
+
+    if (!shouldShow) return nothing;
 
     return html`
       <button
@@ -195,7 +173,7 @@ class PathInput extends LitElement {
         class="path-action-btn"
         @click=${this.handleButtonClick}
       >
-        ${this.buttonLabel}
+        Check
       </button>
     `;
   }
@@ -214,7 +192,7 @@ class PathInput extends LitElement {
               class="path-input"
               name="${this.name}"
               .value=${this.value || ''}
-              placeholder=${this.disabled ? this.prefix : this.sanitizedSuggestion}
+              placeholder=${this.disabled ? this.prefix : this.sanitizeInput(this.suggestion ?? '')}
               ?disabled=${this.disabled}
               @input=${this.handleInput}
             />
