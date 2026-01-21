@@ -72,7 +72,9 @@
       const urlElements = xmlDoc.querySelectorAll('url');
       let currentUrlElement = null;
       const correctedPath = pathname.includes('html') ? pathname : `${pathname}.html`
-      const currentPageUrl = pathname !== '/' ? `${sitemapOrigin}${correctedPath}` : `${sitemapOrigin}/`;
+      const isLocalRoot = `${sitemapOrigin}/${localeMatch}/` === `${sitemapOrigin}${pathname}`;
+      const rootPage = isLocalRoot ? `${sitemapOrigin}/${localeMatch}/` : `${sitemapOrigin}/`; 
+      const currentPageUrl = pathname !== '/' && pathname !== `/${localeMatch}/` ? `${sitemapOrigin}${correctedPath}` : `${rootPage}`;
 
       for (const urlElement of urlElements) {
         const loc = urlElement.querySelector('loc')?.textContent;
