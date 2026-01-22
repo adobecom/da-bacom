@@ -1,0 +1,298 @@
+<!-- npm run test:file "test/tools/generator/path-input.test.html" -->
+<html>
+
+<head>
+  <script type="importmap">
+      {
+        "imports": {
+          "da-sdk": "./mocks/da-sdk.js",
+          "da-fetch": "./mocks/da-fetch.js",
+          "da-lit": "https://da.live/deps/lit/dist/index.js",
+          "constants": "https://da.live/nx/public/utils/constants.js",
+          "styles": "https://da.live/nx/utils/styles.js",
+          "svg": "https://da.live/nx/utils/svg.js",
+          "components": "https://da.live/nx/public/sl/components.js"
+        }
+      }
+    </script>
+</head>
+
+<body>
+  <script type="module">
+    import { runTests } from '@web/test-runner-mocha';
+    import { expect } from '@esm-bundle/chai';
+    import sinon from 'sinon';
+    import '../../../tools/generator/path-input/path-input.js';
+
+    const DEBOUNCE_DELAY = 800;
+
+    runTests(() => {
+      describe('Path Input', () => {
+        let pathInput;
+        let clock;
+
+        const tick = async (milliseconds) => {
+          clock.tick(milliseconds);
+          await clock.nextAsync();
+        };
+
+        beforeEach(async () => {
+          clock = sinon.useFakeTimers();
+          document.body.innerHTML = '<path-input name="testPath"></path-input>';
+          await customElements.whenDefined('path-input');
+          await tick(100);
+          
+          pathInput = document.querySelector('path-input');
+          await pathInput.updateComplete;
+        });
+
+        afterEach(() => {
+          clock.restore();
+          document.body.innerHTML = '';
+        });
+
+        it('renders with default properties', async () => {
+          expect(pathInput.name).to.equal('testPath');
+          expect(pathInput.value).to.equal('');
+          expect(pathInput.status).to.equal('empty');
+          expect(pathInput.shadowRoot.querySelector('.path-label')).to.exist;
+          expect(pathInput.shadowRoot.querySelector('.path-input')).to.exist;
+        });
+
+        it('displays prefix when provided', async () => {
+          pathInput.prefix = '/test/path/';
+          await pathInput.updateComplete;
+
+          const prefix = pathInput.shadowRoot.querySelector('.path-prefix');
+          expect(prefix).to.exist;
+          expect(prefix.textContent).to.equal('/test/path/');
+        });
+
+        it('displays error message', async () => {
+          pathInput.error = 'This is an error';
+          await pathInput.updateComplete;
+
+          const errorMsg = pathInput.shadowRoot.querySelector('.error-message');
+          expect(errorMsg).to.exist;
+          expect(errorMsg.textContent).to.equal('This is an error');
+        });
+
+        it('disables input when disabled', async () => {
+          pathInput.disabled = true;
+          await pathInput.updateComplete;
+
+          const input = pathInput.shadowRoot.querySelector('.path-input');
+          expect(input.disabled).to.be.true;
+        });
+
+        describe('sanitization', () => {
+          it('removes special characters', () => {
+            expect(pathInput.sanitizeInput('test@#$%value!')).to.equal('testvalue');
+          });
+
+          it('converts spaces to hyphens and lowercases text', () => {
+            expect(pathInput.sanitizeInput('Test Value With Spaces')).to.equal('test-value-with-spaces');
+          });
+
+          it('removes multiple consecutive hyphens', () => {
+            expect(pathInput.sanitizeInput('test---value')).to.equal('test-value');
+          });
+
+          it('handles empty and null input', () => {
+            expect(pathInput.sanitizeInput('')).to.equal('');
+            expect(pathInput.sanitizeInput(null)).to.equal('');
+          });
+
+          it('sanitizes complex inputs', () => {
+            const testCases = [
+              { input: 'Test Landing Page', expected: 'test-landing-page' },
+              { input: 'Test: Landing @ Page! (2025)', expected: 'test-landing-page-2025' },
+              { input: 'Test   Multiple    Spaces', expected: 'test-multiple-spaces' },
+              { input: 'Test___Underscores___', expected: 'testunderscores' },
+              { input: 'Test/Landing/Page', expected: 'testlandingpage' },
+              { input: 'CamelCaseTitle', expected: 'camelcasetitle' },
+              { input: 'Test & More & Things', expected: 'test-more-things' },
+              { input: '123 Numbers First', expected: '123-numbers-first' },
+              { input: 'Test-Already-Has-Hyphens', expected: 'test-already-has-hyphens' },
+              { input: '  Leading and Trailing  ', expected: 'leading-and-trailing' },
+              { input: 'Spëcîål Çhårāctërs', expected: 'spcl-hrctrs' },
+              { input: 'Test@Email.com', expected: 'testemailcom' },
+              { input: '$100 Price Tag!', expected: '100-price-tag' },
+              { input: 'Test-with--double--hyphens', expected: 'test-with-double-hyphens' }
+            ];
+
+            testCases.forEach(({ input, expected }) => {
+              const result = pathInput.sanitizeInput(input);
+              expect(result).to.equal(expected, `Failed for "${input}": expected "${expected}" but got "${result}"`);
+            });
+          });
+        });
+
+        describe('user input', () => {
+          it('sanitizes input on change', async () => {
+            const input = pathInput.shadowRoot.querySelector('.path-input');
+            input.value = 'Test Value@#$';
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            await pathInput.updateComplete;
+
+            expect(pathInput.value).to.equal('test-value');
+          });
+
+          it('dispatches input event with sanitized value', async () => {
+            let eventDetail = null;
+            pathInput.addEventListener('input', (e) => {
+              eventDetail = e.detail;
+            });
+
+            const input = pathInput.shadowRoot.querySelector('.path-input');
+            input.value = 'Test Value';
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+
+            expect(eventDetail).to.exist;
+            expect(eventDetail.name).to.equal('testPath');
+            expect(eventDetail.value).to.equal('test-value');
+          });
+
+          it('changes status to empty when input is cleared', async () => {
+            let statusDetail = null;
+            pathInput.addEventListener('status-change', (e) => {
+              statusDetail = e.detail;
+            });
+
+            const input = pathInput.shadowRoot.querySelector('.path-input');
+            input.value = '';
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+
+            expect(statusDetail).to.exist;
+            expect(statusDetail.status).to.equal('empty');
+          });
+        });
+
+        describe('validation', () => {
+          it('dispatches validate request after debounce delay', async () => {
+            let validateDetail = null;
+            pathInput.addEventListener('validate-request', (e) => {
+              validateDetail = e.detail;
+            });
+
+            const input = pathInput.shadowRoot.querySelector('.path-input');
+            input.value = 'test-value';
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+
+            expect(validateDetail).to.be.null;
+            await tick(DEBOUNCE_DELAY);
+
+            expect(validateDetail).to.exist;
+            expect(validateDetail.value).to.equal('test-value');
+            expect(validateDetail.isSuggestion).to.be.false;
+          });
+
+          it('includes full path with prefix in validation request', async () => {
+            pathInput.prefix = '/resources/guide/';
+            let validateDetail = null;
+            pathInput.addEventListener('validate-request', (e) => {
+              validateDetail = e.detail;
+            });
+
+            const input = pathInput.shadowRoot.querySelector('.path-input');
+            input.value = 'test-guide';
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            await tick(DEBOUNCE_DELAY);
+
+            expect(validateDetail.fullPath).to.equal('/resources/guide/test-guide');
+          });
+        });
+
+        describe('status icons', () => {
+          it('shows checkmark icon when available', async () => {
+            pathInput.status = 'available';
+            await pathInput.updateComplete;
+
+            const icon = pathInput.shadowRoot.querySelector('.validation-icon.available use');
+            expect(icon).to.exist;
+            expect(icon.getAttribute('href')).to.equal('#checkmark');
+          });
+
+          it('shows warning icon when conflict', async () => {
+            pathInput.status = 'conflict';
+            await pathInput.updateComplete;
+
+            const icon = pathInput.shadowRoot.querySelector('.validation-icon.conflict use');
+            expect(icon).to.exist;
+            expect(icon.getAttribute('href')).to.equal('#warning');
+          });
+
+          it('shows progress icon when checking', async () => {
+            pathInput.status = 'checking';
+            await pathInput.updateComplete;
+
+            const icon = pathInput.shadowRoot.querySelector('.validation-icon.checking use');
+            expect(icon).to.exist;
+            expect(icon.getAttribute('href')).to.equal('#progress');
+          });
+
+          it('hides icon when empty', async () => {
+            pathInput.status = 'empty';
+            await pathInput.updateComplete;
+
+            const icon = pathInput.shadowRoot.querySelector('.validation-icon');
+            expect(icon).to.not.exist;
+          });
+        });
+
+        describe('check button', () => {
+          it('shows button when suggestion exists and path conflicts', async () => {
+            pathInput.suggestion = 'test-suggestion';
+            pathInput.status = 'conflict';
+            await pathInput.updateComplete;
+
+            const button = pathInput.shadowRoot.querySelector('.path-action-btn');
+            expect(button).to.exist;
+            expect(button.textContent.trim()).to.equal('Check');
+          });
+
+          it('hides button when disabled', async () => {
+            pathInput.suggestion = 'test-suggestion';
+            pathInput.status = 'conflict';
+            pathInput.disabled = true;
+            await pathInput.updateComplete;
+
+            const button = pathInput.shadowRoot.querySelector('.path-action-btn');
+            expect(button).to.not.exist;
+          });
+
+          it('applies suggestion on click', async () => {
+            pathInput.suggestion = 'Test Suggestion';
+            pathInput.status = 'conflict';
+            await pathInput.updateComplete;
+
+            const button = pathInput.shadowRoot.querySelector('.path-action-btn');
+            button.click();
+            await pathInput.updateComplete;
+
+            expect(pathInput.value).to.equal('test-suggestion');
+          });
+
+          it('triggers validation with suggestion flag on click', async () => {
+            pathInput.suggestion = 'test-suggestion';
+            pathInput.status = 'conflict';
+            await pathInput.updateComplete;
+
+            let validateDetail = null;
+            pathInput.addEventListener('validate-request', (e) => {
+              validateDetail = e.detail;
+            });
+
+            const button = pathInput.shadowRoot.querySelector('.path-action-btn');
+            button.click();
+
+            expect(validateDetail).to.exist;
+            expect(validateDetail.isSuggestion).to.be.true;
+          });
+        });
+      });
+    });
+  </script>
+</body>
+
+</html>
