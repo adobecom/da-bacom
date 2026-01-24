@@ -577,6 +577,13 @@ export default async function init(el) {
     const headerParams = extractHeaderParams(el);
     processCustomProperties(el, container);
     finalizeInitialization(el, container, imageParams, headerParams);
+
+    // add iswa to every section so as to prevent authoring burden
+    const main = document.querySelector('main');
+    const sections = main.querySelectorAll('div > div');
+    sections.forEach((sec) => {
+      if (!sec.classList.contains('icon-block') && sec.classList.length > 0) sec.classList.add('iswa');
+    });
   } catch (err) {
     logError('Error initializing animated photo banner', err);
   }
