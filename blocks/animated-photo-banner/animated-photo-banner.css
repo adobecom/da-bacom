@@ -22,6 +22,7 @@ html {
   --size-w-3xl: 768px; /* 48rem */
   --size-w-mobxl: 340px;
   --size-w-mobxs: 165px;
+  --size-w-mq: 637px; /* marquee main image */
 }
 
 .animated-photo-banner-container {
@@ -40,7 +41,6 @@ html {
   align-items: flex-start;
   text-align: left;
   z-index: 2;
-  margin: 0 10vw;
 }
 
 .animated-banner-header-wrapper {
@@ -100,6 +100,10 @@ html {
   position: absolute;
   z-index: 1;
   will-change: transform, opacity, left, top, right, bottom;
+}
+
+.animated-photo-banner-image.w-mq {
+  max-width: var(--size-w-mq);
 }
 
 .animated-photo-banner-image.w-mobxl {
@@ -171,7 +175,6 @@ html {
 
   .animated-photo-banner-header { 
     max-width: 100%;
-    margin: 0 10vw;
   }
 
   .animated-photo-banner-header p {
@@ -232,10 +235,11 @@ html {
   }
 
   .animated-photo-banner-icon {
-    margin-bottom: 2rem;
+    margin-bottom: 0;
   }
 
   .animated-photo-banner-title {
+    margin-top: 0;
     margin-bottom: 1rem;
   }
   
