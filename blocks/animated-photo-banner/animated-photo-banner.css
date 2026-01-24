@@ -41,6 +41,7 @@ html {
   align-items: flex-start;
   text-align: left;
   z-index: 2;
+  margin: 0 6vw;
 }
 
 .animated-banner-header-wrapper {
@@ -55,6 +56,7 @@ html {
     right: 0;
     margin: 0 auto;
     height: 100%;
+
 }
 
 .animated-photo-banner-icon {
@@ -72,6 +74,10 @@ html {
 
 .animated-photo-banner-title {
   margin: 3rem 0 0.75rem;
+}
+
+.animated-photo-banner-text {
+  width: 90%;
 }
 
 .animated-photo-banner-title h1 {
@@ -213,10 +219,17 @@ html {
 }
 
 @media screen and (min-width: 1200px) {
+  .animated-photo-banner-header {
+    margin: unset;
+  }
+
   .animated-banner-header-wrapper {
     width: 1200px;
   }
 
+  .animated-photo-banner-text {
+    width: 100%;
+  }
 }
 
 /* Desktop */
