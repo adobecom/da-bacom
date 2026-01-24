@@ -20,6 +20,8 @@ html {
   --size-w-xl: 384px; /* 24rem */
   --size-w-2xl: 512px; /* 32rem */
   --size-w-3xl: 768px; /* 48rem */
+  --size-w-mobxl: 340px;
+  --size-w-mobxs: 165px;
 }
 
 .animated-photo-banner-container {
@@ -42,10 +44,9 @@ html {
 }
 
 .animated-banner-header-wrapper {
-    width: 1440px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: flex-start;
     position: absolute;
     align-self: center;
@@ -64,8 +65,13 @@ html {
   width: var(--size-w-xs);
 }
 
+.animated-photo-banner-header .animated-photo-banner-icon img {
+  opacity: 0;
+  height: 0;
+}
+
 .animated-photo-banner-title {
-  margin-bottom: 0.75rem;
+  margin: 3rem 0 0.75rem;
 }
 
 .animated-photo-banner-title h1 {
@@ -74,7 +80,7 @@ html {
   font-size: 44px;
   letter-spacing: 1;
   margin: 0;
-  line-height: .75;
+  line-height: 1;
 }
 
 .animated-photo-banner-header p {
@@ -94,6 +100,14 @@ html {
   position: absolute;
   z-index: 1;
   will-change: transform, opacity, left, top, right, bottom;
+}
+
+.animated-photo-banner-image.w-mobxl {
+  max-width: var(--size-w-mobxl);
+}
+
+.animated-photo-banner-image.w-mobxs {
+  max-width: var(--size-w-mobxs);
 }
 
 .animated-photo-banner-image.w-3xl {
@@ -139,6 +153,7 @@ html {
 }
 
 /* Default image styling with standard size fallback */
+/* stylelint-disable-next-line no-descending-specificity */
 .animated-photo-banner-image img {
   width: 100%;
   height: auto;
@@ -151,6 +166,7 @@ html {
 @media screen and (min-width: 600px) {
   .animated-banner-header-wrapper {
     width: 100%;
+    justify-content: center;
   }
 
   .animated-photo-banner-header { 
@@ -165,21 +181,29 @@ html {
 
   .animated-photo-banner-icon {
     margin-bottom: 1rem;
+    height: 70px;
   }
 
   .animated-photo-banner-icon img {
     width: var(--size-w-sm);
   }
 
+  .animated-photo-banner-header .animated-photo-banner-icon img {
+    opacity: 1;
+    height: 70px;
+  }
+
   .animated-photo-banner-title {
-    margin-bottom: 2rem;
+    margin: 2rem 0;
   }
 
   .animated-photo-banner-title h1 {
     font-size: 80px;
     letter-spacing: -0.3rem;
+    line-height: .75;
   }
 
+  /* stylelint-disable-next-line no-descending-specificity */
   .animated-photo-banner-image img {
     border-radius: 8px;
   }
@@ -209,16 +233,15 @@ html {
 
   .animated-photo-banner-icon {
     margin-bottom: 2rem;
-    height: 70px;
   }
 
   .animated-photo-banner-title {
-    margin-bottom: 5rem;
+    margin-bottom: 1rem;
   }
   
   .animated-photo-banner-title h1 {
     font-size: 96px;
-    letter-spacing: 1;
+    letter-spacing: -0.3rem;
   }
 
   .animated-photo-banner-image img {

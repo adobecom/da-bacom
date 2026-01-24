@@ -455,6 +455,7 @@ function buildHeaderSection(el, container) {
     const contentDiv = el.querySelector('div:nth-child(2) > div:first-child');
     const [title, titleTwo] = contentDiv.querySelectorAll('h1');
     const subtitle = contentDiv?.querySelector('p');
+    const cta = contentDiv.querySelector('a');
 
     const headerSection = createTag('div', { class: 'animated-photo-banner-header' });
 
@@ -493,8 +494,17 @@ function buildHeaderSection(el, container) {
       }
     }
 
+    if (cta) {
+      try {
+        cta.classList.add('con-button', 'button-xl', 'fill');
+      } catch (err) {
+        logError(err);
+      }
+    }
+
     const wrapper = createTag('div', { class: 'animated-banner-header-wrapper' });
     headerSection.appendChild(textContent);
+    headerSection.appendChild(cta);
     wrapper.appendChild(headerSection);
     container.appendChild(wrapper);
   } catch (err) {
