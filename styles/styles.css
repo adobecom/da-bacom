@@ -95,13 +95,22 @@ div[class*='-up'] .con-block.has-bg.text-block.text-list,
 
 .brick.iswa .brick-text h3 {
   font-size: 36px;
+  line-height: .95;
+}
+
+.brick.iswa .brick-text p {
+  font-size: 18px;
 }
 
 .brick.iswa .brick-text .action-area {
   margin-top: 12px;
 }
 
-
+@media screen and (min-width: 600px) {
+  .brick.iswa {
+    min-height: 600px;
+  }
+}
 
 @media screen and (min-width: 900px) {
   .text-block.text-list {
@@ -117,6 +126,15 @@ div[class*='-up'] .con-block.has-bg.text-block.text-list,
 
   .global-navigation .feds-profile > .feds-signIn {
     margin-right: 0;
+  }
+
+  /* ISWA Styles */
+  .brick.iswa .brick-text p {
+    font-size: inherit;
+  } 
+
+  .brick.iswa {
+    min-height: 500px;
   }
 }
 
