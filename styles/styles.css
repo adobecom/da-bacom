@@ -144,6 +144,10 @@ div[class*='-up'] .con-block.has-bg.text-block.text-list,
   .brick.iswa {
     min-height: 500px;
   }
+
+  body .iswa h1, body .iswa h2, body .iswa h3, body .iswa h4 {
+    font-family: "Adobe Clean Black", var(--body-font-family);
+  }
 }
 
  /* CaaS Height Styles  */
