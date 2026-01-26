@@ -209,7 +209,7 @@ html {
   .animated-photo-banner-title h1 {
     font-size: 80px;
     letter-spacing: -0.3rem;
-    line-height: .95;
+    line-height: 1;
   }
 
   /* stylelint-disable-next-line no-descending-specificity */
@@ -236,13 +236,13 @@ html {
 /* Desktop */
 @media screen and (min-width: 1440px) {
   :root {
-    --size-w-mq: 637px; /* marquee main image */
+    --size-w-mq: 600px; /* marquee main image */
     --size-w-lg: 256px; /* 16rem */
   }
 
   .animated-photo-banner-header {
     max-width: 50%;
-    margin: 0 6vw;
+    margin: 0 4.25vw;
   }
 
   .animated-banner-header-wrapper {
