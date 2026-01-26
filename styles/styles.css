@@ -1,3 +1,11 @@
+/* ISWA Font */
+@font-face {
+  font-family: "Adobe Clean Black";
+  src:
+    local("Adobe Clean Black"), 
+    url("./AdobeClean-Black.otf");
+}
+
 /* stylelint-disable selector-class-pattern, selector-id-pattern */
 .white-columns .columns > .row {
   padding: 80px 0;
