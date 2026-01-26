@@ -16,13 +16,13 @@ html {
   --size-w-xs: 96px; /* 6rem */
   --size-w-sm: 128px; /* 8rem */
   --size-w-md: 192px; /* 12rem */
-  --size-w-lg: 256px; /* 16rem */
+  --size-w-lg: 174px; 
   --size-w-xl: 384px; /* 24rem */
   --size-w-2xl: 512px; /* 32rem */
   --size-w-3xl: 768px; /* 48rem */
   --size-w-mobxl: 340px;
   --size-w-mobxs: 165px;
-  --size-w-mq: 637px; /* marquee main image */
+  --size-w-mq: 500px; /* marquee main image */
 }
 
 .animated-photo-banner-container {
@@ -220,7 +220,8 @@ html {
 
 @media screen and (min-width: 1200px) {
   .animated-photo-banner-header {
-    margin: unset;
+    max-width: 46%;
+    margin: 0 8vw;
   }
 
   .animated-banner-header-wrapper {
@@ -234,8 +235,14 @@ html {
 
 /* Desktop */
 @media screen and (min-width: 1440px) {
+  :root {
+    --size-w-mq: 637px; /* marquee main image */
+    --size-w-lg: 256px; /* 16rem */
+  }
+
   .animated-photo-banner-header {
     max-width: 50%;
+    margin: 0 6vw;
   }
 
   .animated-banner-header-wrapper {
