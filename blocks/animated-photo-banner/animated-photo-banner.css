@@ -67,10 +67,10 @@ html {
   width: var(--size-w-xs);
 }
 
-.animated-photo-banner-header .animated-photo-banner-icon img {
+/* .animated-photo-banner-header .animated-photo-banner-icon img {
   opacity: 0;
   height: 0;
-}
+} */
 
 .animated-photo-banner-title {
   margin: 3rem 0 0.75rem;
