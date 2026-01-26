@@ -60,7 +60,7 @@ html {
 }
 
 .animated-photo-banner-icon {
-  margin: 60px 0 0;
+  margin: 20px 0 0;
 }
 
 .animated-photo-banner-icon img {
@@ -73,7 +73,7 @@ html {
 } */
 
 .animated-photo-banner-title {
-  margin: 1rem 0;
+  margin: 2px 0 0;
 }
 
 .animated-photo-banner-text {
@@ -84,7 +84,7 @@ html {
   font-family: "Adobe Clean Black", var(--body-font-family);
   font-size: 44px;
   letter-spacing: 1;
-  margin: 0;
+  margin: 0 0 24px;
   line-height: 1;
 }
 
