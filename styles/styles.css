@@ -124,6 +124,17 @@ div[class*='-up'] .con-block.has-bg.text-block.text-list,
   margin-top: 12px;
 }
 
+/* stylelint-disable-next-line no-descending-specificity */
+.noticiation.iswa h3 {
+  font-size: 20px;
+  font-weight: 900;
+}
+
+/* stylelint-disable-next-line no-descending-specificity */
+.noticiation.iswa p {
+  font-size: 16px;
+}
+
 @media screen and (min-width: 600px) {
   .brick.iswa {
     min-height: 600px;
