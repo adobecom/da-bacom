@@ -82,13 +82,13 @@ div[class*='-up'] .con-block.has-bg.text-block.text-list,
 
 .carousel.iswa .icon-block h3 {
   font-size: 28px;
-  font-weight: 900;
+  font-weight: 800;
   line-height: .95;
 }
 
 .text.iswa h2 {
   font-weight: 900;
-  font-size: 32px;
+  font-size: 36px;
   margin-bottom: 2rem;
   line-height: .95;
 }
@@ -148,7 +148,7 @@ div[class*='-up'] .con-block.has-bg.text-block.text-list,
   .brick.iswa {
     min-height: 500px;
   }
-  
+
   .text.iswa h2 {
     font-weight: 900;
     font-size: 64px;
