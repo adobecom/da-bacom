@@ -80,7 +80,7 @@ html {
   width: 90%;
 }
 
-.animated-photo-banner-title h1 {
+.animated-photo-banner-title h1, .animated-photo-banner-title h2 {
   font-family: "Adobe Clean Black", var(--body-font-family);
   font-size: 44px;
   letter-spacing: 1;
@@ -88,7 +88,7 @@ html {
   line-height: 1;
 }
 
-.animated-photo-banner-title.iswa h1 {
+.animated-photo-banner-title.iswa h1, .animated-photo-banner-title.iswa h2 {
   font-weight: 900;
 }
 
@@ -209,7 +209,7 @@ html {
     margin: 2rem 0;
   }
 
-  .animated-photo-banner-title h1 {
+  .animated-photo-banner-title h1,  .animated-photo-banner-title h2 {
     font-size: 80px;
     letter-spacing: -0.3rem;
     line-height: 1;
@@ -266,7 +266,7 @@ html {
     margin-bottom: 1rem;
   }
   
-  .animated-photo-banner-title h1 {
+  .animated-photo-banner-title h1, .animated-photo-banner-title h2 {
     font-size: 96px;
     letter-spacing: -0.3rem;
   }

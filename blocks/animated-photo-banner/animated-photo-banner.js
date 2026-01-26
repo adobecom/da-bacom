@@ -453,7 +453,8 @@ function buildHeaderSection(el, container) {
   try {
     const iconContent = el.querySelector('div:first-child > div');
     const contentDiv = el.querySelector('div:nth-child(2) > div:first-child');
-    const [title, titleTwo] = contentDiv.querySelectorAll('h1');
+    const title = contentDiv.querySelector('h1');
+    const titleTwo = contentDiv.querySelector('h2');
     const subtitle = contentDiv?.querySelector('p');
     const cta = contentDiv.querySelector('a');
 
