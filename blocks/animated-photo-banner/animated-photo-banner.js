@@ -485,7 +485,7 @@ function buildHeaderSection(el, container) {
       }
     }
 
-    if (subtitle) {
+    if (subtitle && !subtitle.querySelector('a')) {
       try {
         const subtitleEl = createTag('div', { class: 'animated-photo-banner-subtitle' });
         subtitleEl.appendChild(subtitle.cloneNode(true));
