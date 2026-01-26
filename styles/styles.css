@@ -176,10 +176,6 @@ body.disable-scroll #adbMsgClientWrapper #adbmsgContainer .adbmsgCta {
 }
 
 @media screen and (min-width: 1200px) {
-  :root {
-    --grid-container-width: 1440px;
-  }
-
   main .section.grid-width-10 {
     padding-left: var(--grid-margins-width-10);
     padding-right: var(--grid-margins-width-10);
@@ -193,5 +189,11 @@ body.disable-scroll #adbMsgClientWrapper #adbmsgContainer .adbmsgCta {
   main .section.grid-width-6 {
     padding-left: var(--grid-margins-width-6);
     padding-right: var(--grid-margins-width-6);
+  }
+}
+
+@media screen and (min-width: 1440px) {
+  :root {
+    --grid-container-width: 1440px;
   }
 }
