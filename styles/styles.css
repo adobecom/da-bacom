@@ -94,12 +94,12 @@ div[class*='-up'] .con-block.has-bg.text-block.text-list,
 .text.iswa h2 {
   font-weight: 900;
   font-size: 36px;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   line-height: .95;
 }
 
 .text-block.text.iswa div > *:last-child {
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 
 .brick.iswa {
@@ -133,6 +133,12 @@ div[class*='-up'] .con-block.has-bg.text-block.text-list,
 /* stylelint-disable-next-line no-descending-specificity */
 .noticiation.iswa p {
   font-size: 16px;
+}
+
+@media screen and (max-width: 375px) {
+  .brick.iswa {
+    min-height: 580px;
+  }
 }
 
 @media screen and (min-width: 600px) {
