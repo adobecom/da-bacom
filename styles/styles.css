@@ -88,7 +88,7 @@ div[class*='-up'] .con-block.has-bg.text-block.text-list,
   font-size: 28px;
   letter-spacing: -1px;
   font-weight: 800;
-  line-height: 98%;
+  line-height: 130%;
 }
 
 .text.center.iswa {
@@ -111,6 +111,10 @@ div[class*='-up'] .con-block.has-bg.text-block.text-list,
   letter-spacing: -1px;
 }
 
+.text.iswa.mobile-left .action-area { 
+  justify-content: flex-start;
+}
+
 .text-block.text.iswa div > *:last-child {
   margin-bottom: 1rem;
 }
@@ -126,12 +130,12 @@ div[class*='-up'] .con-block.has-bg.text-block.text-list,
 .brick.iswa .brick-text h3 {
   font-size: 28px;
   letter-spacing: -1px;
-  line-height: 98%;
+  line-height: 130%;
 }
 
 .brick.iswa .brick-text p {
   font-size: 18px;
-  line-height: 98%;
+  line-height: 130%;
 }
 
 .brick.iswa .brick-text .action-area {
@@ -147,6 +151,11 @@ div[class*='-up'] .con-block.has-bg.text-block.text-list,
 /* stylelint-disable-next-line no-descending-specificity */
 .noticiation.iswa p {
   font-size: 16px;
+  line-height: 130%;
+}
+
+.iswa .body-xl, .iswa .body-m {
+  line-height: 130%;
 }
 
 @media screen and (max-width: 375px) {
@@ -198,6 +207,10 @@ div[class*='-up'] .con-block.has-bg.text-block.text-list,
   .text.center.iswa {
     text-align: center;
     align-items: center;
+  }
+
+  .text.iswa.mobile-left .action-area { 
+    justify-content: center;
   }
 }
 
@@ -256,7 +269,7 @@ body.disable-scroll #adbMsgClientWrapper #adbmsgContainer .adbmsgCta {
 }
 
 @media screen and (min-width: 1440px) {
-  :root {
+  main.iswa-main {
     --grid-container-width: 1440px;
   }
 }

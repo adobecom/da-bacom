@@ -581,6 +581,7 @@ export default async function init(el) {
 
     // add iswa to every section so as to prevent authoring burden
     const main = document.querySelector('main');
+    main.classList.add('iswa-main');
     const sections = main.querySelectorAll('div > div');
     sections.forEach((sec) => {
       if (!sec.classList.contains('icon-block') && sec.classList.length > 0) sec.classList.add('iswa');
