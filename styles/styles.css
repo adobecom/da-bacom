@@ -94,6 +94,7 @@ div[class*='-up'] .con-block.has-bg.text-block.text-list,
 .text.center.iswa {
   text-align: left;
   align-items: left;
+  padding-bottom: 12px;
 }
 
 .text.iswa h2 {
@@ -102,6 +103,12 @@ div[class*='-up'] .con-block.has-bg.text-block.text-list,
   letter-spacing: -1px;
   margin-bottom: 1rem;
   line-height: 98%;
+}
+
+/* stylelint-disable-next-line no-descending-specificity */
+.text.iswa h3 {
+  line-height: 98%;
+  letter-spacing: -1px;
 }
 
 .text-block.text.iswa div > *:last-child {
@@ -158,6 +165,10 @@ div[class*='-up'] .con-block.has-bg.text-block.text-list,
   .text-block.text-list {
     max-width: 400px;
     box-sizing: border-box;
+  }
+
+  .text.center.iswa {
+    padding-bottom: 48px;
   }
 }
 
