@@ -130,7 +130,7 @@ div[class*='-up'] .con-block.has-bg.text-block.text-list,
 .brick.iswa .brick-text h3 {
   font-size: 28px;
   letter-spacing: -1px;
-  line-height: 130%;
+  line-height: 98%;
 }
 
 .brick.iswa .brick-text p {
@@ -140,6 +140,10 @@ div[class*='-up'] .con-block.has-bg.text-block.text-list,
 
 .brick.iswa .brick-text .action-area {
   margin-top: 12px;
+}
+
+.brick.iswa .foreground p {
+  margin-top: 8px;
 }
 
 /* stylelint-disable-next-line no-descending-specificity */
