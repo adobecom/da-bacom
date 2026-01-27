@@ -85,7 +85,7 @@ html {
   font-size: 44px;
   letter-spacing: 1;
   margin: 0 0 24px;
-  line-height: 1;
+  line-height: 98%;
 }
 
 .animated-photo-banner-title.iswa h1, .animated-photo-banner-title.iswa h2 {
@@ -211,7 +211,7 @@ html {
 
   .animated-photo-banner-title h1,  .animated-photo-banner-title h2 {
     font-size: 80px;
-    letter-spacing: -0.3rem;
+    letter-spacing: -3px;
     line-height: 1;
   }
 
@@ -268,6 +268,7 @@ html {
   
   .animated-photo-banner-title h1, .animated-photo-banner-title h2 {
     font-size: 96px;
+    letter-spacing: -3px;
     letter-spacing: -0.3rem;
   }
 

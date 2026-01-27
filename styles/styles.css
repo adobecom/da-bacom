@@ -86,8 +86,9 @@ div[class*='-up'] .con-block.has-bg.text-block.text-list,
 
 .carousel.iswa .icon-block h3 {
   font-size: 28px;
+  letter-spacing: -1px;
   font-weight: 800;
-  line-height: .95;
+  line-height: 98%;
 }
 
 .text.center.iswa {
@@ -98,8 +99,9 @@ div[class*='-up'] .con-block.has-bg.text-block.text-list,
 .text.iswa h2 {
   font-weight: 900;
   font-size: 36px;
+  letter-spacing: -1px;
   margin-bottom: 1rem;
-  line-height: .95;
+  line-height: 98%;
 }
 
 .text-block.text.iswa div > *:last-child {
@@ -116,12 +118,13 @@ div[class*='-up'] .con-block.has-bg.text-block.text-list,
 
 .brick.iswa .brick-text h3 {
   font-size: 28px;
-  line-height: .95;
+  letter-spacing: -1px;
+  line-height: 98%;
 }
 
 .brick.iswa .brick-text p {
   font-size: 18px;
-  line-height: 130%;
+  line-height: 98%;
 }
 
 .brick.iswa .brick-text .action-area {
