@@ -9,7 +9,7 @@ import { initIms } from 'da-fetch';
 import { LitElement, html, nothing } from 'da-lit';
 import { LIBS } from '../../scripts/scripts.js';
 import { createToast, TOAST_TYPES } from './toast/toast.js';
-import { getSource, saveSource, saveFile, getSheets } from './da-utils.js';
+import { getSource, saveSource, saveFile, getSheets, checkPath } from './da-utils.js';
 import {
   getStorageItem,
   setStorageItem,
@@ -37,7 +37,6 @@ const ADMIN_URL = 'https://admin.hlx.page';
 const FORM_STORAGE_KEY = 'landing-page-builder';
 const OPTIONS_LOADING = [{ value: 'loading', label: 'Loading...' }];
 const OPTIONS_ERROR = [{ value: 'error', label: 'Error loading options' }];
-const DRAFT_PATH = '/drafts/landing-page-builder/';
 const BRANCH = searchParams.get('ref') || '';
 const DEBUG = searchParams.get('debug') || false;
 const DATA_PATH = '/tools/page-builder/landing-page/data/';
@@ -59,6 +58,8 @@ const TEMPLATE_MAP = {
   'infographic-ungated': '/tools/page-builder/prd-template-basic-ungated',
 };
 
+const CORE_FIELDS = ['contentType', 'gated', 'region', 'marqueeHeadline', 'pageName'];
+const TEMPLATE_FIELDS = ['contentType', 'gated'];
 const IMAGES = ['marqueeImage', 'bodyImage', 'cardImage'];
 const FILES = ['pdfAsset'];
 
@@ -81,6 +82,8 @@ const FORM_SCHEMA = {
   contentType: '',
   gated: '',
   region: '',
+  pageName: '',
+  pathStatus: 'empty',
   formTemplate: '',
   campaignId: '',
   marketoPOI: '',
@@ -123,7 +126,7 @@ class LandingPageForm extends LitElement {
     primaryProductOptions: { type: Array },
     industryOptions: { type: Array },
     isInitialized: { type: Boolean },
-    coreLocked: { type: Boolean },
+    showForm: { type: Boolean },
     missingFields: { type: Object },
   };
 
@@ -136,13 +139,13 @@ class LandingPageForm extends LitElement {
     this.isInitialized = false;
     this.template = null;
     this.currentTemplateKey = null;
-    this.coreLocked = false;
+    this.showForm = false;
     this.missingFields = {};
   }
 
   resetForm() {
     this.form = { ...FORM_SCHEMA };
-    this.coreLocked = false;
+    this.showForm = false;
     this.missingFields = {};
     localStorage.removeItem(FORM_STORAGE_KEY);
     if (this.isInitialized) {
@@ -177,7 +180,9 @@ class LandingPageForm extends LitElement {
     const token = await initIms();
     this.token = token?.accessToken?.token;
     this.loadFormState();
-    this.coreLocked = this.form.url !== '';
+
+    if (!this.form.contentType || !this.form.gated || !this.form.region) this.form.pageName = '';
+    this.showForm = this.form.pageName !== '';
 
     try {
       if (!this.token) throw new Error('Failed to get token');
@@ -269,14 +274,14 @@ class LandingPageForm extends LitElement {
     return marketoState;
   }
 
-  getCaasContentType(form) {
-    const contentTypeMap = {
+  getCaasContentType(contentType) {
+    const CAAS_CONTENT_TYPE_MAP = {
       Guide: 'caas:content-type/guide',
       Infographic: 'caas:content-type/infographic',
       Report: 'caas:content-type/report',
       'Video/Demo': 'caas:content-type/demos-and-video',
     };
-    return contentTypeMap[form.contentType] || '';
+    return CAAS_CONTENT_TYPE_MAP[contentType] || '';
   }
 
   async templatePlaceholders(form) {
@@ -311,7 +316,7 @@ class LandingPageForm extends LitElement {
       formDescription,
       formSuccessContent,
       caasPrimaryProducts: Array.isArray(form.primaryProducts) ? form.primaryProducts.join(', ') : form.primaryProducts,
-      caasContentType: this.getCaasContentType(form),
+      caasContentType: this.getCaasContentType(form.contentType),
       cardDate: new Date().toISOString().split('T')[0],
       marqueeImage: form.marqueeImage?.url,
       bodyImage: form.bodyImage?.url,
@@ -323,18 +328,6 @@ class LandingPageForm extends LitElement {
       placeholders.pdfAssetName = form.pdfAsset?.name;
     }
     return placeholders;
-  }
-
-  generateUrl(form) {
-    if (form.marqueeHeadline && form.contentType && form.gated && form.region) {
-      const pageName = form.marqueeHeadline?.toLowerCase().trim().replace(/[^a-z0-9\-\s_/]/g, '').replace(/[\s_/]+/g, '-') || '';
-      const contentType = form.contentType?.toLowerCase().replace('/', '-') || '';
-      const region = form.region.replace(/\/$/, '') || '';
-      const year = new Date().getFullYear();
-      const month = new Date().getMonth() + 1;
-      return `${region}${DRAFT_PATH}${contentType}/${year}/${month}/${pageName}.html`;
-    }
-    return '';
   }
 
   handleInput = (e) => {
@@ -350,15 +343,20 @@ class LandingPageForm extends LitElement {
 
     newForm[name] = value;
 
-    if (['marqueeHeadline', 'contentType', 'gated', 'region'].includes(name)) {
-      newForm.url = this.generateUrl(newForm);
+    if (CORE_FIELDS.includes(name) && name !== 'pageName') {
+      if (CORE_FIELDS.some((field) => this.isEmpty(newForm[field]))) {
+        newForm.pathStatus = 'empty';
+        newForm.url = '';
+        this.showForm = false;
+      }
     }
 
-    if (['contentType', 'gated'].includes(name)) {
-      const { contentType, gated } = newForm;
-      if (contentType && gated) {
-        const templateKey = `${contentType.toLowerCase()}-${gated.toLowerCase()}`;
+    if (TEMPLATE_FIELDS.includes(name)) {
+      if (!TEMPLATE_FIELDS.some((field) => this.isEmpty(newForm[field]))) {
+        const templateKey = `${newForm.contentType.toLowerCase()}-${newForm.gated.toLowerCase()}`;
         newForm.templatePath = this.getTemplatePath(templateKey);
+      } else {
+        newForm.templatePath = '';
       }
     }
 
@@ -368,15 +366,50 @@ class LandingPageForm extends LitElement {
     this.saveFormState();
   };
 
+  handlePathStatusChange = (e) => {
+    const { status } = e.detail;
+    const updates = { pathStatus: status };
+
+    if (status === 'empty') {
+      updates.pageName = '';
+      updates.url = '';
+    } else if (status === 'stale') {
+      updates.url = '';
+    }
+
+    this.form = { ...this.form, ...updates };
+  };
+
+  handleValidateRequest = async (e) => {
+    const { fullPath, value } = e.detail;
+
+    try {
+      const exists = await checkPath(fullPath);
+
+      if (exists) {
+        this.form = { ...this.form, pageName: value, pathStatus: 'conflict', url: '' };
+        document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.WARNING, message: `Path "${fullPath}" already exists`, timeout: 5000 } }));
+      } else {
+        this.form = { ...this.form, pageName: value, pathStatus: 'available', url: `${fullPath}.html` };
+      }
+    } catch (error) {
+      this.form = { ...this.form, pathStatus: 'empty', url: '' };
+      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: `Failed to validate path: ${error.message}` } }));
+    }
+
+    this.saveFormState();
+    this.requestUpdate();
+  };
+
   handleConfirm = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    const { contentType, gated, marqueeHeadline } = this.form;
-    if (this.isEmpty(contentType) || this.isEmpty(gated) || this.isEmpty(marqueeHeadline)) {
-      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Please fill in all core options before confirming' } }));
+    const { contentType, gated, marqueeHeadline, pageName } = this.form;
+    if (this.isEmpty(contentType) || this.isEmpty(gated) || this.isEmpty(marqueeHeadline) || this.isEmpty(pageName)) {
+      document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.ERROR, message: 'Please fill in all core options before confirming', timeout: 5000 } }));
       return;
     }
-    this.coreLocked = true;
+    this.showForm = true;
   };
 
   handleToast = (e) => {
@@ -385,11 +418,9 @@ class LandingPageForm extends LitElement {
     const detail = e.detail || {};
     const toast = createToast(detail.message, detail.type, detail.timeout);
     document.body.appendChild(toast);
-    if (detail.type === 'error') {
+    if (detail.type === 'error' && DEBUG) {
       console.error('Error:', detail.message);
-      if (DEBUG) {
-        console.trace();
-      }
+      console.trace();
     }
   };
 
@@ -404,18 +435,10 @@ class LandingPageForm extends LitElement {
     super.disconnectedCallback();
   }
 
-  async uploadImage(file, path) {
+  async uploadAsset(file, path, type = 'image') {
     const result = await saveFile(path, file);
-    const url = result?.source?.contentUrl;
-    if (!url) throw new Error('Failed to upload image');
-
-    return url;
-  }
-
-  async uploadFile(file, path) {
-    const result = await saveFile(path, file);
-    const url = result?.aem?.previewUrl;
-    if (!url) throw new Error('Failed to upload file');
+    const url = type === 'image' ? result?.source?.contentUrl : result?.aem?.previewUrl;
+    if (!url) throw new Error(`Failed to upload ${type}`);
 
     return url;
   }
@@ -435,9 +458,8 @@ class LandingPageForm extends LitElement {
 
     if (this.missingFields[name]) this.missingFields[name] = false;
 
-    // Update template after page generation to correct path
     const path = computeAssetDirFromUrl(this.form.url);
-    this.uploadImage(file, path)
+    this.uploadAsset(file, path, 'image')
       .then((url) => {
         if (!url) return;
         this.form[name] = { url, name: file.name };
@@ -473,7 +495,7 @@ class LandingPageForm extends LitElement {
     document.dispatchEvent(new CustomEvent('show-toast', { detail: { type: TOAST_TYPES.INFO, message: 'Uploading PDF...', timeout: 3000 } }));
 
     try {
-      const url = await this.uploadFile(file, path);
+      const url = await this.uploadAsset(file, path, 'file');
       if (!url) {
         throw new Error('Upload failed');
       }
@@ -501,6 +523,7 @@ class LandingPageForm extends LitElement {
       this.requestUpdate();
       return true;
     } catch (error) {
+      console.error('Failed to save page:', error);
       return false;
     }
   }
@@ -514,7 +537,8 @@ class LandingPageForm extends LitElement {
     }
     const previewApiData = await previewApiResponse.json();
     if (previewApiData?.preview?.status === 200) {
-      return { success: true, url: previewApiData.preview.url };
+      const businessStageUrl = previewApiData.preview.url.replace('main--da-bacom--adobecom.aem.page', 'business.stage.adobe.com');
+      return { success: true, url: businessStageUrl };
     }
     return { success: false };
   }
@@ -632,11 +656,7 @@ class LandingPageForm extends LitElement {
 
   isFormComplete() {
     const required = this.getRequiredFields();
-    const hasRequired = required.every((field) => {
-      const value = this.form[field];
-      return !this.isEmpty(value);
-    });
-    return hasRequired;
+    return required.every((field) => !this.isEmpty(this.form[field]));
   }
 
   hasError(fieldName) {
@@ -645,15 +665,15 @@ class LandingPageForm extends LitElement {
   }
 
   render() {
-    const canConfirm = this.form.url !== '';
+    const canConfirm = this.form.contentType && this.form.gated && this.form.region && this.form.marqueeHeadline;
     const hasError = this.hasError.bind(this);
 
     return html`
       <h1>Landing Page Builder ${BRANCH ? `- ${BRANCH.toUpperCase()}` : ''}</h1>
       <div class="builder-container">
         <form @submit=${this.handleSubmit}>
-          ${renderContentType(this.form, this.handleInput, this.options?.regions, this.coreLocked, hasError)}
-          ${this.coreLocked ? html`
+          ${renderContentType(this.form, this.handleInput, this.options?.regions, { isLocked: this.showForm, hasError, onValidateRequest: this.handleValidateRequest, onStatusChange: this.handlePathStatusChange })}
+          ${this.showForm ? html`
             ${renderForm(this.form, this.handleInput, { marketoPOIOptions: this.marketoPOIOptions, hasError })}
             ${renderMarquee(this.form, this.handleInput, this.handleImageChange.bind(this), hasError)}
             ${renderBody(this.form, this.handleInput, this.handleImageChange.bind(this), hasError)}
@@ -676,12 +696,12 @@ class LandingPageForm extends LitElement {
                 class="primary" 
                 ?disabled=${!canConfirm}
                 @click=${this.handleConfirm}>
-                Confirm & Continue
+                Confirm
               </sl-button>
               <sl-button class="reset" @click=${this.resetForm}>
                 Reset Form
               </sl-button>
-              ${!canConfirm ? html`<p class="help-text">Please fill in Content Type, Gated/Ungated, and Marquee Headline to continue.</p>` : nothing}
+              ${!canConfirm ? html`<p class="help-text">Please fill in Content Type, Gated/Ungated, Region, and Marquee Headline to confirm.</p>` : nothing}
             </div>
             `}
         </form>
