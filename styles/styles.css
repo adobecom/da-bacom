@@ -80,6 +80,10 @@ div[class*='-up'] .con-block.has-bg.text-block.text-list,
   fill: var(--color-white);
 }
 
+.carousel.iswa .carousel-slide {
+  align-self: flex-start;
+}
+
 .carousel.iswa .icon-block h3 {
   font-size: 28px;
   font-weight: 800;
