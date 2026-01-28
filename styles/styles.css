@@ -164,7 +164,7 @@ div[class*='-up'] .con-block.has-bg.text-block.text-list,
 
 @media screen and (max-width: 375px) {
   .brick.iswa {
-    min-height: 580px;
+    min-height: 540px;
   }
 }
 
