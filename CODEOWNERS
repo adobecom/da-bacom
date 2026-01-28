@@ -4,11 +4,8 @@
 
 
 # BACOM Core
-* @brandon32 @JasonHowellSlavin @meganthecoder
+* @brandon32 @JasonHowellSlavin @jsandland
 
 # BACOM Blocks - last matching pattern takes precedence
 /blocks/chat-cta @JasonHowellSlavin
 /blocks/comparison @brandon32
-/blocks/event-speakers @meganthecoder
-/blocks/faas-decode @meganthecoder
-/blocks/tree-view @meganthecoder
