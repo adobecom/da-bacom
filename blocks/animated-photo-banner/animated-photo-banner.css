@@ -288,3 +288,159 @@ html {
     will-change: auto;
   }
 }
+
+/* ISWA Page Overrides */
+@font-face {
+  font-family: "Adobe Clean Black";
+  src:
+    local("Adobe Clean Black"), 
+    url("../../styles/AdobeClean-Black.otf");
+}
+
+/* stylelint-disable-next-line no-descending-specificity */
+body .iswa h1, body .iswa h2, body .iswa h3, body .iswa h4 {
+  font-family: "Adobe Clean Black", var(--body-font-family);
+}
+
+/* ISWA Styles */
+.carousel.iswa .carousel-button-container {
+  background: var(--carousel-nav-background-dark);
+}
+
+.carousel.iswa .carousel-previous, .carousel.iswa .carousel-next {
+  background-color: var(--carousel-nav-background);
+}
+
+.carousel.iswa .carousel-previous path, .carousel.iswa .carousel-next path {
+  fill: var(--color-white);
+}
+
+.carousel.iswa .carousel-slide {
+  align-self: flex-start;
+}
+
+.carousel.iswa .icon-block h3 {
+  font-size: 28px;
+  letter-spacing: -1px;
+  font-weight: 800;
+  line-height: 130%;
+}
+
+.text.center.iswa {
+  text-align: left;
+  align-items: left;
+  padding-bottom: 12px;
+}
+
+.text.iswa h2 {
+  font-weight: 900;
+  font-size: 36px;
+  letter-spacing: -1px;
+  margin-bottom: 1rem;
+  line-height: 98%;
+}
+
+/* stylelint-disable-next-line no-descending-specificity */
+.text.iswa h3 {
+  line-height: 98%;
+  letter-spacing: -1px;
+}
+
+.text.iswa.mobile-left .action-area { 
+  justify-content: flex-start;
+}
+
+.text-block.text.iswa div > *:last-child {
+  margin-bottom: 1rem;
+}
+
+.brick.iswa {
+  min-height: 520px;
+}
+
+.brick.iswa .foreground {
+  padding: 24px;
+}
+
+.brick.iswa .brick-text h3 {
+  font-size: 28px;
+  letter-spacing: -1px;
+  line-height: 98%;
+}
+
+.brick.iswa .brick-text p {
+  font-size: 18px;
+  line-height: 130%;
+}
+
+.brick.iswa .brick-text .action-area {
+  margin-top: 12px;
+}
+
+.brick.iswa .foreground p {
+  margin-top: 8px;
+}
+
+/* stylelint-disable-next-line no-descending-specificity */
+.noticiation.iswa h3 {
+  font-size: 20px;
+  font-weight: 900;
+}
+
+/* stylelint-disable-next-line no-descending-specificity */
+.noticiation.iswa p {
+  font-size: 16px;
+  line-height: 130%;
+}
+
+.iswa .body-xl, .iswa .body-m {
+  line-height: 130%;
+}
+
+@media screen and (max-width: 375px) {
+  .brick.iswa {
+    min-height: 540px;
+  }
+}
+
+@media screen and (min-width: 600px) {
+  .brick.iswa {
+    min-height: 600px;
+  }
+}
+
+@media screen and (min-width: 900px) {
+  .text.center.iswa {
+    padding-bottom: 48px;
+  }
+}
+
+@media screen and (min-width: 1200px) {
+  .brick.iswa .brick-text p {
+    font-size: inherit;
+  } 
+
+  .brick.iswa {
+    min-height: 500px;
+  }
+
+  .text.iswa h2 {
+    font-weight: 900;
+    font-size: 64px;
+  }
+
+  .text.center.iswa {
+    text-align: center;
+    align-items: center;
+  }
+
+  .text.iswa.mobile-left .action-area { 
+    justify-content: center;
+  }
+}
+
+@media screen and (min-width: 1440px) {
+  main.iswa-main {
+    --grid-container-width: 1440px;
+  }
+}
