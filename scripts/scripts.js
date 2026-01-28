@@ -113,7 +113,7 @@ const CONFIG = {
     tr: { ietf: 'tr-TR', tk: 'qxw8hzm.css', base: '' },
     tw: { ietf: 'zh-TW', tk: 'jay0ecd', exl: 'zh-hant', base: '' },
     ua: { ietf: 'uk-UA', tk: 'qxw8hzm.css', base: '' },
-    uk: { ietf: 'en-GB', tk: 'hah7vzn.css' },
+    uk: { ietf: 'en-GB', tk: 'hah7vzn.css', base: '' },
     vn_en: { ietf: 'en-GB', tk: 'hah7vzn.css', base: '' },
     vn_vi: { ietf: 'vi', tk: 'qxw8hzm.css' },
     za: { ietf: 'en-GB', tk: 'hah7vzn.css' },
