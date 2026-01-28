@@ -260,7 +260,7 @@ function animateWaveSequence(waveGroups, paramsList) {
           element.style.transition = transitions.join(', ');
 
           // Translate to end position and shrink from scale 1.2 to scale 1
-          setElementTransform(element, endPos[0], endPos[1], 1, false);
+          setElementTransform(element, endPos[0], endPos[1], params.scale || 1, false);
         }, 200);
       });
     }, index * CONFIG.WAVE_DELAY + CONFIG.WAVE_INITIAL_DELAY);
