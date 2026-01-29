@@ -289,14 +289,6 @@ html {
   }
 }
 
-/* ISWA Page Overrides */
-@font-face {
-  font-family: "Adobe Clean Black";
-  src:
-    local("Adobe Clean Black"), 
-    url("../../styles/AdobeClean-Black.otf");
-}
-
 /* stylelint-disable-next-line no-descending-specificity */
 body .iswa h1, body .iswa h2, body .iswa h3, body .iswa h4 {
   font-family: "Adobe Clean Black", var(--body-font-family);
