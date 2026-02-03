@@ -1,0 +1,170 @@
+:host {
+  display: block;
+  position: relative;
+}
+
+:host > svg {
+  display: none;
+}
+
+.path-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.path-label {
+  font-size: var(--s2-body-xs-size);
+  font-weight: 500;
+  color: var(--s2-gray-700, #505050);
+  display: block;
+}
+
+.path-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.path-input-container {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  background: white;
+  border: 1px solid var(--s2-gray-400, #ccc);
+  border-radius: var(--s2-radius-100, 4px);
+  padding: 0 12px;
+  height: 32px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.path-input-container:focus-within {
+  outline: none;
+  border-color: var(--s2-blue-900, #0265dc);
+  box-shadow: 0 0 0 1px var(--s2-blue-900, #0265dc);
+}
+
+.path-input-container.error {
+  border-color: var(--s2-red-900);
+}
+
+.path-input-container.error:focus-within {
+  box-shadow: 0 0 0 1px var(--s2-red-900);
+}
+
+/* State-based border colors */
+.path-input-container.available {
+  border-color: var(--s2-green-900, #12805c);
+}
+
+.path-input-container.conflict {
+  border-color: var(--s2-red-900, #d7373f);
+}
+
+.path-input-container.stale {
+  border-color: var(--s2-orange-900, #e68619);
+}
+
+.path-prefix {
+  font-family: monospace;
+  font-size: 14px;
+  color: var(--s2-gray-600, #6b7280);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.path-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-family: monospace;
+  font-size: 14px;
+  color: var(--s2-gray-900, #1f2937);
+  background: transparent;
+  padding: 0 4px;
+  min-width: 80px;
+  height: 100%;
+}
+
+.path-input:disabled {
+  color: var(--s2-gray-500, #9ca3af);
+  cursor: not-allowed;
+}
+
+.path-input::placeholder {
+  color: var(--s2-gray-500, #9ca3af);
+  font-style: italic;
+}
+
+/* Validation Icons */
+.validation-icon {
+  display: block;
+  width: 18px;
+  height: 18px;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+.validation-icon.checking {
+  color: var(--s2-blue-900, #0265dc);
+  animation: spin 1s linear infinite;
+}
+
+.validation-icon.available {
+  color: var(--s2-green-900, #12805c);
+}
+
+.validation-icon.conflict {
+  color: var(--s2-red-900, #d7373f);
+}
+
+.validation-icon.stale {
+  color: var(--s2-orange-900, #e68619);
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Action Button */
+.path-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  height: 32px;
+  font-size: 13px;
+  font-weight: 500;
+  color: white;
+  background: var(--s2-blue-900, #0265dc);
+  border: none;
+  border-radius: var(--s2-radius-100, 4px);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.path-action-btn:hover {
+  background: var(--s2-blue-1000, #0054b6);
+}
+
+.path-action-btn:active {
+  transform: scale(0.98);
+}
+
+.path-action-btn:focus-visible {
+  outline: 2px solid var(--s2-blue-900, #0265dc);
+  outline-offset: 2px;
+}
+
+.error-message {
+  font-size: var(--s2-body-xs-size);
+  color: var(--s2-red-900);
+  margin: 0;
+}
