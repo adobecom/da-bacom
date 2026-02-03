@@ -397,6 +397,10 @@ body .iswa h1, body .iswa h2, body .iswa h3, body .iswa h4 {
   line-height: 130%;
 }
 
+.iswa.aside .supplemental-text {
+  font-weight: 700;
+}
+
 @media screen and (max-width: 375px) {
   .brick.iswa {
     min-height: 540px;
@@ -436,6 +440,12 @@ body .iswa h1, body .iswa h2, body .iswa h3, body .iswa h4 {
 
   .text.iswa.mobile-left .action-area { 
     justify-content: center;
+  }
+
+  .iswa.aside h2 {
+    font-size: 80px;
+    letter-spacing: -3px;
+    line-height: 98%;
   }
 }
 
