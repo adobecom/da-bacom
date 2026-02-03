@@ -20,7 +20,7 @@ export default function registerAAUniversity() {
     body: JSON.stringify(postBody),
     headers: { 'Content-Type': 'application/json' },
   })
-    .catch((error) => window.lana.log(`Marketo AA University Error: ${error}`));
+    .catch((error) => window.lana.log(`Marketo AA University Error: ${error}`, { severity: 'error', tags: 'aa-university' }));
 
   return postBody;
 }
