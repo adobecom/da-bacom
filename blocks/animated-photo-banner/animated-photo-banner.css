@@ -1,0 +1,425 @@
+/* Responsive styling with mobile-first approach */
+
+/*
+ * Prevent layout shift from scrollbar appearing/disappearing
+ * Note: This should ideally be applied to html/body in your global styles
+ * Adding here as a component-level solution
+ */
+
+html {
+  scrollbar-gutter: stable;
+}
+
+:root {
+  --size-w-3xs: 32px; /* 2rem */
+  --size-w-2xs: 64px; /* 4rem */
+  --size-w-xs: 96px; /* 6rem */
+  --size-w-sm: 128px; /* 8rem */
+  --size-w-md: 192px; /* 12rem */
+  --size-w-lg: 174px; 
+  --size-w-xl: 384px; /* 24rem */
+  --size-w-2xl: 512px; /* 32rem */
+  --size-w-3xl: 768px; /* 48rem */
+  --size-w-mobxl: 340px;
+  --size-w-mobxs: 165px;
+  --size-w-mq: 500px; /* marquee main image */
+}
+
+.animated-photo-banner-container {
+  position: relative;
+  width: 100%;
+  height: 800px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+/* Header section styling */
+.animated-photo-banner-header {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  text-align: left;
+  z-index: 2;
+  margin: 0 6vw;
+}
+
+.animated-banner-header-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    position: absolute;
+    align-self: center;
+    top: 0;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    height: 100%;
+}
+
+.animated-photo-banner-icon {
+  margin: 20px 0 0;
+}
+
+.animated-photo-banner-icon img {
+  width: var(--size-w-xs);
+}
+
+.animated-photo-banner-title {
+  margin: 2px 0 0;
+}
+
+.animated-photo-banner-text {
+  width: 90%;
+}
+
+.animated-photo-banner-title h1, .animated-photo-banner-title h2 {
+  font-size: 44px;
+  letter-spacing: -2px;
+  margin: 0 0 24px;
+  line-height: 98%;
+}
+
+.animated-photo-banner-title.iswa h1, .animated-photo-banner-title.iswa h2 {
+  font-weight: 800;
+}
+
+.animated-photo-banner-header p {
+  font-size: 18px;
+  max-width: 300px;
+  line-height: 1.3;
+}
+
+/* Images container */
+.animated-photo-banner-images {
+  height: 100vh;
+  width: 100%;
+  overflow: visible;
+}
+
+.animated-photo-banner-image {
+  position: absolute;
+  z-index: 1;
+  will-change: transform, opacity, left, top, right, bottom;
+}
+
+.animated-photo-banner-image.w-mq {
+  max-width: var(--size-w-mq);
+}
+
+.animated-photo-banner-image.w-mobxl {
+  max-width: var(--size-w-mobxl);
+}
+
+.animated-photo-banner-image.w-mobxs {
+  max-width: var(--size-w-mobxs);
+}
+
+.animated-photo-banner-image.w-3xl {
+  max-width: var(--size-w-3xl);
+}
+
+.animated-photo-banner-image.w-2xl {
+  max-width: var(--size-w-2xl);
+}
+
+.animated-photo-banner-image.w-xl {
+  max-width: var(--size-w-xl);
+}
+
+.animated-photo-banner-image.w-lg {
+  max-width: var(--size-w-lg);
+}
+
+.animated-photo-banner-image.w-md {
+  max-width: var(--size-w-md);
+}
+
+.animated-photo-banner-image.w-sm {
+  max-width: var(--size-w-sm);
+}
+
+.animated-photo-banner-image.w-xs {
+  max-width: var(--size-w-xs);
+}
+
+.animated-photo-banner-image.w-2xs {
+  max-width: var(--size-w-2xs);
+}
+
+.animated-photo-banner-image.w-3xs {
+  max-width: var(--size-w-3xs);
+}
+
+.animated-photo-banner-image picture {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Default image styling with standard size fallback */
+/* stylelint-disable-next-line no-descending-specificity */
+.animated-photo-banner-image img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: contain;
+}
+
+/* Tablet */
+@media screen and (min-width: 600px) {
+  .animated-banner-header-wrapper {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .animated-photo-banner-header { 
+    max-width: 100%;
+  }
+
+  .animated-photo-banner-header p {
+    max-width: 640px;
+    font-size: 28px;
+  }
+
+  .animated-photo-banner-icon {
+    margin-bottom: 1rem;
+    height: 70px;
+  }
+
+  .animated-photo-banner-icon img {
+    width: var(--size-w-sm);
+  }
+
+  .animated-photo-banner-header .animated-photo-banner-icon img {
+    opacity: 1;
+    height: 70px;
+  }
+
+  .animated-photo-banner-title {
+    margin: 2rem 0;
+  }
+
+  .animated-photo-banner-title h1,  .animated-photo-banner-title h2 {
+    font-size: 80px;
+    letter-spacing: -2px;
+    line-height: 1;
+  }
+}
+
+@media screen and (min-width: 1200px) {
+  .animated-photo-banner-header {
+    max-width: 46%;
+    margin: 0 8vw;
+  }
+
+  .animated-banner-header-wrapper {
+    width: 1200px;
+  }
+
+  .animated-photo-banner-text {
+    width: 100%;
+  }
+}
+
+/* Desktop */
+@media screen and (min-width: 1440px) {
+  :root {
+    --size-w-mq: 600px; /* marquee main image */
+    --size-w-lg: 256px; /* 16rem */
+  }
+
+  .animated-photo-banner-header {
+    max-width: 50%;
+    margin: 0 4.25vw;
+  }
+
+  .animated-banner-header-wrapper {
+    width: 1440px;
+  }
+
+  .animated-photo-banner-header p {
+    max-width: 840px;
+    font-size: 24px;
+  }
+
+  .animated-photo-banner-icon {
+    margin-bottom: 0;
+  }
+
+  .animated-photo-banner-title {
+    margin-top: 0;
+    margin-bottom: 3rem;
+  }
+  
+  .animated-photo-banner-title h1, .animated-photo-banner-title h2 {
+    font-size: 96px;
+    letter-spacing: -2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animated-photo-banner-image,
+  .animated-photo-banner-header {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .animated-photo-banner-image {
+    will-change: auto;
+  }
+}
+
+/* ISWA Styles */
+.carousel.iswa .carousel-button-container {
+  background: var(--carousel-nav-background-dark);
+}
+
+.carousel.iswa .carousel-previous, .carousel.iswa .carousel-next {
+  background-color: var(--carousel-nav-background);
+}
+
+.carousel.iswa .carousel-previous path, .carousel.iswa .carousel-next path {
+  fill: var(--color-white);
+}
+
+.carousel.iswa .carousel-slide {
+  align-self: flex-start;
+}
+
+.carousel.iswa .icon-block h3 {
+  font-size: 28px;
+  letter-spacing: -2px;
+  font-weight: 800;
+  line-height: 110%;
+}
+
+.text.center.iswa {
+  text-align: left;
+  align-items: left;
+  padding-bottom: 12px;
+}
+
+.text.iswa h2 {
+  font-weight: 800;
+  font-size: 36px;
+  letter-spacing: -2px;
+  margin-bottom: 1rem;
+  line-height: 98%;
+}
+
+/* stylelint-disable-next-line no-descending-specificity */
+.text.iswa h3 {
+  line-height: 110%;
+  letter-spacing: -2px;
+}
+
+.text.iswa.mobile-left .action-area { 
+  justify-content: flex-start;
+}
+
+.text-block.text.iswa div > *:last-child {
+  margin-bottom: 1rem;
+}
+
+.brick.iswa {
+  min-height: 520px;
+}
+
+.brick.iswa .foreground {
+  padding: 24px;
+}
+
+.brick.iswa .brick-text h3 {
+  font-size: 28px;
+  letter-spacing: -2px;
+  line-height: 110%;
+}
+
+.brick.iswa .brick-text p {
+  font-size: 18px;
+  line-height: 130%;
+}
+
+.brick.iswa .brick-text .action-area {
+  margin-top: 12px;
+}
+
+.brick.iswa .foreground p {
+  margin-top: 8px;
+}
+
+/* stylelint-disable-next-line no-descending-specificity */
+.noticiation.iswa h3 {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+/* stylelint-disable-next-line no-descending-specificity */
+.noticiation.iswa p {
+  font-size: 16px;
+  line-height: 130%;
+}
+
+.iswa .body-xl, .iswa .body-m {
+  line-height: 130%;
+}
+
+.iswa.aside .supplemental-text {
+  font-weight: 800;
+}
+
+@media screen and (max-width: 375px) {
+  .brick.iswa {
+    min-height: 540px;
+  }
+}
+
+@media screen and (min-width: 600px) {
+  .brick.iswa {
+    min-height: 600px;
+  }
+}
+
+@media screen and (min-width: 900px) {
+  .text.center.iswa {
+    padding-bottom: 48px;
+  }
+}
+
+@media screen and (min-width: 1200px) {
+  .brick.iswa .brick-text p {
+    font-size: inherit;
+  } 
+
+  .brick.iswa {
+    min-height: 500px;
+  }
+
+  .text.iswa h2 {
+    font-weight: 800;
+    font-size: 64px;
+  }
+
+  .text.center.iswa {
+    text-align: center;
+    align-items: center;
+  }
+
+  .text.iswa.mobile-left .action-area { 
+    justify-content: center;
+  }
+
+  .iswa.aside h2 {
+    font-size: 80px;
+    letter-spacing: -2px;
+    line-height: 98%;
+  }
+}
+
+@media screen and (min-width: 1440px) {
+  main.iswa-main {
+    --grid-container-width: 1440px;
+  }
+}
