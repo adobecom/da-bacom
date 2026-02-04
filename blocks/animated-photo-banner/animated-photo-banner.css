@@ -203,7 +203,7 @@ html {
 
   .animated-photo-banner-title h1,  .animated-photo-banner-title h2 {
     font-size: 80px;
-    letter-spacing: -3px;
+    letter-spacing: -2px;
     line-height: 1;
   }
 }
@@ -255,8 +255,7 @@ html {
   
   .animated-photo-banner-title h1, .animated-photo-banner-title h2 {
     font-size: 96px;
-    letter-spacing: -3px;
-    letter-spacing: -0.3rem;
+    letter-spacing: -2px;
   }
 }
 
@@ -291,7 +290,7 @@ html {
 
 .carousel.iswa .icon-block h3 {
   font-size: 28px;
-  letter-spacing: -1px;
+  letter-spacing: -2px;
   font-weight: 800;
   line-height: 110%;
 }
@@ -305,7 +304,7 @@ html {
 .text.iswa h2 {
   font-weight: 800;
   font-size: 36px;
-  letter-spacing: -1px;
+  letter-spacing: -2px;
   margin-bottom: 1rem;
   line-height: 98%;
 }
@@ -313,7 +312,7 @@ html {
 /* stylelint-disable-next-line no-descending-specificity */
 .text.iswa h3 {
   line-height: 110%;
-  letter-spacing: -1px;
+  letter-spacing: -2px;
 }
 
 .text.iswa.mobile-left .action-area { 
@@ -334,7 +333,7 @@ html {
 
 .brick.iswa .brick-text h3 {
   font-size: 28px;
-  letter-spacing: -1px;
+  letter-spacing: -2px;
   line-height: 110%;
 }
 
@@ -414,7 +413,7 @@ html {
 
   .iswa.aside h2 {
     font-size: 80px;
-    letter-spacing: -3px;
+    letter-spacing: -2px;
     line-height: 98%;
   }
 }
