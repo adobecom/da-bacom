@@ -56,7 +56,6 @@ html {
     right: 0;
     margin: 0 auto;
     height: 100%;
-
 }
 
 .animated-photo-banner-icon {
@@ -67,11 +66,6 @@ html {
   width: var(--size-w-xs);
 }
 
-/* .animated-photo-banner-header .animated-photo-banner-icon img {
-  opacity: 0;
-  height: 0;
-} */
-
 .animated-photo-banner-title {
   margin: 2px 0 0;
 }
@@ -81,15 +75,14 @@ html {
 }
 
 .animated-photo-banner-title h1, .animated-photo-banner-title h2 {
-  font-family: "Adobe Clean Black", var(--body-font-family);
   font-size: 44px;
-  letter-spacing: 1;
+  letter-spacing: -2px;
   margin: 0 0 24px;
   line-height: 98%;
 }
 
 .animated-photo-banner-title.iswa h1, .animated-photo-banner-title.iswa h2 {
-  font-weight: 900;
+  font-weight: 800;
 }
 
 .animated-photo-banner-header p {
@@ -172,7 +165,6 @@ html {
   height: auto;
   display: block;
   object-fit: contain;
-  border-radius: 4px;
 }
 
 /* Tablet */
@@ -213,11 +205,6 @@ html {
     font-size: 80px;
     letter-spacing: -3px;
     line-height: 1;
-  }
-
-  /* stylelint-disable-next-line no-descending-specificity */
-  .animated-photo-banner-image img {
-    border-radius: 8px;
   }
 }
 
@@ -271,10 +258,6 @@ html {
     letter-spacing: -3px;
     letter-spacing: -0.3rem;
   }
-
-  .animated-photo-banner-image img {
-    border-radius: 16px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -287,19 +270,6 @@ html {
   .animated-photo-banner-image {
     will-change: auto;
   }
-}
-
-/* ISWA Page Overrides */
-@font-face {
-  font-family: "Adobe Clean Black";
-  src:
-    local("Adobe Clean Black"), 
-    url("../../styles/AdobeClean-Black.otf");
-}
-
-/* stylelint-disable-next-line no-descending-specificity */
-body .iswa h1, body .iswa h2, body .iswa h3, body .iswa h4 {
-  font-family: "Adobe Clean Black", var(--body-font-family);
 }
 
 /* ISWA Styles */
@@ -323,7 +293,7 @@ body .iswa h1, body .iswa h2, body .iswa h3, body .iswa h4 {
   font-size: 28px;
   letter-spacing: -1px;
   font-weight: 800;
-  line-height: 130%;
+  line-height: 110%;
 }
 
 .text.center.iswa {
@@ -333,7 +303,7 @@ body .iswa h1, body .iswa h2, body .iswa h3, body .iswa h4 {
 }
 
 .text.iswa h2 {
-  font-weight: 900;
+  font-weight: 800;
   font-size: 36px;
   letter-spacing: -1px;
   margin-bottom: 1rem;
@@ -342,7 +312,7 @@ body .iswa h1, body .iswa h2, body .iswa h3, body .iswa h4 {
 
 /* stylelint-disable-next-line no-descending-specificity */
 .text.iswa h3 {
-  line-height: 98%;
+  line-height: 110%;
   letter-spacing: -1px;
 }
 
@@ -365,7 +335,7 @@ body .iswa h1, body .iswa h2, body .iswa h3, body .iswa h4 {
 .brick.iswa .brick-text h3 {
   font-size: 28px;
   letter-spacing: -1px;
-  line-height: 98%;
+  line-height: 110%;
 }
 
 .brick.iswa .brick-text p {
@@ -384,7 +354,7 @@ body .iswa h1, body .iswa h2, body .iswa h3, body .iswa h4 {
 /* stylelint-disable-next-line no-descending-specificity */
 .noticiation.iswa h3 {
   font-size: 20px;
-  font-weight: 900;
+  font-weight: 800;
 }
 
 /* stylelint-disable-next-line no-descending-specificity */
@@ -395,6 +365,10 @@ body .iswa h1, body .iswa h2, body .iswa h3, body .iswa h4 {
 
 .iswa .body-xl, .iswa .body-m {
   line-height: 130%;
+}
+
+.iswa.aside .supplemental-text {
+  font-weight: 800;
 }
 
 @media screen and (max-width: 375px) {
@@ -425,7 +399,7 @@ body .iswa h1, body .iswa h2, body .iswa h3, body .iswa h4 {
   }
 
   .text.iswa h2 {
-    font-weight: 900;
+    font-weight: 800;
     font-size: 64px;
   }
 
@@ -436,6 +410,12 @@ body .iswa h1, body .iswa h2, body .iswa h3, body .iswa h4 {
 
   .text.iswa.mobile-left .action-area { 
     justify-content: center;
+  }
+
+  .iswa.aside h2 {
+    font-size: 80px;
+    letter-spacing: -3px;
+    line-height: 98%;
   }
 }
 
