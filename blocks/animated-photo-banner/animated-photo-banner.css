@@ -232,7 +232,7 @@ html {
   }
 
   .animated-photo-banner-header {
-    max-width: 58%;
+    max-width: 50%;
     margin: 0 1.25vw 0 0;
   }
 
@@ -253,10 +253,18 @@ html {
     margin-top: 0;
     margin-bottom: 3rem;
   }
-  
-  .animated-photo-banner-title h1, .animated-photo-banner-title h2 {
-    font-size: 96px;
+
+  .animated-photo-banner-title h1 {
+    font-size: 64px;
     letter-spacing: -2px;
+    font-weight: 700px;
+  }
+  
+  .animated-photo-banner-title.iswa h2 {
+    font-size: 80px;
+    letter-spacing: -2px;
+    font-weight: 700px;
+    margin-bottom: 16px;
   }
 }
 
