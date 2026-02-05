@@ -265,7 +265,7 @@ html {
 
   .animated-photo-banner-title {
     margin-top: 0;
-    margin-bottom: 3rem;
+    margin-bottom: 32px;
   }
 
   .animated-photo-banner-title h1 {
@@ -278,7 +278,7 @@ html {
     font-size: 80px;
     letter-spacing: -2px;
     font-weight: 700px;
-    margin-bottom: 32px;
+    margin-bottom: 24px;
   }
 }
 
