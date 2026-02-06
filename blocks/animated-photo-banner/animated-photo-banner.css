@@ -81,8 +81,15 @@ html {
   line-height: 98%;
 }
 
-.animated-photo-banner-title.iswa h1, .animated-photo-banner-title.iswa h2 {
+.animated-photo-banner-title.iswa h2 {
   font-weight: 800;
+  margin-bottom: 0;
+}
+
+.animated-photo-banner-title.iswa h1 {
+  font-weight: 700;
+  font-size: 32px;
+  margin: 16px 0 32px;
 }
 
 .animated-photo-banner-header p {
@@ -201,8 +208,16 @@ html {
     margin: 2rem 0;
   }
 
-  .animated-photo-banner-title h1,  .animated-photo-banner-title h2 {
+  .animated-photo-banner-title.iswa h1 {
+    font-size: 64px;
+  }
+
+  .animated-photo-banner-title.iswa h2 {
     font-size: 80px;
+  }
+
+  /* stylelint-disable-next-line no-descending-specificity */
+  .animated-photo-banner-title h1, .animated-photo-banner-title h2 {
     letter-spacing: -2px;
     line-height: 1;
   }
@@ -232,7 +247,7 @@ html {
 
   .animated-photo-banner-header {
     max-width: 50%;
-    margin: 0 4.25vw;
+    margin: 0 1.25vw 0 0;
   }
 
   .animated-banner-header-wrapper {
@@ -250,12 +265,20 @@ html {
 
   .animated-photo-banner-title {
     margin-top: 0;
-    margin-bottom: 3rem;
+    margin-bottom: 40px;
+  }
+
+  .animated-photo-banner-title h1 {
+    font-size: 64px;
+    letter-spacing: -2px;
+    font-weight: 700px;
   }
   
-  .animated-photo-banner-title h1, .animated-photo-banner-title h2 {
-    font-size: 96px;
+  .animated-photo-banner-title.iswa h2 {
+    font-size: 80px;
     letter-spacing: -2px;
+    font-weight: 700px;
+    margin-bottom: 24px;
   }
 }
 
