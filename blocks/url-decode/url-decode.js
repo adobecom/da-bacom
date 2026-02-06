@@ -159,7 +159,10 @@ async function generateReport(el, configColumn) {
     });
   } catch (e) {
     /* c8 ignore next 4 */
-    window.lana?.log(`Error fetching data from url: ${queryIndex.href}`, { tags: 'info,url-decode' });
+    window.lana?.log(
+      `Error fetching data from url: ${queryIndex.href}`,
+      { severity: 'error', tags: 'url-decode' },
+    );
     report.append(createTag('p', { class: 'error' }, 'Error fetching data'));
     return;
   }

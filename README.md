@@ -61,20 +61,21 @@ npx eslint file1.js
 
 ## Logging
 When logging do not use `console` but instead use `window.lana.log`, these logs will then be visible in Splunk.
-Use tags to help filter logs. Tags should have the severity, see below, and the module/block name.
-Tags should provide context, categorization, or help in filtering, etc.
+Use tags to help filter logs. Tags should provide context like module/block names and must **not** be used for severity.
 
-Severity:
+Severity (use the `severity` option):
 ```
-info = network issues or extra details to identify important information.
-warn = authoring related mis-configurations or similar - this could lead to generating tickets.
-error = actual error ( ex. cannot read Y of undefined ) - this could lead to generating tickets / CSOs depending on context.
+critical = outage-level or security impact
+error = failures that block expected behavior
+warning = misconfigurations or recoverable issues
+info = general operational details (default when omitted)
+debug = verbose troubleshooting details
 ```
 Work with OPS to generate automatic tickets / CSOs, for example if an error causes the page or block not to render.
 
-Example Logging:
+Example logging (include a block/module tag for source clarity):
 ```js
-window.lana.log('message', 'info, block-name');
+window.lana.log('message', { severity: 'warning', tags: 'block-name' });
 ```
 
 More info: https://wiki.corp.adobe.com/display/WCMSOps/Best+Practices
