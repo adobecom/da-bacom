@@ -454,7 +454,7 @@ function buildHeaderSection(el, container) {
     const iconContent = el.querySelector('div:first-child > div');
     const contentDiv = el.querySelector('div:nth-child(2) > div:first-child');
     const title = contentDiv.querySelector('h1');
-    const titleTwo = contentDiv.querySelector('h2');
+    const eyebrowTitle = contentDiv.querySelector('h2');
     const subtitle = contentDiv?.querySelector('p');
     const cta = contentDiv.querySelector('a');
 
@@ -475,10 +475,12 @@ function buildHeaderSection(el, container) {
     if (title) {
       try {
         const titleEl = createTag('div', { class: 'animated-photo-banner-title' });
-        titleEl.appendChild(title.cloneNode(true));
-        if (titleTwo) {
-          titleEl.appendChild(titleTwo.cloneNode(true));
+
+        if (eyebrowTitle) {
+          titleEl.appendChild(eyebrowTitle.cloneNode(true));
         }
+        titleEl.appendChild(title.cloneNode(true));
+
         textContent.appendChild(titleEl);
       } catch (err) {
         logError('Header title processing', `Failed to process title: ${err}`);
