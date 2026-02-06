@@ -452,10 +452,11 @@ function processImageSections(el, imagesContainer) {
 function buildHeaderSection(el, container) {
   try {
     const iconContent = el.querySelector('div:first-child > div');
-    const contentDiv = el.querySelector('div:nth-child(2) > div:first-child');
+    const contentDiv = el.querySelector('div:nth-child(2)');
     const title = contentDiv.querySelector('h1');
     const eyebrowTitle = contentDiv.querySelector('h2');
-    const subtitle = contentDiv?.querySelector('p');
+    const contentContainer = title.closest('div');
+    const subtitle = contentContainer?.querySelector('p');
     const cta = contentDiv.querySelector('a');
 
     const headerSection = createTag('div', { class: 'animated-photo-banner-header' });
