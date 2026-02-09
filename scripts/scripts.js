@@ -282,7 +282,12 @@ async function loadPage() {
   if (eventMD && eventUtils?.setEventConfig) eventUtils.setEventConfig({ cmsType: 'DA' }, CONFIG);
   if (eventMD && eventUtils?.decorateEvent) eventUtils.decorateEvent(document);
 
-  loadLana({ clientId: 'bacom', tags: 'info', endpoint: 'https://business.adobe.com/lana/ll', endpointStage: 'https://business.stage.adobe.com/lana/ll' });
+  loadLana({
+    clientId: 'bacom',
+    tags: 'bacom',
+    endpoint: 'https://business.adobe.com/lana/ll',
+    endpointStage: 'https://business.stage.adobe.com/lana/ll',
+  });
   transformExlLinks(getLocale(CONFIG.locales));
 
   await loadArea();
@@ -300,7 +305,12 @@ async function loadPage() {
   }
   const observer = new PerformanceObserver((list) => {
     list.getEntries().forEach((entry) => {
-      if (entry.responseStatus === 404) window.lana?.log(`The resource ${entry.name} returned a 404 status.`, { tags: 'resource-404' });
+      if (entry.responseStatus === 404) {
+        window.lana?.log(
+          `The resource ${entry.name} returned a 404 status.`,
+          { severity: 'warning', tags: 'resource-404' },
+        );
+      }
     });
   });
   observer.observe({ type: 'resource', buffered: true });
@@ -314,4 +324,6 @@ loadPage();
   import('https://da.live/scripts/dapreview.js').then(({ default: daPreview }) => daPreview(loadPage));
 }());
 
-if (eventsError) window.lana?.log([eventsError[0], eventsError[1]]);
+if (eventsError) {
+  window.lana?.log([eventsError[0], eventsError[1]], { severity: 'error', tags: 'events' });
+}
