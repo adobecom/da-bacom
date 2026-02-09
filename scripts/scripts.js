@@ -187,7 +187,7 @@ export const getLCPImages = (doc) => {
 
 export function setLibs(location) {
   const { hostname, search } = location;
-  if (!['.aem.', '.hlx.', '.stage.', 'local'].some((i) => hostname.includes(i))) return '/libs';
+  if (!['.aem.', '.hlx.', '.stage.', 'local', '.da.'].some((i) => hostname.includes(i))) return '/libs';
   const branch = new URLSearchParams(search).get('milolibs') || 'main';
   if (branch === 'local') return 'http://localhost:6456/libs';
   if (branch === 'main' && hostname.includes('.stage.')) return '/libs';
