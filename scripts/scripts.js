@@ -28,7 +28,7 @@ const CONFIG = {
     ae_ar: { ietf: 'ar', tk: 'qxw8hzm.css', dir: 'rtl' },
     ae_en: { ietf: 'en', tk: 'hah7vzn.css', base: '' },
     africa: { ietf: 'en', tk: 'hah7vzn.css', base: '' },
-    ar: { ietf: 'es-AR', tk: 'hah7vzn.css', exl: 'es', base: 'es' },
+    ar: { ietf: 'es-AR', tk: 'hah7vzn.css', exl: 'es' },
     at: { ietf: 'de-AT', tk: 'hah7vzn.css', exl: 'de', base: 'de' },
     au: { ietf: 'en-AU', tk: 'hah7vzn.css' },
     be_en: { ietf: 'en-BE', tk: 'hah7vzn.css', base: '' },
@@ -41,9 +41,9 @@ const CONFIG = {
     ch_de: { ietf: 'de-CH', tk: 'hah7vzn.css', exl: 'de', base: 'de' },
     ch_fr: { ietf: 'fr-CH', tk: 'hah7vzn.css', exl: 'fr', base: 'fr' },
     ch_it: { ietf: 'it-CH', tk: 'hah7vzn.css', exl: 'it', base: 'it' },
-    cl: { ietf: 'es-CL', tk: 'hah7vzn.css', exl: 'es', base: 'es' },
+    cl: { ietf: 'es-CL', tk: 'hah7vzn.css', exl: 'es' },
     cn: { ietf: 'zh-CN', tk: 'qxw8hzm', exl: 'zh-hans', base: '' },
-    co: { ietf: 'es-CO', tk: 'hah7vzn.css', exl: 'es', base: 'es' },
+    co: { ietf: 'es-CO', tk: 'hah7vzn.css', exl: 'es' },
     cr: { ietf: 'es-419', tk: 'hah7vzn.css' },
     cy_en: { ietf: 'en-CY', tk: 'hah7vzn.css' },
     cz: { ietf: 'cs-CZ', tk: 'qxw8hzm.css', base: '' },
@@ -85,14 +85,14 @@ const CONFIG = {
     mena_ar: { ietf: 'ar', tk: 'qxw8hzm.css', dir: 'rtl' },
     mena_en: { ietf: 'en', tk: 'hah7vzn.css', base: '' },
     mt: { ietf: 'en-MT', tk: 'hah7vzn.css' },
-    mx: { ietf: 'es-MX', tk: 'hah7vzn.css', exl: 'es', base: 'es' },
+    mx: { ietf: 'es-MX', tk: 'hah7vzn.css', exl: 'es' },
     my_en: { ietf: 'en-GB', tk: 'hah7vzn.css', base: '' },
     my_ms: { ietf: 'ms', tk: 'qxw8hzm.css' },
     ng: { ietf: 'en-GB', tk: 'hah7vzn.css' },
     nl: { ietf: 'nl-NL', tk: 'qxw8hzm.css', exl: 'nl', base: '' },
     no: { ietf: 'no-NO', tk: 'qxw8hzm.css', base: '' },
     nz: { ietf: 'en-GB', tk: 'hah7vzn.css', base: '' },
-    pe: { ietf: 'es-PE', tk: 'hah7vzn.css', exl: 'es', base: 'es' },
+    pe: { ietf: 'es-PE', tk: 'hah7vzn.css', exl: 'es' },
     ph_en: { ietf: 'en', tk: 'hah7vzn.css', base: '' },
     ph_fil: { ietf: 'fil-PH', tk: 'qxw8hzm.css' },
     pl: { ietf: 'pl-PL', tk: 'qxw8hzm.css', base: '' },
@@ -127,7 +127,6 @@ const CONFIG = {
   ],
   htmlExclude: [
     /business\.adobe\.com\/(\w\w(_\w\w)?\/)?blog(\/.*)?/,
-    /(\w\w(_\w\w)?\/)?blog(\/.*)?/,
   ],
   useDotHtml: true,
   dynamicNavKey: 'bacom',
@@ -147,7 +146,7 @@ const CONFIG = {
   uniqueSiteId: 'da-bacom',
   mepLingoCountryToRegion: {
     africa: ['ke', 'mu', 'ng', 'za'],
-    la: ['bo', 'cr', 'do', 'ec', 'gt', 'pa', 'pr', 'py', 'sv', 'uy', 've'],
+    la: ['bo', 'cr', 'do', 'ec', 'gt', 'pa', 'pr', 'py', 'sv', 'uy', 've', 'ar', 'co', 'cl', 'mx', 'pe'],
     mena_en: ['bh', 'dz', 'iq', 'ir', 'jo', 'lb', 'ly', 'om', 'ps', 'sy', 'tn', 'ye'],
   },
   lingoProjectSuccessLogging: 'on',
@@ -187,7 +186,7 @@ export const getLCPImages = (doc) => {
 
 export function setLibs(location) {
   const { hostname, search } = location;
-  if (!['.aem.', '.hlx.', '.stage.', 'local'].some((i) => hostname.includes(i))) return '/libs';
+  if (!['.aem.', '.hlx.', '.stage.', 'local', '.da.'].some((i) => hostname.includes(i))) return '/libs';
   const branch = new URLSearchParams(search).get('milolibs') || 'main';
   if (branch === 'local') return 'http://localhost:6456/libs';
   if (branch === 'main' && hostname.includes('.stage.')) return '/libs';
@@ -283,7 +282,12 @@ async function loadPage() {
   if (eventMD && eventUtils?.setEventConfig) eventUtils.setEventConfig({ cmsType: 'DA' }, CONFIG);
   if (eventMD && eventUtils?.decorateEvent) eventUtils.decorateEvent(document);
 
-  loadLana({ clientId: 'bacom', tags: 'info', endpoint: 'https://business.adobe.com/lana/ll', endpointStage: 'https://business.stage.adobe.com/lana/ll' });
+  loadLana({
+    clientId: 'bacom',
+    tags: 'bacom',
+    endpoint: 'https://business.adobe.com/lana/ll',
+    endpointStage: 'https://business.stage.adobe.com/lana/ll',
+  });
   transformExlLinks(getLocale(CONFIG.locales));
 
   await loadArea();
@@ -301,7 +305,12 @@ async function loadPage() {
   }
   const observer = new PerformanceObserver((list) => {
     list.getEntries().forEach((entry) => {
-      if (entry.responseStatus === 404) window.lana?.log(`The resource ${entry.name} returned a 404 status.`, { tags: 'resource-404' });
+      if (entry.responseStatus === 404) {
+        window.lana?.log(
+          `The resource ${entry.name} returned a 404 status.`,
+          { severity: 'warning', tags: 'resource-404' },
+        );
+      }
     });
   });
   observer.observe({ type: 'resource', buffered: true });
@@ -315,4 +324,6 @@ loadPage();
   import('https://da.live/scripts/dapreview.js').then(({ default: daPreview }) => daPreview(loadPage));
 }());
 
-if (eventsError) window.lana?.log([eventsError[0], eventsError[1]]);
+if (eventsError) {
+  window.lana?.log([eventsError[0], eventsError[1]], { severity: 'error', tags: 'events' });
+}
