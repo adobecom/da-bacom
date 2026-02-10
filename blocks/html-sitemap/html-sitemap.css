@@ -29,6 +29,11 @@
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
+/* Prevent grid items from overflowing into adjacent columns */
+.html-sitemap-section {
+  min-width: 0;
+}
+
 .html-sitemap-section-title {
   margin: 0 0 var(--spacing-xs);
   font-size: var(--type-heading-xxs-size);
@@ -40,10 +45,14 @@
   padding-left: var(--spacing-m);
   display: grid;
   gap: var(--spacing-xxs);
+  min-width: 0;
+  overflow-wrap: break-word;
 }
 
 .html-sitemap-links a {
   color: inherit;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .html-sitemap-links a:hover,
