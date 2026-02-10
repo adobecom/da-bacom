@@ -1,0 +1,66 @@
+.html-sitemap {
+  padding: var(--spacing-l) var(--spacing-s);
+}
+
+.html-sitemap-wrapper {
+  max-width: var(--grid-container-width);
+  margin: 0 auto;
+  display: grid;
+  gap: var(--spacing-l);
+}
+
+.html-sitemap-group {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: var(--spacing-m);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 4%);
+}
+
+.html-sitemap-group-title {
+  margin: 0 0 var(--spacing-s);
+  font-size: var(--type-heading-xs-size);
+  line-height: var(--type-heading-xs-lh);
+}
+
+.html-sitemap-section-list {
+  display: grid;
+  gap: var(--spacing-m);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.html-sitemap-section-title {
+  margin: 0 0 var(--spacing-xs);
+  font-size: var(--type-heading-xxs-size);
+  line-height: var(--type-heading-xxs-lh);
+}
+
+.html-sitemap-links {
+  margin: 0;
+  padding-left: var(--spacing-m);
+  display: grid;
+  gap: var(--spacing-xxs);
+}
+
+.html-sitemap-links a {
+  color: inherit;
+}
+
+.html-sitemap-links a:hover,
+.html-sitemap-links a:focus {
+  color: #0265dc;
+}
+
+.html-sitemap-placeholder {
+  padding: var(--spacing-m);
+  border: 1px dashed #d0d0d0;
+  border-radius: 6px;
+  background: #fafafa;
+  color: #666;
+}
+
+@media (min-width: 900px) {
+  .html-sitemap {
+    padding: var(--spacing-xl) var(--spacing-m);
+  }
+}
