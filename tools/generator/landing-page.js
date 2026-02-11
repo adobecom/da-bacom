@@ -595,8 +595,13 @@ class LandingPageForm extends LitElement {
 
   async previewAsset(assetUrl) {
     if (!assetUrl) return false;
-    let path = assetUrl.startsWith('http') ? new URL(assetUrl).pathname : assetUrl;
-    path = !path.startsWith('/') ? `/${path}` : path;
+    let path;
+    try {
+      path = assetUrl.startsWith('http') ? new URL(assetUrl).pathname : assetUrl;
+    } catch {
+      return false;
+    }
+    path = path.startsWith('/') ? path : `/${path}`;
     const previewApi = `${ADMIN_URL}/preview/adobecom/da-bacom/main${path}`;
     const resp = await fetch(previewApi, { method: 'POST' });
     if (!resp.ok) return false;
