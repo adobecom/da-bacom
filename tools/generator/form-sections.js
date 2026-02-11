@@ -41,10 +41,20 @@ export function renderContentType(form, handleInput, regionOptions, { isLocked =
 
   const pathPrefix = getPathPrefix();
   const pathReady = form.contentType && form.gated && form.region;
+  const templateName = form.templatePath?.split('/').pop() || '';
+  const templateLink = `https://main--da-bacom--adobecom.aem.live/docs/library/templates/${templateName}`;
 
   return html`
     <div class="form-row core-options ${isLocked ? 'locked' : ''}">
-      <h2>Core Options</h2>
+      <div class="core-options-header">
+        <h2>Core Options</h2>
+        ${form.templatePath ? html`
+          <span class="template-preview">
+            Template:
+            <a href="${templateLink}" target="_blank" rel="noopener noreferrer">${templateName}</a>
+          </span>
+        ` : nothing}
+      </div>
       <sl-select
         .value=${form.contentType}
         name="contentType"
@@ -83,14 +93,6 @@ export function renderContentType(form, handleInput, regionOptions, { isLocked =
         @validate-request=${onValidateRequest}
         @status-change=${onStatusChange}
       ></path-input>
-      ${form.templatePath ? html`
-        <label class="template-preview-label">
-          Template:
-          <a href="https://main--da-bacom--adobecom.aem.live${form.templatePath}" target="_blank" rel="noopener noreferrer">
-            ${form.templatePath}
-          </a>
-        </label>
-      ` : nothing}
     </div>
   `;
 }
