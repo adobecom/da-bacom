@@ -1,0 +1,449 @@
+<!-- npm run test:file "test/tools/generator/multi-select.test.html" -->
+<html>
+
+<head>
+  <script type="importmap">
+      {
+        "imports": {
+          "da-sdk": "./mocks/da-sdk.js",
+          "da-fetch": "./mocks/da-fetch.js",
+          "da-lit": "https://da.live/deps/lit/dist/index.js",
+          "constants": "https://da.live/nx/public/utils/constants.js",
+          "styles": "https://da.live/nx/utils/styles.js",
+          "components": "https://da.live/nx/public/sl/components.js"
+        }
+      }
+    </script>
+</head>
+
+<body>
+  <script type="module">
+    import { runTests } from '@web/test-runner-mocha';
+    import { expect } from '@esm-bundle/chai';
+    import sinon from 'sinon';
+    import '../../../tools/generator/multi-select/multi-select.js';
+
+    const mockOptions = [
+      { value: 'opt1', label: 'Option 1' },
+      { value: 'opt2', label: 'Option 2' },
+      { value: 'opt3', label: 'Option 3' },
+    ];
+
+    runTests(() => {
+      describe('MultiSelect Component', () => {
+        let clock;
+
+        const tick = async (milliseconds) => {
+          clock.tick(milliseconds);
+          await clock.nextAsync();
+        };
+
+        beforeEach(async () => {
+          clock = sinon.useFakeTimers();
+          document.body.innerHTML = '<multi-select name="test"></multi-select>';
+          await customElements.whenDefined('multi-select');
+          await tick(100);
+        });
+
+        afterEach(() => {
+          clock.restore();
+          document.body.innerHTML = '';
+        });
+
+        describe('Rendering', () => {
+          it('renders with default properties', async () => {
+            const element = document.querySelector('multi-select');
+            await element.updateComplete;
+
+            expect(element).to.exist;
+            expect(element.name).to.equal('test');
+            expect(element.value).to.deep.equal([]);
+            expect(element.options).to.deep.equal([]);
+          });
+
+          it('renders label when provided', async () => {
+            const element = document.querySelector('multi-select');
+            element.label = 'Test Label';
+            await element.updateComplete;
+
+            const label = element.shadowRoot.querySelector('label');
+            expect(label).to.exist;
+            expect(label.textContent).to.equal('Test Label');
+          });
+
+          it('renders placeholder when no values selected', async () => {
+            const element = document.querySelector('multi-select');
+            element.options = mockOptions;
+            await element.updateComplete;
+
+            const placeholder = element.shadowRoot.querySelector('.placeholder');
+            expect(placeholder).to.exist;
+            expect(placeholder.textContent).to.equal('--Select--');
+          });
+
+          it('renders selected tags when values are selected', async () => {
+            const element = document.querySelector('multi-select');
+            element.options = mockOptions;
+            element.value = ['opt1', 'opt2'];
+            await element.updateComplete;
+
+            const tags = element.shadowRoot.querySelectorAll('.selected-tag');
+            expect(tags.length).to.equal(2);
+            expect(tags[0].textContent).to.include('Option 1');
+            expect(tags[1].textContent).to.include('Option 2');
+          });
+
+          it('renders all options in dropdown menu', async () => {
+            const element = document.querySelector('multi-select');
+            element.options = mockOptions;
+            await element.updateComplete;
+
+            const options = element.shadowRoot.querySelectorAll('.dropdown-option');
+            expect(options.length).to.equal(3);
+          });
+
+          it('renders "No options available" when options array is empty', async () => {
+            const element = document.querySelector('multi-select');
+            element.options = [];
+            await element.updateComplete;
+
+            const noOptions = element.shadowRoot.querySelector('.no-options');
+            expect(noOptions).to.exist;
+            expect(noOptions.textContent).to.equal('No options available');
+          });
+        });
+
+        describe('Dropdown Functionality', () => {
+          it('starts with dropdown closed', async () => {
+            const element = document.querySelector('multi-select');
+            element.options = mockOptions;
+            await element.updateComplete;
+
+            expect(element.isOpen).to.be.false;
+            const menu = element.shadowRoot.querySelector('.dropdown-menu');
+            expect(menu.classList.contains('hidden')).to.be.true;
+          });
+
+          it('opens dropdown when clicked', async () => {
+            const element = document.querySelector('multi-select');
+            element.options = mockOptions;
+            await element.updateComplete;
+
+            const selectedItems = element.shadowRoot.querySelector('.selected-items');
+            selectedItems.click();
+            await element.updateComplete;
+
+            expect(element.isOpen).to.be.true;
+            const menu = element.shadowRoot.querySelector('.dropdown-menu');
+            expect(menu.classList.contains('hidden')).to.be.false;
+          });
+
+          it('toggles dropdown on multiple clicks', async () => {
+            const element = document.querySelector('multi-select');
+            element.options = mockOptions;
+            await element.updateComplete;
+
+            const selectedItems = element.shadowRoot.querySelector('.selected-items');
+
+            selectedItems.click();
+            await element.updateComplete;
+            expect(element.isOpen).to.be.true;
+
+            selectedItems.click();
+            await element.updateComplete;
+            expect(element.isOpen).to.be.false;
+          });
+
+          it('closes dropdown when clicking outside', async () => {
+            const element = document.querySelector('multi-select');
+            element.options = mockOptions;
+            await element.updateComplete;
+
+            const selectedItems = element.shadowRoot.querySelector('.selected-items');
+
+            selectedItems.click();
+            await element.updateComplete;
+            expect(element.isOpen).to.be.true;
+
+            document.body.click();
+            await element.updateComplete;
+            expect(element.isOpen).to.be.false;
+          });
+        });
+
+        describe('Selection Functionality', () => {
+          it('selects an option when clicked', async () => {
+            const element = document.querySelector('multi-select');
+            element.options = mockOptions;
+            await element.updateComplete;
+
+            const selectedItems = element.shadowRoot.querySelector('.selected-items');
+            selectedItems.click();
+            await element.updateComplete;
+
+            const option = element.shadowRoot.querySelector('.dropdown-option');
+            let changeEvent = null;
+            element.addEventListener('change', (e) => { changeEvent = e; });
+
+            option.click();
+            await element.updateComplete;
+
+            expect(element.value).to.deep.equal(['opt1']);
+            expect(changeEvent).to.exist;
+            expect(changeEvent.detail.value).to.deep.equal(['opt1']);
+          });
+
+          it('selects multiple options', async () => {
+            const element = document.querySelector('multi-select');
+            element.options = mockOptions;
+            await element.updateComplete;
+
+            const selectedItems = element.shadowRoot.querySelector('.selected-items');
+            selectedItems.click();
+            await element.updateComplete;
+
+            const options = element.shadowRoot.querySelectorAll('.dropdown-option');
+            options[0].click();
+            await element.updateComplete;
+            options[1].click();
+            await element.updateComplete;
+
+            expect(element.value).to.deep.equal(['opt1', 'opt2']);
+          });
+
+          it('deselects an option when clicked again', async () => {
+            const element = document.querySelector('multi-select');
+            element.options = mockOptions;
+            element.value = ['opt1', 'opt2'];
+            await element.updateComplete;
+
+            const selectedItems = element.shadowRoot.querySelector('.selected-items');
+            selectedItems.click();
+            await element.updateComplete;
+
+            const option = element.shadowRoot.querySelector('.dropdown-option');
+            option.click();
+            await element.updateComplete;
+
+            expect(element.value).to.deep.equal(['opt2']);
+          });
+
+          it('shows checkmark on selected options', async () => {
+            const element = document.querySelector('multi-select');
+            element.options = mockOptions;
+            element.value = ['opt1'];
+            await element.updateComplete;
+
+            const selectedItems = element.shadowRoot.querySelector('.selected-items');
+            selectedItems.click();
+            await element.updateComplete;
+
+            const options = element.shadowRoot.querySelectorAll('.dropdown-option');
+            const checkbox = options[0].querySelector('.checkbox');
+            expect(checkbox.classList.contains('checked')).to.be.true;
+          });
+        });
+
+        describe('Tag Removal', () => {
+          it('renders remove button on selected tags', async () => {
+            const element = document.querySelector('multi-select');
+            element.options = mockOptions;
+            element.value = ['opt1'];
+            await element.updateComplete;
+
+            const tag = element.shadowRoot.querySelector('.selected-tag');
+            const removeButton = tag.querySelector('button');
+            expect(removeButton).to.exist;
+          });
+
+          it('removes tag when remove button is clicked', async () => {
+            const element = document.querySelector('multi-select');
+            element.options = mockOptions;
+            element.value = ['opt1', 'opt2'];
+            await element.updateComplete;
+
+            const tag = element.shadowRoot.querySelector('.selected-tag');
+            const removeButton = tag.querySelector('button');
+
+            removeButton.click();
+            await element.updateComplete;
+
+            expect(element.value).to.deep.equal(['opt2']);
+          });
+
+          it('dispatches change event when tag is removed', async () => {
+            const element = document.querySelector('multi-select');
+            element.options = mockOptions;
+            element.value = ['opt1', 'opt2'];
+            await element.updateComplete;
+
+            let changeEvent = null;
+            element.addEventListener('change', (e) => { changeEvent = e; });
+
+            const tag = element.shadowRoot.querySelector('.selected-tag');
+            const removeButton = tag.querySelector('button');
+            removeButton.click();
+            await element.updateComplete;
+
+            expect(changeEvent).to.exist;
+            expect(changeEvent.detail.value).to.deep.equal(['opt2']);
+          });
+
+          it('does not close dropdown when removing a tag', async () => {
+            const element = document.querySelector('multi-select');
+            element.options = mockOptions;
+            element.value = ['opt1'];
+            await element.updateComplete;
+
+            const selectedItems = element.shadowRoot.querySelector('.selected-items');
+            selectedItems.click();
+            await element.updateComplete;
+            expect(element.isOpen).to.be.true;
+
+            const tag = element.shadowRoot.querySelector('.selected-tag');
+            const removeButton = tag.querySelector('button');
+            removeButton.click();
+            await element.updateComplete;
+
+            expect(element.isOpen).to.be.true;
+          });
+        });
+
+        describe('Form Integration', () => {
+          it('sets form value as JSON string', async () => {
+            const element = document.querySelector('multi-select');
+            element.options = mockOptions;
+            element.value = ['opt1', 'opt2'];
+            await element.updateComplete;
+
+            // eslint-disable-next-line no-underscore-dangle
+            const internals = element._internals;
+            expect(internals).to.exist;
+          });
+
+          it('updates form value when selection changes', async () => {
+            const element = document.querySelector('multi-select');
+            element.options = mockOptions;
+            await element.updateComplete;
+
+            const selectedItems = element.shadowRoot.querySelector('.selected-items');
+            selectedItems.click();
+            await element.updateComplete;
+
+            const option = element.shadowRoot.querySelector('.dropdown-option');
+            option.click();
+            await element.updateComplete;
+
+            expect(element.value).to.deep.equal(['opt1']);
+          });
+        });
+
+        describe('Helper Methods', () => {
+          it('checks if option is selected', async () => {
+            const element = document.querySelector('multi-select');
+            element.options = mockOptions;
+            element.value = ['opt1'];
+            await element.updateComplete;
+
+            expect(element.isSelected('opt1')).to.be.true;
+            expect(element.isSelected('opt2')).to.be.false;
+          });
+
+          it('gets option label by value', async () => {
+            const element = document.querySelector('multi-select');
+            element.options = mockOptions;
+            await element.updateComplete;
+
+            expect(element.getOptionLabel('opt1')).to.equal('Option 1');
+            expect(element.getOptionLabel('opt2')).to.equal('Option 2');
+          });
+
+          it('returns value when option not found', async () => {
+            const element = document.querySelector('multi-select');
+            element.options = mockOptions;
+            await element.updateComplete;
+
+            expect(element.getOptionLabel('unknown')).to.equal('unknown');
+          });
+        });
+
+        describe('Event Handling', () => {
+          it('dispatches change event with correct detail', async () => {
+            const element = document.querySelector('multi-select');
+            element.options = mockOptions;
+            await element.updateComplete;
+
+            let changeEvent = null;
+            element.addEventListener('change', (e) => { changeEvent = e; });
+
+            const selectedItems = element.shadowRoot.querySelector('.selected-items');
+            selectedItems.click();
+            await element.updateComplete;
+
+            const option = element.shadowRoot.querySelector('.dropdown-option');
+            option.click();
+            await element.updateComplete;
+
+            expect(changeEvent).to.exist;
+            expect(changeEvent.detail).to.exist;
+            expect(changeEvent.detail.name).to.equal('test');
+            expect(changeEvent.detail.value).to.deep.equal(['opt1']);
+          });
+
+          it('bubbles change events', async () => {
+            const element = document.querySelector('multi-select');
+            element.options = mockOptions;
+            await element.updateComplete;
+
+            let bubbled = false;
+            document.body.addEventListener('change', () => { bubbled = true; });
+
+            const selectedItems = element.shadowRoot.querySelector('.selected-items');
+            selectedItems.click();
+            await element.updateComplete;
+
+            const option = element.shadowRoot.querySelector('.dropdown-option');
+            option.click();
+            await element.updateComplete;
+
+            expect(bubbled).to.be.true;
+          });
+        });
+
+        describe('Reactive Updates', () => {
+          it('updates when value property changes', async () => {
+            const element = document.querySelector('multi-select');
+            element.options = mockOptions;
+            element.value = ['opt1'];
+            await element.updateComplete;
+
+            element.value = ['opt2', 'opt3'];
+            await element.updateComplete;
+
+            const tags = element.shadowRoot.querySelectorAll('.selected-tag');
+            expect(tags.length).to.equal(2);
+          });
+
+          it('updates when options property changes', async () => {
+            const element = document.querySelector('multi-select');
+            element.options = mockOptions;
+            await element.updateComplete;
+
+            const newOptions = [
+              { value: 'new1', label: 'New 1' },
+              { value: 'new2', label: 'New 2' },
+            ];
+            element.options = newOptions;
+            await element.updateComplete;
+
+            const options = element.shadowRoot.querySelectorAll('.dropdown-option');
+            expect(options.length).to.equal(2);
+          });
+        });
+      });
+    });
+  </script>
+</body>
+
+</html>
+

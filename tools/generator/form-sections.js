@@ -2,6 +2,9 @@
 /* eslint-disable import/no-unresolved */
 import { html, nothing } from 'da-lit';
 import './image-dropzone/image-dropzone.js';
+import './multi-select/multi-select.js';
+import './text-editor/text-editor.js';
+import './path-input/path-input.js';
 
 function optionsSelect(form, handleInput, optionName, optionLabel, options, hasError = () => '') {
   if (!options || options.length <= 1) {
@@ -28,7 +31,17 @@ function optionsSelect(form, handleInput, optionName, optionLabel, options, hasE
   </sl-select>`;
 }
 
-export function renderContentType(form, handleInput, regionOptions, isLocked = false, hasError = () => '') {
+export function renderContentType(form, handleInput, regionOptions, { isLocked = false, hasError = () => '', onValidateRequest, onStatusChange } = {}) {
+  const getPathPrefix = () => {
+    if (!form.region || !form.contentType) return '';
+    const region = form.region.replace(/\/$/, '');
+    const contentType = form.contentType.toLowerCase().replace('/', '-');
+    return `${region}/resources/${contentType}/`;
+  };
+
+  const pathPrefix = getPathPrefix();
+  const pathReady = form.contentType && form.gated && form.region;
+
   return html`
     <div class="form-row core-options ${isLocked ? 'locked' : ''}">
       <h2>Core Options</h2>
@@ -57,13 +70,33 @@ export function renderContentType(form, handleInput, regionOptions, isLocked = f
       </sl-select>
       ${optionsSelect(form, handleInput, 'region', 'Region*', regionOptions, hasError)}
       <sl-input type="text" name="marqueeHeadline" .value=${form.marqueeHeadline} placeholder="Marquee Headline*" label="Marquee Headline*" error=${hasError('marqueeHeadline')} @input=${handleInput}></sl-input>
-      <sl-input type="text" name="url" .value=${form.url} placeholder="/resources/..." label="URL*" error=${hasError('url')} @input=${handleInput}></sl-input>
+      <path-input
+        name="pageName"
+        .value=${form.pageName || ''}
+        .prefix=${pathReady ? pathPrefix : 'Select Content Type, Gated/Ungated, and Region to continue'}
+        .suggestion=${pathReady ? form.marqueeHeadline : ''}
+        status=${form.pathStatus || 'empty'}
+        ?disabled=${!pathReady}
+        error=${hasError('pageName')}
+        label="Page Name*"
+        @input=${handleInput}
+        @validate-request=${onValidateRequest}
+        @status-change=${onStatusChange}
+      ></path-input>
+      ${form.templatePath ? html`
+        <label class="template-preview-label">
+          Template:
+          <a href="https://main--da-bacom--adobecom.aem.live${form.templatePath}" target="_blank" rel="noopener noreferrer">
+            ${form.templatePath}
+          </a>
+        </label>
+      ` : nothing}
     </div>
   `;
 }
 
 export function renderForm(form, handleInput, { marketoPOIOptions, hasError = () => '' }) {
-  // TODO: Identify additional form options, e.g. Title and Description
+  // https://wiki.corp.adobe.com/display/adobedotcom/BACOM+Marketo+Forms+Hub
   return html`
     <div class="form-row">
     ${form.gated === 'Gated' ? html`
@@ -76,7 +109,6 @@ export function renderForm(form, handleInput, { marketoPOIOptions, hasError = ()
         error=${hasError('formTemplate')}
         @change=${handleInput}>
           <option value="" ?selected=${form.formTemplate === ''}>--Select--</option>
-          <option value="Long" ?selected=${form.formTemplate === 'Long'}>Long</option>
           <option value="Medium" ?selected=${form.formTemplate === 'Medium'}>Medium</option>
           <option value="Short" ?selected=${form.formTemplate === 'Short'}>Short</option>
       </sl-select>
@@ -119,8 +151,14 @@ export function renderBody(form, handleInput, handleImageChange, hasError = () =
   return html`
     <div class="form-row">
       <h2>Body</h2>
-      <sl-input type="text" name="bodyDescription" .value=${form.bodyDescription} placeholder="Body Description*" label="Body Description*" error=${hasError('bodyDescription')} @input=${handleInput}></sl-input>
-        <div class="image-dropzone-container">
+      <text-editor 
+        name="bodyDescription" 
+        .value=${form.bodyDescription} 
+        label="Body Description*" 
+        error=${hasError('bodyDescription')}
+        @input=${handleInput}>
+      </text-editor>
+      <div class="image-dropzone-container">
         <label>Body Image</label>
         <div class="dropzone-wrapper">
           <image-dropzone name="bodyImage" .file=${form.bodyImage} @image-change=${handleImageChange}>
@@ -148,12 +186,12 @@ export function renderCard(form, handleInput, handleImageChange, hasError = () =
   `;
 }
 
-export function renderCaas(form, handleInput, { contentTypeOptions, primaryProductOptions, hasError = () => '' }) {
+export function renderCaas(form, handleInput, { primaryProductOptions, industryOptions }) {
   return html`
     <div class="form-row">
       <h2>CaaS Content</h2>
-      ${optionsSelect(form, handleInput, 'contentTypeCaas', 'Content Type*', contentTypeOptions, hasError)}
-      ${optionsSelect(form, handleInput, 'primaryProduct', 'Primary Product', primaryProductOptions)}
+      <multi-select name="primaryProducts" label="Product(s)" .value=${form.primaryProducts || []} .options=${primaryProductOptions || []} @change=${handleInput}></multi-select>
+      ${optionsSelect(form, handleInput, 'caasIndustry', 'Industry', industryOptions || [])}
     </div>
   `;
 }
@@ -178,13 +216,37 @@ export function renderExperienceFragment(form, handleInput, { fragmentOptions },
   `;
 }
 
-export function renderAssetDelivery(form, handleInput, hasError = () => '') {
+export function renderAssetDelivery(form, handleInput, handlePdfChange, hasError = () => '') {
+  const pdfError = hasError('pdfAsset');
   return html`
     <div class="form-row">
       <h2>Asset Delivery</h2>
       ${(form.contentType || '').toLowerCase().includes('video') ? html`
         <sl-input type="text" name="videoAsset" .value=${form.videoAsset} placeholder="https://video.tv.adobe.com/v/..." label="Video Asset*" error=${hasError('videoAsset')} @input=${handleInput}></sl-input>`
-    : html`<sl-input type="file" name="pdfAsset" label="Upload PDF Asset*" error=${hasError('pdfAsset')} @input=${handleInput}></sl-input>`}
+    : html`
+        <div class="pdf-upload-container">
+          <label class="pdf-label ${pdfError ? 'error' : ''}">
+            Upload PDF Asset*
+          </label>
+          ${form.pdfAsset?.name ? html`
+            <p class="file-info">
+              <span>${form.pdfAsset.name}</span>
+              <span>
+                <a href="${form.pdfAsset.url}" target="_blank" rel="noopener noreferrer">View</a>
+                <a href="#" @click=${handlePdfChange}>Clear</a>
+              </span>
+            </p>
+          ` : html`
+            <input 
+              type="file" 
+              name="pdfAsset" 
+              class="pdf-file-input"
+              accept=".pdf,application/pdf"
+              @change=${handlePdfChange}>
+              ${pdfError ? html`<div class="error-message">${pdfError}</div>` : nothing}
+            `}
+        </div>
+      `}
     </div>
   `;
 }
