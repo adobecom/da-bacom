@@ -10,23 +10,27 @@
     return branch.includes('--') ? `https://${branch}.aem.live/libs` : `https://${branch}--milo--adobecom.aem.live/libs`;
   })();
 
-  const miloStyles = document.createElement('link');
-  const miloUtils = document.createElement('link');
-  const miloDecorate = document.createElement('link');
+  const ssrFlag = document.getElementById('page-load-ok-milo')
 
-  miloStyles.setAttribute('as', 'style');
-  miloStyles.setAttribute('href', `${libs}/styles/styles.css`);
+  if (!ssrFlag) {
+    const miloStyles = document.createElement('link');
+    const miloUtils = document.createElement('link');
+    const miloDecorate = document.createElement('link');
 
-  [miloUtils, miloDecorate].forEach((tag) => {
-    tag.setAttribute('crossorigin', 'true');
-    tag.setAttribute('as', 'script');
-  })
+    miloStyles.setAttribute('as', 'style');
+    miloStyles.setAttribute('href', `${libs}/styles/styles.css`);
 
-  miloUtils.setAttribute('href', `${libs}/utils/utils.js`);
-  miloDecorate.setAttribute('href', `${libs}/utils/decorate.js`);
+    [miloUtils, miloDecorate].forEach((tag) => {
+      tag.setAttribute('crossorigin', 'true');
+      tag.setAttribute('as', 'script');
+    })
 
-  [miloStyles, miloUtils, miloDecorate].forEach((tag) => tag.setAttribute('rel', 'preload'));
-  document.head.append(miloStyles, miloUtils, miloDecorate);
+    miloUtils.setAttribute('href', `${libs}/utils/utils.js`);
+    miloDecorate.setAttribute('href', `${libs}/utils/decorate.js`);
+
+    [miloStyles, miloUtils, miloDecorate].forEach((tag) => tag.setAttribute('rel', 'preload'));
+    document.head.append(miloStyles, miloUtils, miloDecorate); 
+  }
 
   function buildLink(language, url) {
     const link = document.createElement('link');
@@ -110,7 +114,7 @@
     }
   }
   
-  if (isAllowedAgent) {
+  if (isAllowedAgent && !ssrFlag) {
     fetchAndParseSitemap();
   }
 
