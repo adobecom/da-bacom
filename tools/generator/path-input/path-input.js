@@ -12,6 +12,19 @@ const icons = await getSvg({
   ],
 });
 const DEBOUNCE_DELAY = 800;
+const TOOLTIP_ERROR_DURATION = 4000;
+const TOOLTIP_INFO_DURATION = 2000;
+const STATUS = {
+  EMPTY: 'empty',
+  CHECKING: 'checking',
+  AVAILABLE: 'available',
+  CONFLICT: 'conflict',
+};
+const MESSAGES = {
+  CHECKING: 'Checking if this path is available.',
+  AVAILABLE: 'This path is available.',
+  CONFLICT: 'This path is already in use. Please choose a different name.',
+};
 
 class PathInput extends LitElement {
   static formAssociated = true;
@@ -27,18 +40,22 @@ class PathInput extends LitElement {
     error: { type: String },
     label: { type: String },
     disabled: { type: Boolean },
+    _tooltipVisible: { type: Boolean, state: true },
   };
 
   constructor() {
     super();
     this._internals = this.attachInternals();
     this._debounceTimer = null;
+    this._tooltipTimer = null;
+    this._tooltipVisible = false;
     this._previousPrefix = '';
+    this._loadValidated = false;
     this.name = '';
     this.value = '';
     this.prefix = '';
     this.suggestion = '';
-    this.status = 'empty';
+    this.status = STATUS.EMPTY;
     this.error = '';
     this.label = 'Page Path';
     this.disabled = false;
@@ -49,13 +66,25 @@ class PathInput extends LitElement {
     this.shadowRoot.append(...icons.map((icon) => icon.cloneNode(true)));
     this._internals.setFormValue(this.value || '');
     this._previousPrefix = this.prefix;
+    this._boundHandleApplySuggestion = this._handleApplySuggestionEvent.bind(this);
+    document.addEventListener('path-input-apply-suggestion', this._boundHandleApplySuggestion);
   }
 
   disconnectedCallback() {
-    super.disconnectedCallback();
+    document.removeEventListener('path-input-apply-suggestion', this._boundHandleApplySuggestion);
     if (this._debounceTimer) {
       clearTimeout(this._debounceTimer);
     }
+    if (this._tooltipTimer) {
+      clearTimeout(this._tooltipTimer);
+    }
+    super.disconnectedCallback();
+  }
+
+  _handleApplySuggestionEvent(e) {
+    const targetName = e.detail?.name;
+    if (targetName !== undefined && targetName !== this.name) return;
+    this.useSuggested();
   }
 
   updated(changedProperties) {
@@ -63,11 +92,45 @@ class PathInput extends LitElement {
       this._internals.setFormValue(this.value || '');
     }
 
-    if (changedProperties.has('prefix') && this._previousPrefix !== this.prefix) {
-      if (this.value && this.status !== 'empty') {
-        this.dispatchStatusChange('stale');
+    if (this._savedSelection) {
+      const input = this.shadowRoot?.querySelector('.path-input');
+      if (input && document.activeElement === input) {
+        const { start, end } = this._savedSelection;
+        const len = (this.value || '').length;
+        input.setSelectionRange(Math.min(start, len), Math.min(end, len));
+      }
+      this._savedSelection = null;
+    }
+
+    const hasRealPrefix = this.prefix?.includes('/');
+    const prefixChanged = changedProperties.has('prefix') && this._previousPrefix !== this.prefix;
+
+    if (prefixChanged) {
+      if (hasRealPrefix && this.value && this.status !== STATUS.EMPTY) {
+        this.dispatchStatusChange(STATUS.CHECKING);
+        this.dispatchValidateRequest(this.value, false);
       }
       this._previousPrefix = this.prefix;
+    }
+
+    if (
+      !prefixChanged
+      && this.value
+      && hasRealPrefix
+      && (this.status === STATUS.AVAILABLE || this.status === STATUS.CONFLICT)
+      && !this._loadValidated
+    ) {
+      this._loadValidated = true;
+      this.dispatchStatusChange(STATUS.CHECKING);
+      this.dispatchValidateRequest(this.value, false);
+    }
+
+    if (changedProperties.has('status') && this.status !== STATUS.EMPTY) {
+      if (this.status === STATUS.CONFLICT) {
+        this.showTooltip(TOOLTIP_ERROR_DURATION);
+      } else {
+        this.showTooltip(TOOLTIP_INFO_DURATION);
+      }
     }
   }
 
@@ -75,12 +138,24 @@ class PathInput extends LitElement {
     return this._internals.form;
   }
 
+  showTooltip(duration = TOOLTIP_ERROR_DURATION) {
+    if (this._tooltipTimer) {
+      clearTimeout(this._tooltipTimer);
+      this._tooltipTimer = null;
+    }
+    this._tooltipVisible = true;
+    this._tooltipTimer = setTimeout(() => {
+      this._tooltipVisible = false;
+      this._tooltipTimer = null;
+    }, duration);
+  }
+
   sanitizeInput(input) {
     if (!input) return '';
-    return input.trim()
+    return input
+      .replace(/^[\s-]+/, '')
       .replace(/[^a-z0-9\s-]/gi, '')
-      .replace(/[\s]+/g, '-')
-      .replace(/-+/g, '-')
+      .replace(/[\s-]+/g, '-')
       .toLowerCase();
   }
 
@@ -105,9 +180,33 @@ class PathInput extends LitElement {
     }));
   }
 
+  useSuggested() {
+    if (this.value) return;
+    const sanitized = this.sanitizeInput(this.suggestion ?? '');
+    if (!sanitized) return;
+    this.value = sanitized;
+    this._internals.setFormValue(sanitized);
+    this.dispatchEvent(new CustomEvent('input', {
+      bubbles: true,
+      composed: true,
+      detail: { name: this.name, value: sanitized },
+    }));
+    const hasRealPrefix = this.prefix?.includes('/');
+    if (hasRealPrefix) {
+      this.dispatchStatusChange(STATUS.CHECKING);
+      this.dispatchValidateRequest(sanitized, true);
+    }
+  }
+
   handleInput = (e) => {
-    const sanitized = this.sanitizeInput(e.target.value);
-    e.target.value = sanitized;
+    const input = e.target;
+    const sanitized = this.sanitizeInput(input.value);
+    const len = sanitized.length;
+    this._savedSelection = {
+      start: Math.min(input.selectionStart, len),
+      end: Math.min(input.selectionEnd, len),
+    };
+    input.value = sanitized;
     this.value = sanitized;
 
     this.dispatchEvent(new CustomEvent('input', {
@@ -117,7 +216,9 @@ class PathInput extends LitElement {
     }));
 
     if (!sanitized) {
-      this.dispatchStatusChange('empty');
+      requestAnimationFrame(() => {
+        this.dispatchStatusChange(STATUS.EMPTY);
+      });
       return;
     }
 
@@ -130,73 +231,55 @@ class PathInput extends LitElement {
     }
 
     this._debounceTimer = setTimeout(() => {
-      this.dispatchStatusChange('checking');
+      this.dispatchStatusChange(STATUS.CHECKING);
       this.dispatchValidateRequest(value, false);
     }, DEBOUNCE_DELAY);
   }
 
-  handleButtonClick = (e) => {
+  handleIconClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
-
+    if (this.disabled) return;
     if (this._debounceTimer) {
       clearTimeout(this._debounceTimer);
+      this._debounceTimer = null;
     }
-
-    const isStaleCheck = this.status === 'stale';
-    const sanitizedSuggestion = this.sanitizeInput(this.suggestion ?? '');
-    const valueToValidate = isStaleCheck ? this.value : sanitizedSuggestion;
-
-    if (!isStaleCheck && this.value !== sanitizedSuggestion) {
-      this.value = sanitizedSuggestion;
-
-      this.dispatchEvent(new CustomEvent('input', {
-        bubbles: true,
-        composed: true,
-        detail: { name: this.name, value: sanitizedSuggestion },
-      }));
+    if (!this.value) {
+      this.useSuggested();
+      return;
     }
-
-    this.dispatchStatusChange('checking');
-    this.dispatchValidateRequest(valueToValidate, !isStaleCheck);
+    this.dispatchStatusChange(STATUS.CHECKING);
+    this.dispatchValidateRequest(this.value, false);
   };
 
   renderValidationIcon() {
     const iconMap = {
-      checking: 'progress',
-      available: 'checkmark',
-      conflict: 'warning',
-      stale: 'warning',
+      [STATUS.CHECKING]: 'progress',
+      [STATUS.AVAILABLE]: 'checkmark',
+      [STATUS.CONFLICT]: 'warning',
     };
 
     const iconId = iconMap[this.status];
     if (!iconId) return nothing;
 
+    const tooltipText = MESSAGES[this.status.toUpperCase()];
+
     return html`
-      <svg class="validation-icon ${this.status}">
-        <use href="#${iconId}"/>
-      </svg>
+      <span class="validation-wrapper ${this._tooltipVisible ? 'tooltip-visible' : ''}">
+        <span class="validation-tooltip" role="tooltip">${tooltipText}</span>
+        <button type="button" class="validation-icon-button" aria-label="Check path availability" @click=${this.handleIconClick}>
+          <svg class="validation-icon ${this.status}">
+            <use href="#${iconId}"/>
+          </svg>
+        </button>
+      </span>
     `;
   }
 
-  renderButton() {
-    const sanitizedSuggestion = this.sanitizeInput(this.suggestion ?? '');
-    const shouldShow = sanitizedSuggestion
-      && !this.disabled
-      && (!this.value || ['conflict', 'stale'].includes(this.status));
-
-    if (!shouldShow) return nothing;
-
-    return html`
-      <button
-        type="button"
-        class="path-action-btn"
-        @click=${this.handleButtonClick}
-      >
-        Check
-      </button>
-    `;
-  }
+  focusInput = () => {
+    const input = this.shadowRoot?.querySelector('.path-input');
+    input?.focus();
+  };
 
   render() {
     const hasError = this.error && this.error.length > 0;
@@ -206,7 +289,7 @@ class PathInput extends LitElement {
         <label class="path-label">${this.label}</label>
         <div class="path-input-row">
           <div class="path-input-container ${hasError ? 'error' : ''} ${this.status}">
-            ${this.prefix && !this.disabled ? html`<span class="path-prefix">${this.prefix}</span>` : nothing}
+            ${this.prefix && !this.disabled ? html`<button type="button" class="path-prefix" @click=${this.focusInput}>${this.prefix}</button>` : nothing}
             <input
               type="text"
               class="path-input"
@@ -215,11 +298,12 @@ class PathInput extends LitElement {
               placeholder=${this.disabled ? this.prefix : this.sanitizeInput(this.suggestion ?? '')}
               ?disabled=${this.disabled}
               @input=${this.handleInput}
+              @keydown=${this.handleKeydown}
             />
             ${this.renderValidationIcon()}
           </div>
-          ${this.renderButton()}
         </div>
+        <p class="path-description">Enter only the page name url slug. The path set automatically from your Content Type and Region.</p>
         ${hasError ? html`<div class="error-message">${this.error}</div>` : nothing}
       </div>
     `;
@@ -228,4 +312,5 @@ class PathInput extends LitElement {
 
 if (!customElements.get('path-input')) customElements.define('path-input', PathInput);
 
+export { STATUS };
 export default PathInput;
