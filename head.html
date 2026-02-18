@@ -28,7 +28,7 @@
 
   miloUtils.setAttribute('href', `${libs}/utils/utils.js`);
   miloDecorate.setAttribute('href', `${libs}/utils/decorate.js`);
-  miloIcons.setAttribute('href', `${libs}/icons/icons.js`)
+  miloIcons.setAttribute('href', `${libs}/features/icons/icons.js`)
 
   [miloStyles, miloUtils, miloDecorate, miloIconStyles, miloIcons].forEach((tag) => tag.setAttribute('rel', 'preload'));
   document.head.append(miloStyles, miloUtils, miloDecorate, miloIconStyles, miloIcons);
