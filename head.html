@@ -36,15 +36,14 @@
     return link;
   }
 
-  document.addEventListener('DOMContentLoaded', () => {
-    const playIcon = document.querySelector('main span.icon-play');
-    console.log(playIcon);
-    if (playIcon) {
-      playIcon.classList.remove('icon');
-      playIcon.classList.remove('icon-play');
-      playIcon.classList.add('bacom-play-icon');
-    }
-  });
+  // document.addEventListener('DOMContentLoaded', () => {
+  //   const playIcon = document.querySelector('main span.icon-play');
+  //   if (playIcon) {
+  //     playIcon.classList.remove('icon');
+  //     playIcon.classList.remove('icon-play');
+  //     playIcon.classList.add('bacom-play-icon');
+  //   }
+  // });
 
   const userAgentMeta = document.querySelector('meta[name="hreflinksuseragents"]');
   const allowedAgents = userAgentMeta && userAgentMeta.content.split(',');
