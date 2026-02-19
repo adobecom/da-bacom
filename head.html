@@ -23,7 +23,6 @@
 
   const scriptTags = [miloUtils, miloDecorate, miloIcons].filter(tag => tag != null);
   scriptTags.forEach((tag) => {
-    console.log(tag)
     tag.setAttribute('crossorigin', 'true');
     tag.setAttribute('as', 'script');
   })
@@ -35,6 +34,8 @@
   const allTags = [miloStyles, miloUtils, miloDecorate, miloIconStyles, miloIcons].filter(tag => tag != null);
   allTags.forEach((tag) => tag.setAttribute('rel', 'preload'));
   document.head.append(...allTags);
+
+  console.log('All elements:', { miloStyles, miloUtils, miloDecorate, miloIcons, miloIconStyles });
 
   function buildLink(language, url) {
     const link = document.createElement('link');
