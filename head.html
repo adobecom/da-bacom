@@ -36,6 +36,13 @@
     return link;
   }
 
+  const playIcon = document.querySelector('.icon.icon-play');
+  if (playIcon) {
+    playIcon.classList.remove('icon');
+    playIcon.classList.remove('icon-play');
+    playIcon.classList.add('bacom-play-icon');
+  }
+
   const userAgentMeta = document.querySelector('meta[name="hreflinksuseragents"]');
   const allowedAgents = userAgentMeta && userAgentMeta.content.split(',');
   const userAgentString = window.navigator.userAgent;
