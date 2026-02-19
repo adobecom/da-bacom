@@ -28,12 +28,12 @@
   [miloStyles, miloUtils, miloDecorate].forEach((tag) => tag.setAttribute('rel', 'preload'));
   document.head.append(miloStyles, miloUtils, miloDecorate);
 
-  const playIcon = document.querySelector('.icon.icon-play');
-  if (playIcon) {
-    playIcon.classList.add('bacom-icon-play');
-    playIcon.classList.remove('icon-play');
-    playIcon.classList.add('icon');
-  }
+  // const playIcon = document.querySelector('.icon.icon-play');
+  // if (playIcon) {
+  //   playIcon.classList.add('bacom-icon-play');
+  //   playIcon.classList.remove('icon-play');
+  //   playIcon.classList.add('icon');
+  // }
 
   function buildLink(language, url) {
     const link = document.createElement('link');
