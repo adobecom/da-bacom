@@ -28,6 +28,13 @@
   [miloStyles, miloUtils, miloDecorate].forEach((tag) => tag.setAttribute('rel', 'preload'));
   document.head.append(miloStyles, miloUtils, miloDecorate);
 
+  const playIcon = document.querySelector('.icon.icon-play');
+  if (playIcon) {
+    icon.classList.add('bacom-icon-play');
+    icon.classList.remove('icon-play');
+    icon.classList.add('icon');
+  }
+
   function buildLink(language, url) {
     const link = document.createElement('link');
     link.setAttribute('rel', 'alternate');
