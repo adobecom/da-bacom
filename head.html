@@ -16,8 +16,6 @@
   const miloIcons = document.createElement('link');
   const miloIconStyles = document.createElement('link');
 
-  console.log(miloIcons, miloIconStyles)
-
   miloStyles.setAttribute('as', 'style');
   miloStyles.setAttribute('href', `${libs}/styles/styles.css`);
   miloIconStyles.setAttribute('as', 'style');
@@ -34,8 +32,9 @@
   miloDecorate.setAttribute('href', `${libs}/utils/decorate.js`);
   miloIcons.setAttribute('href', `${libs}/features/icons/icons.js`)
 
-  [miloStyles, miloUtils, miloDecorate, miloIconStyles, miloIcons].forEach((tag) => tag.setAttribute('rel', 'preload'));
-  document.head.append(miloStyles, miloUtils, miloDecorate, miloIconStyles, miloIcons);
+  const allTags = [miloStyles, miloUtils, miloDecorate, miloIconStyles, miloIcons].filter(tag => tag != null);
+  allTags.forEach((tag) => tag.setAttribute('rel', 'preload'));
+  document.head.append(...allTags);
 
   function buildLink(language, url) {
     const link = document.createElement('link');
