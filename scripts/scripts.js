@@ -228,6 +228,13 @@ export const EVENT_LIBS = (() => {
 
 let eventsError;
 
+const playIcon = document.querySelector('main span.icon-play');
+if (playIcon) {
+  playIcon.classList.remove('icon');
+  playIcon.classList.remove('icon-play');
+  playIcon.classList.add('bacom-play-icon');
+}
+
 async function loadPage() {
   const {
     loadArea, loadLana, setConfig, createTag, getMetadata, getLocale,
