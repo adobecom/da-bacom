@@ -30,16 +30,8 @@
 
   const personalizationMeta = document.querySelector('meta[name="personalization"]');
   if (personalizationMeta) {
-    let personalizationUrl = personalizationMeta.getAttribute('content');
-    let url; 
-    try {
-      url = new URL(personalizationUrl);
-    } catch (e) {
-    }
+    const personalizationUrl = personalizationMeta.getAttribute('content');
 
-    const path = url.pathname;
-    personalizationMeta.setAttribute('content', `${libs}${path}`);
-    personalizationUrl = `${libs}${path}`;
     // Helper to create preload link if it doesn't already exist
     const createPreloadLink = (href, as, crossorigin = 'anonymous') => {
       // Normalize URL to ensure exact match
@@ -66,7 +58,6 @@
     
     // Preload manifest URL if provided
     if (personalizationUrl) {
-      console.log('Peronaliation link, ', personalizationUrl, personalizationMeta.content)
       createPreloadLink(personalizationUrl, 'fetch');
     }
   }
