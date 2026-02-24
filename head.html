@@ -30,6 +30,16 @@
 
   const personalizationMeta = document.querySelector('meta[name="personalization"]');
   if (personalizationMeta) {
+    let personalizationUrl = personalizationMeta.getAttribute('content');
+    let url; 
+    try {
+      url = new URL(personalizationUrl);
+    } catch (e) {
+    }
+
+    const path = url.pathname;
+    personalizationMeta.setAttribute('content', `${libs}${path}`);
+    personalizationUrl = `${libs}${path}`;
     // Helper to create preload link if it doesn't already exist
     const createPreloadLink = (href, as, crossorigin = 'anonymous') => {
       // Normalize URL to ensure exact match
@@ -48,9 +58,17 @@
     // Preload helpers.js - ensure URL matches what utils.js will use
     createPreloadLink(`${libs}/martech/helpers.js`, 'script');
     
+    // Preload imslib.min.js - ensure URL matches what loadIms() will use
+    // createPreloadLink(`${libs}/deps/imslib.min.js`, 'script');
+    
     // Preload preview.js - use absolute URL for dynamic imports
     createPreloadLink(`${libs}/features/personalization/preview.js`, 'script');
-
+    
+    // Preload manifest URL if provided
+    // if (personalizationUrl) {
+    //   console.log('Peronaliation link, ', personalizationUrl, personalizationMeta.content)
+    //   createPreloadLink(personalizationUrl, 'fetch');
+    // }
   }
 
   function buildLink(language, url) {
