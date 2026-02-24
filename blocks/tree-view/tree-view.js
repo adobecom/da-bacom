@@ -11,7 +11,7 @@ export const isCurrentPage = (link) => {
 
     if (isBacomHost && url.pathname.replace('.html', '') === currentPath) return true;
   } catch (e) {
-    window.lana?.log(`Tree View error:${e.message}`, { tags: 'info,tree-view' });
+    window.lana?.log(`Tree View error:${e.message}`, { severity: 'error', tags: 'tree-view' });
   }
 
   return false;
@@ -109,6 +109,18 @@ const init = async (el) => {
   const topList = el.querySelector('ul');
 
   if (!topList) return;
+  // TODO: Remove after bugfix PR adobe/helix-html2md#556 is merged
+  const listItems = topList.querySelectorAll('li');
+  [...listItems].forEach((liEl) => {
+    const pElements = liEl.querySelectorAll('p');
+    pElements.forEach((pElement) => {
+      while (pElement?.firstChild) {
+        pElement.parentNode.insertBefore(pElement.firstChild, pElement);
+      }
+      pElement.remove();
+    });
+  });
+  // END TODO: Remove after bugfix PR adobe/helix-html2md#556 is merged
 
   const { createTag } = await import(`${LIBS}/utils/utils.js`);
   const subLists = topList.querySelectorAll('ul');
@@ -166,7 +178,7 @@ const init = async (el) => {
       topListItem.setAttribute('aria-haspopup', 'menu');
       topListItem.setAttribute('aria-expanded', false);
 
-      const label = topListItem.textContent.split('\n')[0];
+      const label = topListItem.textContent.split('\n')?.find((t) => t.trim() !== '') || '';
       const id = label.trim().replaceAll(' ', '-');
       const button = createTag('button', { id }, label);
       const subList = topListItem.querySelector('ul');

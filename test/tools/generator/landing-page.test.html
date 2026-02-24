@@ -1,0 +1,222 @@
+<!-- npm run test:file "test/tools/generator/landing-page.test.html" -->
+<html>
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://da.live/nx/styles/nexter.css">
+  <script type="importmap">
+      {
+        "imports": {
+          "da-sdk": "./mocks/da-sdk.js",
+          "da-fetch": "./mocks/da-fetch.js",
+          "constants": "https://da.live/nx/public/utils/constants.js",
+          "da-lit": "https://da.live/deps/lit/dist/index.js",
+          "styles": "https://da.live/nx/utils/styles.js",
+          "components": "https://da.live/nx/public/sl/components.js"
+        }
+      }
+    </script>
+</head>
+
+<body>
+  <main>
+    <da-generator></da-generator>
+  </main>
+  <script type="module">
+    import { runTests } from '@web/test-runner-mocha';
+    import { expect } from '@esm-bundle/chai';
+    import { stub } from 'sinon';
+    import sinon from 'sinon';
+    import DA_SDK from 'da-sdk';
+    import { daFetch, initIms } from './mocks/da-fetch.js';
+    import '../../../tools/generator/landing-page.js';
+
+    const ogLana = window.lana;
+
+    runTests(() => {
+      describe('LandingPageForm', () => {
+        let clock;
+
+        const tick = async (milliseconds) => {
+          clock.tick(milliseconds);
+          await clock.nextAsync();
+        };
+
+        beforeEach(async () => {
+          window.lana = { log: sinon.spy() };
+          clock = sinon.useFakeTimers();
+        });
+
+        afterEach(() => {
+          window.lana = ogLana;
+          clock.restore();
+
+          document.querySelectorAll('toast-message').forEach(el => el.remove());
+          const generator = document.querySelector('da-generator');
+          generator.resetForm();
+        });
+
+        it('renders correctly', async () => {
+          const generator = document.querySelector('da-generator');
+          expect(generator).to.exist;
+          expect(initIms.called).to.be.true;
+
+          const shadowRoot = generator.shadowRoot;
+          expect(shadowRoot.querySelector('h1')).to.exist;
+          expect(shadowRoot.querySelector('form')).to.exist;
+        });
+
+        it('renders all form sections', async () => {
+          const generator = document.querySelector('da-generator');
+          const shadowRoot = generator.shadowRoot;
+          const h2 = shadowRoot.querySelector('form h2');
+          expect(h2.textContent.trim()).to.equal('Core Options');
+        });
+
+        it('has all form fields', async () => {
+          const generator = document.querySelector('da-generator');
+          const shadowRoot = generator.shadowRoot;
+
+          const formFields = [
+            'contentType',
+            'gated',
+            'region',
+            'marqueeHeadline',
+            'url'
+          ];
+
+          const fields = shadowRoot.querySelectorAll('form [name]');
+          const fieldNames = Array.from(fields).map(field => field.getAttribute('name'));
+          expect(fieldNames).to.deep.equal(formFields);
+        });
+
+        it('handles toast events', () => {
+          const generator = document.querySelector('da-generator');
+          expect(generator).to.exist;
+
+          const toastEvent = new CustomEvent('show-toast', {
+            detail: { message: 'Test toast message', type: 'info', timeout: 5000 }
+          });
+
+          document.dispatchEvent(toastEvent);
+
+          const toast = document.querySelector('toast-message');
+          expect(toast).to.exist;
+          expect(toast.message).to.equal('Test toast message');
+          expect(toast.type).to.equal('info');
+          expect(toast.timeout).to.equal(5000);
+        });
+
+        it('registers all custom elements', () => {
+          expect(customElements.get('image-dropzone')).to.exist;
+          expect(customElements.get('da-generator')).to.exist;
+          expect(customElements.get('toast-message')).to.exist;
+        });
+
+        it('initializes with DA SDK', async () => {
+          const sdk = await DA_SDK;
+          expect(sdk).to.exist;
+          expect(sdk.context.repo).to.equal('adobecom');
+          expect(sdk.token).to.equal('mock-token');
+        });
+
+        it('uploads mock image', async () => {
+          const generator = document.querySelector('da-generator');
+          const file = new File(['mock image content'], 'mock-image.jpg', { type: 'image/jpeg' });
+
+          generator.handleImageChange({ detail: { file }, target: { name: 'marqueeImage' } });
+          await tick(500);
+
+          expect(daFetch.called).to.be.true;
+
+          const fetchUrls = daFetch.getCalls().map(call => call.args[0]);
+          expect(fetchUrls[0]).to.include('mock-image.jpg');
+        });
+
+        it('shows error on submit when required fields are missing', async () => {
+            const generator = document.querySelector('da-generator');
+            const shadowRoot = generator.shadowRoot;
+
+            generator.form.contentType = 'Guide';
+            generator.form.gated = 'Ungated';
+
+            await generator.updateComplete;
+
+            const form = shadowRoot.querySelector('form');
+            const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
+            form.dispatchEvent(submitEvent);
+
+            await tick(100);
+
+            expect(generator.missingFields).to.not.deep.equal({});
+          });
+
+        it('generates and formats URLs correctly', () => {
+          const generator = document.querySelector('da-generator');
+          const year = new Date().getFullYear();
+          const month = new Date().getMonth() + 1;
+
+          const testCases = [
+            { input: {}, expected: '' },
+            { input: { marqueeHeadline: 'Test' }, expected: '' },
+            { input: { marqueeHeadline: 'Test', contentType: 'Guide' }, expected: '' },
+            { input: { marqueeHeadline: 'Test', contentType: 'Guide', gated: 'Gated' }, expected: '' },
+            {
+              input: { marqueeHeadline: 'Test Landing Page', contentType: 'Guide', gated: 'Gated', region: '/' },
+              expected: `/drafts/landing-page-builder/guide/${year}/${month}/test-landing-page.html`
+            },
+            {
+              input: { marqueeHeadline: 'Test: Landing @ Page! (2025)', contentType: 'Guide', gated: 'Gated', region: '/jp/' },
+              expected: `/jp/drafts/landing-page-builder/guide/${year}/${month}/test-landing-page-2025.html`
+            },
+            {
+              input: { marqueeHeadline: 'Test   Multiple    Spaces__and_underscores', contentType: 'Guide', gated: 'Gated', region: '/kr/' },
+              expected: `/kr/drafts/landing-page-builder/guide/${year}/${month}/test-multiple-spaces-and-underscores.html`
+            },
+            {
+              input: { marqueeHeadline: 'Test/Landing/Page', contentType: 'Guide', gated: 'Gated', region: '/au/' },
+              expected: `/au/drafts/landing-page-builder/guide/${year}/${month}/test-landing-page.html`
+            },
+            {
+              input: { marqueeHeadline: 'Test Page', contentType: 'Report', gated: 'Gated', region: '/' },
+              expected: `/drafts/landing-page-builder/report/${year}/${month}/test-page.html`
+            },
+            {
+              input: { marqueeHeadline: 'Test Page', contentType: 'Guide', gated: 'Ungated', region: '/' },
+              expected: `/drafts/landing-page-builder/guide/${year}/${month}/test-page.html`
+            }
+          ];
+
+          testCases.forEach(({ input, expected }) => {
+            const url = generator.generateUrl(input);
+            expect(url).to.equal(expected);
+          });
+        });
+
+        it('updates URL dynamically when form fields change', () => {
+          const generator = document.querySelector('da-generator');
+          generator.isInitialized = true;
+          const fieldTests = [
+            { field: 'marqueeHeadline', value: 'Updated Headline', expectedIncludes: 'updated-headline' },
+            { field: 'contentType', value: 'Report', expectedIncludes: '/report/' },
+            { field: 'region', value: '/jp/', expectedIncludes: '/jp/drafts/' }
+          ];
+
+          for (const { field, value, expectedIncludes } of fieldTests) {
+            generator.form = {
+              marqueeHeadline: 'Test Page',
+              contentType: 'Guide',
+              gated: 'Gated',
+              region: '/'
+            }
+            generator.handleInput({ target: { name: field, value } });
+
+            expect(generator.form.url).to.include(expectedIncludes);
+          }
+        });
+      });
+    });
+  </script>
+</body>
+
+</html>
