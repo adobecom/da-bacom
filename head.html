@@ -31,29 +31,35 @@
   const personalizationMeta = document.querySelector('meta[name="personalization"]');
   if (personalizationMeta) {
     const personalizationUrl = personalizationMeta.getAttribute('content');
-    const personalizationHelpers = document.createElement('link');
-    const personalizationImslib = document.createElement('link');
-    const personalizationScript = document.createElement('link');
-    const personalizationManifest = document.createElement('link');
-
-    [personalizationHelpers, personalizationImslib, personalizationScript, personalizationManifest].forEach((tag) => {
-      tag.setAttribute('crossorigin', 'true');
-      tag.setAttribute('as', 'script');
-      tag.setAttribute('rel', 'preload');
-    });
-
+    
+    // Helper to create preload link if it doesn't already exist
+    const createPreloadLink = (href, as, crossorigin = 'anonymous') => {
+      // Normalize URL to ensure exact match
+      const normalizedHref = href.replace(/\/+/g, '/').replace(/^([^:]+):\/([^/])/, '$1://$2');
+      const existingLink = document.head.querySelector(`link[rel="preload"][href="${normalizedHref}"]`);
+      if (existingLink) return; // Already preloaded
+      
+      const link = document.createElement('link');
+      link.setAttribute('rel', 'preload');
+      link.setAttribute('as', as);
+      link.setAttribute('crossorigin', crossorigin);
+      link.setAttribute('href', normalizedHref);
+      document.head.append(link);
+    };
+    
+    // Preload helpers.js - ensure URL matches what utils.js will use
+    createPreloadLink(`${libs}/martech/helpers.js`, 'script');
+    
+    // Preload imslib.min.js - ensure URL matches what loadIms() will use
+    createPreloadLink(`${libs}/deps/imslib.min.js`, 'script');
+    
+    // Preload personalization.js - use absolute URL for dynamic imports
+    createPreloadLink(`${libs}/features/personalization/personalization.js`, 'script');
+    
+    // Preload manifest URL if provided
     if (personalizationUrl) {
-      personalizationManifest.setAttribute('href', personalizationUrl);
+      createPreloadLink(personalizationUrl, 'fetch');
     }
-    personalizationHelpers.setAttribute('href', `${libs}/martech/helpers.js`);
-    personalizationImslib.setAttribute('href', `${libs}/deps/imslib.min.js`);
-    personalizationScript.setAttribute('href', `${libs}/features/personalization/personalization.js`);
-
-    const personalizationLinks = [personalizationHelpers, personalizationImslib, personalizationScript];
-    if (personalizationUrl) {
-      personalizationLinks.push(personalizationManifest);
-    }
-    document.head.append(...personalizationLinks);
   }
 
   function buildLink(language, url) {
