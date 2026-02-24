@@ -28,6 +28,34 @@
   [miloStyles, miloUtils, miloDecorate].forEach((tag) => tag.setAttribute('rel', 'preload'));
   document.head.append(miloStyles, miloUtils, miloDecorate);
 
+  const personalizationMeta = document.querySelector('meta[name="personalization"]');
+  if (personalizationMeta) {
+    const personalizationUrl = personalizationMeta.getAttribute('content');
+    const personalizationHelpers = document.createElement('link');
+    const personalizationImslib = document.createElement('link');
+    const personalizationScript = document.createElement('link');
+    const personalizationManifest = document.createElement('link');
+
+    [personalizationHelpers, personalizationImslib, personalizationScript, personalizationManifest].forEach((tag) => {
+      tag.setAttribute('crossorigin', 'true');
+      tag.setAttribute('as', 'script');
+      tag.setAttribute('rel', 'preload');
+    });
+
+    if (personalizationUrl) {
+      personalizationManifest.setAttribute('href', personalizationUrl);
+    }
+    personalizationHelpers.setAttribute('href', `${libs}/martech/helpers.js`);
+    personalizationImslib.setAttribute('href', `${libs}/deps/imslib.min.js`);
+    personalizationScript.setAttribute('href', `${libs}/features/personalization/personalization.js`);
+
+    const personalizationLinks = [personalizationHelpers, personalizationImslib, personalizationScript];
+    if (personalizationUrl) {
+      personalizationLinks.push(personalizationManifest);
+    }
+    document.head.append(...personalizationLinks);
+  }
+
   function buildLink(language, url) {
     const link = document.createElement('link');
     link.setAttribute('rel', 'alternate');
