@@ -54,21 +54,6 @@
       link.setAttribute('href', normalizedHref);
       document.head.append(link);
     };
-    
-    // Preload helpers.js - ensure URL matches what utils.js will use
-    createPreloadLink(`${libs}/martech/helpers.js`, 'script');
-    
-    // Preload imslib.min.js - ensure URL matches what loadIms() will use
-    // createPreloadLink(`${libs}/deps/imslib.min.js`, 'script');
-    
-    // Preload preview.js - use absolute URL for dynamic imports
-    createPreloadLink(`${libs}/features/personalization/preview.js`, 'script');
-    
-    // Preload manifest URL if provided
-    // if (personalizationUrl) {
-    //   console.log('Peronaliation link, ', personalizationUrl, personalizationMeta.content)
-    //   createPreloadLink(personalizationUrl, 'fetch');
-    // }
   }
 
   function buildLink(language, url) {
