@@ -28,6 +28,21 @@
   [miloStyles, miloUtils, miloDecorate].forEach((tag) => tag.setAttribute('rel', 'preload'));
   document.head.append(miloStyles, miloUtils, miloDecorate);
 
+  // Preload helpers.js and imslib.js as scripts
+  const helpersPreload = document.createElement('link');
+  helpersPreload.setAttribute('rel', 'preload');
+  helpersPreload.setAttribute('as', 'script');
+  helpersPreload.setAttribute('crossorigin', 'anonymous');
+  helpersPreload.setAttribute('href', `${libs}/martech/helpers.js`);
+  document.head.append(helpersPreload);
+
+  const imslibPreload = document.createElement('link');
+  imslibPreload.setAttribute('rel', 'preload');
+  imslibPreload.setAttribute('as', 'script');
+  imslibPreload.setAttribute('crossorigin', 'anonymous');
+  imslibPreload.setAttribute('href', `${libs}/deps/imslib.min.js`);
+  document.head.append(imslibPreload);
+
   function buildLink(language, url) {
     const link = document.createElement('link');
     link.setAttribute('rel', 'alternate');
