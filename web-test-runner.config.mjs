@@ -10,7 +10,17 @@ export default {
       '**/deps/**',
     ],
   },
-  plugins: [importMapsPlugin({})],
+  plugins: [
+    importMapsPlugin({
+      inject: {
+        importMap: {
+          imports: {
+            'da-lit': 'https://da.live/nx/deps/lit/lit-core.min.js',
+          },
+        },
+      },
+    }),
+  ],
   testRunnerHtml: (testFramework) => `
     <html>
       <head>
