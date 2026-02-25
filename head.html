@@ -30,7 +30,7 @@
 
   // Preload helpers.js and imslib.js as scripts
   const helpersPreload = document.createElement('link');
-  helpersPreload.setAttribute('rel', 'preload');
+  helpersPreload.setAttribute('rel', 'modulepreload');
   helpersPreload.setAttribute('as', 'script');
   helpersPreload.setAttribute('crossorigin', 'anonymous');
   helpersPreload.setAttribute('href', `${libs}/martech/helpers.js`);
