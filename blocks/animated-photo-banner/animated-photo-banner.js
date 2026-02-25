@@ -55,7 +55,6 @@ const CONFIG = {
   DEFAULT_HEADER_POSITION: [50, 10],
   DEFAULT_WIDTH_CLASS: 'md',
   WAVE_INITIAL_DELAY: 300,
-  /** Delay (ms) after fade-in before starting scale/position transition */
   TRANSFORM_START_DELAY: 200,
   DESKTOP_TABLET_WIDTH: {
     ORIGINAL: 2000,
@@ -67,7 +66,7 @@ const CONFIG = {
   },
 };
 
-const LANA_OPTIONS = { tags: 'animated-photo-banner', errorType: 'i' };
+const LANA_OPTIONS = { severity: 'error', tags: 'animated-photo-banner' };
 const DETECTED_VIEWPORT = getScreenSizeCategory({ mobile: 599, tablet: 1199 });
 
 // ===== UTILITY FUNCTIONS =====
