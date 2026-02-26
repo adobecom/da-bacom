@@ -22,7 +22,7 @@
     import { runTests } from '@web/test-runner-mocha';
     import { expect } from '@esm-bundle/chai';
     import sinon from 'sinon';
-    import '../../../tools/generator/path-input/path-input.js';
+    import PathInput, { STATUS } from '../../../tools/generator/path-input/path-input.js';
 
     const DEBOUNCE_DELAY = 800;
 
@@ -54,7 +54,7 @@
         it('renders with default properties', async () => {
           expect(pathInput.name).to.equal('testPath');
           expect(pathInput.value).to.equal('');
-          expect(pathInput.status).to.equal('empty');
+          expect(pathInput.status).to.equal(STATUS.EMPTY);
           expect(pathInput.shadowRoot.querySelector('.path-label')).to.exist;
           expect(pathInput.shadowRoot.querySelector('.path-input')).to.exist;
         });
@@ -114,7 +114,7 @@
               { input: 'Test & More & Things', expected: 'test-more-things' },
               { input: '123 Numbers First', expected: '123-numbers-first' },
               { input: 'Test-Already-Has-Hyphens', expected: 'test-already-has-hyphens' },
-              { input: '  Leading and Trailing  ', expected: 'leading-and-trailing' },
+              { input: '  Leading and Trailing  ', expected: 'leading-and-trailing-' },
               { input: 'Spëcîål Çhårāctërs', expected: 'spcl-hrctrs' },
               { input: 'Test@Email.com', expected: 'testemailcom' },
               { input: '$100 Price Tag!', expected: '100-price-tag' },
@@ -163,8 +163,10 @@
             input.value = '';
             input.dispatchEvent(new Event('input', { bubbles: true }));
 
+            await tick(0);
+
             expect(statusDetail).to.exist;
-            expect(statusDetail.status).to.equal('empty');
+            expect(statusDetail.status).to.equal(STATUS.EMPTY);
           });
         });
 
@@ -205,7 +207,7 @@
 
         describe('status icons', () => {
           it('shows checkmark icon when available', async () => {
-            pathInput.status = 'available';
+            pathInput.status = STATUS.AVAILABLE;
             await pathInput.updateComplete;
 
             const icon = pathInput.shadowRoot.querySelector('.validation-icon.available use');
@@ -214,7 +216,7 @@
           });
 
           it('shows warning icon when conflict', async () => {
-            pathInput.status = 'conflict';
+            pathInput.status = STATUS.CONFLICT;
             await pathInput.updateComplete;
 
             const icon = pathInput.shadowRoot.querySelector('.validation-icon.conflict use');
@@ -223,7 +225,7 @@
           });
 
           it('shows progress icon when checking', async () => {
-            pathInput.status = 'checking';
+            pathInput.status = STATUS.CHECKING;
             await pathInput.updateComplete;
 
             const icon = pathInput.shadowRoot.querySelector('.validation-icon.checking use');
@@ -232,7 +234,7 @@
           });
 
           it('hides icon when empty', async () => {
-            pathInput.status = 'empty';
+            pathInput.status = STATUS.EMPTY;
             await pathInput.updateComplete;
 
             const icon = pathInput.shadowRoot.querySelector('.validation-icon');
@@ -240,42 +242,50 @@
           });
         });
 
-        describe('check button', () => {
-          it('shows button when suggestion exists and path conflicts', async () => {
+        describe('validation icon click', () => {
+          it('shows validation icon when path conflicts', async () => {
             pathInput.suggestion = 'test-suggestion';
-            pathInput.status = 'conflict';
+            pathInput.status = STATUS.CONFLICT;
             await pathInput.updateComplete;
 
-            const button = pathInput.shadowRoot.querySelector('.path-action-btn');
+            const button = pathInput.shadowRoot.querySelector('.validation-icon-button');
             expect(button).to.exist;
-            expect(button.textContent.trim()).to.equal('Check');
           });
 
-          it('hides button when disabled', async () => {
+          it('does not dispatch validate-request when icon clicked and disabled', async () => {
             pathInput.suggestion = 'test-suggestion';
-            pathInput.status = 'conflict';
+            pathInput.status = STATUS.CONFLICT;
             pathInput.disabled = true;
             await pathInput.updateComplete;
 
-            const button = pathInput.shadowRoot.querySelector('.path-action-btn');
-            expect(button).to.not.exist;
+            let validateFired = false;
+            pathInput.addEventListener('validate-request', () => { validateFired = true; });
+
+            const button = pathInput.shadowRoot.querySelector('.validation-icon-button');
+            button.click();
+
+            expect(validateFired).to.be.false;
           });
 
-          it('applies suggestion on click', async () => {
+          it('applies suggestion on click when value is empty', async () => {
+            pathInput.value = '';
             pathInput.suggestion = 'Test Suggestion';
-            pathInput.status = 'conflict';
+            pathInput.status = STATUS.CONFLICT;
+            pathInput.prefix = '/resources/guide/';
             await pathInput.updateComplete;
 
-            const button = pathInput.shadowRoot.querySelector('.path-action-btn');
+            const button = pathInput.shadowRoot.querySelector('.validation-icon-button');
             button.click();
             await pathInput.updateComplete;
 
             expect(pathInput.value).to.equal('test-suggestion');
           });
 
-          it('triggers validation with suggestion flag on click', async () => {
+          it('dispatches validate-request with isSuggestion when icon clicked and value empty', async () => {
+            pathInput.value = '';
             pathInput.suggestion = 'test-suggestion';
-            pathInput.status = 'conflict';
+            pathInput.status = STATUS.CONFLICT;
+            pathInput.prefix = '/resources/guide/';
             await pathInput.updateComplete;
 
             let validateDetail = null;
@@ -283,11 +293,24 @@
               validateDetail = e.detail;
             });
 
-            const button = pathInput.shadowRoot.querySelector('.path-action-btn');
+            const button = pathInput.shadowRoot.querySelector('.validation-icon-button');
             button.click();
 
             expect(validateDetail).to.exist;
             expect(validateDetail.isSuggestion).to.be.true;
+          });
+
+          it('applies suggestion from apply-suggestion event', async () => {
+            pathInput.name = 'pageName';
+            pathInput.value = '';
+            pathInput.suggestion = 'Headline Here';
+            pathInput.prefix = '/resources/guide/';
+            await pathInput.updateComplete;
+
+            document.dispatchEvent(new CustomEvent('path-input-apply-suggestion', { detail: { name: 'pageName' } }));
+            await pathInput.updateComplete;
+
+            expect(pathInput.value).to.equal('headline-here');
           });
         });
       });

@@ -26,6 +26,12 @@
   gap: 8px;
 }
 
+.path-description {
+  font-size: var(--s2-body-xs-size);
+  color: var(--s2-gray-600, #6b7280);
+  margin: 0;
+}
+
 .path-input-container {
   display: flex;
   align-items: center;
@@ -61,16 +67,27 @@
   border-color: var(--s2-red-900, #d7373f);
 }
 
-.path-input-container.stale {
-  border-color: var(--s2-orange-900, #e68619);
-}
-
 .path-prefix {
   font-family: monospace;
   font-size: 14px;
   color: var(--s2-gray-600, #6b7280);
   white-space: nowrap;
   user-select: none;
+  padding: 0 8px 0 0;
+  height: 100%;
+  min-height: 30px;
+  border: none;
+  background: transparent;
+  cursor: text;
+  text-align: left;
+}
+
+.path-prefix:hover {
+  color: var(--s2-gray-700, #505050);
+}
+
+.path-prefix:focus-visible {
+  outline: none;
 }
 
 .path-input {
@@ -97,12 +114,33 @@
 }
 
 /* Validation Icons */
+.validation-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+.validation-icon-button {
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.validation-icon-button:focus-visible {
+  outline: 2px solid var(--s2-blue-900, #0265dc);
+  outline-offset: 2px;
+}
+
 .validation-icon {
   display: block;
   width: 18px;
   height: 18px;
-  margin-left: 8px;
-  flex-shrink: 0;
 }
 
 .validation-icon.checking {
@@ -118,8 +156,46 @@
   color: var(--s2-red-900, #d7373f);
 }
 
-.validation-icon.stale {
-  color: var(--s2-orange-900, #e68619);
+.validation-tooltip {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  transform: translate(8px, -12px);
+  padding: 4px 9px 5px;
+  width: max-content;
+  max-width: 420px;
+  font-size: 12px;
+  line-height: 15.6px;
+  color: white;
+  background: var(--s2-gray-900, #1f2937);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 25%);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+  transition-delay: 0.4s;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.validation-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  right: 12px;
+  border: 6px solid transparent;
+  border-top-color: var(--s2-gray-900, #1f2937);
+}
+
+.validation-wrapper:hover .validation-tooltip,
+.validation-wrapper:focus-within .validation-tooltip,
+.validation-wrapper.tooltip-visible .validation-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+.validation-wrapper.tooltip-visible .validation-tooltip {
+  transition-delay: 0s;
 }
 
 @keyframes spin {
@@ -130,37 +206,6 @@
   to {
     transform: rotate(360deg);
   }
-}
-
-/* Action Button */
-.path-action-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 12px;
-  height: 32px;
-  font-size: 13px;
-  font-weight: 500;
-  color: white;
-  background: var(--s2-blue-900, #0265dc);
-  border: none;
-  border-radius: var(--s2-radius-100, 4px);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background-color 0.2s, transform 0.1s;
-}
-
-.path-action-btn:hover {
-  background: var(--s2-blue-1000, #0054b6);
-}
-
-.path-action-btn:active {
-  transform: scale(0.98);
-}
-
-.path-action-btn:focus-visible {
-  outline: 2px solid var(--s2-blue-900, #0265dc);
-  outline-offset: 2px;
 }
 
 .error-message {

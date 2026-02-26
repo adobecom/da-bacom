@@ -203,7 +203,7 @@
           setPageName();
           await tick(100);
 
-          shadowRoot.querySelector('sl-button.primary').click();
+          shadowRoot.querySelector('sl-button.confirm').click();
           await tick(100);
 
           expect(generator.showForm).to.be.true;
@@ -220,7 +220,7 @@
           expect(generator.form.url).to.equal('/resources/guide/test-page.html');
           expect(generator.form.pageName).to.equal('test-page');
 
-          shadowRoot.querySelector('sl-button.primary').click();
+          shadowRoot.querySelector('sl-button.confirm').click();
           await tick(100);
 
           setValue('marqueeDescription', 'Test description');
@@ -238,7 +238,7 @@
 
           expect(generator.isFormComplete()).to.be.true;
 
-          shadowRoot.querySelector('sl-button[type="submit"]').click();
+          shadowRoot.querySelector('sl-button.submit').click();
           // Wait for the preview call to be made
           for (let i = 0; i < 10; i++) {
             await tick(500);
@@ -259,7 +259,7 @@
           setPageName();
           await tick(100);
 
-          shadowRoot.querySelector('sl-button.primary').click();
+          shadowRoot.querySelector('sl-button.confirm').click();
           await tick(100);
 
           setValue('cardTitle', '');
@@ -279,7 +279,7 @@
           setPageName('test');
           await tick(100);
 
-          shadowRoot.querySelector('sl-button.primary').click();
+          shadowRoot.querySelector('sl-button.confirm').click();
           await tick(100);
 
           shadowRoot.querySelector('sl-button[type="submit"]').click();
