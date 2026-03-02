@@ -136,12 +136,24 @@ daFetch.callsFake(async (url, options = {}) => {
 
   if (method === 'PUT') {
     if (path.startsWith('/source/')) {
-      if (path.includes('mock-image.jpg') || path.includes('test-page.html')) {
-        return { ok: true, json: async () => ({ source: { contentUrl: '/test/tools/generator/mocks/mock-image.jpg' } }) };
+      if (path.includes('mock-image.jpg')) {
+        return {
+          ok: true,
+          json: async () => ({
+            source: { contentUrl: '/test/tools/generator/mocks/mock-image.jpg' },
+            aem: { previewUrl: '/test/tools/generator/mocks/mock-image.jpg' },
+          }),
+        };
       }
 
-      if (path.includes('mock-image.jpg') || path.includes('test-page.html')) {
-        return { ok: true, json: async () => ({ source: { contentUrl: '/test/tools/generator/mocks/mock-document.html' } }) };
+      if (path.includes('mock-document.html')) {
+        return {
+          ok: true,
+          json: async () => ({
+            source: { contentUrl: '/test/tools/generator/mocks/mock-document.html' },
+            aem: { previewUrl: '/test/tools/generator/mocks/mock-document.html' },
+          }),
+        };
       }
     }
   }
