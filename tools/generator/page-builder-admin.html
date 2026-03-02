@@ -2,9 +2,10 @@
 <html>
 
 <head>
-  <title>Campaign Landing Page Generator</title>
+  <title>Page Builder Admin</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="https://da.live/nx/styles/nexter.css">
+  <link rel="stylesheet" href="./page-builder-admin.css">
   <script type="importmap">
     {
       "imports": {
@@ -13,20 +14,20 @@
         "da-fetch": "https://da.live/nx/utils/daFetch.js",
         "constants": "https://da.live/nx/public/utils/constants.js",
         "styles": "https://da.live/nx/utils/styles.js",
-        "svg": "https://da.live/nx/utils/svg.js",
         "components": "https://da.live/nx/public/sl/components.js"
       }
     }
   </script>
   <link rel="modulepreload" href="https://da.live/nx/utils/sdk.js">
-  <script src="./landing-page.js" type="module"></script>
+  <script src="./page-builder-admin.js" type="module"></script>
   <link rel="icon" href="data:,">
 </head>
 
-<body style="background: #fff;">
+<body style="background: #f5f5f5;">
   <main>
-    <da-generator></da-generator>
+    <da-page-builder-admin></da-page-builder-admin>
   </main>
 </body>
 
 </html>
+
