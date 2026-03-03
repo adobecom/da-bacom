@@ -24,9 +24,9 @@ export function createTag(tag, attributes, html, options = {}) {
   return el;
 }
 
-export function getScreenSizeCategory(overridenBreakpoints) {
+export function getScreenSizeCategory(overriddenBreakpoints) {
   const DEFAULT_BREAKPOINTS = { mobile: 599, tablet: 899 };
-  const { mobile, tablet } = { ...DEFAULT_BREAKPOINTS, ...overridenBreakpoints };
+  const { mobile, tablet } = { ...DEFAULT_BREAKPOINTS, ...overriddenBreakpoints };
   const MEDIA_QUERIES = {
     mobile: window.matchMedia(`(max-width: ${mobile}px)`),
     tablet: window.matchMedia(`(min-width: ${mobile + 1}px) and (max-width: ${tablet}px)`),
@@ -48,17 +48,14 @@ export function prefersReducedMotion() {
 // Configuration constants
 const CONFIG = {
   WAVE_DELAY: 300,
-  ANIMATION_BUFFER: 500,
-  TRANSITION_DELAY: 50,
   FADE_DURATION: 500,
-  TRANSFORM_DURATION: 1500,
   SCALE_SHRINK_DURATION: 300,
-  HEADER_DELAY: 1200,
   DEFAULT_SCALE: 1,
   DEFAULT_POSITION: [50, 50],
   DEFAULT_HEADER_POSITION: [50, 10],
   DEFAULT_WIDTH_CLASS: 'md',
   WAVE_INITIAL_DELAY: 300,
+  TRANSFORM_START_DELAY: 200,
   DESKTOP_TABLET_WIDTH: {
     ORIGINAL: 2000,
     OPTIMIZED: 1000,
@@ -69,7 +66,7 @@ const CONFIG = {
   },
 };
 
-const LANA_OPTIONS = { tags: 'animated-photo-banner', errorType: 'i' };
+const LANA_OPTIONS = { severity: 'error', tags: 'animated-photo-banner' };
 const DETECTED_VIEWPORT = getScreenSizeCategory({ mobile: 599, tablet: 1199 });
 
 // ===== UTILITY FUNCTIONS =====
@@ -106,29 +103,6 @@ function getViewportParams(params, viewport = DETECTED_VIEWPORT) {
 
 function getPositionWithFallback(params, positionKey = 'end-pos', fallback = CONFIG.DEFAULT_POSITION) {
   return params[positionKey] || params['start-pos'] || fallback;
-}
-
-// eslint-disable-next-line no-unused-vars
-function calculateAnimationTiming(maxWave) {
-  const totalWavesAppearTime = maxWave * CONFIG.WAVE_DELAY;
-  return {
-    totalWavesAppearTime,
-    totalAnimationTime: totalWavesAppearTime + CONFIG.HEADER_DELAY,
-    finalPhaseDelay: totalWavesAppearTime + CONFIG.ANIMATION_BUFFER,
-  };
-}
-
-function addTransitionStyles(element, includeTransform = true) {
-  const transitions = [`opacity ${CONFIG.FADE_DURATION / 1000}s ease-out`];
-  if (includeTransform) {
-    transitions.push(`transform ${CONFIG.TRANSFORM_DURATION / 1000}s ease-in-out`);
-  }
-  element.style.transition = transitions.join(', ');
-}
-
-function removeTransformTransition(element) {
-  // Keep only the opacity transition
-  element.style.transition = `opacity ${CONFIG.FADE_DURATION / 1000}s ease-out`;
 }
 
 // ===== PARAMETER PROCESSING =====
@@ -229,67 +203,37 @@ function setupHeaderInitialState(header, headerParams) {
   if (endPos[1] !== undefined) header.style.top = `${endPos[1]}rem`;
 }
 
-function animateWaveSequence(waveGroups, paramsList) {
+function animateWaveSequence(waveGroups) {
   const waves = Object.keys(waveGroups)
-    .filter((wave) => parseInt(wave, 10) > 0) // Exclude wave -1 and 0
+    .filter((wave) => parseInt(wave, 10) > 0) // Exclude wave ≤ 0 (immediate or hidden)
     .sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
 
-  waves.forEach((wave, index) => {
+  waves.forEach((wave, waveIndex) => {
     setTimeout(() => {
       const waveImages = waveGroups[wave];
 
-      waveImages.forEach(({ element, params, index: imageIndex }) => {
+      waveImages.forEach(({ element, params }) => {
         const startPos = getPositionWithFallback(params, 'start-pos');
 
-        // Set initial position with inverted scale
+        // Set initial position with scaled-up state and optional blur
         setElementTransform(element, startPos[0], startPos[1], 1.2, true);
 
         // Fade in the image
         setElementVisibility(element, true, CONFIG.FADE_DURATION);
 
-        // Run transform after image becomes visible (after fade completes)
+        // After brief delay, transition to final position and scale
         setTimeout(() => {
-          // Get params from paramsList using the image index
-          const imageParams = paramsList[imageIndex];
-          const viewportParams = getViewportParams(imageParams);
-          const endPos = getPositionWithFallback(viewportParams);
-
-          // Add faster transform transition for scale shrink and translation
+          const endPos = getPositionWithFallback(params);
           const transitions = [`opacity ${CONFIG.FADE_DURATION / 1000}s ease-out`];
           transitions.push(`transform ${CONFIG.SCALE_SHRINK_DURATION / 1000}s ease-out`);
           element.style.transition = transitions.join(', ');
 
-          // Translate to end position and shrink from scale 1.2 to scale 1
-          setElementTransform(element, endPos[0], endPos[1], params.scale || 1, false);
-        }, 200);
+          const scale = params.scale ?? CONFIG.DEFAULT_SCALE;
+          setElementTransform(element, endPos[0], endPos[1], scale, false);
+        }, CONFIG.TRANSFORM_START_DELAY);
       });
-    }, index * CONFIG.WAVE_DELAY + CONFIG.WAVE_INITIAL_DELAY);
+    }, waveIndex * CONFIG.WAVE_DELAY + CONFIG.WAVE_INITIAL_DELAY);
   });
-}
-
-// eslint-disable-next-line no-unused-vars
-function animateToFinalPositions(images, paramsList, timing) {
-  setTimeout(() => {
-    images.forEach((image, index) => {
-      const params = paramsList[index];
-      const viewportParams = getViewportParams(params);
-      const wave = viewportParams.wave || 1;
-
-      // Skip immediate images
-      if (wave === 0) return;
-
-      const endPos = getPositionWithFallback(viewportParams);
-
-      // Add transition and animate to final position
-      addTransitionStyles(image, true);
-      setElementTransform(image, endPos[0], endPos[1], CONFIG.DEFAULT_SCALE);
-
-      // Remove transform transition after animation completes
-      setTimeout(() => {
-        removeTransformTransition(image);
-      }, CONFIG.TRANSFORM_DURATION);
-    });
-  }, timing.finalPhaseDelay);
 }
 
 function showHeader(header, headerParams) {
@@ -338,8 +282,7 @@ function createAnimationSequence(container, images, paramsList, headerParams) {
   setupHeaderInitialState(header, headerParams);
 
   // Run animation sequence
-  animateWaveSequence(waveGroups, paramsList);
-  // animateToFinalPositions(images, paramsList, timing);
+  animateWaveSequence(waveGroups);
   showHeader(header, headerParams);
 }
 
@@ -502,7 +445,7 @@ function buildHeaderSection(el, container) {
       try {
         cta.classList.add('con-button', 'button-xl', 'fill');
       } catch (err) {
-        logError(err);
+        logError('Header CTA processing', err);
       }
     }
 
