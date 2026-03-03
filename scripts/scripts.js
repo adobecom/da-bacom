@@ -120,7 +120,7 @@ const CONFIG = {
   },
   geoRouting: 'on',
   productionDomain: 'business.adobe.com',
-  prodDomains: ['business.adobe.com', 'www.adobe.com', 'helpx.adobe.com'],
+  prodDomains: ['business.adobe.com', 'www.adobe.com', 'helpx.adobe.com', 'experienceleague.adobe.com'],
   autoBlocks: [
     { iframe: 'https://adobe-ideacloud.forgedx.com' },
     { iframe: 'https://adobe.ideacloud.com' },
@@ -229,9 +229,7 @@ export const EVENT_LIBS = (() => {
 let eventsError;
 
 async function loadPage() {
-  const {
-    loadArea, loadLana, setConfig, createTag, getMetadata, getLocale,
-  } = await import(`${LIBS}/utils/utils.js`);
+  const { loadArea, loadLana, setConfig, createTag, getMetadata } = await import(`${LIBS}/utils/utils.js`);
 
   let eventUtils;
   const eventMD = getMetadata('event-id');
@@ -288,7 +286,7 @@ async function loadPage() {
     endpoint: 'https://business.adobe.com/lana/ll',
     endpointStage: 'https://business.stage.adobe.com/lana/ll',
   });
-  transformExlLinks(getLocale(CONFIG.locales));
+  // transformExlLinks(getLocale(CONFIG.locales));
 
   await loadArea();
 
