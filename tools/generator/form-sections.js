@@ -4,7 +4,7 @@ import { html, nothing } from 'da-lit';
 import './image-dropzone/image-dropzone.js';
 import './multi-select/multi-select.js';
 import './text-editor/text-editor.js';
-import './path-input/path-input.js';
+import { STATUS as PATH_STATUS } from './path-input/path-input.js';
 
 function optionsSelect(form, handleInput, optionName, optionLabel, options, hasError = () => '') {
   if (!options || options.length <= 1) {
@@ -85,7 +85,7 @@ export function renderContentType(form, handleInput, regionOptions, { isLocked =
         .value=${form.pageName || ''}
         .prefix=${pathReady ? pathPrefix : 'Select Content Type, Gated/Ungated, and Region to continue'}
         .suggestion=${pathReady ? form.marqueeHeadline : ''}
-        status=${form.pathStatus || 'empty'}
+        status=${form.pathStatus || PATH_STATUS.EMPTY}
         ?disabled=${!pathReady}
         error=${hasError('pageName')}
         label="Page Name*"

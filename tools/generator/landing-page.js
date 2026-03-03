@@ -9,6 +9,7 @@ import { initIms } from 'da-fetch';
 import { LitElement, html, nothing } from 'da-lit';
 import { LIBS } from '../../scripts/scripts.js';
 import { createToast, TOAST_TYPES } from './toast/toast.js';
+import { STATUS as PATH_STATUS } from './path-input/path-input.js';
 import { getSource, saveSource, saveFile, getSheets, checkPath } from './da-utils.js';
 import {
   getStorageItem,
@@ -83,7 +84,7 @@ const FORM_SCHEMA = {
   gated: '',
   region: '',
   pageName: '',
-  pathStatus: 'empty',
+  pathStatus: PATH_STATUS.EMPTY,
   formTemplate: '',
   campaignId: '',
   marketoPOI: '',
@@ -156,7 +157,7 @@ class LandingPageForm extends LitElement {
     primaryProductOptions: { type: Array },
     industryOptions: { type: Array },
     isInitialized: { type: Boolean },
-    showForm: { type: Boolean },
+    confirmedUrl: { type: String },
     missingFields: { type: Object },
     authStatus: { type: String },
     previewUrl: { type: String },
@@ -171,7 +172,7 @@ class LandingPageForm extends LitElement {
     this.isInitialized = false;
     this.template = null;
     this.currentTemplateKey = null;
-    this.showForm = false;
+    this.confirmedUrl = '';
     this.missingFields = {};
     this.authStatus = null;
     this.previewUrl = '';
@@ -179,7 +180,7 @@ class LandingPageForm extends LitElement {
 
   resetForm() {
     this.form = { ...FORM_SCHEMA };
-    this.showForm = false;
+    this.confirmedUrl = '';
     this.missingFields = {};
     this.previewUrl = '';
     localStorage.removeItem(FORM_STORAGE_KEY);
@@ -196,14 +197,16 @@ class LandingPageForm extends LitElement {
         formToSave[field] = null;
       }
     });
-    setStorageItem(FORM_STORAGE_KEY, formToSave);
+    setStorageItem(FORM_STORAGE_KEY, { ...formToSave, confirmedUrl: this.confirmedUrl });
   }
 
   loadFormState() {
     try {
-      const savedForm = getStorageItem(FORM_STORAGE_KEY);
-      if (!savedForm) return;
-      this.form = { ...FORM_SCHEMA, ...savedForm };
+      const saved = getStorageItem(FORM_STORAGE_KEY);
+      if (!saved) return;
+      const { confirmedUrl = '', ...formRest } = saved;
+      this.confirmedUrl = confirmedUrl || '';
+      this.form = { ...FORM_SCHEMA, ...formRest };
     } catch {
       showToast(MESSAGES.DRAFT_LOAD_FAILED, TOAST_TYPES.ERROR);
     }
@@ -217,7 +220,6 @@ class LandingPageForm extends LitElement {
     this.loadFormState();
 
     if (!this.form.contentType || !this.form.gated || !this.form.region) this.form.pageName = '';
-    this.showForm = this.form.pageName !== '';
 
     if (!this.token) {
       this.authStatus = 'NOT_SIGNED_IN';
@@ -393,9 +395,9 @@ class LandingPageForm extends LitElement {
 
     if (CORE_FIELDS.includes(name) && name !== 'pageName') {
       if (CORE_FIELDS.some((field) => this.isEmpty(newForm[field]))) {
-        newForm.pathStatus = 'empty';
+        newForm.pathStatus = PATH_STATUS.EMPTY;
         newForm.url = '';
-        this.showForm = false;
+        this.confirmedUrl = '';
       }
     }
 
@@ -418,15 +420,19 @@ class LandingPageForm extends LitElement {
     const { status } = e.detail;
     const updates = { pathStatus: status };
 
-    if (status === 'empty') {
+    if (status === PATH_STATUS.EMPTY) {
       updates.pageName = '';
       updates.url = '';
-    } else if (status === 'stale') {
-      updates.url = '';
+      this.confirmedUrl = '';
     }
 
     this.form = { ...this.form, ...updates };
   };
+
+  isOwnPagePath(fullPath) {
+    const normalize = (url) => (url || '').replace(/\.html$/i, '');
+    return [this.form.url, this.confirmedUrl].some((url) => normalize(url) === fullPath);
+  }
 
   handleValidateRequest = async (e) => {
     const { fullPath, value } = e.detail;
@@ -435,13 +441,23 @@ class LandingPageForm extends LitElement {
       const exists = await checkPath(fullPath);
 
       if (exists) {
-        this.form = { ...this.form, pageName: value, pathStatus: 'conflict', url: '' };
-        showToast(MESSAGES.ADDRESS_IN_USE, TOAST_TYPES.WARNING, 5000);
+        if (this.isOwnPagePath(fullPath)) {
+          this.form = { ...this.form, pageName: value, pathStatus: PATH_STATUS.AVAILABLE, url: `${fullPath}.html` };
+        } else {
+          this.form = { ...this.form, pageName: value, pathStatus: PATH_STATUS.CONFLICT, url: '' };
+          this.confirmPending = false;
+        }
       } else {
-        this.form = { ...this.form, pageName: value, pathStatus: 'available', url: `${fullPath}.html` };
+        this.form = { ...this.form, pageName: value, pathStatus: PATH_STATUS.AVAILABLE, url: `${fullPath}.html` };
+      }
+      if (this.confirmPending && this.form.pathStatus === PATH_STATUS.AVAILABLE) {
+        this.confirmPending = false;
+        this.confirmedUrl = this.form.url;
+        this.saveFormState();
       }
     } catch {
-      this.form = { ...this.form, pathStatus: 'empty', url: '' };
+      this.form = { ...this.form, pathStatus: PATH_STATUS.EMPTY, url: '' };
+      this.confirmPending = false;
       showToast(MESSAGES.ADDRESS_CHECK_FAILED, TOAST_TYPES.ERROR);
     }
 
@@ -449,15 +465,27 @@ class LandingPageForm extends LitElement {
     this.requestUpdate();
   };
 
+  get showForm() {
+    const { contentType, gated, marqueeHeadline, pageName, pathStatus } = this.form;
+    const coreFilled = !this.isEmpty(contentType)
+      && !this.isEmpty(gated)
+      && !this.isEmpty(marqueeHeadline)
+      && !this.isEmpty(pageName);
+    return !!this.confirmedUrl && coreFilled && pathStatus !== PATH_STATUS.EMPTY;
+  }
+
   handleConfirm = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    const { contentType, gated, marqueeHeadline, pageName } = this.form;
-    if (this.isEmpty(contentType) || this.isEmpty(gated) || this.isEmpty(marqueeHeadline) || this.isEmpty(pageName)) {
-      showToast(MESSAGES.FILL_CORE_OPTIONS, TOAST_TYPES.ERROR, 5000);
-      return;
+    if (this.isEmpty(this.form.pageName)) {
+      this.confirmPending = true;
+      document.dispatchEvent(new CustomEvent('path-input-apply-suggestion', { detail: { name: 'pageName' } }));
     }
-    this.showForm = true;
+    if (this.form.pathStatus === PATH_STATUS.AVAILABLE) {
+      this.confirmedUrl = this.form.url;
+      this.saveFormState();
+    }
+    this.requestUpdate();
   };
 
   handleToast = (e) => {
