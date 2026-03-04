@@ -566,9 +566,10 @@ class LandingPageForm extends LitElement {
     if (!result) {
       throw new Error(`Failed to upload ${type}`);
     }
-    const url = result?.aem?.previewUrl ?? result?.source?.contentUrl ?? null;
-    const previewUnavailable = !result?.aem?.previewUrl && result?.source;
-    return { url, previewUnavailable };
+    const url = result?.source?.contentUrl ?? result?.aem?.previewUrl ?? result?.aem?.liveUrl ?? null;
+    const previewApiUrl = result?.aem?.previewUrl ?? result?.aem?.liveUrl ?? null;
+    const previewUnavailable = !previewApiUrl && result?.source;
+    return { url, previewApiUrl, previewUnavailable };
   }
 
   handleImageChange(e) {
@@ -588,15 +589,15 @@ class LandingPageForm extends LitElement {
 
     const path = computeAssetDirFromUrl(this.form.url);
     this.uploadAsset(file, path, 'image')
-      .then(async ({ url, previewUnavailable }) => {
+      .then(async ({ url, previewApiUrl, previewUnavailable }) => {
         if (!url) return;
-        this.form[name] = { url, name: file.name };
+        this.form[name] = { url, previewUrl: previewApiUrl, name: file.name };
         showToast(MESSAGES.IMAGE_UPLOADED, TOAST_TYPES.SUCCESS, 5000);
         if (previewUnavailable) {
           showToast(MESSAGES.IMAGE_UPLOAD_PREVIEW_UNAVAILABLE, TOAST_TYPES.ERROR, 5000);
           return;
         }
-        const previewOk = await this.previewAsset(url);
+        const previewOk = await this.previewAsset(previewApiUrl);
         if (!previewOk) {
           showToast(MESSAGES.IMAGE_PREVIEW_FAILED, TOAST_TYPES.ERROR, 5000);
         }
@@ -631,15 +632,15 @@ class LandingPageForm extends LitElement {
     showToast(MESSAGES.UPLOADING_PDF, TOAST_TYPES.INFO, 3000);
 
     try {
-      const { url, previewUnavailable } = await this.uploadAsset(file, path, 'file');
+      const { url, previewApiUrl, previewUnavailable } = await this.uploadAsset(file, path, 'file');
       if (!url) {
         throw new Error('Upload failed');
       }
 
-      this.form.pdfAsset = { url, name: file.name };
+      this.form.pdfAsset = { url, previewApiUrl, name: file.name };
       showToast(MESSAGES.PDF_UPLOADED, TOAST_TYPES.SUCCESS, 5000);
       if (!previewUnavailable) {
-        const previewOk = await this.previewAsset(url);
+        const previewOk = await this.previewAsset(previewApiUrl);
         if (!previewOk) {
           showToast(MESSAGES.PREVIEW_PDF_LINK_FAILED, TOAST_TYPES.ERROR, 5000);
         }
@@ -711,7 +712,8 @@ class LandingPageForm extends LitElement {
 
   async previewPdfAsset() {
     if (!this.form.pdfAsset?.url) return { success: true, skipped: true };
-    const success = await this.previewAsset(this.form.pdfAsset.url);
+    const assetUrl = this.form.pdfAsset.previewApiUrl ?? this.form.pdfAsset.url;
+    const success = await this.previewAsset(assetUrl);
     return { success };
   }
 

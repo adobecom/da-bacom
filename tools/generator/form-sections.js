@@ -140,7 +140,7 @@ export function renderMarquee(form, handleInput, handleImageChange, hasError = (
       <div class="image-dropzone-container">
         <label>Marquee Image*</label>
         <div class="dropzone-wrapper">
-          <image-dropzone name="marqueeImage" .file=${form.marqueeImage?.url?.startsWith('http') && getViewUrl ? { ...form.marqueeImage, url: getViewUrl(form.marqueeImage.url) } : form.marqueeImage} error=${hasError('marqueeImage')} @image-change=${handleImageChange}>
+          <image-dropzone name="marqueeImage" .file=${form.marqueeImage?.url?.startsWith('http') ? { ...form.marqueeImage, url: getViewUrl ? getViewUrl(form.marqueeImage.previewUrl ?? form.marqueeImage.url) : (form.marqueeImage.previewUrl ?? form.marqueeImage.url) } : form.marqueeImage} error=${hasError('marqueeImage')} @image-change=${handleImageChange}>
             <label slot="img-label">Upload Marquee Image</label>
           </image-dropzone>
         </div>
@@ -163,7 +163,7 @@ export function renderBody(form, handleInput, handleImageChange, hasError = () =
       <div class="image-dropzone-container">
         <label>Body Image</label>
         <div class="dropzone-wrapper">
-          <image-dropzone name="bodyImage" .file=${form.bodyImage?.url?.startsWith('http') && getViewUrl ? { ...form.bodyImage, url: getViewUrl(form.bodyImage.url) } : form.bodyImage} @image-change=${handleImageChange}>
+          <image-dropzone name="bodyImage" .file=${form.bodyImage?.url?.startsWith('http') ? { ...form.bodyImage, url: getViewUrl ? getViewUrl(form.bodyImage.previewUrl ?? form.bodyImage.url) : (form.bodyImage.previewUrl ?? form.bodyImage.url) } : form.bodyImage} @image-change=${handleImageChange}>
             <label slot="img-label">Upload Body Image</label>
           </image-dropzone>
         </div>
@@ -180,7 +180,7 @@ export function renderCard(form, handleInput, handleImageChange, hasError = () =
       <sl-input type="text" name="cardDescription" .value=${form.cardDescription} placeholder="Card Description*" label="Card Description*" error=${hasError('cardDescription')} @input=${handleInput}></sl-input>
       <div class="image-dropzone-container">
         <label>Card Image*</label>
-        <image-dropzone name="cardImage" .file=${form.cardImage?.url?.startsWith('http') && getViewUrl ? { ...form.cardImage, url: getViewUrl(form.cardImage.url) } : form.cardImage} error=${hasError('cardImage')} @image-change=${handleImageChange}>
+        <image-dropzone name="cardImage" .file=${form.cardImage?.url?.startsWith('http') ? { ...form.cardImage, url: getViewUrl ? getViewUrl(form.cardImage.previewUrl ?? form.cardImage.url) : (form.cardImage.previewUrl ?? form.cardImage.url) } : form.cardImage} error=${hasError('cardImage')} @image-change=${handleImageChange}>
           <label slot="img-label">Upload Card Image</label>
         </image-dropzone>
       </div>
