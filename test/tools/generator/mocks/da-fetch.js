@@ -145,7 +145,7 @@ daFetch.callsFake(async (url, options = {}) => {
     }
   }
 
-  if (method === 'PUT') {
+  if (method === 'PUT' || method === 'POST') {
     if (path.startsWith('/source/')) {
       if (path.includes('mock-image.jpg')) {
         return {

@@ -136,7 +136,7 @@
 
           expect(daFetch.called).to.be.true;
 
-          const uploadCalls = daFetch.getCalls().filter(call => call.args[1]?.method === 'PUT');
+          const uploadCalls = daFetch.getCalls().filter(call => call.args[1]?.method === 'POST' && call.args[0].includes('mock-image'));
           expect(uploadCalls.length).to.be.greaterThan(0);
           expect(uploadCalls[0].args[0]).to.include('mock-image.jpg');
         });

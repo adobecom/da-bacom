@@ -119,6 +119,7 @@ const MESSAGES = {
   FILL_CORE_OPTIONS: 'Please fill in all core options before confirming',
   IMAGE_UPLOADED: 'Image Uploaded',
   IMAGE_UPLOAD_FAILED: 'Image upload failed. Please try again.',
+  IMAGE_UPLOAD_PREVIEW_UNAVAILABLE: 'Image saved but preview link is not ready yet. Try Save & Preview in a moment.',
   IMAGE_PREVIEW_FAILED: 'Image uploaded, but could not be previewed. Please try again.',
   PDF_CLEARED: 'PDF cleared',
   UPLOAD_PDF_FILE: 'Please upload a PDF file',
@@ -562,10 +563,12 @@ class LandingPageForm extends LitElement {
 
   async uploadAsset(file, path, type = 'image') {
     const result = await saveFile(path, file);
-    const url = result?.aem?.previewUrl;
-    if (!url) throw new Error(`Failed to upload ${type}`);
-
-    return url;
+    if (!result) {
+      throw new Error(`Failed to upload ${type}`);
+    }
+    const url = result?.aem?.previewUrl ?? result?.source?.contentUrl ?? null;
+    const previewUnavailable = !result?.aem?.previewUrl && result?.source;
+    return { url, previewUnavailable };
   }
 
   handleImageChange(e) {
@@ -585,10 +588,14 @@ class LandingPageForm extends LitElement {
 
     const path = computeAssetDirFromUrl(this.form.url);
     this.uploadAsset(file, path, 'image')
-      .then(async (url) => {
+      .then(async ({ url, previewUnavailable }) => {
         if (!url) return;
         this.form[name] = { url, name: file.name };
         showToast(MESSAGES.IMAGE_UPLOADED, TOAST_TYPES.SUCCESS, 5000);
+        if (previewUnavailable) {
+          showToast(MESSAGES.IMAGE_UPLOAD_PREVIEW_UNAVAILABLE, TOAST_TYPES.ERROR, 5000);
+          return;
+        }
         const previewOk = await this.previewAsset(url);
         if (!previewOk) {
           showToast(MESSAGES.IMAGE_PREVIEW_FAILED, TOAST_TYPES.ERROR, 5000);
@@ -624,14 +631,19 @@ class LandingPageForm extends LitElement {
     showToast(MESSAGES.UPLOADING_PDF, TOAST_TYPES.INFO, 3000);
 
     try {
-      const url = await this.uploadAsset(file, path, 'file');
+      const { url, previewUnavailable } = await this.uploadAsset(file, path, 'file');
       if (!url) {
         throw new Error('Upload failed');
       }
 
       this.form.pdfAsset = { url, name: file.name };
       showToast(MESSAGES.PDF_UPLOADED, TOAST_TYPES.SUCCESS, 5000);
-      await this.previewAsset(url);
+      if (!previewUnavailable) {
+        const previewOk = await this.previewAsset(url);
+        if (!previewOk) {
+          showToast(MESSAGES.PREVIEW_PDF_LINK_FAILED, TOAST_TYPES.ERROR, 5000);
+        }
+      }
     } catch (error) {
       showToast(MESSAGES.PDF_UPLOAD_FAILED, TOAST_TYPES.ERROR);
       input.value = '';
