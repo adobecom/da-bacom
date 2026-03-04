@@ -30,9 +30,11 @@
     import DA_SDK from 'da-sdk';
     import { daFetch, initIms } from './mocks/da-fetch.js';
     import { mockFetch, restoreFetch } from './mocks/fetch.js';
-    import '../../../tools/generator/landing-page.js';
 
     const ogLana = window.lana;
+
+    mockFetch();
+    await import('../../../tools/generator/landing-page.js');
 
     runTests(() => {
       describe('LandingPageForm', () => {
@@ -244,8 +246,9 @@
             await tick(500);
           }
 
-          const fetchCalls = window.fetch.getCalls();
-          const previewCall = fetchCalls.find(call => call.args[0].includes('/resources/guide/test-page'));
+          const previewCall = daFetch.getCalls().find(
+            (call) => call.args[0].includes('/resources/guide/test-page') && call.args[1]?.method === 'POST'
+          );
           expect(previewCall).to.exist;
           expect(previewCall.args[1]?.method).to.equal('POST');
 

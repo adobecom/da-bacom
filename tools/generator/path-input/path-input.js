@@ -63,7 +63,7 @@ class PathInput extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
-    this.shadowRoot.append(...icons.map((icon) => icon.cloneNode(true)));
+    this.shadowRoot.append(...icons.filter(Boolean).map((icon) => icon.cloneNode(true)));
     this._internals.setFormValue(this.value || '');
     this._previousPrefix = this.prefix;
     this._boundHandleApplySuggestion = this._handleApplySuggestionEvent.bind(this);

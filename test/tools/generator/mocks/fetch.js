@@ -7,6 +7,10 @@ export const mockFetch = () => {
   window.fetch.callsFake(async (url, options = {}) => {
     const method = options.method || 'GET';
 
+    if (url.includes('business.stage.adobe.com') && method === 'HEAD') {
+      return { ok: true };
+    }
+
     if (url.includes('admin.hlx.page/preview') && method === 'POST') {
       return {
         ok: true,

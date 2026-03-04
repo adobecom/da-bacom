@@ -119,6 +119,7 @@ const MESSAGES = {
   FILL_CORE_OPTIONS: 'Please fill in all core options before confirming',
   IMAGE_UPLOADED: 'Image Uploaded',
   IMAGE_UPLOAD_FAILED: 'Image upload failed. Please try again.',
+  IMAGE_PREVIEW_FAILED: 'Image uploaded, but could not be previewed. Please try again.',
   PDF_CLEARED: 'PDF cleared',
   UPLOAD_PDF_FILE: 'Please upload a PDF file',
   UPLOADING_PDF: 'Uploading PDF...',
@@ -129,8 +130,8 @@ const MESSAGES = {
   SAVE_PAGE_FAILED: "We couldn't save your page. Please try again.",
   PAGE_SAVED: 'Page saved',
   UPDATING_PREVIEW: 'Updating preview...',
-  PREVIEW_OPEN_FAILED: "We couldn't open the preview. Use the link below to view your page.",
-  PREVIEW_PDF_LINK_FAILED: "Preview was updated, but we couldn't refresh the PDF link.",
+  PREVIEW_OPEN_FAILED: 'Preview failed. Your page was saved. Check that you\'re on the VPN and signed in, then try Save & Preview again or use the link below.',
+  PREVIEW_PDF_LINK_FAILED: 'Page preview is ready, but the PDF asset could not be previewed. Please check the PDF file and try again.',
   PREVIEW_UPDATED: 'Preview updated',
 };
 
@@ -588,7 +589,10 @@ class LandingPageForm extends LitElement {
         if (!url) return;
         this.form[name] = { url, name: file.name };
         showToast(MESSAGES.IMAGE_UPLOADED, TOAST_TYPES.SUCCESS, 5000);
-        await this.previewAsset(url);
+        const previewOk = await this.previewAsset(url);
+        if (!previewOk) {
+          showToast(MESSAGES.IMAGE_PREVIEW_FAILED, TOAST_TYPES.ERROR, 5000);
+        }
       }).catch(() => {
         showToast(MESSAGES.IMAGE_UPLOAD_FAILED, TOAST_TYPES.ERROR);
       }).finally(() => {
@@ -657,15 +661,20 @@ class LandingPageForm extends LitElement {
   async previewPage() {
     const path = this.form.url.replace('.html', '');
     const previewApi = `${ADMIN_URL}/preview/adobecom/da-bacom/main${path}`;
-    const previewApiResponse = await daFetch(previewApi, { method: 'POST' });
-    if (!previewApiResponse.ok) {
+    try {
+      const previewApiResponse = await daFetch(previewApi, { method: 'POST' });
+      if (!previewApiResponse?.ok) {
+        return { success: false };
+      }
+      const previewApiData = await previewApiResponse.json();
+      const url = previewApiData?.preview?.url;
+      if (previewApiData?.preview?.status === 200 && url) {
+        return { success: true, url: toBusinessStageUrl(url) };
+      }
+      return { success: false };
+    } catch {
       return { success: false };
     }
-    const previewApiData = await previewApiResponse.json();
-    if (previewApiData?.preview?.status === 200) {
-      return { success: true, url: toBusinessStageUrl(previewApiData.preview.url) };
-    }
-    return { success: false };
   }
 
   async previewAsset(assetUrl) {
@@ -678,10 +687,14 @@ class LandingPageForm extends LitElement {
     }
     path = path.startsWith('/') ? path : `/${path}`;
     const previewApi = `${ADMIN_URL}/preview/adobecom/da-bacom/main${path}`;
-    const resp = await daFetch(previewApi, { method: 'POST' });
-    if (!resp.ok) return false;
-    const data = await resp.json();
-    return data?.preview?.status === 200;
+    try {
+      const resp = await daFetch(previewApi, { method: 'POST' });
+      if (!resp?.ok) return false;
+      const data = await resp.json();
+      return data?.preview?.status === 200;
+    } catch {
+      return false;
+    }
   }
 
   async previewPdfAsset() {
