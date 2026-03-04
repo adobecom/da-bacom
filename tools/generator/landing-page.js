@@ -149,6 +149,12 @@ function toBusinessStageUrl(url) {
     .replace(AEM_LIVE_HOST, BUSINESS_STAGE_DOMAIN);
 }
 
+function withCacheBust(url) {
+  if (!url || typeof url !== 'string') return url;
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}_t=${Date.now()}`;
+}
+
 async function hasPreviewPermission() {
   const statusUrl = `${ADMIN_URL}/status/adobecom/da-bacom/main/`;
   try {
@@ -759,7 +765,7 @@ class LandingPageForm extends LitElement {
     }
     if (pageResult.success && pdfResult.success) {
       showToast(MESSAGES.PREVIEW_UPDATED, TOAST_TYPES.SUCCESS, 5000);
-      window.open(this.previewUrl, '_blank');
+      window.open(withCacheBust(this.previewUrl), '_blank');
     }
   }
 
@@ -852,7 +858,7 @@ class LandingPageForm extends LitElement {
             </div>
             ${this.previewUrl ? html`
             <div class="preview-success">
-              <p>Page saved. <a href="${this.previewUrl}" target="_blank" rel="noopener">Open your preview</a></p>
+              <p>Page saved. <a href="${withCacheBust(this.previewUrl)}" target="_blank" rel="noopener">Open your preview</a></p>
             </div>
             ` : nothing}
           ` : html`
