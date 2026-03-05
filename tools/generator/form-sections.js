@@ -129,7 +129,7 @@ export function renderForm(form, handleInput, { marketoPOIOptions, hasError = ()
   `;
 }
 
-export function renderMarquee(form, handleInput, handleImageChange, hasError = () => '') {
+export function renderMarquee(form, handleInput, handleImageChange, hasError = () => '', getViewUrl = null) {
   return html`
     <div class="form-row">
       <h2>Marquee</h2>
@@ -140,7 +140,7 @@ export function renderMarquee(form, handleInput, handleImageChange, hasError = (
       <div class="image-dropzone-container">
         <label>Marquee Image*</label>
         <div class="dropzone-wrapper">
-          <image-dropzone name="marqueeImage" .file=${form.marqueeImage} error=${hasError('marqueeImage')} @image-change=${handleImageChange}>
+          <image-dropzone name="marqueeImage" .file=${form.marqueeImage?.url?.startsWith('http') ? { ...form.marqueeImage, url: getViewUrl ? getViewUrl(form.marqueeImage.previewUrl ?? form.marqueeImage.url) : (form.marqueeImage.previewUrl ?? form.marqueeImage.url) } : form.marqueeImage} error=${hasError('marqueeImage')} @image-change=${handleImageChange}>
             <label slot="img-label">Upload Marquee Image</label>
           </image-dropzone>
         </div>
@@ -149,7 +149,7 @@ export function renderMarquee(form, handleInput, handleImageChange, hasError = (
   `;
 }
 
-export function renderBody(form, handleInput, handleImageChange, hasError = () => '') {
+export function renderBody(form, handleInput, handleImageChange, hasError = () => '', getViewUrl = null) {
   return html`
     <div class="form-row">
       <h2>Body</h2>
@@ -163,7 +163,7 @@ export function renderBody(form, handleInput, handleImageChange, hasError = () =
       <div class="image-dropzone-container">
         <label>Body Image</label>
         <div class="dropzone-wrapper">
-          <image-dropzone name="bodyImage" .file=${form.bodyImage} @image-change=${handleImageChange}>
+          <image-dropzone name="bodyImage" .file=${form.bodyImage?.url?.startsWith('http') ? { ...form.bodyImage, url: getViewUrl ? getViewUrl(form.bodyImage.previewUrl ?? form.bodyImage.url) : (form.bodyImage.previewUrl ?? form.bodyImage.url) } : form.bodyImage} @image-change=${handleImageChange}>
             <label slot="img-label">Upload Body Image</label>
           </image-dropzone>
         </div>
@@ -172,7 +172,7 @@ export function renderBody(form, handleInput, handleImageChange, hasError = () =
   `;
 }
 
-export function renderCard(form, handleInput, handleImageChange, hasError = () => '') {
+export function renderCard(form, handleInput, handleImageChange, hasError = () => '', getViewUrl = null) {
   return html`
     <div class="form-row">
       <h2>Card</h2>
@@ -180,7 +180,7 @@ export function renderCard(form, handleInput, handleImageChange, hasError = () =
       <sl-input type="text" name="cardDescription" .value=${form.cardDescription} placeholder="Card Description*" label="Card Description*" error=${hasError('cardDescription')} @input=${handleInput}></sl-input>
       <div class="image-dropzone-container">
         <label>Card Image*</label>
-        <image-dropzone name="cardImage" .file=${form.cardImage} error=${hasError('cardImage')} @image-change=${handleImageChange}>
+        <image-dropzone name="cardImage" .file=${form.cardImage?.url?.startsWith('http') ? { ...form.cardImage, url: getViewUrl ? getViewUrl(form.cardImage.previewUrl ?? form.cardImage.url) : (form.cardImage.previewUrl ?? form.cardImage.url) } : form.cardImage} error=${hasError('cardImage')} @image-change=${handleImageChange}>
           <label slot="img-label">Upload Card Image</label>
         </image-dropzone>
       </div>
@@ -218,8 +218,9 @@ export function renderExperienceFragment(form, handleInput, { fragmentOptions },
   `;
 }
 
-export function renderAssetDelivery(form, handleInput, handlePdfChange, hasError = () => '') {
+export function renderAssetDelivery(form, handleInput, handlePdfChange, hasError = () => '', getViewUrl = null) {
   const pdfError = hasError('pdfAsset');
+  const pdfViewUrl = form.pdfAsset?.url && getViewUrl ? getViewUrl(form.pdfAsset.url) : form.pdfAsset?.url;
   return html`
     <div class="form-row">
       <h2>Asset Delivery</h2>
@@ -234,7 +235,7 @@ export function renderAssetDelivery(form, handleInput, handlePdfChange, hasError
             <p class="file-info">
               <span>${form.pdfAsset.name}</span>
               <span>
-                <a href="${form.pdfAsset.url}" target="_blank" rel="noopener noreferrer">View</a>
+                <a href="${pdfViewUrl}" target="_blank" rel="noopener noreferrer">View</a>
                 <a href="#" @click=${handlePdfChange}>Clear</a>
               </span>
             </p>

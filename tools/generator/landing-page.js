@@ -5,7 +5,7 @@
 import 'components';
 import getStyle from 'styles';
 import DA_SDK from 'da-sdk';
-import { initIms } from 'da-fetch';
+import { initIms, daFetch } from 'da-fetch';
 import { LitElement, html, nothing } from 'da-lit';
 import { LIBS } from '../../scripts/scripts.js';
 import { createToast, TOAST_TYPES } from './toast/toast.js';
@@ -111,12 +111,16 @@ const FORM_SCHEMA = {
 const MESSAGES = {
   NOT_SIGNED_IN: 'Please sign in to use the Landing Page Builder.',
   WRONG_ORG: 'Please make sure you are in the Skyline org to use the Landing Page Builder.',
+  NO_PREVIEW_PERMISSION: "You don't have preview permission for this site. Contact your admin to get access.",
+  NO_BUSINESS_STAGE_ACCESS: 'Cannot reach business.stage.adobe.com. Connect to the VPN to view previews.',
   DRAFT_LOAD_FAILED: "We couldn't load your draft. You can start a new page.",
   ADDRESS_IN_USE: 'This page address is already in use. Please choose a different one.',
   ADDRESS_CHECK_FAILED: "We couldn't check if this address is available. Please try again.",
   FILL_CORE_OPTIONS: 'Please fill in all core options before confirming',
   IMAGE_UPLOADED: 'Image Uploaded',
   IMAGE_UPLOAD_FAILED: 'Image upload failed. Please try again.',
+  IMAGE_UPLOAD_PREVIEW_UNAVAILABLE: 'Image saved but preview link is not ready yet. Try Save & Preview in a moment.',
+  IMAGE_PREVIEW_FAILED: 'Image uploaded, but could not be previewed. Please try again.',
   PDF_CLEARED: 'PDF cleared',
   UPLOAD_PDF_FILE: 'Please upload a PDF file',
   UPLOADING_PDF: 'Uploading PDF...',
@@ -127,12 +131,52 @@ const MESSAGES = {
   SAVE_PAGE_FAILED: "We couldn't save your page. Please try again.",
   PAGE_SAVED: 'Page saved',
   UPDATING_PREVIEW: 'Updating preview...',
-  PREVIEW_OPEN_FAILED: "We couldn't open the preview. Use the link below to view your page.",
-  PREVIEW_PDF_LINK_FAILED: "Preview was updated, but we couldn't refresh the PDF link.",
+  PREVIEW_OPEN_FAILED: 'Preview failed. Your page was saved. Check that you\'re on the VPN and signed in, then try Save & Preview again or use the link below.',
+  PREVIEW_PDF_LINK_FAILED: 'Page preview is ready, but the PDF asset could not be previewed. Please check the PDF file and try again.',
   PREVIEW_UPDATED: 'Preview updated',
 };
 
 const delay = (milliseconds) => new Promise((resolve) => { setTimeout(resolve, milliseconds); });
+
+const BUSINESS_STAGE_DOMAIN = 'business.stage.adobe.com';
+const AEM_PAGE_HOST = 'main--da-bacom--adobecom.aem.page';
+const AEM_LIVE_HOST = 'main--da-bacom--adobecom.aem.live';
+
+function toBusinessStageUrl(url) {
+  if (!url || typeof url !== 'string') return url;
+  return url
+    .replace(AEM_PAGE_HOST, BUSINESS_STAGE_DOMAIN)
+    .replace(AEM_LIVE_HOST, BUSINESS_STAGE_DOMAIN);
+}
+
+function withCacheBust(url) {
+  if (!url || typeof url !== 'string') return url;
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}_t=${Date.now()}`;
+}
+
+async function hasPreviewPermission() {
+  const statusUrl = `${ADMIN_URL}/status/adobecom/da-bacom/main/`;
+  try {
+    const res = await daFetch(statusUrl);
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function hasBusinessStageAccess() {
+  const url = `https://${BUSINESS_STAGE_DOMAIN}/`;
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const res = await fetch(url, { method: 'HEAD', signal: controller.signal });
+    clearTimeout(timeoutId);
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
 
 function showToast(message, type, timeout) {
   const detail = { type: type ?? TOAST_TYPES.INFO, message };
@@ -252,6 +296,18 @@ class LandingPageForm extends LitElement {
       this.primaryProductOptions = caasCollections?.primaryProducts ?? OPTIONS_ERROR;
       this.industryOptions = caasCollections?.industries ?? OPTIONS_ERROR;
       this.templateRules = templateRules ?? null;
+
+      if (!(await hasPreviewPermission())) {
+        this.authStatus = 'NO_PREVIEW_PERMISSION';
+        this.requestUpdate();
+        return;
+      }
+
+      if (!(await hasBusinessStageAccess())) {
+        this.authStatus = 'NO_BUSINESS_STAGE_ACCESS';
+        this.requestUpdate();
+        return;
+      }
 
       this.authStatus = 'ok';
       this.isInitialized = true;
@@ -513,10 +569,13 @@ class LandingPageForm extends LitElement {
 
   async uploadAsset(file, path, type = 'image') {
     const result = await saveFile(path, file);
-    const url = result?.aem?.previewUrl;
-    if (!url) throw new Error(`Failed to upload ${type}`);
-
-    return url;
+    if (!result) {
+      throw new Error(`Failed to upload ${type}`);
+    }
+    const url = result?.source?.contentUrl ?? result?.aem?.previewUrl ?? result?.aem?.liveUrl ?? null;
+    const previewApiUrl = result?.aem?.previewUrl ?? result?.aem?.liveUrl ?? null;
+    const previewUnavailable = !previewApiUrl && result?.source;
+    return { url, previewApiUrl, previewUnavailable };
   }
 
   handleImageChange(e) {
@@ -536,11 +595,18 @@ class LandingPageForm extends LitElement {
 
     const path = computeAssetDirFromUrl(this.form.url);
     this.uploadAsset(file, path, 'image')
-      .then(async (url) => {
+      .then(async ({ url, previewApiUrl, previewUnavailable }) => {
         if (!url) return;
-        this.form[name] = { url, name: file.name };
+        this.form[name] = { url, previewUrl: previewApiUrl, name: file.name };
         showToast(MESSAGES.IMAGE_UPLOADED, TOAST_TYPES.SUCCESS, 5000);
-        await this.previewAsset(url);
+        if (previewUnavailable) {
+          showToast(MESSAGES.IMAGE_UPLOAD_PREVIEW_UNAVAILABLE, TOAST_TYPES.ERROR, 5000);
+          return;
+        }
+        const previewOk = await this.previewAsset(previewApiUrl);
+        if (!previewOk) {
+          showToast(MESSAGES.IMAGE_PREVIEW_FAILED, TOAST_TYPES.ERROR, 5000);
+        }
       }).catch(() => {
         showToast(MESSAGES.IMAGE_UPLOAD_FAILED, TOAST_TYPES.ERROR);
       }).finally(() => {
@@ -572,14 +638,19 @@ class LandingPageForm extends LitElement {
     showToast(MESSAGES.UPLOADING_PDF, TOAST_TYPES.INFO, 3000);
 
     try {
-      const url = await this.uploadAsset(file, path, 'file');
+      const { url, previewApiUrl, previewUnavailable } = await this.uploadAsset(file, path, 'file');
       if (!url) {
         throw new Error('Upload failed');
       }
 
-      this.form.pdfAsset = { url, name: file.name };
+      this.form.pdfAsset = { url, previewApiUrl, name: file.name };
       showToast(MESSAGES.PDF_UPLOADED, TOAST_TYPES.SUCCESS, 5000);
-      await this.previewAsset(url);
+      if (!previewUnavailable) {
+        const previewOk = await this.previewAsset(previewApiUrl);
+        if (!previewOk) {
+          showToast(MESSAGES.PREVIEW_PDF_LINK_FAILED, TOAST_TYPES.ERROR, 5000);
+        }
+      }
     } catch (error) {
       showToast(MESSAGES.PDF_UPLOAD_FAILED, TOAST_TYPES.ERROR);
       input.value = '';
@@ -609,16 +680,20 @@ class LandingPageForm extends LitElement {
   async previewPage() {
     const path = this.form.url.replace('.html', '');
     const previewApi = `${ADMIN_URL}/preview/adobecom/da-bacom/main${path}`;
-    const previewApiResponse = await fetch(previewApi, { method: 'POST' });
-    if (!previewApiResponse.ok) {
+    try {
+      const previewApiResponse = await daFetch(previewApi, { method: 'POST' });
+      if (!previewApiResponse?.ok) {
+        return { success: false };
+      }
+      const previewApiData = await previewApiResponse.json();
+      const url = previewApiData?.preview?.url;
+      if (previewApiData?.preview?.status === 200 && url) {
+        return { success: true, url: toBusinessStageUrl(url) };
+      }
+      return { success: false };
+    } catch {
       return { success: false };
     }
-    const previewApiData = await previewApiResponse.json();
-    if (previewApiData?.preview?.status === 200) {
-      const businessStageUrl = previewApiData.preview.url.replace('main--da-bacom--adobecom.aem.page', 'business.stage.adobe.com');
-      return { success: true, url: businessStageUrl };
-    }
-    return { success: false };
   }
 
   async previewAsset(assetUrl) {
@@ -631,15 +706,20 @@ class LandingPageForm extends LitElement {
     }
     path = path.startsWith('/') ? path : `/${path}`;
     const previewApi = `${ADMIN_URL}/preview/adobecom/da-bacom/main${path}`;
-    const resp = await fetch(previewApi, { method: 'POST' });
-    if (!resp.ok) return false;
-    const data = await resp.json();
-    return data?.preview?.status === 200;
+    try {
+      const resp = await daFetch(previewApi, { method: 'POST' });
+      if (!resp?.ok) return false;
+      const data = await resp.json();
+      return data?.preview?.status === 200;
+    } catch {
+      return false;
+    }
   }
 
   async previewPdfAsset() {
     if (!this.form.pdfAsset?.url) return { success: true, skipped: true };
-    const success = await this.previewAsset(this.form.pdfAsset.url);
+    const assetUrl = this.form.pdfAsset.previewApiUrl ?? this.form.pdfAsset.url;
+    const success = await this.previewAsset(assetUrl);
     return { success };
   }
 
@@ -685,7 +765,7 @@ class LandingPageForm extends LitElement {
     }
     if (pageResult.success && pdfResult.success) {
       showToast(MESSAGES.PREVIEW_UPDATED, TOAST_TYPES.SUCCESS, 5000);
-      window.open(this.previewUrl, '_blank');
+      window.open(withCacheBust(this.previewUrl), '_blank');
     }
   }
 
@@ -761,13 +841,13 @@ class LandingPageForm extends LitElement {
           ${renderContentType(this.form, this.handleInput, this.options?.regions, { isLocked: this.showForm && !DEBUG, hasError, onValidateRequest: this.handleValidateRequest, onStatusChange: this.handlePathStatusChange })}
           ${this.showForm ? html`
             ${renderForm(this.form, this.handleInput, { marketoPOIOptions: this.marketoPOIOptions, hasError })}
-            ${renderMarquee(this.form, this.handleInput, this.handleImageChange.bind(this), hasError)}
-            ${renderBody(this.form, this.handleInput, this.handleImageChange.bind(this), hasError)}
-            ${renderCard(this.form, this.handleInput, this.handleImageChange.bind(this), hasError)}
+            ${renderMarquee(this.form, this.handleInput, this.handleImageChange.bind(this), hasError, toBusinessStageUrl)}
+            ${renderBody(this.form, this.handleInput, this.handleImageChange.bind(this), hasError, toBusinessStageUrl)}
+            ${renderCard(this.form, this.handleInput, this.handleImageChange.bind(this), hasError, toBusinessStageUrl)}
             ${renderCaas(this.form, this.handleInput, { primaryProductOptions: this.primaryProductOptions, industryOptions: this.industryOptions })}
             ${renderSeo(this.form, this.handleInput, { primaryProductNameOptions: this.options?.primaryProductName }, hasError)}
             ${renderExperienceFragment(this.form, this.handleInput, { fragmentOptions: this.options?.experienceFragment }, hasError)}
-            ${renderAssetDelivery(this.form, this.handleInput, this.handlePdfChange.bind(this), hasError)}
+            ${renderAssetDelivery(this.form, this.handleInput, this.handlePdfChange.bind(this), hasError, toBusinessStageUrl)}
             <div class="submit-row">
               <sl-button class="reset primary" @click=${this.resetForm}>
                 Reset Form
@@ -778,7 +858,7 @@ class LandingPageForm extends LitElement {
             </div>
             ${this.previewUrl ? html`
             <div class="preview-success">
-              <p>Page saved. <a href="${this.previewUrl}" target="_blank" rel="noopener">Open your preview</a></p>
+              <p>Page saved. <a href="${withCacheBust(this.previewUrl)}" target="_blank" rel="noopener">Open your preview</a></p>
             </div>
             ` : nothing}
           ` : html`

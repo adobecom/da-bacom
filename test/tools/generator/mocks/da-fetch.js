@@ -103,6 +103,17 @@ daFetch.callsFake(async (url, options = {}) => {
   const method = options.method || 'GET';
   const path = new URL(url).pathname;
 
+  if (url.includes('admin.hlx.page') && url.includes('/status/')) {
+    return { ok: true };
+  }
+
+  if (url.includes('admin.hlx.page') && url.includes('/preview/') && method === 'POST') {
+    return {
+      ok: true,
+      json: async () => ({ preview: { status: 200, url: 'https://main--da-bacom--adobecom.aem.page/resources/guide/test-page' } }),
+    };
+  }
+
   if (method === 'GET') {
     if (path.startsWith('/list/')) {
       return { ok: true, json: async () => ({ sources: [] }) };
@@ -134,7 +145,7 @@ daFetch.callsFake(async (url, options = {}) => {
     }
   }
 
-  if (method === 'PUT') {
+  if (method === 'PUT' || method === 'POST') {
     if (path.startsWith('/source/')) {
       if (path.includes('mock-image.jpg')) {
         return {
