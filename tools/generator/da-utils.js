@@ -3,9 +3,7 @@
 /* eslint-disable import/no-unresolved */
 import { daFetch, replaceHtml } from 'da-fetch';
 import { DA_ORIGIN } from 'constants';
-
-const ORG = 'adobecom';
-const REPO = 'da-bacom';
+import { ORG, REPO } from './paths-config.js';
 
 function getDaPath(path, isHtml) {
   const basePath = path.replace(/\.html$/, '');
