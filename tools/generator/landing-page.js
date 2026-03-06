@@ -150,8 +150,10 @@ const delay = (milliseconds) => new Promise((resolve) => { setTimeout(resolve, m
 async function hasPreviewPermission() {
   try {
     const res = await daFetch(ADMIN_STATUS_URL);
+    if (DEBUG) console.log('[LPB][Auth] hasPreviewPermission:', res.ok, ADMIN_STATUS_URL);
     return res.ok;
-  } catch {
+  } catch (err) {
+    if (DEBUG) console.error('[Auth] hasPreviewPermission failed:', err);
     return false;
   }
 }
@@ -162,8 +164,10 @@ async function hasBusinessStageAccess() {
     const timeoutId = setTimeout(() => controller.abort(), 5000);
     const res = await fetch(`${STAGE_ORIGIN}/`, { method: 'HEAD', signal: controller.signal });
     clearTimeout(timeoutId);
+    if (DEBUG) console.log('[LPB][Auth] hasBusinessStageAccess:', res.ok, STAGE_ORIGIN);
     return res.ok;
-  } catch {
+  } catch (err) {
+    if (DEBUG) console.error('[Auth] hasBusinessStageAccess failed:', err);
     return false;
   }
 }
@@ -248,6 +252,7 @@ class LandingPageForm extends LitElement {
 
   async connectedCallback() {
     super.connectedCallback();
+    if (DEBUG) console.clear();
     document.addEventListener('show-toast', this.handleToast);
     const token = await initIms();
     this.token = token?.accessToken?.token;
@@ -256,23 +261,36 @@ class LandingPageForm extends LitElement {
     if (!this.form.contentType || !this.form.gated || !this.form.region) this.form.pageName = '';
 
     if (!this.token) {
+      if (DEBUG) console.error('[Auth] NOT_SIGNED_IN: no token from initIms()');
       this.authStatus = 'NOT_SIGNED_IN';
       this.requestUpdate();
       return;
     }
 
     try {
-      const [
-        options,
+      const sheetPaths = [
+        `${DATA_PATH}${DATA_SOURCES.PAGE_OPTIONS}`,
+        `${DATA_PATH}${DATA_SOURCES.MARKETO_POI}`,
+        `${DATA_PATH}${DATA_SOURCES.CAAS_COLLECTIONS}`,
+        `${DATA_PATH}${DATA_SOURCES.MARKETO_TEMPLATE_RULES}`,
+      ];
+      if (DEBUG) console.log('[LPB][Request] GET sheets:', sheetPaths);
+      const [options,
         marketoPOIData,
         caasCollections,
         templateRules,
       ] = await Promise.all([
-        getSheets(`${DATA_PATH}${DATA_SOURCES.PAGE_OPTIONS}`),
-        getSheets(`${DATA_PATH}${DATA_SOURCES.MARKETO_POI}`),
-        getSheets(`${DATA_PATH}${DATA_SOURCES.CAAS_COLLECTIONS}`),
-        getSheets(`${DATA_PATH}${DATA_SOURCES.MARKETO_TEMPLATE_RULES}`),
+        getSheets(sheetPaths[0]),
+        getSheets(sheetPaths[1]),
+        getSheets(sheetPaths[2]),
+        getSheets(sheetPaths[3]),
       ]);
+      if (DEBUG) {
+        console.log(
+          '[LPB][Response] sheets:',
+          { options: options != null, marketoPOI: marketoPOIData != null, caas: caasCollections != null, templateRules: templateRules != null },
+        );
+      }
 
       if (options == null) {
         if (DEBUG) console.error('Options load failed: PAGE_OPTIONS returned null (e.g. 403 Forbidden)');
@@ -288,17 +306,20 @@ class LandingPageForm extends LitElement {
       this.templateRules = templateRules ?? null;
 
       if (!(await hasPreviewPermission())) {
+        if (DEBUG) console.error('[Auth] NO_PREVIEW_PERMISSION: admin status check failed');
         this.authStatus = 'NO_PREVIEW_PERMISSION';
         this.requestUpdate();
         return;
       }
 
       if (!(await hasBusinessStageAccess())) {
+        if (DEBUG) console.error('[Auth] NO_BUSINESS_STAGE_ACCESS: stage origin unreachable (VPN?)');
         this.authStatus = 'NO_BUSINESS_STAGE_ACCESS';
         this.requestUpdate();
         return;
       }
 
+      if (DEBUG) console.log('[LPB][Auth] ok: initialized');
       this.authStatus = 'ok';
       this.isInitialized = true;
       this.requestUpdate();
@@ -336,7 +357,9 @@ class LandingPageForm extends LitElement {
     }
 
     this.currentTemplateKey = templateKey;
+    if (DEBUG) console.log('[LPB][Request] GET template:', templatePath);
     this.template = await getSource(templatePath);
+    if (DEBUG) console.log('[LPB][Response] template:', this.template ? 'ok' : 'null', templatePath);
     this.templateHTML = this.template?.body?.innerHTML;
     return this.templateHTML;
   }
@@ -559,8 +582,10 @@ class LandingPageForm extends LitElement {
   }
 
   async uploadAsset(file, path, type = 'image') {
+    if (DEBUG) console.log('[LPB][Request] POST asset:', type, path + file.name, file.name);
     const result = await saveFile(path, file);
     if (!result) {
+      if (DEBUG) console.error('[Response] POST asset failed:', type, path + file.name);
       throw new Error(`Failed to upload ${type}`);
     }
     const rawUrl = result?.source?.contentUrl ?? result?.aem?.previewUrl ?? result?.aem?.liveUrl ?? null;
@@ -568,6 +593,7 @@ class LandingPageForm extends LitElement {
     const previewUnavailable = !rawPreviewUrl && result?.source;
     const assetPath = rawUrl ? getRepoRelativePath(getPathFromUrl(rawUrl)) : null;
     const assetPreviewPath = rawPreviewUrl ? getRepoRelativePath(getPathFromUrl(rawPreviewUrl)) : null;
+    if (DEBUG) console.log('[LPB][Response] POST asset:', type, { path: assetPath, previewPath: assetPreviewPath, previewUnavailable });
     return { path: assetPath, previewPath: assetPreviewPath, previewUnavailable };
   }
 
@@ -584,9 +610,11 @@ class LandingPageForm extends LitElement {
     if (this.missingFields[name]) this.missingFields[name] = false;
 
     const assetDirPath = computeAssetDirFromUrl(this.form.url);
+    if (DEBUG) console.log('[LPB][Image] upload start:', name, file.name, assetDirPath);
     this.uploadAsset(file, assetDirPath, 'image')
       .then(async ({ path, previewPath, previewUnavailable }) => {
         if (!path) return;
+        if (DEBUG) console.log('[LPB][Image] upload response:', name, { path, previewPath, previewUnavailable });
         this.form[name] = { path, previewPath, name: file.name };
         showToast(MESSAGES.IMAGE_UPLOADED, TOAST_TYPES.SUCCESS, 5000);
         if (previewUnavailable) {
@@ -594,6 +622,7 @@ class LandingPageForm extends LitElement {
           return;
         }
         const previewOk = await this.previewAsset(previewPath);
+        if (DEBUG) console.log('[LPB][Image] preview:', name, previewPath, previewOk);
         if (!previewOk) {
           showToast(MESSAGES.IMAGE_PREVIEW_FAILED, TOAST_TYPES.ERROR, 5000);
         }
@@ -627,10 +656,12 @@ class LandingPageForm extends LitElement {
 
     if (this.missingFields.pdfAsset) this.missingFields.pdfAsset = false;
     const path = computeAssetDirFromUrl(this.form.url);
+    if (DEBUG) console.log('[LPB][PDF] upload start:', path, file.name);
     showToast(MESSAGES.UPLOADING_PDF, TOAST_TYPES.INFO, 3000);
 
     try {
       const result = await this.uploadAsset(file, path, 'file');
+      if (DEBUG) console.log('[LPB][PDF] upload response:', { path: result?.path, previewPath: result?.previewPath, previewUnavailable: result?.previewUnavailable });
       if (!result.path) {
         throw new Error('Upload failed');
       }
@@ -638,9 +669,13 @@ class LandingPageForm extends LitElement {
       this.form.pdfAsset = { path: result.path, previewPath: result.previewPath, name: file.name };
       showToast(MESSAGES.PDF_UPLOADED, TOAST_TYPES.SUCCESS, 5000);
       if (!result.previewUnavailable && !(await this.previewAsset(result.previewPath))) {
+        if (DEBUG) console.error('[PDF] preview failed:', result.previewPath);
         showToast(MESSAGES.PREVIEW_PDF_LINK_FAILED, TOAST_TYPES.ERROR, 5000);
+      } else if (DEBUG && !result.previewUnavailable) {
+        console.log('[PDF] preview ok:', result.previewPath);
       }
     } catch (error) {
+      if (DEBUG) console.error('[PDF] upload failed:', error);
       showToast(MESSAGES.PDF_UPLOAD_FAILED, TOAST_TYPES.ERROR);
       input.value = '';
     } finally {
@@ -653,15 +688,18 @@ class LandingPageForm extends LitElement {
     await this.getTemplateContent();
     const placeholders = await this.templatePlaceholders(this.form);
     if (DEBUG) {
+      console.log('[Save] savePage url:', this.form.url);
       console.table(placeholders);
     }
     const generatedPage = applyTemplateData(this.templateHTML, placeholders);
     try {
+      if (DEBUG) console.log('[LPB][Request] PUT page:', this.form.url);
       await saveSource(this.form.url, generatedPage);
+      if (DEBUG) console.log('[LPB][Response] PUT page ok:', this.form.url);
       this.requestUpdate();
       return true;
     } catch (error) {
-      console.error('Failed to save page:', error);
+      if (DEBUG) console.error('[Response] PUT page failed:', this.form.url, error);
       return false;
     }
   }
@@ -669,18 +707,24 @@ class LandingPageForm extends LitElement {
   async previewPage() {
     const path = this.form.url.replace('.html', '');
     const previewApi = getAdminPreviewUrl(path);
+    if (DEBUG) console.log('[LPB][Request] POST preview page:', previewApi);
     try {
       const previewApiResponse = await daFetch(previewApi, { method: 'POST' });
       if (!previewApiResponse?.ok) {
+        if (DEBUG) console.error('[Response] POST preview page:', previewApiResponse?.status);
         return { success: false };
       }
       const previewApiData = await previewApiResponse.json();
       const url = previewApiData?.preview?.url;
       if (previewApiData?.preview?.status === 200 && url) {
-        return { success: true, path: getPathFromUrl(url) };
+        const resolvedPath = getPathFromUrl(url);
+        if (DEBUG) console.log('[LPB][Response] POST preview page ok:', resolvedPath);
+        return { success: true, path: resolvedPath };
       }
+      if (DEBUG) console.error('[Response] POST preview page bad payload:', previewApiData?.preview?.status, url);
       return { success: false };
-    } catch {
+    } catch (err) {
+      if (DEBUG) console.error('[Response] POST preview page failed:', err);
       return { success: false };
     }
   }
@@ -695,12 +739,19 @@ class LandingPageForm extends LitElement {
     }
     path = path.startsWith('/') ? path : `/${path}`;
     const previewApi = getAdminPreviewUrl(path);
+    if (DEBUG) console.log('[LPB][Request] POST preview asset:', previewApi);
     try {
       const resp = await daFetch(previewApi, { method: 'POST' });
-      if (!resp?.ok) return false;
+      if (!resp?.ok) {
+        if (DEBUG) console.error('[Response] POST preview asset:', resp?.status, path);
+        return false;
+      }
       const data = await resp.json();
-      return data?.preview?.status === 200;
-    } catch {
+      const ok = data?.preview?.status === 200;
+      if (DEBUG) console.log('[LPB][Response] POST preview asset:', ok ? 'ok' : 'fail', path);
+      return ok;
+    } catch (err) {
+      if (DEBUG) console.error('[Response] POST preview asset failed:', path, err);
       return false;
     }
   }
@@ -731,6 +782,7 @@ class LandingPageForm extends LitElement {
     showToast(MESSAGES.SAVING_PAGE, TOAST_TYPES.INFO, 5000);
     const saveSuccess = await this.savePage();
     if (!saveSuccess) {
+      if (DEBUG) console.error('[Save & Preview] save failed, aborting');
       showToast(MESSAGES.SAVE_PAGE_FAILED, TOAST_TYPES.ERROR, 5000);
       return;
     }
@@ -743,6 +795,7 @@ class LandingPageForm extends LitElement {
       this.previewPdfAsset(),
     ]);
 
+    if (DEBUG) console.log('[LPB][Save & Preview] pageResult:', pageResult?.success, pageResult?.path, 'pdfResult:', pdfResult?.success, pdfResult?.skipped);
     this.previewPath = pageResult.path;
     this.requestUpdate();
 
