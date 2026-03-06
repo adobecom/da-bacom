@@ -5,6 +5,13 @@ import './image-dropzone/image-dropzone.js';
 import './multi-select/multi-select.js';
 import './text-editor/text-editor.js';
 import { STATUS as PATH_STATUS } from './path-input/path-input.js';
+import { getTemplateLink, getDisplayUrl } from './paths-config.js';
+
+function fileForDisplay(file) {
+  if (!file) return file;
+  const url = getDisplayUrl(file.path);
+  return url ? { ...file, url } : file;
+}
 
 function optionsSelect(form, handleInput, optionName, optionLabel, options, hasError = () => '') {
   if (!options || options.length <= 1) {
@@ -42,7 +49,7 @@ export function renderContentType(form, handleInput, regionOptions, { isLocked =
   const pathPrefix = getPathPrefix();
   const pathReady = form.contentType && form.gated && form.region;
   const templateName = form.templatePath?.split('/').pop() || '';
-  const templateLink = `https://main--da-bacom--adobecom.aem.live/docs/library/templates/${templateName}`;
+  const templateLink = templateName ? getTemplateLink(templateName) : '';
 
   return html`
     <div class="form-row core-options ${isLocked ? 'locked' : ''}">
@@ -129,7 +136,7 @@ export function renderForm(form, handleInput, { marketoPOIOptions, hasError = ()
   `;
 }
 
-export function renderMarquee(form, handleInput, handleImageChange, hasError = () => '', getViewUrl = null) {
+export function renderMarquee(form, handleInput, handleImageChange, hasError = () => '') {
   return html`
     <div class="form-row">
       <h2>Marquee</h2>
@@ -140,7 +147,7 @@ export function renderMarquee(form, handleInput, handleImageChange, hasError = (
       <div class="image-dropzone-container">
         <label>Marquee Image*</label>
         <div class="dropzone-wrapper">
-          <image-dropzone name="marqueeImage" .file=${form.marqueeImage?.url?.startsWith('http') ? { ...form.marqueeImage, url: getViewUrl ? getViewUrl(form.marqueeImage.previewUrl ?? form.marqueeImage.url) : (form.marqueeImage.previewUrl ?? form.marqueeImage.url) } : form.marqueeImage} error=${hasError('marqueeImage')} @image-change=${handleImageChange}>
+          <image-dropzone name="marqueeImage" .file=${fileForDisplay(form.marqueeImage)} error=${hasError('marqueeImage')} @image-change=${handleImageChange}>
             <label slot="img-label">Upload Marquee Image</label>
           </image-dropzone>
         </div>
@@ -149,7 +156,7 @@ export function renderMarquee(form, handleInput, handleImageChange, hasError = (
   `;
 }
 
-export function renderBody(form, handleInput, handleImageChange, hasError = () => '', getViewUrl = null) {
+export function renderBody(form, handleInput, handleImageChange, hasError = () => '') {
   return html`
     <div class="form-row">
       <h2>Body</h2>
@@ -163,7 +170,7 @@ export function renderBody(form, handleInput, handleImageChange, hasError = () =
       <div class="image-dropzone-container">
         <label>Body Image</label>
         <div class="dropzone-wrapper">
-          <image-dropzone name="bodyImage" .file=${form.bodyImage?.url?.startsWith('http') ? { ...form.bodyImage, url: getViewUrl ? getViewUrl(form.bodyImage.previewUrl ?? form.bodyImage.url) : (form.bodyImage.previewUrl ?? form.bodyImage.url) } : form.bodyImage} @image-change=${handleImageChange}>
+          <image-dropzone name="bodyImage" .file=${fileForDisplay(form.bodyImage)} @image-change=${handleImageChange}>
             <label slot="img-label">Upload Body Image</label>
           </image-dropzone>
         </div>
@@ -172,7 +179,7 @@ export function renderBody(form, handleInput, handleImageChange, hasError = () =
   `;
 }
 
-export function renderCard(form, handleInput, handleImageChange, hasError = () => '', getViewUrl = null) {
+export function renderCard(form, handleInput, handleImageChange, hasError = () => '') {
   return html`
     <div class="form-row">
       <h2>Card</h2>
@@ -180,7 +187,7 @@ export function renderCard(form, handleInput, handleImageChange, hasError = () =
       <sl-input type="text" name="cardDescription" .value=${form.cardDescription} placeholder="Card Description*" label="Card Description*" error=${hasError('cardDescription')} @input=${handleInput}></sl-input>
       <div class="image-dropzone-container">
         <label>Card Image*</label>
-        <image-dropzone name="cardImage" .file=${form.cardImage?.url?.startsWith('http') ? { ...form.cardImage, url: getViewUrl ? getViewUrl(form.cardImage.previewUrl ?? form.cardImage.url) : (form.cardImage.previewUrl ?? form.cardImage.url) } : form.cardImage} error=${hasError('cardImage')} @image-change=${handleImageChange}>
+        <image-dropzone name="cardImage" .file=${fileForDisplay(form.cardImage)} error=${hasError('cardImage')} @image-change=${handleImageChange}>
           <label slot="img-label">Upload Card Image</label>
         </image-dropzone>
       </div>
@@ -218,9 +225,9 @@ export function renderExperienceFragment(form, handleInput, { fragmentOptions },
   `;
 }
 
-export function renderAssetDelivery(form, handleInput, handlePdfChange, hasError = () => '', getViewUrl = null) {
+export function renderAssetDelivery(form, handleInput, handlePdfChange, hasError = () => '') {
   const pdfError = hasError('pdfAsset');
-  const pdfViewUrl = form.pdfAsset?.url && getViewUrl ? getViewUrl(form.pdfAsset.url) : form.pdfAsset?.url;
+  const pdfViewUrl = getDisplayUrl(form.pdfAsset?.path);
   return html`
     <div class="form-row">
       <h2>Asset Delivery</h2>

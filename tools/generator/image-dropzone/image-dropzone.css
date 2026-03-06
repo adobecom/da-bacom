@@ -1,3 +1,7 @@
+:host > svg {
+  display: none;
+}
+
 .img-file-input-wrapper {
   border: 2px dashed #B6B6B6;
   border-radius: 8px;
@@ -61,6 +65,24 @@
   width: 100%;
   object-fit: cover;
   display: block;
+}
+
+.preview-spinner-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-spinner {
+  width: 40px;
+  height: 40px;
+  color: #0265dc;
+  transform-origin: center;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .img-file-input-wrapper label {
