@@ -574,9 +574,6 @@ class LandingPageForm extends LitElement {
   handleImageChange(e) {
     const { name } = e?.target || {};
     if (!name || !Object.hasOwn(this.form, name)) return;
-    if (this.form[name]?.path?.startsWith?.('blob:')) {
-      URL.revokeObjectURL(this.form[name].path);
-    }
     this.form[name] = { path: '', name: '' };
     const { file } = e.detail;
     if (!file) {
@@ -603,7 +600,9 @@ class LandingPageForm extends LitElement {
       }).catch(() => {
         showToast(MESSAGES.IMAGE_UPLOAD_FAILED, TOAST_TYPES.ERROR);
       }).finally(() => {
+        document.dispatchEvent(new CustomEvent('upload-complete', { detail: { name }, bubbles: true }));
         this.saveFormState();
+        this.requestUpdate();
       });
   }
 
