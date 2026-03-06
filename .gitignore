@@ -9,3 +9,8 @@ node_modules/*
 test-html-results/
 test-results/
 test-a11y-results/
+
+# Local LPB docs and auth state
+nala/tools/landing-page-builder/TEST-PLAN.md
+nala/tools/landing-page-builder/MANUAL-TEST-PLAN.md
+nala/utils/auth.json
