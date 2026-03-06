@@ -5,8 +5,8 @@ export const BRANCH = 'main';
 export const STAGE_ORIGIN = 'https://business.stage.adobe.com';
 export const CONTENT_ORIGIN = 'https://content.da.live';
 export const ADMIN_ORIGIN = 'https://admin.hlx.page';
-export const AEM_PAGE_ORIGIN = `https://${ORG}--${REPO}--${BRANCH}.aem.page`;
-export const AEM_LIVE_ORIGIN = `https://${ORG}--${REPO}--${BRANCH}.aem.live`;
+export const AEM_PAGE_ORIGIN = `https://${BRANCH}--${REPO}--${ORG}.aem.page`;
+export const AEM_LIVE_ORIGIN = `https://${BRANCH}--${REPO}--${ORG}.aem.live`;
 
 export const CONTENT_PATH_PREFIX = `/${ORG}/${REPO}`;
 export const TEMPLATES_BASE_PATH = '/docs/library/templates/';
