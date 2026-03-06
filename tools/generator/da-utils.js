@@ -1,10 +1,9 @@
+/* eslint-disable max-len */
 /* eslint-disable no-console */
 /* eslint-disable import/no-unresolved */
 import { daFetch, replaceHtml } from 'da-fetch';
 import { DA_ORIGIN } from 'constants';
-
-const ORG = 'adobecom';
-const REPO = 'da-bacom';
+import { ORG, REPO } from './paths-config.js';
 
 function getDaPath(path, isHtml) {
   const basePath = path.replace(/\.html$/, '');
@@ -151,26 +150,47 @@ export async function saveSource(path, document) {
   return null;
 }
 
-export async function saveFile(path, file) {
-  const daPath = getDaPath(`${path}${file.name}`, false);
-  const formData = new FormData();
-  const opts = { method: 'PUT', body: formData };
+function normalizeAemUrl(url) {
+  if (!url || typeof url !== 'string') return null;
+  return url.replace('hlx.page', 'aem.page').replace('hlx.live', 'aem.live');
+}
 
-  formData.append('data', file);
+function sanitizeFileName(filename) {
+  if (!filename || typeof filename !== 'string') return 'asset';
+  const lastDot = filename.lastIndexOf('.');
+  const ext = lastDot > 0 ? filename.slice(lastDot) : '';
+  let base = lastDot > 0 ? filename.slice(0, lastDot) : filename;
+  base = base
+    .replace(/\s+/g, '-')
+    .replace(/\u202F/g, '-')
+    .replace(/[^a-zA-Z0-9_-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '') || 'asset';
+  return base + ext;
+}
+
+export async function saveFile(path, file) {
+  const safeName = sanitizeFileName(file.name);
+  const fileToUpload = safeName !== file.name ? new File([file], safeName, { type: file.type }) : file;
+  const daPath = getDaPath(`${path}${fileToUpload.name}`, false);
+  const formData = new FormData();
+  formData.append('data', fileToUpload);
+  const opts = { method: 'POST', body: formData };
   try {
     const resp = await daFetch(daPath, opts);
 
     if (resp.ok) {
       const json = await resp.json();
-      const liveUrl = json?.aem?.liveUrl.replace('hlx.page', 'aem.page').replace('hlx.live', 'aem.live');
-      const previewUrl = json?.aem?.previewUrl.replace('hlx.page', 'aem.page').replace('hlx.live', 'aem.live');
+      const liveUrl = normalizeAemUrl(json?.aem?.liveUrl);
+      const previewUrl = normalizeAemUrl(json?.aem?.previewUrl);
 
       return { source: json?.source, aem: { liveUrl, previewUrl } };
     }
     /* c8 ignore next 7 */
     return null;
   } catch (error) {
-    throw new Error(`Couldn't save ${path}${file.name}`, error);
+    console.error(`Couldn't save ${path}${fileToUpload.name}:`, error);
+    return null;
   }
 }
 

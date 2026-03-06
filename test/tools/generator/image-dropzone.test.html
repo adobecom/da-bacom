@@ -10,6 +10,7 @@
           "da-lit": "https://da.live/deps/lit/dist/index.js",
           "constants": "https://da.live/nx/public/utils/constants.js",
           "styles": "https://da.live/nx/utils/styles.js",
+          "svg": "https://da.live/nx/utils/svg.js",
           "components": "https://da.live/nx/public/sl/components.js"
         }
       }
@@ -102,8 +103,8 @@
           const imageDropzone = document.querySelector('image-dropzone');
           await imageDropzone.updateComplete;
 
-          const mockFile = createMockImageFile('test.png', 'image/png', 1000);
-          await imageDropzone.setFile([mockFile]);
+          imageDropzone.file = { url: 'https://example.com/preview.png', name: 'test.png' };
+          await imageDropzone.requestUpdate();
 
           expect(imageDropzone.shadowRoot.querySelector('.preview-wrapper')).to.exist;
           expect(imageDropzone.shadowRoot.querySelector('.preview-img-placeholder img')).to.exist;
@@ -157,8 +158,8 @@
           const imageDropzone = document.querySelector('image-dropzone');
           await imageDropzone.updateComplete;
 
-          const mockFile = createMockImageFile('test.png', 'image/png', 1000);
-          await imageDropzone.setFile([mockFile]);
+          imageDropzone.file = { url: 'https://example.com/preview.png', name: 'test.png' };
+          await imageDropzone.requestUpdate();
 
           let changeEvent;
           imageDropzone.addEventListener('image-change', (e) => { changeEvent = e; });
@@ -255,9 +256,8 @@
         it('cleans up blob URL on disconnect', async () => {
           const imageDropzone = document.querySelector('image-dropzone');
 
-          const mockFile = createMockImageFile('test.png', 'image/png', 1000);
-          await imageDropzone.setFile([mockFile]);
-
+          imageDropzone.file = { url: 'blob:mock-url', name: 'test.png' };
+          await imageDropzone.requestUpdate();
           imageDropzone.remove();
 
           expect(URL.revokeObjectURL.called).to.be.true;
@@ -269,8 +269,8 @@
           imageDropzone.handleDelete = customDeleteHandler;
           await imageDropzone.updateComplete;
 
-          const mockFile = createMockImageFile('test.png', 'image/png', 1000);
-          await imageDropzone.setFile([mockFile]);
+          imageDropzone.file = { url: 'https://example.com/preview.png', name: 'test.png' };
+          await imageDropzone.requestUpdate();
 
           const deleteButton = imageDropzone.shadowRoot.querySelector('.icon-delete');
           deleteButton.click();

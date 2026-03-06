@@ -4,7 +4,14 @@ import { html, nothing } from 'da-lit';
 import './image-dropzone/image-dropzone.js';
 import './multi-select/multi-select.js';
 import './text-editor/text-editor.js';
-import './path-input/path-input.js';
+import { STATUS as PATH_STATUS } from './path-input/path-input.js';
+import { getTemplateLink, getDisplayUrl } from './paths-config.js';
+
+function fileForDisplay(file) {
+  if (!file) return file;
+  const url = getDisplayUrl(file.path);
+  return url ? { ...file, url } : file;
+}
 
 function optionsSelect(form, handleInput, optionName, optionLabel, options, hasError = () => '') {
   if (!options || options.length <= 1) {
@@ -42,7 +49,7 @@ export function renderContentType(form, handleInput, regionOptions, { isLocked =
   const pathPrefix = getPathPrefix();
   const pathReady = form.contentType && form.gated && form.region;
   const templateName = form.templatePath?.split('/').pop() || '';
-  const templateLink = `https://main--da-bacom--adobecom.aem.live/docs/library/templates/${templateName}`;
+  const templateLink = templateName ? getTemplateLink(templateName) : '';
 
   return html`
     <div class="form-row core-options ${isLocked ? 'locked' : ''}">
@@ -85,7 +92,7 @@ export function renderContentType(form, handleInput, regionOptions, { isLocked =
         .value=${form.pageName || ''}
         .prefix=${pathReady ? pathPrefix : 'Select Content Type, Gated/Ungated, and Region to continue'}
         .suggestion=${pathReady ? form.marqueeHeadline : ''}
-        status=${form.pathStatus || 'empty'}
+        status=${form.pathStatus || PATH_STATUS.EMPTY}
         ?disabled=${!pathReady}
         error=${hasError('pageName')}
         label="Page Name*"
@@ -140,7 +147,7 @@ export function renderMarquee(form, handleInput, handleImageChange, hasError = (
       <div class="image-dropzone-container">
         <label>Marquee Image*</label>
         <div class="dropzone-wrapper">
-          <image-dropzone name="marqueeImage" .file=${form.marqueeImage} error=${hasError('marqueeImage')} @image-change=${handleImageChange}>
+          <image-dropzone name="marqueeImage" .file=${fileForDisplay(form.marqueeImage)} error=${hasError('marqueeImage')} @image-change=${handleImageChange}>
             <label slot="img-label">Upload Marquee Image</label>
           </image-dropzone>
         </div>
@@ -163,7 +170,7 @@ export function renderBody(form, handleInput, handleImageChange, hasError = () =
       <div class="image-dropzone-container">
         <label>Body Image</label>
         <div class="dropzone-wrapper">
-          <image-dropzone name="bodyImage" .file=${form.bodyImage} @image-change=${handleImageChange}>
+          <image-dropzone name="bodyImage" .file=${fileForDisplay(form.bodyImage)} @image-change=${handleImageChange}>
             <label slot="img-label">Upload Body Image</label>
           </image-dropzone>
         </div>
@@ -180,7 +187,7 @@ export function renderCard(form, handleInput, handleImageChange, hasError = () =
       <sl-input type="text" name="cardDescription" .value=${form.cardDescription} placeholder="Card Description*" label="Card Description*" error=${hasError('cardDescription')} @input=${handleInput}></sl-input>
       <div class="image-dropzone-container">
         <label>Card Image*</label>
-        <image-dropzone name="cardImage" .file=${form.cardImage} error=${hasError('cardImage')} @image-change=${handleImageChange}>
+        <image-dropzone name="cardImage" .file=${fileForDisplay(form.cardImage)} error=${hasError('cardImage')} @image-change=${handleImageChange}>
           <label slot="img-label">Upload Card Image</label>
         </image-dropzone>
       </div>
@@ -220,6 +227,7 @@ export function renderExperienceFragment(form, handleInput, { fragmentOptions },
 
 export function renderAssetDelivery(form, handleInput, handlePdfChange, hasError = () => '') {
   const pdfError = hasError('pdfAsset');
+  const pdfViewUrl = getDisplayUrl(form.pdfAsset?.path);
   return html`
     <div class="form-row">
       <h2>Asset Delivery</h2>
@@ -234,7 +242,7 @@ export function renderAssetDelivery(form, handleInput, handlePdfChange, hasError
             <p class="file-info">
               <span>${form.pdfAsset.name}</span>
               <span>
-                <a href="${form.pdfAsset.url}" target="_blank" rel="noopener noreferrer">View</a>
+                <a href="${pdfViewUrl}" target="_blank" rel="noopener noreferrer">View</a>
                 <a href="#" @click=${handlePdfChange}>Clear</a>
               </span>
             </p>
