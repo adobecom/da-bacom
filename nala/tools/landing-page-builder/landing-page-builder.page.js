@@ -6,96 +6,111 @@ const LPB_PATH = '/app/adobecom/da-bacom/tools/generator/landing-page';
 export default class LandingPageBuilder {
   constructor(page) {
     this.page = page;
-
-    // Root component
-    this.generator = page.locator('da-generator');
-
-    // Core Options
-    this.contentType = page.locator('sl-select[name="contentType"]');
-    this.gated = page.locator('sl-select[name="gated"]');
-    this.region = page.locator('sl-select[name="region"]');
-    this.marqueeHeadlineInput = page.locator('sl-input[name="marqueeHeadline"]');
-    this.pathInput = page.locator('path-input[name="pageName"]');
-    this.pathInputField = page.locator('path-input[name="pageName"] input.path-input');
-    this.pathCheckBtn = page.locator('path-input[name="pageName"] button.path-action-btn');
-    this.pathAvailableIcon = page.locator('path-input[name="pageName"] svg.validation-icon.available');
-    this.pathConflictIcon = page.locator('path-input[name="pageName"] svg.validation-icon.conflict');
-    this.pathCheckingIcon = page.locator('path-input[name="pageName"] svg.validation-icon.checking');
-    this.coreOptionsSection = page.locator('.form-row.core-options');
-    this.templatePreviewLink = page.locator('.template-preview-label a');
-
-    // Action buttons
-    this.confirmBtn = page.locator('sl-button.primary');
-    this.savePreviewBtn = page.locator('sl-button[type="submit"]');
-    this.resetBtn = page.locator('sl-button.reset');
-    this.helpText = page.locator('p.help-text');
-
-    // Form section (Gated only)
-    this.formTemplate = page.locator('sl-select[name="formTemplate"]');
-    this.campaignId = page.locator('sl-input[name="campaignId"]');
-    this.marketoPOI = page.locator('sl-select[name="marketoPOI"]');
-
-    // Marquee section
-    this.marqueeEyebrow = page.locator('sl-select[name="marqueeEyebrow"]');
-    this.marqueeDescription = page.locator('sl-input[name="marqueeDescription"]');
-    this.marqueeImageDropzone = page.locator('image-dropzone[name="marqueeImage"]');
-    this.marqueeImageInput = page.locator('image-dropzone[name="marqueeImage"] input.img-file-input');
-    this.marqueeImagePreview = page.locator('image-dropzone[name="marqueeImage"] .preview-img-placeholder img');
-    this.marqueeImageDelete = page.locator('image-dropzone[name="marqueeImage"] .icon-delete');
-
-    // Body section
-    this.bodyDescription = page.locator('text-editor[name="bodyDescription"]');
-    this.bodyEditorContent = page.locator('text-editor[name="bodyDescription"] .editor-content');
-    this.bodyBoldBtn = page.locator('text-editor[name="bodyDescription"] .toolbar-btn.bold');
-    this.bodyItalicBtn = page.locator('text-editor[name="bodyDescription"] .toolbar-btn.italic');
-    this.bodyListBtn = page.locator('text-editor[name="bodyDescription"] .toolbar-btn.list');
-    this.bodyImageDropzone = page.locator('image-dropzone[name="bodyImage"]');
-    this.bodyImageInput = page.locator('image-dropzone[name="bodyImage"] input.img-file-input');
-
-    // Card section
-    this.cardTitle = page.locator('sl-input[name="cardTitle"]');
-    this.cardDescription = page.locator('sl-input[name="cardDescription"]');
-    this.cardImageDropzone = page.locator('image-dropzone[name="cardImage"]');
-    this.cardImageInput = page.locator('image-dropzone[name="cardImage"] input.img-file-input');
-
-    // CaaS section
-    this.primaryProducts = page.locator('multi-select[name="primaryProducts"]');
-    this.productsDropdownTrigger = page.locator('multi-select[name="primaryProducts"] .selected-items');
-    this.productsDropdownMenu = page.locator('multi-select[name="primaryProducts"] .dropdown-menu');
-    this.industry = page.locator('sl-select[name="caasIndustry"]');
-
-    // SEO Metadata section
-    this.seoTitle = page.locator('sl-input[name="seoMetadataTitle"]');
-    this.seoDescription = page.locator('sl-input[name="seoMetadataDescription"]');
-    this.primaryProductName = page.locator('sl-select[name="primaryProductName"]');
-
-    // Experience Fragment
-    this.experienceFragment = page.locator('sl-select[name="experienceFragment"]');
-
-    // Asset delivery
-    this.videoAsset = page.locator('sl-input[name="videoAsset"]');
-    this.pdfFileInput = page.locator('input.pdf-file-input');
-    this.pdfFileInfo = page.locator('.file-info');
-    this.pdfViewLink = page.locator('.file-info a:has-text("View")');
-    this.pdfClearLink = page.locator('.file-info a:has-text("Clear")');
-
-    // Toasts (appended to document.body, outside shadow DOM)
-    this.toast = page.locator('toast-message');
-    this.toastSuccess = page.locator('toast-message .toast.success');
-    this.toastError = page.locator('toast-message .toast.error');
-    this.toastInfo = page.locator('toast-message .toast.info');
-    this.toastWarning = page.locator('toast-message .toast.warning');
-
-    // Error states
-    this.fieldErrors = page.locator('.error-message');
-    this.requiredFieldError = page.locator('.inputfield-error');
-
-    // Section headers
-    this.sectionHeaders = page.locator('.form-row h2');
+    this.lpbUrlOverride = process.env.LPB_URL || '';
   }
 
-  // eslint-disable-next-line class-methods-use-this
+  initLocators(root) {
+    // Root component
+    this.generator = root.locator('da-generator');
+
+    // Core Options
+    this.coreOptionsSection = root.locator('.form-row.core-options');
+    this.contentType = root.locator('sl-select[name="contentType"]');
+    this.gated = root.locator('sl-select[name="gated"]');
+    this.region = root.locator('sl-select[name="region"]');
+    this.marqueeHeadlineInput = root.locator('sl-input[name="marqueeHeadline"]');
+    this.pathInput = root.locator('path-input[name="pageName"]');
+    this.pathInputField = root.locator('path-input[name="pageName"] input.path-input');
+    this.pathCheckBtn = root.locator('path-input[name="pageName"] button.path-action-btn');
+    this.pathAvailableIcon = root.locator('path-input[name="pageName"] svg.validation-icon.available');
+    this.pathConflictIcon = root.locator('path-input[name="pageName"] svg.validation-icon.conflict');
+    this.pathCheckingIcon = root.locator('path-input[name="pageName"] svg.validation-icon.checking');
+    this.templatePreviewLink = this.coreOptionsSection.locator('a[href]').first();
+
+    // Action buttons
+    this.confirmBtn = root.locator('sl-button.confirm');
+    this.savePreviewBtn = root.locator('sl-button[type="submit"]');
+    this.resetBtn = root.locator('sl-button.reset');
+    this.helpText = root.locator('p.help-text');
+
+    // Form section (Gated only)
+    this.formTemplate = root.locator('sl-select[name="formTemplate"]');
+    this.campaignId = root.locator('sl-input[name="campaignId"]');
+    this.marketoPOI = root.locator('sl-select[name="marketoPOI"]');
+
+    // Marquee section
+    this.marqueeSection = root.locator('.form-row').filter({ has: root.locator('h2', { hasText: 'Marquee' }) });
+    this.marqueeEyebrow = root.locator('sl-select[name="marqueeEyebrow"]');
+    this.marqueeDescription = root.locator('sl-input[name="marqueeDescription"]');
+    this.marqueeImageDropzone = this.marqueeSection.locator('image-dropzone');
+    this.marqueeImageInput = this.marqueeSection.locator('input.img-file-input');
+    this.marqueeImagePreview = this.marqueeSection.locator('img[alt="preview image"]');
+    this.marqueeImageDelete = this.marqueeSection.locator('.icon-delete');
+
+    // Body section
+    this.bodySection = root.locator('.form-row').filter({ has: root.locator('h2', { hasText: 'Body' }) });
+    this.bodyDescription = root.locator('text-editor[name="bodyDescription"]');
+    this.bodyEditorContent = root.locator('text-editor[name="bodyDescription"] .editor-content');
+    this.bodyBoldBtn = root.locator('text-editor[name="bodyDescription"] .toolbar-btn.bold');
+    this.bodyItalicBtn = root.locator('text-editor[name="bodyDescription"] .toolbar-btn.italic');
+    this.bodyListBtn = root.locator('text-editor[name="bodyDescription"] .toolbar-btn.list');
+    this.bodyImageDropzone = this.bodySection.locator('image-dropzone');
+    this.bodyImageInput = this.bodySection.locator('input.img-file-input');
+
+    // Card section
+    this.cardSection = root.locator('.form-row').filter({ has: root.locator('h2', { hasText: 'Card' }) });
+    this.cardTitle = root.locator('sl-input[name="cardTitle"]');
+    this.cardDescription = root.locator('sl-input[name="cardDescription"]');
+    this.cardImageDropzone = this.cardSection.locator('image-dropzone');
+    this.cardImageInput = this.cardSection.locator('input.img-file-input');
+    this.cardImagePreview = this.cardSection.locator('img[alt="preview image"]');
+
+    // CaaS section
+    this.primaryProducts = root.locator('multi-select[name="primaryProducts"]');
+    this.productsDropdownTrigger = root.locator('multi-select[name="primaryProducts"] .selected-items');
+    this.productsDropdownMenu = root.locator('multi-select[name="primaryProducts"] .dropdown-menu');
+    this.industry = root.locator('sl-select[name="caasIndustry"]');
+
+    // SEO Metadata section
+    this.seoTitle = root.locator('sl-input[name="seoMetadataTitle"]');
+    this.seoDescription = root.locator('sl-input[name="seoMetadataDescription"]');
+    this.primaryProductName = root.locator('sl-select[name="primaryProductName"]');
+
+    // Experience Fragment
+    this.experienceFragment = root.locator('sl-select[name="experienceFragment"]');
+
+    // Asset delivery
+    this.videoAsset = root.locator('sl-input[name="videoAsset"]');
+    this.pdfFileInput = root.locator('input.pdf-file-input');
+    this.pdfFileInfo = root.locator('.file-info');
+    this.pdfViewLink = root.locator('.file-info a:has-text("View")');
+    this.pdfClearLink = root.locator('.file-info a:has-text("Clear")');
+
+    // Toasts
+    this.toast = root.locator('toast-message');
+    this.toastSuccess = root.locator('toast-message .toast.success');
+    this.toastError = root.locator('toast-message .toast.error');
+    this.toastInfo = root.locator('toast-message .toast.info');
+    this.toastWarning = root.locator('toast-message .toast.warning');
+    this.previewLink = root.getByRole('link', { name: 'Open your preview' });
+
+    // Error states
+    this.fieldErrors = root.locator('.error-message');
+    this.requiredFieldError = root.locator('.inputfield-error');
+
+    // Section headers
+    this.sectionHeaders = root.locator('.form-row h2');
+  }
+
   getLPBUrl(ref = '') {
+    if (this.lpbUrlOverride) {
+      const url = new URL(this.lpbUrlOverride);
+      if (ref && !url.searchParams.has('ref')) {
+        url.searchParams.set('ref', ref);
+      }
+      return url.toString();
+    }
+
     const params = ref ? `?ref=${ref}` : '';
     return `${DA_LIVE_URL}${LPB_PATH}${params}`;
   }
@@ -104,11 +119,49 @@ export default class LandingPageBuilder {
     const url = this.getLPBUrl(ref);
     await this.page.goto(url);
     await this.page.waitForLoadState('domcontentloaded');
-    await this.generator.waitFor({ state: 'attached', timeout: 30000 });
+    await this.dismissPopup();
+    await this.initFrame();
+  }
+
+  async dismissPopup() {
+    const continueBtn = this.page.locator('.disclaimer sl-button[name="continue"]');
+    try {
+      await continueBtn.click({ timeout: 10000 });
+    } catch {
+      // No popup appeared, continue normally
+    }
+  }
+
+  async initFrame() {
+    if (this.lpbUrlOverride) {
+      await this.page.locator('da-generator').waitFor({ state: 'attached', timeout: 30000 });
+      this.iframe = this.page;
+      this.initLocators(this.page);
+      return;
+    }
+
+    await this.page.locator('iframe').waitFor({ state: 'attached', timeout: 30000 });
+    this.iframe = this.page.frameLocator('iframe');
+    this.initLocators(this.iframe);
+  }
+
+  getIframeFrame() {
+    if (this.lpbUrlOverride) return this.page;
+    return this.page.frames().find((f) => f.url().includes('aem.live'));
+  }
+
+  async reloadPage() {
+    await this.page.reload();
+    await this.page.waitForLoadState('domcontentloaded');
+    await this.dismissPopup();
+    await this.initFrame();
   }
 
   async clearLocalStorage() {
-    await this.page.evaluate(() => localStorage.removeItem('landing-page-builder'));
+    const frame = this.getIframeFrame();
+    if (frame) {
+      await frame.evaluate(() => localStorage.removeItem('landing-page-builder'));
+    }
   }
 
   async navigateFresh(ref = '') {
@@ -116,7 +169,8 @@ export default class LandingPageBuilder {
     await this.clearLocalStorage();
     await this.page.reload();
     await this.page.waitForLoadState('domcontentloaded');
-    await this.generator.waitFor({ state: 'attached', timeout: 30000 });
+    await this.dismissPopup();
+    await this.initFrame();
   }
 
   // --- Core Options ---
@@ -156,7 +210,7 @@ export default class LandingPageBuilder {
   }
 
   async clickConfirm() {
-    await this.confirmBtn.click();
+    await this.confirmBtn.click({ force: true });
   }
 
   async fillCoreOptionsAndConfirm(data) {
@@ -164,9 +218,11 @@ export default class LandingPageBuilder {
     await this.selectGated(data.gated);
     if (data.region) await this.selectRegion(data.region);
     await this.fillMarqueeHeadline(data.headline);
+    if (data.pageSlug) {
+      await this.fillPageName(data.pageSlug);
+      await this.waitForPathAvailable();
+    }
     await this.page.waitForTimeout(1000);
-    await this.clickPathCheck();
-    await this.waitForPathAvailable();
     await this.clickConfirm();
     await this.savePreviewBtn.waitFor({ state: 'visible', timeout: 10000 });
   }
@@ -197,6 +253,11 @@ export default class LandingPageBuilder {
 
   // --- Marquee Section ---
 
+  async selectMarqueeEyebrow(value) {
+    await this.marqueeEyebrow.locator('select').selectOption(value);
+    await this.marqueeEyebrow.dispatchEvent('change');
+  }
+
   async fillMarqueeDescription(text) {
     const input = this.marqueeDescription.locator('input');
     await input.fill(text);
@@ -204,6 +265,7 @@ export default class LandingPageBuilder {
   }
 
   async uploadMarqueeImage(filePath) {
+    await this.marqueeImageDropzone.scrollIntoViewIfNeeded();
     await this.marqueeImageInput.setInputFiles(filePath);
   }
 
@@ -249,6 +311,7 @@ export default class LandingPageBuilder {
   }
 
   async uploadCardImage(filePath) {
+    await this.cardImageDropzone.scrollIntoViewIfNeeded();
     await this.cardImageInput.setInputFiles(filePath);
   }
 
@@ -261,8 +324,7 @@ export default class LandingPageBuilder {
       const option = this.productsDropdownMenu.locator(`.dropdown-option:has-text("${product}")`);
       await option.click();
     }
-    // Close dropdown by clicking outside
-    await this.page.locator('h1').first().click();
+    await this.iframe.locator('h1').first().click();
   }
 
   async removeProductTag(product) {
@@ -341,12 +403,24 @@ export default class LandingPageBuilder {
   }
 
   async submitAndWaitForPreview() {
-    const [previewPage] = await Promise.all([
-      this.page.context().waitForEvent('page', { timeout: 60000 }),
-      this.clickSaveAndPreview(),
-    ]);
-    await previewPage.waitForLoadState('domcontentloaded');
-    return previewPage;
+    const previewPagePromise = this.page.context()
+      .waitForEvent('page', { timeout: 60000 })
+      .catch(() => null);
+
+    await this.clickSaveAndPreview();
+
+    const previewPage = await previewPagePromise;
+    if (previewPage) {
+      await previewPage.waitForLoadState('domcontentloaded');
+      return previewPage;
+    }
+
+    const previewLink = await this.waitForPreviewLink(30000);
+    const href = await previewLink.getAttribute('href');
+    const newPage = await this.page.context().newPage();
+    await newPage.goto(href);
+    await newPage.waitForLoadState('domcontentloaded');
+    return newPage;
   }
 
   // --- Toast Verification ---
@@ -355,7 +429,7 @@ export default class LandingPageBuilder {
     const selector = type
       ? `toast-message .toast.${type}`
       : 'toast-message .toast';
-    const toast = this.page.locator(selector).filter({ hasText: text });
+    const toast = this.iframe.locator(selector).filter({ hasText: text });
     await toast.waitFor({ state: 'visible', timeout });
     return toast;
   }
@@ -364,6 +438,31 @@ export default class LandingPageBuilder {
     for (const { text, type } of messages) {
       await this.waitForToast(text, type, 30000);
     }
+  }
+
+  async waitForPreviewLink(timeout = 30000) {
+    await this.previewLink.waitFor({ state: 'visible', timeout });
+    return this.previewLink;
+  }
+
+  async waitForStoredField(fieldName, timeout = 30000) {
+    await expect.poll(async () => {
+      const frame = this.getIframeFrame();
+      if (!frame) return '';
+      return frame.evaluate(({ key, field }) => {
+        const stored = localStorage.getItem(key);
+        if (!stored) return '';
+
+        const form = JSON.parse(stored);
+        const value = form[field];
+        if (!value) return '';
+        if (typeof value === 'object') return value.url || value.name || '';
+        return value;
+      }, { key: 'landing-page-builder', field: fieldName });
+    }, {
+      timeout,
+      intervals: [500, 1000, 2000],
+    }).toBeTruthy();
   }
 
   // --- Validation Helpers ---
@@ -382,7 +481,7 @@ export default class LandingPageBuilder {
   }
 
   async getFieldError(fieldName) {
-    const container = this.page.locator(`[name="${fieldName}"]`).locator('..');
+    const container = this.iframe.locator(`[name="${fieldName}"]`).locator('..');
     const error = container.locator('.error-message, .inputfield-error');
     if (await error.isVisible()) return error.textContent();
     return null;
@@ -390,7 +489,7 @@ export default class LandingPageBuilder {
 
   async verifyRequiredFieldsHighlighted(fields) {
     for (const field of fields) {
-      const element = this.page.locator(`[name="${field}"]`);
+      const element = this.iframe.locator(`[name="${field}"]`);
       const errorAttr = await element.getAttribute('error');
       expect(errorAttr).toBeTruthy();
     }
@@ -399,41 +498,32 @@ export default class LandingPageBuilder {
   // --- Full Form Fill ---
 
   async fillCompleteForm(data) {
-    // Form section (gated)
     if (data.gated === 'Gated') {
       await this.fillFormSection(data);
     }
 
-    // Marquee
     if (data.marqueeDescription) await this.fillMarqueeDescription(data.marqueeDescription);
     if (data.marqueeImage) await this.uploadMarqueeImage(data.marqueeImage);
 
-    // Body
     if (data.bodyDescription) await this.fillBodyDescription(data.bodyDescription);
     if (data.bodyImage) await this.uploadBodyImage(data.bodyImage);
 
-    // Card
     if (data.cardTitle) await this.fillCardTitle(data.cardTitle);
     if (data.cardDescription) await this.fillCardDescription(data.cardDescription);
     if (data.cardImage) await this.uploadCardImage(data.cardImage);
 
-    // CaaS
     if (data.products?.length) await this.selectProducts(data.products);
     if (data.industry) await this.selectIndustry(data.industry);
 
-    // SEO
     if (data.seoTitle) await this.fillSeoTitle(data.seoTitle);
     if (data.seoDescription) await this.fillSeoDescription(data.seoDescription);
     if (data.primaryProductName) await this.selectPrimaryProductName(data.primaryProductName);
 
-    // Experience Fragment
     if (data.experienceFragment) await this.selectExperienceFragment(data.experienceFragment);
 
-    // Asset
     if (data.videoUrl) await this.fillVideoUrl(data.videoUrl);
     if (data.pdfAsset) await this.uploadPdf(data.pdfAsset);
 
-    // Wait for async uploads to settle
     await this.page.waitForTimeout(2000);
   }
 }

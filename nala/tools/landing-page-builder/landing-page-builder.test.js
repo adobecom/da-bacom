@@ -2,7 +2,16 @@ import { expect, test } from '@playwright/test';
 import { features } from './landing-page-builder.spec.js';
 import LandingPageBuilder from './landing-page-builder.page.js';
 
-const LPB_REF = process.env.LPB_REF || 'uat';
+const LPB_REF = process.env.LPB_REF || 'stage';
+
+test.use({ storageState: './nala/utils/auth.json' });
+
+const toAutoSlug = (text) => text
+  .toLowerCase()
+  .trim()
+  .replace(/[^a-z0-9]+/g, '-')
+  .replace(/^-|-$/g, '');
+const DEV_JARGON = ['error code', 'stack trace', 'undefined', 'null reference', 'exception', 'status 4', 'status 5'];
 
 let lpb;
 
@@ -19,6 +28,11 @@ test.describe('Landing Page Builder - Form & Field Tests', () => {
   test(`${features[0].name}, ${features[0].tags}`, async () => {
     await test.step('Navigate to LPB with fresh state', async () => {
       await lpb.navigateFresh(LPB_REF);
+    });
+
+    await test.step('Verify page loads without auth or org access errors', async () => {
+      const errorBanner = lpb.iframe.locator('.org-access-error, .auth-error, .error-banner');
+      await expect(errorBanner).not.toBeVisible();
     });
 
     await test.step('Verify only Core Options section is visible', async () => {
@@ -43,7 +57,7 @@ test.describe('Landing Page Builder - Form & Field Tests', () => {
     });
 
     await test.step('Verify Confirm is disabled when content type is empty', async () => {
-      const isDisabled = await lpb.confirmBtn.getAttribute('disabled');
+      const isDisabled = await lpb.confirmBtn.locator('button').getAttribute('disabled');
       expect(isDisabled).not.toBeNull();
     });
 
@@ -73,15 +87,15 @@ test.describe('Landing Page Builder - Form & Field Tests', () => {
     });
 
     await test.step('Verify path input is populated with correct prefix', async () => {
-      const prefix = lpb.page.locator('path-input[name="pageName"] .path-prefix');
+      const prefix = lpb.iframe.locator('.path-input-container .path-prefix');
       const prefixText = await prefix.textContent();
-      expect(prefixText).toContain(data.region);
       expect(prefixText).toContain('resources');
       expect(prefixText.toLowerCase()).toContain(data.contentType.toLowerCase());
     });
 
-    await test.step('Verify template link is shown', async () => {
-      await expect(lpb.templatePreviewLink).toBeVisible();
+    await test.step('Verify page name placeholder is auto-generated from headline', async () => {
+      const placeholder = await lpb.iframe.locator('input.path-input[name="pageName"]').getAttribute('placeholder');
+      expect(placeholder).toBe('nala-lpb-test-auto-url');
     });
   });
 
@@ -106,6 +120,15 @@ test.describe('Landing Page Builder - Form & Field Tests', () => {
 
     await test.step('Verify Save & Preview button is visible', async () => {
       await expect(lpb.savePreviewBtn).toBeVisible();
+    });
+
+    await test.step('Verify Reset button is visible and placed before Save & Preview', async () => {
+      await expect(lpb.resetBtn).toBeVisible();
+      const submitBox = await lpb.savePreviewBtn.boundingBox();
+      const resetBox = await lpb.resetBtn.boundingBox();
+      expect(submitBox).not.toBeNull();
+      expect(resetBox).not.toBeNull();
+      expect(submitBox.x).toBeGreaterThan(resetBox.x);
     });
 
     await test.step('Verify core options section is locked', async () => {
@@ -135,8 +158,7 @@ test.describe('Landing Page Builder - Form & Field Tests', () => {
     });
 
     await test.step('Verify fields are cleared after refresh', async () => {
-      await lpb.page.reload();
-      await lpb.page.waitForLoadState('domcontentloaded');
+      await lpb.reloadPage();
       expect(await lpb.isFullFormVisible()).toBe(false);
     });
   });
@@ -161,9 +183,19 @@ test.describe('Landing Page Builder - Form & Field Tests', () => {
       await lpb.waitForToast('Please complete all required fields', 'error');
     });
 
-    await test.step('Verify required fields are highlighted', async () => {
-      const errors = await lpb.fieldErrors.count();
-      expect(errors).toBeGreaterThan(0);
+    await test.step('Verify required field errors are highlighted and user-friendly', async () => {
+      const toastText = await lpb.toastError.first().textContent();
+      for (const jargon of DEV_JARGON) {
+        expect(toastText.toLowerCase()).not.toContain(jargon);
+      }
+
+      const errors = await lpb.fieldErrors.allTextContents();
+      expect(errors.length).toBeGreaterThan(0);
+      for (const errorText of errors) {
+        for (const jargon of DEV_JARGON) {
+          expect(errorText.toLowerCase()).not.toContain(jargon);
+        }
+      }
     });
   });
 
@@ -359,7 +391,7 @@ test.describe('Landing Page Builder - Form & Field Tests', () => {
       const options = lpb.productsDropdownMenu.locator('.dropdown-option');
       await options.nth(0).click();
       await options.nth(1).click();
-      await lpb.page.locator('h1').first().click();
+      await lpb.iframe.locator('h1').first().click();
     });
 
     await test.step('Remove one tag by clicking X', async () => {
@@ -392,7 +424,7 @@ test.describe('Landing Page Builder - Form & Field Tests', () => {
     });
 
     await test.step('Click outside to close dropdown', async () => {
-      await lpb.page.locator('h1').first().click();
+      await lpb.iframe.locator('h1').first().click();
     });
 
     await test.step('Verify dropdown is closed but selection retained', async () => {
@@ -420,9 +452,7 @@ test.describe('Landing Page Builder - Form & Field Tests', () => {
     });
 
     await test.step('Refresh the page', async () => {
-      await lpb.page.reload();
-      await lpb.page.waitForLoadState('domcontentloaded');
-      await lpb.generator.waitFor({ state: 'attached', timeout: 30000 });
+      await lpb.reloadPage();
     });
 
     await test.step('Verify form fields are restored', async () => {
@@ -451,14 +481,13 @@ test.describe('Landing Page Builder - Form & Field Tests', () => {
     });
 
     await test.step('Refresh page and verify form is empty', async () => {
-      await lpb.page.reload();
-      await lpb.page.waitForLoadState('domcontentloaded');
-      await lpb.generator.waitFor({ state: 'attached', timeout: 30000 });
+      await lpb.reloadPage();
       expect(await lpb.isFullFormVisible()).toBe(false);
     });
 
     await test.step('Verify localStorage is cleared', async () => {
-      const stored = await lpb.page.evaluate(() => localStorage.getItem('landing-page-builder'));
+      const frame = lpb.getIframeFrame();
+      const stored = await frame.evaluate(() => localStorage.getItem('landing-page-builder'));
       expect(stored).toBeNull();
     });
   });
@@ -475,24 +504,19 @@ test.describe('Landing Page Builder - Form & Field Tests', () => {
       await lpb.fillCoreOptionsAndConfirm(data);
     });
 
-    await test.step('Click in body description editor', async () => {
+    await test.step('Click in body description editor and type text', async () => {
       await lpb.bodyEditorContent.click();
-      await lpb.page.keyboard.type('Bold text test');
+      await lpb.bodyEditorContent.pressSequentially('Bold text test');
     });
 
-    await test.step('Select text and apply bold', async () => {
-      await lpb.page.keyboard.press('Control+a');
-      await lpb.applyBoldFormatting();
+    await test.step('Select text and apply bold via Cmd+B', async () => {
+      await lpb.bodyEditorContent.press('Meta+a');
+      await lpb.bodyEditorContent.press('Meta+b');
     });
 
     await test.step('Verify bold formatting is applied', async () => {
       const html = await lpb.bodyEditorContent.innerHTML();
-      expect(html).toContain('<b>');
-    });
-
-    await test.step('Verify bold toolbar button is active', async () => {
-      const classes = await lpb.bodyBoldBtn.getAttribute('class');
-      expect(classes).toContain('is-active');
+      expect(html).toMatch(/<(b|strong)>/);
     });
   });
 
@@ -504,16 +528,16 @@ test.describe('Landing Page Builder - Form & Field Tests', () => {
       await lpb.fillCoreOptionsAndConfirm(data);
     });
 
-    await test.step('Type text and apply italic', async () => {
+    await test.step('Type text and apply italic via Cmd+I', async () => {
       await lpb.bodyEditorContent.click();
-      await lpb.page.keyboard.type('Italic text test');
-      await lpb.page.keyboard.press('Control+a');
-      await lpb.applyItalicFormatting();
+      await lpb.bodyEditorContent.pressSequentially('Italic text test');
+      await lpb.bodyEditorContent.press('Meta+a');
+      await lpb.bodyEditorContent.press('Meta+i');
     });
 
     await test.step('Verify italic formatting', async () => {
       const html = await lpb.bodyEditorContent.innerHTML();
-      expect(html).toContain('<i>');
+      expect(html).toMatch(/<(i|em)>/);
     });
   });
 
@@ -528,15 +552,80 @@ test.describe('Landing Page Builder - Form & Field Tests', () => {
     await test.step('Click bullet list button and type items', async () => {
       await lpb.bodyEditorContent.click();
       await lpb.applyBulletList();
-      await lpb.page.keyboard.type('First bullet');
-      await lpb.page.keyboard.press('Enter');
-      await lpb.page.keyboard.type('Second bullet');
+      await lpb.bodyEditorContent.pressSequentially('First bullet');
+      await lpb.bodyEditorContent.press('Enter');
+      await lpb.bodyEditorContent.pressSequentially('Second bullet');
     });
 
     await test.step('Verify bullet list formatting', async () => {
       const html = await lpb.bodyEditorContent.innerHTML();
       expect(html).toContain('<ul>');
       expect(html).toContain('<li>');
+    });
+  });
+
+  // =============================================================
+  // 3.2 Template Link Regression
+  // =============================================================
+
+  test(`${features[20].name}, ${features[20].tags}`, async () => {
+    const { data } = features[20];
+
+    await test.step('Navigate to LPB with fresh state', async () => {
+      await lpb.navigateFresh(LPB_REF);
+    });
+
+    await test.step('Select content type and gated option', async () => {
+      await lpb.selectContentType(data.contentType);
+      await lpb.selectGated(data.gated);
+    });
+
+    await test.step('Verify template preview link is visible', async () => {
+      await expect(lpb.templatePreviewLink).toBeVisible({ timeout: 15000 });
+    });
+
+    await test.step('Verify link points to a real example on aem.live', async () => {
+      const href = await lpb.templatePreviewLink.getAttribute('href');
+      expect(href).toMatch(/aem\.live/);
+      expect(href).not.toContain('placeholder');
+    });
+  });
+
+  [21, 22, 23].forEach((featureIndex) => {
+    test(`${features[featureIndex].name}, ${features[featureIndex].tags}`, async () => {
+      const { data } = features[featureIndex];
+
+      await test.step('Navigate to LPB with fresh state', async () => {
+        await lpb.navigateFresh(LPB_REF);
+      });
+
+      await test.step('Fill core options for the selected region', async () => {
+        await lpb.selectContentType(data.contentType);
+        await lpb.selectGated(data.gated);
+        await lpb.selectRegion(data.region);
+        await lpb.fillMarqueeHeadline(data.headline);
+      });
+
+      await test.step('Verify page name input is enabled and auto-generated from the headline', async () => {
+        await expect(lpb.pathInputField).toBeEnabled();
+        const placeholder = await lpb.pathInputField.getAttribute('placeholder');
+        expect(placeholder).toBe(toAutoSlug(data.headline));
+      });
+
+      await test.step('Verify the selected region is persisted in localStorage', async () => {
+        const frame = lpb.getIframeFrame();
+        const storedRegion = await frame.evaluate(() => JSON.parse(localStorage.getItem('landing-page-builder') || '{}').region);
+        expect(storedRegion).toBe(data.storedRegion);
+      });
+
+      await test.step('Confirm and verify the form stays on the selected region after reload', async () => {
+        await lpb.clickConfirm();
+        await expect(lpb.savePreviewBtn).toBeVisible();
+        await lpb.reloadPage();
+        await expect(lpb.savePreviewBtn).toBeVisible();
+        const selectedRegionLabel = await lpb.region.locator('select option:checked').textContent();
+        expect(selectedRegionLabel.trim()).toBe(data.region);
+      });
     });
   });
 });

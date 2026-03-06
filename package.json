@@ -14,6 +14,7 @@
     "lint:css": "stylelint 'blocks/**/*.css' 'styles/*.css'",
     "prepare": "husky install",
     "nala": "node nala/utils/nala.run.js",
+    "nala:login": "node nala/utils/da-login.js",
     "a11y": "node nala/utils/nala.cli.js a11y"
   },
   "repository": {
