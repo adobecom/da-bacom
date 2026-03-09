@@ -11,10 +11,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out repository
+      - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - name: Run Nala
-        uses: adobecom/nala@main
+        with:
+          fetch-depth: 2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
+        with:
+          node-version: 20.x
+
+      - name: Set execute permission for nalarun.sh
+        run: chmod +x ./nala/utils/pr.run.sh
+
+      - name: Run Nala Tests via pr.run.sh
+        run: ./nala/utils/pr.run.sh
         env:
           labels: ${{ join(github.event.pull_request.labels.*.name, ' ') }}
           branch: ${{ github.event.pull_request.head.ref }}
@@ -24,5 +35,6 @@ jobs:
           prRepo: ${{ github.event.pull_request.head.repo.name }}
           prBranch: ${{ github.event.pull_request.head.ref }}
           prBaseBranch: ${{ github.event.pull_request.base.ref }}
+          GITHUB_ACTION_PATH: ${{ github.workspace }}
           IMS_EMAIL: ${{ secrets.IMS_EMAIL }}
           IMS_PASS: ${{ secrets.IMS_PASS }}

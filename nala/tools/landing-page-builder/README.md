@@ -52,7 +52,7 @@ LPB_REF=stage npm run nala local @lpb-non-e2e
 Run only LPB E2E:
 
 ```bash
-LPB_REF=stage npm run nala stage "@lpb @e2e"
+LPB_REF=stage npm run nala stage @lpb-e2e
 ```
 
 Run one LPB E2E in UI mode:
@@ -87,7 +87,7 @@ Recommended usage:
 Example branch run:
 
 ```bash
-LPB_REF=my-feature-branch npm run nala my-feature-branch @lpb @e2e
+LPB_REF=my-feature-branch npm run nala my-feature-branch @lpb-e2e
 ```
 
 ## Local Development With `aem up`

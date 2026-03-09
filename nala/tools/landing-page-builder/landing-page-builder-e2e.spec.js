@@ -26,7 +26,7 @@ module.exports = {
       tcid: '0',
       name: '@lpb-e2e-gated-guide: Full gated guide journey',
       path: '/tools/generator/landing-page',
-      tags: '@lpb @e2e @gated @guide @smoke @regression @bacom',
+      tags: '@lpb @lpb-e2e @gated @guide @smoke @regression @bacom',
       data: {
         contentType: 'Guide',
         gated: 'Gated',
@@ -62,7 +62,7 @@ module.exports = {
       tcid: '1',
       name: '@lpb-e2e-ungated-report: Full ungated report journey',
       path: '/tools/generator/landing-page',
-      tags: '@lpb @e2e @ungated @report @smoke @regression @bacom',
+      tags: '@lpb @lpb-e2e @ungated @report @smoke @regression @bacom',
       data: {
         contentType: 'Report',
         gated: 'Ungated',
@@ -94,7 +94,7 @@ module.exports = {
       tcid: '2',
       name: '@lpb-e2e-video-demo: Full video/demo journey',
       path: '/tools/generator/landing-page',
-      tags: '@lpb @e2e @ungated @video @smoke @regression @bacom',
+      tags: '@lpb @lpb-e2e @ungated @video @smoke @regression @bacom',
       data: {
         contentType: 'Video/Demo',
         gated: 'Ungated',
@@ -126,7 +126,7 @@ module.exports = {
       tcid: '3',
       name: '@lpb-e2e-infographic-jp: Full ungated infographic journey in JP',
       path: '/tools/generator/landing-page',
-      tags: '@lpb @e2e @ungated @infographic @region @smoke @regression @bacom',
+      tags: '@lpb @lpb-e2e @ungated @infographic @region @smoke @regression @bacom',
       data: {
         contentType: 'Infographic',
         gated: 'Ungated',
