@@ -34,13 +34,13 @@ prRepo=${prRepo:-$toRepoName}
 prOrg=${prOrg:-$toRepoOrg}
 
 # Handle PR Branch Live URL
-PR_BRANCH_LIVE_URL_GH="https://${FEATURE_BRANCH}--${prRepo}--${prOrg}.aem.live"
+PR_BRANCH_LIVE_URL="https://${FEATURE_BRANCH}--${prRepo}--${prOrg}.aem.live"
 
 # set pr branch url as env
-export PR_BRANCH_LIVE_URL_GH
+export PR_BRANCH_LIVE_URL
 export PR_NUMBER
 
-echo "PR Branch live URL: $PR_BRANCH_LIVE_URL_GH"
+echo "PR Branch live URL: $PR_BRANCH_LIVE_URL"
 
 # Convert GitHub Tag(@) labels that can be grepped
 for label in ${labels}; do
