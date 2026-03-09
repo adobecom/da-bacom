@@ -2,10 +2,12 @@
 /* eslint-disable class-methods-use-this */
 import { LitElement, html } from 'da-lit';
 import getStyle from 'styles';
+import getSvg from 'svg';
 
 const MAX_FILE_SIZE = 26214400; // 25MB
 
 const style = await getStyle(import.meta.url.split('?')[0]);
+const progressIcons = await getSvg({ paths: ['/tools/ui/progress.svg'] });
 
 async function isImageTypeValid(file) {
   const validTypes = ['jpeg', 'jpg', 'png', 'svg'];
@@ -55,6 +57,7 @@ export default class ImageDropzone extends LitElement {
     handleDelete: { type: Function },
     name: { type: String },
     error: { type: String },
+    uploading: { type: Boolean },
   };
 
   static styles = style;
@@ -66,6 +69,21 @@ export default class ImageDropzone extends LitElement {
     this.handleDelete = this.handleDelete || null;
     this.name = '';
     this.error = '';
+    this.uploading = false;
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    if (progressIcons?.length) {
+      this.shadowRoot.append(...progressIcons.filter(Boolean).map((icon) => icon.cloneNode(true)));
+    }
+    this.boundOnUploadComplete = (e) => {
+      if (e.detail?.name === this.name) {
+        this.uploading = false;
+        this.requestUpdate();
+      }
+    };
+    document.addEventListener('upload-complete', this.boundOnUploadComplete);
   }
 
   cleanupFile() {
@@ -76,8 +94,16 @@ export default class ImageDropzone extends LitElement {
   }
 
   disconnectedCallback() {
+    document.removeEventListener('upload-complete', this.boundOnUploadComplete);
     this.cleanupFile();
     super.disconnectedCallback();
+  }
+
+  updated(changedProperties) {
+    super.updated?.(changedProperties);
+    if (changedProperties.has('file') && this.file?.path && this.uploading) {
+      this.uploading = false;
+    }
   }
 
   async setFile(files) {
@@ -95,9 +121,7 @@ export default class ImageDropzone extends LitElement {
     const isValid = await isImageTypeValid(file);
     if (isValid) {
       this.cleanupFile();
-
       this.file = file;
-      this.file.url = URL.createObjectURL(file);
       this.requestUpdate();
     } else {
       document.dispatchEvent(new CustomEvent('show-toast', {
@@ -121,7 +145,10 @@ export default class ImageDropzone extends LitElement {
       await this.setFile(files);
       this.handleImage();
     }
-    if (this.file) this.dispatchEvent(new CustomEvent('image-change', { detail: { file: this.file } }));
+    if (this.file) {
+      this.uploading = true;
+      this.dispatchEvent(new CustomEvent('image-change', { detail: { file: this.file } }));
+    }
   }
 
   async onImageChange(e) {
@@ -131,7 +158,10 @@ export default class ImageDropzone extends LitElement {
       await this.setFile(files);
       this.handleImage();
     }
-    if (this.file) this.dispatchEvent(new CustomEvent('image-change', { detail: { file: this.file } }));
+    if (this.file) {
+      this.uploading = true;
+      this.dispatchEvent(new CustomEvent('image-change', { detail: { file: this.file } }));
+    }
   }
 
   handleDragover(e) {
@@ -157,24 +187,39 @@ export default class ImageDropzone extends LitElement {
 
   render() {
     const hasError = this.error && this.error.length > 0;
-    return html`
-      ${this.file?.url ? html`
-      <div class="img-file-input-wrapper solid-border">
-        <div class="preview-wrapper">
-          <div class="preview-img-placeholder">
-            <img src="${this.file.url}" alt="preview image">
+    const displayUrl = this.file?.url && !this.file.url.startsWith('blob:');
+    let previewBlock;
+    if (this.uploading) {
+      previewBlock = html`
+        <div class="img-file-input-wrapper solid-border">
+          <div class="preview-wrapper">
+            <div class="preview-img-placeholder preview-spinner-wrapper">
+              <svg class="preview-spinner" aria-hidden="true" viewBox="0 0 18 18"><use href="#progress"/></svg>
+            </div>
           </div>
-          <img src="/tools/generator/image-dropzone/delete.svg" alt="delete icon" class="icon icon-delete" @click=${this.handleDelete ? this.handleDelete : this.deleteImage}>
-        </div>
-      </div>`
-    : html`
-    <div class="img-file-input-wrapper ${hasError ? 'error' : ''}">
-      <label class="img-file-input-label" @dragover=${this.handleDragover} @dragleave=${this.handleDragleave} @drop=${this.handleImageDrop}>
-        <input type="file" class="img-file-input" accept="image/png, image/jpeg, image/jpg, image/svg+xml" @change=${this.onImageChange}>
-        <img src="/tools/generator/image-dropzone/image-add.svg" alt="add image icon" class="icon icon-image-add">
-        <slot name="img-label"></slot>
-      </label>
-    </div>`}
+        </div>`;
+    } else if (displayUrl) {
+      previewBlock = html`
+        <div class="img-file-input-wrapper solid-border">
+          <div class="preview-wrapper">
+            <div class="preview-img-placeholder">
+              <img src="${this.file.url}" alt="preview image">
+            </div>
+            <img src="/tools/generator/image-dropzone/delete.svg" alt="delete icon" class="icon icon-delete" @click=${this.handleDelete ? this.handleDelete : this.deleteImage}>
+          </div>
+        </div>`;
+    } else {
+      previewBlock = html`
+        <div class="img-file-input-wrapper ${hasError ? 'error' : ''}">
+          <label class="img-file-input-label" @dragover=${this.handleDragover} @dragleave=${this.handleDragleave} @drop=${this.handleImageDrop}>
+            <input type="file" class="img-file-input" accept="image/png, image/jpeg, image/jpg, image/svg+xml" @change=${this.onImageChange}>
+            <img src="/tools/generator/image-dropzone/image-add.svg" alt="add image icon" class="icon icon-image-add">
+            <slot name="img-label"></slot>
+          </label>
+        </div>`;
+    }
+    return html`
+      ${previewBlock}
       ${hasError ? html`<div class="error-message">${this.error}</div>` : ''}
     `;
   }

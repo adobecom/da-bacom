@@ -2,7 +2,7 @@
 
 TAGS=""
 REPORTER=""
-EXCLUDE_TAGS="--grep-invert nopr"
+EXCLUDE_PATTERN="nopr|lpb"
 EXIT_STATUS=0
 
 echo "GITHUB_REF: $GITHUB_REF"
@@ -34,13 +34,13 @@ prRepo=${prRepo:-$toRepoName}
 prOrg=${prOrg:-$toRepoOrg}
 
 # Handle PR Branch Live URL
-PR_BRANCH_LIVE_URL_GH="https://${FEATURE_BRANCH}--${prRepo}--${prOrg}.aem.live"
+PR_BRANCH_LIVE_URL="https://${FEATURE_BRANCH}--${prRepo}--${prOrg}.aem.live"
 
 # set pr branch url as env
-export PR_BRANCH_LIVE_URL_GH
+export PR_BRANCH_LIVE_URL
 export PR_NUMBER
 
-echo "PR Branch live URL: $PR_BRANCH_LIVE_URL_GH"
+echo "PR Branch live URL: $PR_BRANCH_LIVE_URL"
 
 # Convert GitHub Tag(@) labels that can be grepped
 for label in ${labels}; do
@@ -60,7 +60,7 @@ REPORTER=$reporter
 
 echo "Running Nala on branch: $FEATURE_BRANCH "
 echo "Tags : ${TAGS:-"No @tags or annotations on this PR"}"
-echo "Run Command : npx playwright test ${TAGS} ${EXCLUDE_TAGS} ${REPORTER}"
+echo "Run Command : npx playwright test ${TAGS} --grep-invert ${EXCLUDE_PATTERN} ${REPORTER}"
 echo -e "\n"
 echo "*******************************"
 
@@ -72,7 +72,7 @@ npx playwright install --with-deps
 # Run Playwright tests on the specific projects using root-level playwright.config.js
 # This will be changed later
 echo "*** Running tests on specific projects ***"
-npx playwright test --config=./playwright.config.js ${TAGS} ${EXCLUDE_TAGS} --project=da-bacom-live-chromium --project=da-bacom-live-firefox ${REPORTER} || EXIT_STATUS=$?
+npx playwright test --config=./playwright.config.js ${TAGS} --grep-invert "${EXCLUDE_PATTERN}" --project=da-bacom-live-chromium --project=da-bacom-live-firefox ${REPORTER} || EXIT_STATUS=$?
 
 # Check if tests passed or failed
 if [ $EXIT_STATUS -ne 0 ]; then
