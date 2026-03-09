@@ -11,7 +11,7 @@ module.exports = {
       data: {
         headerText: 'Nala Demo Test',
       },
-      tags: '@demo @smoke',
+      tags: '@demo @smoke @nopr',
     },
   ],
 };

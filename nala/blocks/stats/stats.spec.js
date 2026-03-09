@@ -5,7 +5,7 @@ module.exports = {
       tcid: '0',
       name: '@BACOM-Stats',
       path: '/drafts/nala/blocks/stats/stats',
-      tags: '@stats @bacom @smoke @regression @bacomSmoke',
+      tags: '@stats @bacom @smoke @regression @bacomSmoke @nopr',
     },
   ],
 };
