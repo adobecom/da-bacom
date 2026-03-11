@@ -49,76 +49,76 @@
 
   (() => {
     async function fetchAndParseSitemap() {
-    const sitemapOrigin = 'https://business.adobe.com';
-    const { origin, pathname } = window.location;
+      const sitemapOrigin = 'https://business.adobe.com';
+      const { origin, pathname } = window.location;
 
-    let sitemapPath = '/sitemap.xml';
-    const localeMatch = LOCALES.find(locale => pathname.startsWith(`/${locale}/`));
+      let sitemapPath = '/sitemap.xml';
+      const localeMatch = LOCALES.find(locale => pathname.startsWith(`/${locale}/`));
 
-    if (localeMatch) {
-      sitemapPath = `/${localeMatch}/sitemap.xml`;
-    }
-    
-    try {
-      const response = await fetch(`${origin}${sitemapPath}`);
-      if (!response.ok) {
-        console.warn('Failed to fetch sitemap:', response.status);
-        return;
+      if (localeMatch) {
+        sitemapPath = `/${localeMatch}/sitemap.xml`;
       }
       
-      const xmlText = await response.text();
-      const parser = new DOMParser();
-      const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
-      const parseError = xmlDoc.querySelector('parsererror');
-      if (parseError) {
-        return;
-      }
-      
-      const urlElements = xmlDoc.querySelectorAll('url');
-      let currentUrlElement = null;
-      const correctedPath = pathname.includes('html') ? pathname : `${pathname}.html`
-      const isLocalRoot = `${sitemapOrigin}/${localeMatch}/` === `${sitemapOrigin}${pathname}`;
-      const rootPage = isLocalRoot ? `${sitemapOrigin}/${localeMatch}/` : `${sitemapOrigin}/`; 
-      const currentPageUrl = pathname !== '/' && pathname !== `/${localeMatch}/` ? `${sitemapOrigin}${correctedPath}` : `${rootPage}`;
-
-      for (const urlElement of urlElements) {
-        const loc = urlElement.querySelector('loc')?.textContent;
-        if (loc === currentPageUrl || loc === currentPageUrl.replace(/\/$/, '')) {
-          currentUrlElement = urlElement;
-          break;
+      try {
+        const response = await fetch(`${origin}${sitemapPath}`);
+        if (!response.ok) {
+          console.warn('Failed to fetch sitemap:', response.status);
+          return;
         }
-      }
-      
-      if (!currentUrlElement) {
-        console.warn('Current page not found in sitemap');
-        return;
-      }
-      
-      const alternateLinks = currentUrlElement.querySelectorAll('link[rel="alternate"]');
-      const linkElements = [];
-
-      alternateLinks.forEach(altLink => {
-        const hreflang = altLink.getAttribute('hreflang');
-        const href = altLink.getAttribute('href');
         
-        if (hreflang && href) {
-          linkElements.push(buildLink(hreflang, href));
+        const xmlText = await response.text();
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+        const parseError = xmlDoc.querySelector('parsererror');
+        if (parseError) {
+          return;
         }
-      });
-      
-       const titleElement = document.head.querySelector('title');
-      if (linkElements.length > 0 && titleElement) {
-        titleElement.after(...linkElements);
+        
+        const urlElements = xmlDoc.querySelectorAll('url');
+        let currentUrlElement = null;
+        const correctedPath = pathname.includes('html') ? pathname : `${pathname}.html`
+        const isLocalRoot = `${sitemapOrigin}/${localeMatch}/` === `${sitemapOrigin}${pathname}`;
+        const rootPage = isLocalRoot ? `${sitemapOrigin}/${localeMatch}/` : `${sitemapOrigin}/`; 
+        const currentPageUrl = pathname !== '/' && pathname !== `/${localeMatch}/` ? `${sitemapOrigin}${correctedPath}` : `${rootPage}`;
+
+        for (const urlElement of urlElements) {
+          const loc = urlElement.querySelector('loc')?.textContent;
+          if (loc === currentPageUrl || loc === currentPageUrl.replace(/\/$/, '')) {
+            currentUrlElement = urlElement;
+            break;
+          }
+        }
+        
+        if (!currentUrlElement) {
+          console.warn('Current page not found in sitemap');
+          return;
+        }
+        
+        const alternateLinks = currentUrlElement.querySelectorAll('link[rel="alternate"]');
+        const linkElements = [];
+
+        alternateLinks.forEach(altLink => {
+          const hreflang = altLink.getAttribute('hreflang');
+          const href = altLink.getAttribute('href');
+          
+          if (hreflang && href) {
+            linkElements.push(buildLink(hreflang, href));
+          }
+        });
+        
+        const titleElement = document.head.querySelector('title');
+        if (linkElements.length > 0 && titleElement) {
+          titleElement.after(...linkElements);
+        }
+      } catch (error) {
+        console.error('Error fetching or parsing sitemap:', error);
       }
-    } catch (error) {
-      console.error('Error fetching or parsing sitemap:', error);
-    }
+    } 
 
     console.log(ssrFlag, 'ssrFlag');
     if (isAllowedAgent && !ssrFlag) {
-     fetchAndParseSitemap();
+      fetchAndParseSitemap();
     }
-  }
   })();
 
   const sheetSchema = document.querySelector('[type="application/ld+json"]');
