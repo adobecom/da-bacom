@@ -114,6 +114,7 @@
       console.error('Error fetching or parsing sitemap:', error);
     }
 
+    console.log(ssrFlag, 'ssrFlag');
     if (isAllowedAgent && !ssrFlag) {
      fetchAndParseSitemap();
     }
