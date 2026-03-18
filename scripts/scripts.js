@@ -127,6 +127,7 @@ const CONFIG = {
   ],
   htmlExclude: [
     /business\.adobe\.com\/(\w\w(_\w\w)?\/)?blog(\/.*)?/,
+    /experience\.adobe\.com(\/.*)?/,
   ],
   useDotHtml: true,
   dynamicNavKey: 'bacom',
