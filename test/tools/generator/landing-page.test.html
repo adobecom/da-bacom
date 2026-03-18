@@ -241,14 +241,17 @@
           expect(generator.isFormComplete()).to.be.true;
 
           shadowRoot.querySelector('sl-button.submit').click();
-          // Wait for the preview call to be made
-          for (let i = 0; i < 10; i++) {
-            await tick(500);
+
+          let previewCall;
+          // Calling fake timers multiple times to avoid flaky tests
+          for (let i = 0; i < 50; i++) {
+            await tick(100);
+            previewCall = daFetch.getCalls().find(
+              (call) => call.args[0].includes('/resources/guide/test-page') && call.args[1]?.method === 'POST'
+            );
+            if (previewCall) break;
           }
 
-          const previewCall = daFetch.getCalls().find(
-            (call) => call.args[0].includes('/resources/guide/test-page') && call.args[1]?.method === 'POST'
-          );
           expect(previewCall).to.exist;
           expect(previewCall.args[1]?.method).to.equal('POST');
 

@@ -9,6 +9,8 @@ const FORM_TEST_DATA = {
   firstName: 'NalaTest',
   lastName: 'Tester',
   email: 'qa-test@adobetest.com',
+  jobTitle: 'Other',
+  department: 'Other',
   company: 'Adobe Nala Test Corp',
   country: 'United States',
   state: 'California',
@@ -120,7 +122,7 @@ module.exports = {
     },
 
     // =========================================================
-    // E2E-004: Infographic JP (Parts A + B + C)
+    // E2E-004: Infographic Ungated JP (Parts A + B + C)
     // =========================================================
     {
       tcid: '3',
@@ -135,7 +137,6 @@ module.exports = {
         pageSlug: 'nala-auto-infographic-ungated-jp',
         marqueeEyebrow: 'Infographic',
         marqueeDescription: 'A quick visual summary of the latest analytics trends.',
-        marqueeImage: SAMPLE_PNG,
         bodyDescription: 'Explore the standout analytics insights in a concise infographic format.',
         cardTitle: 'Analytics Trends Infographic',
         cardDescription: 'Download the infographic for a visual breakdown of the trends.',

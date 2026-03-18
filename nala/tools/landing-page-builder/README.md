@@ -76,6 +76,7 @@ Examples:
 ```bash
 LPB_REF=stage npm run nala stage @lpb
 LPB_REF=main npm run nala main @lpb
+LPB_REF=local npm run nala local @lpb
 LPB_REF=my-feature-branch npm run nala my-feature-branch @lpb
 ```
 
@@ -92,46 +93,63 @@ LPB_REF=my-feature-branch npm run nala my-feature-branch @lpb-e2e
 
 ## Local Development With `aem up`
 
-This repo does serve the LPB page locally when you run:
+For manual author-side development and debugging, you can run the LPB on your local environment.
+
+This repo serves the LPB page locally when you run:
 
 ```bash
 aem up
 ```
 
-The local page is:
+This serves the local LPB page at:
 
 ```text
 http://localhost:3000/tools/generator/landing-page
 ```
 
-That is useful for manual author-side development and debugging, and the LPB tests in this folder can now target it explicitly.
+When the DA author app sees `ref=local`, it uses the **local environment** (`localhost:3000`).
 
-Run non-E2E LPB tests against your local author page:
+```text
+https://da.live/app/adobecom/da-bacom/tools/generator/landing-page?ref=local
+```
+
+With this URL, the DA author app loads the LPB in an iframe pointing to your local server with the same URL used by the DA author app on da.live when `ref=local`.
+
+*You get full DA authoring context (auth and APIs) with your local LPB code.* 
+
+### Option A: Author on local URL only (No DA Context)
+
+Directly test the LPB page on your local server for form/field and smoke tests without the DA wrapper.
+
+- `LPB_URL` changes the author app target from `da.live` to your local `aem up` page.
 
 ```bash
 LPB_URL=http://localhost:3000/tools/generator/landing-page npm run nala local @lpb-non-e2e
-```
-
-Run LPB smoke tests against your local author page:
-
-```bash
 LPB_URL=http://localhost:3000/tools/generator/landing-page npm run nala local "@lpb-non-e2e @smoke"
 ```
 
-How this works:
-
-- `LPB_URL` changes the author app target from `da.live` to your local `aem up` page.
-- `npm run nala local` keeps the preview or publish side on `http://localhost:3000`.
-
-Recommended scope for local author runs:
-
+Recommended scope:
 - form and field tests
 - smoke coverage
 
-Not recommended for LPB E2E:
+*Upload/Preview/Publish will not work without the DA context.*
 
-- E2E flows still depend on DA authoring, publish, preview, and cleanup behavior
-- use `LPB_REF=stage` or a branch ref for those
+### Option B: Author on da.live with local environment (recommended)
+
+Test LPB through the DA author app on `da.live`, used for full LPB testing with DA Context.
+
+- **LPB_REF=local** opens da.live with `?ref=local`, pointing DA to your local `aem up` page.
+
+Recommended scope:
+- form and field tests
+- smoke coverage
+- E2E tests
+
+```bash
+LPB_REF=local npm run nala local @lpb-non-e2e
+LPB_REF=local npm run nala local "@lpb-non-e2e @smoke"
+LPB_REF=local npm run nala local @lpb-e2e
+```
 
 ## Stable Slugs
 

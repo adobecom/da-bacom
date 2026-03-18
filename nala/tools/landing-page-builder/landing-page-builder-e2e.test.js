@@ -485,7 +485,7 @@ test.describe('Landing Page Builder - E2E Journey Tests', () => {
   });
 
   // =============================================================
-  // E2E-004: Infographic JP — Parts A + B + C
+  // E2E-004: Infographic Ungated JP — Parts A + B + C
   // =============================================================
   test(`${features[3].name}, ${features[3].tags}`, async ({ page }) => {
     const { data } = features[3];
@@ -503,8 +503,6 @@ test.describe('Landing Page Builder - E2E Journey Tests', () => {
     await test.step('Part A-3: Fill Marquee section', async () => {
       if (data.marqueeEyebrow) await lpb.selectMarqueeEyebrow(data.marqueeEyebrow);
       await lpb.fillMarqueeDescription(data.marqueeDescription);
-      await lpb.uploadMarqueeImage(data.marqueeImage);
-      await lpb.waitForToast('Image Uploaded', 'success', 15000);
     });
 
     await test.step('Part A-4: Fill Body section', async () => {
@@ -556,8 +554,8 @@ test.describe('Landing Page Builder - E2E Journey Tests', () => {
       await preview.verifyMarqueeContent(testData.headline, data.marqueeDescription);
     });
 
-    await runCollectedStep(verificationFailures, 'Part C-2: Verify marquee image', async () => {
-      await preview.verifyMarqueeImageVisible();
+    await runCollectedStep(verificationFailures, 'Part C-2: Verify marquee image not visible', async () => {
+      await preview.verifyMarqueeImageNotVisible();
     });
 
     await runCollectedStep(verificationFailures, 'Part C-3: Verify body content', async () => {

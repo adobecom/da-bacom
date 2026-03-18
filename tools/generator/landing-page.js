@@ -26,6 +26,7 @@ import {
   setStorageItem,
   marketoUrl,
   applyTemplateData,
+  addHiddenTable,
 } from './generator.js';
 import {
   renderContentType,
@@ -39,11 +40,13 @@ import {
   renderAssetDelivery,
 } from './form-sections.js';
 
-await DA_SDK;
+const withTimeout = (p, ms, def = null) => Promise.race([p, new Promise((r) => { setTimeout(() => r(def), ms); })]);
+await withTimeout(DA_SDK, 5000);
 
 const style = await getStyle(import.meta.url.split('?')[0]);
 const searchParams = new URLSearchParams(window.location.search);
 
+const LPB_VERSION = '1.0.0';
 const FORM_STORAGE_KEY = 'landing-page-builder';
 const OPTIONS_LOADING = [{ value: 'loading', label: 'Loading...' }];
 const OPTIONS_ERROR = [{ value: 'error', label: 'Error loading options' }];
@@ -426,6 +429,9 @@ class LandingPageForm extends LitElement {
       minute: 'numeric',
       hour12: false,
     });
+    const marqueeImgVisible = !(this.form.gated === 'Ungated' && this.form.contentType === 'Infographic');
+    const videoVisible = this.form.contentType === 'Video/Demo';
+    const pdfVisible = !videoVisible;
 
     const placeholders = {
       ...form,
@@ -437,9 +443,12 @@ class LandingPageForm extends LitElement {
       caasPrimaryProducts: Array.isArray(form.primaryProducts) ? form.primaryProducts.join(', ') : form.primaryProducts,
       caasContentType: this.getCaasContentType(form.contentType),
       cardDate: new Date().toISOString().split('T')[0],
-      marqueeImage: getContentUrl(form.marqueeImage?.path),
+      marqueeImage: marqueeImgVisible ? getContentUrl(form.marqueeImage?.path) : '',
       bodyImage: getContentUrl(form.bodyImage?.path),
       cardImage: getContentUrl(form.cardImage?.path),
+      pdfAsset: pdfVisible && form.pdfAsset ? getAemPageUrl(form.pdfAsset?.path) : '',
+      pdfAssetName: pdfVisible && form.pdfAsset ? form.pdfAsset?.name : '',
+      videoAsset: videoVisible ? form.videoAsset : '',
     };
 
     if (form.pdfAsset) {
@@ -582,6 +591,7 @@ class LandingPageForm extends LitElement {
   }
 
   async uploadAsset(file, path, type = 'image') {
+    // TODO: Handle subfolders in path
     if (DEBUG) console.log('[LPB][Request] POST asset:', type, path + file.name, file.name);
     const result = await saveFile(path, file);
     if (!result) {
@@ -691,7 +701,10 @@ class LandingPageForm extends LitElement {
       console.log('[Save] savePage url:', this.form.url);
       console.table(placeholders);
     }
-    const generatedPage = applyTemplateData(this.templateHTML, placeholders);
+    let generatedPage = applyTemplateData(this.templateHTML, placeholders);
+    generatedPage = addHiddenTable(generatedPage, { name: FORM_STORAGE_KEY, version: LPB_VERSION }, 'page-builder');
+    if (DEBUG) generatedPage = addHiddenTable(generatedPage, this.form, 'form-data');
+
     try {
       if (DEBUG) console.log('[LPB][Request] PUT page:', this.form.url);
       await saveSource(this.form.url, generatedPage);
@@ -832,6 +845,10 @@ class LandingPageForm extends LitElement {
 
     if (this.form.gated === 'Gated') {
       required.push('formTemplate', 'campaignId', 'marketoPOI');
+    }
+
+    if (this.form.gated === 'Ungated' && this.form.contentType === 'Infographic') {
+      required.splice(required.indexOf('marqueeImage'), 1);
     }
 
     const typeKey = (this.form.contentType || '').toLowerCase();

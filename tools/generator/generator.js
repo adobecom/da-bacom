@@ -24,6 +24,17 @@ function findPlaceholders(templateStr) {
   return fields.map((field) => field.replace('{{', '').replace('}}', ''));
 }
 
+export function addHiddenTable(text, data, extraClass = '') {
+  const rows = Object.entries(data)
+    .map(([key, value]) => {
+      const displayValue = (typeof value === 'object') ? JSON.stringify(value) : value;
+      return `<div><div>${key}</div><div>${displayValue}</div></div>`;
+    })
+    .join('');
+  const hiddenTable = `<div><div class="table hide-block ${extraClass}">${rows}</div></div>`;
+  return text.replace('</main>', `${hiddenTable}</main>`);
+}
+
 export function applyTemplateData(templateStr, data) {
   const fields = findPlaceholders(templateStr);
   const html = fields.reduce((text, field) => {
