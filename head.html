@@ -1,4 +1,5 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="head-loaded" content="false"/>
 <link rel="preload" href="/styles/styles.css" as="style"/>
 <script>
   const libs = (() => {
@@ -10,7 +11,8 @@
     return branch.includes('--') ? `https://${branch}.aem.live/libs` : `https://${branch}--milo--adobecom.aem.live/libs`;
   })();
 
-  const ssrFlag = document.querySelector('meta[name="head-loaded"]');
+  const flagMeta = document.querySelector('meta[name="head-loaded"]');
+  const ssrFlag = flagMeta?.content === 'true';
 
   if (!ssrFlag) {
     const miloStyles = document.createElement('link');
@@ -129,14 +131,14 @@
     "url": window.location.href 
   }
 
-  const jsonLD = document.createElement('script');
-  jsonLD.setAttribute('type', 'application/ld+json');
-  jsonLD.innerText = JSON.stringify(schema);
-  sheetSchema ? sheetSchema.after(jsonLD) : document.head.append(jsonLD);
+  if (!ssrFlag) {
+    const jsonLD = document.createElement('script');
+    jsonLD.setAttribute('type', 'application/ld+json');
+    jsonLD.innerText = JSON.stringify(schema);
+    sheetSchema ? sheetSchema.after(jsonLD) : document.head.append(jsonLD);
+  }
 
-  const meta = document.createElement('meta');
-  meta.setAttribute('name', 'head-loaded');
-  document.head.append(meta);
+  flagMeta.content = 'true';
 </script>
 <script src="/scripts/scripts.js" type="module"></script>
 <style>body { display: none; }</style>
