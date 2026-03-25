@@ -14,3 +14,8 @@ test-a11y-results/
 nala/tools/landing-page-builder/TEST-PLAN.md
 nala/tools/landing-page-builder/MANUAL-TEST-PLAN.md
 nala/utils/auth.json
+
+# AI / editor local state
+.cursor/
+CLAUDE.local.md
+*.ai.local
