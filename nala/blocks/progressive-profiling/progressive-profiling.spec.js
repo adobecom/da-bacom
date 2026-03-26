@@ -1,161 +1,181 @@
-/**
- * BACOM Progressive Profiling Feature Definitions
- *
- * Test Coverage:
- * - Unknown user field visibility across all form types
- * - Known user pre-fill and progressive field behavior
- * - Form journeys: Short→Medium, Short→RFI, Medium→RFI
- *
- * Form Types:
- * - Short (Essential DX): Basic fields (Email, Name, Company, Country)
- * - Medium (Expanded DX): Basic + Job fields (JobTitle, FunctionalArea)
- * - RFI (Contact/Full): All fields including contact details
- *
- * Browser/Platform Requirements (Non-Functional):
- * - Chrome (Desktop) - Primary browser
- * - Firefox (Desktop)
- * - Safari/WebKit (Desktop)
- *
- * Email Requirement:
- * - Use @adobetest.com emails (e.g., xiasun+test001@adobetest.com)
- */
+const BUSINESS_STAGE_ORIGIN = 'https://business.stage.adobe.com';
+
+const STAGED_LOCALES = [
+  { code: 'US', path: '', tag: '@us' },
+  { code: 'UK', path: '/uk', tag: '@uk' },
+  { code: 'AU', path: '/au', tag: '@au' },
+  { code: 'JP', path: '/jp', tag: '@jp' },
+  { code: 'PT', path: '/pt', tag: '@pt' },
+  { code: 'KR', path: '/kr', tag: '@kr' },
+  { code: 'IT', path: '/it', tag: '@it' },
+  { code: 'ES', path: '/es', tag: '@es' },
+  { code: 'FR', path: '/fr', tag: '@fr' },
+  { code: 'DE', path: '/de', tag: '@de' },
+  { code: 'IN', path: '/in', tag: '@in' },
+];
+
+const STAGED_FORMS = [
+  {
+    key: 'Short',
+    formType: 'short',
+    urlPath: '/resources/form-test-1-essential-dx-stage.html',
+    description: 'Unknown visitor sees the full Essential/Short field set on the staged test page.',
+    tags: '@bacom @progressive-profiling @pp @staged @short @smoke @regression',
+    unknownVisitor: {
+      visible: ['email', 'firstName', 'lastName', 'company', 'country'],
+      hidden: ['state', 'postalCode', 'phone', 'jobTitle', 'functionalArea', 'primaryProductInterest'],
+    },
+    revisitPrefill: ['email', 'firstName', 'lastName', 'company', 'country'],
+  },
+  {
+    key: 'Medium',
+    formType: 'medium',
+    urlPath: '/resources/form-test-2-expanded-dx-stage.html',
+    description: 'Unknown visitor sees the full Expanded/Medium field set on the staged test page.',
+    tags: '@bacom @progressive-profiling @pp @staged @medium @smoke @regression',
+    unknownVisitor: {
+      visible: ['email', 'firstName', 'lastName', 'company', 'country', 'jobTitle', 'functionalArea'],
+      hidden: ['state', 'postalCode', 'phone', 'primaryProductInterest'],
+    },
+    revisitPrefill: ['email', 'firstName', 'lastName', 'company', 'country', 'jobTitle', 'functionalArea'],
+  },
+  {
+    key: 'Full',
+    formType: 'rfi',
+    urlPath: '/resources/form-test-5-stage.html',
+    description: 'Unknown visitor sees the full Contact/Full field set on the staged test page.',
+    tags: '@bacom @progressive-profiling @pp @staged @full @smoke @regression',
+    unknownVisitor: {
+      visible: ['email', 'firstName', 'lastName', 'company', 'country', 'phone', 'jobTitle', 'functionalArea', 'primaryProductInterest'],
+      hidden: [],
+      visibleAfterCountry: ['state', 'postalCode'],
+    },
+    revisitPrefill: ['email', 'firstName', 'lastName', 'company', 'country', 'phone', 'jobTitle', 'functionalArea', 'primaryProductInterest', 'state', 'postalCode'],
+  },
+];
+
+function buildStageUrl(localePath, pagePath) {
+  return `${BUSINESS_STAGE_ORIGIN}${localePath}${pagePath}`;
+}
+
+const stagedPages = STAGED_LOCALES.flatMap((locale, localeIndex) => STAGED_FORMS.map((form, formIndex) => ({
+  tcid: `PP-STAGE-${String((localeIndex * STAGED_FORMS.length) + formIndex + 1).padStart(2, '0')}`,
+  name: `@PP-Staged-${locale.code}-${form.key}`,
+  url: buildStageUrl(locale.path, form.urlPath),
+  formType: form.formType,
+  description: `${locale.code} staged test page. ${form.description}`,
+  tags: `${form.tags} ${locale.tag}`,
+  unknownVisitor: form.unknownVisitor,
+  revisitPrefill: form.revisitPrefill,
+})));
 
 module.exports = {
   name: 'BACOM Progressive Profiling',
-  features: [
-    // =========================================================================
-    // UNKNOWN USER TESTS - Verify all fields are visible, no pre-fill
-    // =========================================================================
+  stagedPages,
+  journeyFlows: [
     {
-      tcid: '0',
-      name: '@PP-Unknown-ShortForm-DX',
-      url: 'https://business.adobe.com/resources/form-test-1-essential-dx-stage.html',
-      description: 'Unknown user visits Short DX form - all Short fields visible, no pre-fill',
-      tags: '@bacom @progressive-profiling @unknown @short @dx @smoke @regression',
-      formType: 'short',
-      userState: 'unknown',
+      tcid: 'PP-JOURNEY-01',
+      name: '@PP-Essential-To-Expanded',
+      sourceFormType: 'short',
+      destinationFormType: 'medium',
+      sourceUrl: buildStageUrl('', '/resources/form-test-1-essential-dx-stage.html'),
+      destinationUrl: buildStageUrl('', '/resources/form-test-2-expanded-dx-stage.html'),
+      description: 'Submit Essential/Short, validate PP behavior on Expanded/Medium via email link.',
+      tags: '@bacom @progressive-profiling @pp @journey @short-to-medium @manual @nopr @regression',
+      expectedHidden: ['firstName', 'lastName', 'company'],
+      expectedVisible: ['email', 'country', 'jobTitle', 'functionalArea'],
     },
     {
-      tcid: '1',
-      name: '@PP-Unknown-MediumForm-DX',
-      url: 'https://business.adobe.com/resources/form-test-2-expanded-dx-stage.html',
-      description: 'Unknown user visits Medium DX form - all Medium fields visible, no pre-fill',
-      tags: '@bacom @progressive-profiling @unknown @medium @dx @smoke @regression',
-      formType: 'medium',
-      userState: 'unknown',
+      tcid: 'PP-JOURNEY-02',
+      name: '@PP-Essential-To-Full',
+      sourceFormType: 'short',
+      destinationFormType: 'rfi',
+      sourceUrl: buildStageUrl('', '/resources/form-test-1-essential-dx-stage.html'),
+      destinationUrl: buildStageUrl('', '/resources/form-test-5-stage.html'),
+      description: 'Submit Essential/Short, validate PP behavior on Full/RFI via email link.',
+      tags: '@bacom @progressive-profiling @pp @journey @short-to-rfi @manual @nopr @regression',
+      expectedHidden: ['firstName', 'lastName', 'company'],
+      expectedVisible: ['email', 'country', 'phone', 'state', 'postalCode', 'jobTitle', 'functionalArea', 'primaryProductInterest'],
     },
     {
-      tcid: '2',
-      name: '@PP-Unknown-RFIForm',
-      url: 'https://business.adobe.com/resources/form-test-5-stage.html',
-      description: 'Unknown user visits RFI form - all RFI fields visible, no pre-fill',
-      tags: '@bacom @progressive-profiling @unknown @rfi @smoke @regression',
-      formType: 'rfi',
-      userState: 'unknown',
+      tcid: 'PP-JOURNEY-03',
+      name: '@PP-Expanded-To-Full',
+      sourceFormType: 'medium',
+      destinationFormType: 'rfi',
+      sourceUrl: buildStageUrl('', '/resources/form-test-2-expanded-dx-stage.html'),
+      destinationUrl: buildStageUrl('', '/resources/form-test-5-stage.html'),
+      description: 'Submit Expanded/Medium, validate PP behavior on Full/RFI via email link.',
+      tags: '@bacom @progressive-profiling @pp @journey @medium-to-rfi @manual @nopr @regression',
+      expectedHidden: ['firstName', 'lastName', 'company', 'jobTitle', 'functionalArea'],
+      expectedVisible: ['email', 'country', 'phone', 'state', 'postalCode', 'primaryProductInterest'],
     },
-
-    // =========================================================================
-    // JOURNEY TESTS - Short to Medium Form
-    // =========================================================================
+  ],
+  ongoingPages: [
     {
-      tcid: '3',
-      name: '@PP-Journey-ShortToMedium',
-      description: 'User fills Short DX form, then visits Medium DX form - basic fields pre-filled',
-      tags: '@bacom @progressive-profiling @journey @short-to-medium @smoke @regression',
-      journey: {
-        firstForm: {
-          type: 'short',
-          url: 'https://business.adobe.com/resources/form-test-1-essential-dx-stage.html',
-        },
-        secondForm: {
-          type: 'medium',
-          url: 'https://business.adobe.com/resources/form-test-2-expanded-dx-stage.html',
-        },
-      },
-    },
-
-    // =========================================================================
-    // JOURNEY TESTS - Short to RFI Form
-    // =========================================================================
-    {
-      tcid: '4',
-      name: '@PP-Journey-ShortToRFI',
-      description: 'User fills Short DX form, then visits RFI form - basic fields pre-filled',
-      tags: '@bacom @progressive-profiling @journey @short-to-rfi @smoke @regression',
-      journey: {
-        firstForm: {
-          type: 'short',
-          url: 'https://business.adobe.com/resources/form-test-1-essential-dx-stage.html',
-        },
-        secondForm: {
-          type: 'rfi',
-          url: 'https://business.adobe.com/resources/form-test-5-stage.html',
-        },
-      },
-    },
-
-    // =========================================================================
-    // JOURNEY TESTS - Medium to RFI Form
-    // =========================================================================
-    {
-      tcid: '5',
-      name: '@PP-Journey-MediumToRFI',
-      description: 'User fills Medium DX form, then visits RFI form',
-      tags: '@bacom @progressive-profiling @journey @medium-to-rfi @smoke @regression',
-      journey: {
-        firstForm: {
-          type: 'medium',
-          url: 'https://business.adobe.com/resources/form-test-2-expanded-dx-stage.html',
-        },
-        secondForm: {
-          type: 'rfi',
-          url: 'https://business.adobe.com/resources/form-test-5-stage.html',
-        },
-      },
-    },
-
-    // =========================================================================
-    // FORM SUBMISSION TESTS - Verify form can be submitted successfully
-    // =========================================================================
-    {
-      tcid: '6',
-      name: '@PP-Submit-ShortForm',
-      description: 'Submit Short DX form and verify redirect to thank you page',
-      tags: '@bacom @progressive-profiling @submit @short @smoke @regression',
-      url: 'https://business.adobe.com/resources/form-test-1-essential-dx-stage.html',
-      formType: 'short',
-      testSubmission: true,
+      tcid: 'PP-ONGOING-00',
+      name: '@PP-Ongoing-US-RequestConsultation',
+      url: `${BUSINESS_STAGE_ORIGIN}/request-consultation.html`,
+      tags: '@bacom @progressive-profiling @pp @ongoing @regression',
     },
     {
-      tcid: '7',
-      name: '@PP-Submit-MediumForm',
-      description: 'Submit Medium DX form and verify redirect to thank you page',
-      tags: '@bacom @progressive-profiling @submit @medium @smoke @regression',
-      url: 'https://business.adobe.com/resources/form-test-2-expanded-dx-stage.html',
-      formType: 'medium',
-      testSubmission: true,
+      tcid: 'PP-ONGOING-01',
+      name: '@PP-Ongoing-AU-RequestConsultation',
+      url: `${BUSINESS_STAGE_ORIGIN}/au/request-consultation.html`,
+      tags: '@bacom @progressive-profiling @pp @ongoing @regression',
     },
     {
-      tcid: '8',
-      name: '@PP-Submit-RFIForm',
-      description: 'Submit RFI form and verify redirect to thank you page',
-      tags: '@bacom @progressive-profiling @submit @rfi @smoke @regression',
-      url: 'https://business.adobe.com/resources/form-test-5-stage.html',
-      formType: 'rfi',
-      testSubmission: true,
+      tcid: 'PP-ONGOING-02',
+      name: '@PP-Ongoing-UK-RequestConsultation',
+      url: `${BUSINESS_STAGE_ORIGIN}/uk/request-consultation.html`,
+      tags: '@bacom @progressive-profiling @pp @ongoing @regression',
     },
-
-    // =========================================================================
-    // EDGE CASE TESTS
-    // =========================================================================
     {
-      tcid: '9',
-      name: '@PP-EdgeCase-ClearedCookies',
-      description: 'Verify form behaves as unknown user after cookies are cleared',
-      tags: '@bacom @progressive-profiling @edge-case @regression',
-      url: 'https://business.adobe.com/resources/form-test-2-expanded-dx-stage.html',
-      formType: 'medium',
-      testCookieClear: true,
+      tcid: 'PP-ONGOING-03',
+      name: '@PP-Ongoing-UK-BuildingStrongITFoundations',
+      url: `${BUSINESS_STAGE_ORIGIN}/uk/resources/webinars/building-strong-it-foundations.html`,
+      tags: '@bacom @progressive-profiling @pp @ongoing @regression',
+    },
+    {
+      tcid: 'PP-ONGOING-04',
+      name: '@PP-Ongoing-AU-AI',
+      url: `${BUSINESS_STAGE_ORIGIN}/au/ai.html`,
+      tags: '@bacom @progressive-profiling @pp @ongoing @regression',
+    },
+  ],
+  outOfScopePages: [
+    {
+      tcid: 'PP-OOS-01',
+      name: '@PP-OOS-Express-RequestInfo',
+      url: 'https://www.stage.adobe.com/express/business/request-info',
+      tags: '@bacom @progressive-profiling @pp @out-of-scope @regression',
+    },
+    {
+      tcid: 'PP-OOS-02',
+      name: '@PP-OOS-Acrobat-Contact',
+      url: 'https://www.adobe.com/acrobat/contact.html',
+      tags: '@bacom @progressive-profiling @pp @out-of-scope @regression',
+    },
+    {
+      tcid: 'PP-OOS-03',
+      name: '@PP-OOS-Acrobat-DeveloperForm',
+      url: 'https://www.adobe.com/acrobat/business/developer-form.html',
+      tags: '@bacom @progressive-profiling @pp @out-of-scope @regression',
+    },
+    {
+      tcid: 'PP-OOS-04',
+      name: '@PP-OOS-AgentOrchestrator',
+      url: `${BUSINESS_STAGE_ORIGIN}/products/experience-platform/agent-orchestrator.html`,
+      tags: '@bacom @progressive-profiling @pp @out-of-scope @multi-step @regression',
+      multiStep: true,
+      steps: 3,
+    },
+    {
+      tcid: 'PP-OOS-05',
+      name: '@PP-OOS-CreativeCloudBusiness',
+      url: `${BUSINESS_STAGE_ORIGIN}/products/creativecloud-business.html`,
+      tags: '@bacom @progressive-profiling @pp @out-of-scope @multi-step @regression',
+      multiStep: true,
+      steps: 3,
     },
   ],
 };

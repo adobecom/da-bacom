@@ -1,50 +1,243 @@
 ---
 # =============================================================================
 # BACOM Progressive Profiling Test Data
-# Testing: Field visibility, pre-fill, and hiding behaviors across forms
-# Forms: Short DX (Essential), Medium DX (Expanded), RFI (Contact/Full)
+# Source: Feature Deep Dive spec / PP deployment scope
+# Environment: business.stage.adobe.com for business pages
+# Validation modes:
+# - revisit: submit, wait ~1 minute, revisit page, validate prefilled values
+# - email-link: submit, open email, click link, validate progressive hide/show behavior
 # =============================================================================
 
-# -----------------------------------------------------------------------------
-# Form URLs (DX forms only)
-# -----------------------------------------------------------------------------
-forms:
-  short-dx:
-    name: 'Short Form DX (Essential)'
-    url: 'https://business.adobe.com/resources/form-test-1-essential-dx-stage.html'
+stagedTestPages:
+  - locale: 'US'
+    formType: 'short'
+    name: 'US Short Form DX (Essential)'
+    url: 'https://business.stage.adobe.com/resources/form-test-1-essential-dx-stage.html'
     template: 'flex_content'
-  medium-dx:
-    name: 'Medium Form DX (Expanded)'
-    url: 'https://business.adobe.com/resources/form-test-2-expanded-dx-stage.html'
+    revisitValidation: 'prefill'
+  - locale: 'US'
+    formType: 'medium'
+    name: 'US Medium Form DX (Expanded)'
+    url: 'https://business.stage.adobe.com/resources/form-test-2-expanded-dx-stage.html'
     template: 'flex_event'
-  rfi:
-    name: 'RFI Form (Contact/Full)'
-    url: 'https://business.adobe.com/resources/form-test-5-stage.html'
+    revisitValidation: 'prefill'
+  - locale: 'US'
+    formType: 'rfi'
+    name: 'US RFI Form (Contact/Full)'
+    url: 'https://business.stage.adobe.com/resources/form-test-5-stage.html'
     template: 'flex_contact'
+    revisitValidation: 'prefill'
+  - locale: 'UK'
+    formType: 'short'
+    name: 'UK Short Form DX (Essential)'
+    url: 'https://business.stage.adobe.com/uk/resources/form-test-1-essential-dx-stage.html'
+    template: 'flex_content'
+    revisitValidation: 'prefill'
+  - locale: 'UK'
+    formType: 'medium'
+    name: 'UK Medium Form DX (Expanded)'
+    url: 'https://business.stage.adobe.com/uk/resources/form-test-2-expanded-dx-stage.html'
+    template: 'flex_event'
+    revisitValidation: 'prefill'
+  - locale: 'UK'
+    formType: 'rfi'
+    name: 'UK RFI Form (Contact/Full)'
+    url: 'https://business.stage.adobe.com/uk/resources/form-test-5-stage.html'
+    template: 'flex_contact'
+    revisitValidation: 'prefill'
+  - locale: 'AU'
+    formType: 'short'
+    name: 'AU Short Form DX (Essential)'
+    url: 'https://business.stage.adobe.com/au/resources/form-test-1-essential-dx-stage.html'
+    template: 'flex_content'
+    revisitValidation: 'prefill'
+  - locale: 'AU'
+    formType: 'medium'
+    name: 'AU Medium Form DX (Expanded)'
+    url: 'https://business.stage.adobe.com/au/resources/form-test-2-expanded-dx-stage.html'
+    template: 'flex_event'
+    revisitValidation: 'prefill'
+  - locale: 'AU'
+    formType: 'rfi'
+    name: 'AU RFI Form (Contact/Full)'
+    url: 'https://business.stage.adobe.com/au/resources/form-test-5-stage.html'
+    template: 'flex_contact'
+    revisitValidation: 'prefill'
+  - locale: 'JP'
+    formType: 'short'
+    name: 'JP Short Form DX (Essential)'
+    url: 'https://business.stage.adobe.com/jp/resources/form-test-1-essential-dx-stage.html'
+    template: 'flex_content'
+    revisitValidation: 'prefill'
+  - locale: 'JP'
+    formType: 'medium'
+    name: 'JP Medium Form DX (Expanded)'
+    url: 'https://business.stage.adobe.com/jp/resources/form-test-2-expanded-dx-stage.html'
+    template: 'flex_event'
+    revisitValidation: 'prefill'
+  - locale: 'JP'
+    formType: 'rfi'
+    name: 'JP RFI Form (Contact/Full)'
+    url: 'https://business.stage.adobe.com/jp/resources/form-test-5-stage.html'
+    template: 'flex_contact'
+    revisitValidation: 'prefill'
+  - locale: 'PT'
+    formType: 'short'
+    name: 'PT Short Form DX (Essential)'
+    url: 'https://business.stage.adobe.com/pt/resources/form-test-1-essential-dx-stage.html'
+    template: 'flex_content'
+    revisitValidation: 'prefill'
+  - locale: 'PT'
+    formType: 'medium'
+    name: 'PT Medium Form DX (Expanded)'
+    url: 'https://business.stage.adobe.com/pt/resources/form-test-2-expanded-dx-stage.html'
+    template: 'flex_event'
+    revisitValidation: 'prefill'
+  - locale: 'PT'
+    formType: 'rfi'
+    name: 'PT RFI Form (Contact/Full)'
+    url: 'https://business.stage.adobe.com/pt/resources/form-test-5-stage.html'
+    template: 'flex_contact'
+    revisitValidation: 'prefill'
+  - locale: 'KR'
+    formType: 'short'
+    name: 'KR Short Form DX (Essential)'
+    url: 'https://business.stage.adobe.com/kr/resources/form-test-1-essential-dx-stage.html'
+    template: 'flex_content'
+    revisitValidation: 'prefill'
+  - locale: 'KR'
+    formType: 'medium'
+    name: 'KR Medium Form DX (Expanded)'
+    url: 'https://business.stage.adobe.com/kr/resources/form-test-2-expanded-dx-stage.html'
+    template: 'flex_event'
+    revisitValidation: 'prefill'
+  - locale: 'KR'
+    formType: 'rfi'
+    name: 'KR RFI Form (Contact/Full)'
+    url: 'https://business.stage.adobe.com/kr/resources/form-test-5-stage.html'
+    template: 'flex_contact'
+    revisitValidation: 'prefill'
+  - locale: 'IT'
+    formType: 'short'
+    name: 'IT Short Form DX (Essential)'
+    url: 'https://business.stage.adobe.com/it/resources/form-test-1-essential-dx-stage.html'
+    template: 'flex_content'
+    revisitValidation: 'prefill'
+  - locale: 'IT'
+    formType: 'medium'
+    name: 'IT Medium Form DX (Expanded)'
+    url: 'https://business.stage.adobe.com/it/resources/form-test-2-expanded-dx-stage.html'
+    template: 'flex_event'
+    revisitValidation: 'prefill'
+  - locale: 'IT'
+    formType: 'rfi'
+    name: 'IT RFI Form (Contact/Full)'
+    url: 'https://business.stage.adobe.com/it/resources/form-test-5-stage.html'
+    template: 'flex_contact'
+    revisitValidation: 'prefill'
+  - locale: 'ES'
+    formType: 'short'
+    name: 'ES Short Form DX (Essential)'
+    url: 'https://business.stage.adobe.com/es/resources/form-test-1-essential-dx-stage.html'
+    template: 'flex_content'
+    revisitValidation: 'prefill'
+  - locale: 'ES'
+    formType: 'medium'
+    name: 'ES Medium Form DX (Expanded)'
+    url: 'https://business.stage.adobe.com/es/resources/form-test-2-expanded-dx-stage.html'
+    template: 'flex_event'
+    revisitValidation: 'prefill'
+  - locale: 'ES'
+    formType: 'rfi'
+    name: 'ES RFI Form (Contact/Full)'
+    url: 'https://business.stage.adobe.com/es/resources/form-test-5-stage.html'
+    template: 'flex_contact'
+    revisitValidation: 'prefill'
+  - locale: 'FR'
+    formType: 'short'
+    name: 'FR Short Form DX (Essential)'
+    url: 'https://business.stage.adobe.com/fr/resources/form-test-1-essential-dx-stage.html'
+    template: 'flex_content'
+    revisitValidation: 'prefill'
+  - locale: 'FR'
+    formType: 'medium'
+    name: 'FR Medium Form DX (Expanded)'
+    url: 'https://business.stage.adobe.com/fr/resources/form-test-2-expanded-dx-stage.html'
+    template: 'flex_event'
+    revisitValidation: 'prefill'
+  - locale: 'FR'
+    formType: 'rfi'
+    name: 'FR RFI Form (Contact/Full)'
+    url: 'https://business.stage.adobe.com/fr/resources/form-test-5-stage.html'
+    template: 'flex_contact'
+    revisitValidation: 'prefill'
+  - locale: 'DE'
+    formType: 'short'
+    name: 'DE Short Form DX (Essential)'
+    url: 'https://business.stage.adobe.com/de/resources/form-test-1-essential-dx-stage.html'
+    template: 'flex_content'
+    revisitValidation: 'prefill'
+  - locale: 'DE'
+    formType: 'medium'
+    name: 'DE Medium Form DX (Expanded)'
+    url: 'https://business.stage.adobe.com/de/resources/form-test-2-expanded-dx-stage.html'
+    template: 'flex_event'
+    revisitValidation: 'prefill'
+  - locale: 'DE'
+    formType: 'rfi'
+    name: 'DE RFI Form (Contact/Full)'
+    url: 'https://business.stage.adobe.com/de/resources/form-test-5-stage.html'
+    template: 'flex_contact'
+    revisitValidation: 'prefill'
+  - locale: 'IN'
+    formType: 'short'
+    name: 'IN Short Form DX (Essential)'
+    url: 'https://business.stage.adobe.com/in/resources/form-test-1-essential-dx-stage.html'
+    template: 'flex_content'
+    revisitValidation: 'prefill'
+  - locale: 'IN'
+    formType: 'medium'
+    name: 'IN Medium Form DX (Expanded)'
+    url: 'https://business.stage.adobe.com/in/resources/form-test-2-expanded-dx-stage.html'
+    template: 'flex_event'
+    revisitValidation: 'prefill'
+  - locale: 'IN'
+    formType: 'rfi'
+    name: 'IN RFI Form (Contact/Full)'
+    url: 'https://business.stage.adobe.com/in/resources/form-test-5-stage.html'
+    template: 'flex_contact'
+    revisitValidation: 'prefill'
 
-# -----------------------------------------------------------------------------
-# Test User Data (using @adobetest.com emails as required)
-# -----------------------------------------------------------------------------
+ongoingPages:
+  - 'https://business.stage.adobe.com/request-consultation.html'
+  - 'https://business.stage.adobe.com/au/request-consultation.html'
+  - 'https://business.stage.adobe.com/uk/request-consultation.html'
+  - 'https://business.stage.adobe.com/uk/resources/webinars/building-strong-it-foundations.html'
+  - 'https://business.stage.adobe.com/au/ai.html'
+
+outOfScopePages:
+  - 'https://www.stage.adobe.com/express/business/request-info'
+  - 'https://www.stage.adobe.com/acrobat/contact.html'
+  - 'https://www.stage.adobe.com/acrobat/business/developer-form.html'
+  - 'https://business.stage.adobe.com/products/experience-platform/agent-orchestrator.html'
+  - 'https://business.stage.adobe.com/products/creativecloud-business.html'
+
 testUsers:
   default:
     email: 'xiasun+test001@adobetest.com'
     firstName: 'NalaTest'
-    lastName: 'UserPP'
-    company: 'Adobe Test Corp'
+    lastName: 'Progressive'
+    company: 'Adobe Nala Test Corp'
     country: 'United States'
     state: 'California'
     postalCode: '95110'
-    phone: '408-555-0100'
+    phone: '408-555-9999'
     jobTitle: 'Individual Contributor'
     functionalArea: 'Marketing: General'
     primaryProductInterest: 'Real-time web analytics'
 
-# -----------------------------------------------------------------------------
-# Field Visibility Rules by Form Type (Unknown User)
-# -----------------------------------------------------------------------------
 fieldRules:
-  # Short Form DX (Essential) - 5 fields
-  short-dx:
+  short:
     visible:
       - email
       - firstName
@@ -58,9 +251,7 @@ fieldRules:
       - jobTitle
       - functionalArea
       - primaryProductInterest
-
-  # Medium Form DX (Expanded) - 7 fields
-  medium-dx:
+  medium:
     visible:
       - email
       - firstName
@@ -74,9 +265,6 @@ fieldRules:
       - postalCode
       - phone
       - primaryProductInterest
-
-  # RFI Form (Contact/Full) - 11 fields
-  # Note: state and postalCode are dependent on country selection
   rfi:
     visible:
       - email
@@ -93,14 +281,8 @@ fieldRules:
       - postalCode
     hidden: []
 
-# -----------------------------------------------------------------------------
-# Progressive Profiling Journey Rules
-# Previously collected fields should be HIDDEN on subsequent forms
-# -----------------------------------------------------------------------------
-journeyRules:
-  # Journey: Short DX → Medium DX
+emailLinkJourneys:
   shortToMedium:
-    description: 'User filled Short form, now visiting Medium form via email link'
     hidden:
       - firstName
       - lastName
@@ -110,10 +292,7 @@ journeyRules:
       - country
       - jobTitle
       - functionalArea
-
-  # Journey: Short DX → RFI
   shortToRfi:
-    description: 'User filled Short form, now visiting RFI form via email link'
     hidden:
       - firstName
       - lastName
@@ -127,10 +306,7 @@ journeyRules:
       - jobTitle
       - functionalArea
       - primaryProductInterest
-
-  # Journey: Medium DX → RFI
   mediumToRfi:
-    description: 'User filled Medium form, now visiting RFI form via email link'
     hidden:
       - firstName
       - lastName
@@ -145,10 +321,9 @@ journeyRules:
       - postalCode
       - primaryProductInterest
 
-# -----------------------------------------------------------------------------
-# Thank You Page patterns (for form submission verification)
-# -----------------------------------------------------------------------------
-thankYouPatterns:
-  - 'submissionid'
-  - 'thank-you'
-  - 'form-test-thank-you'
+acceptanceCriteria:
+  - 'Unknown visitor sees the full default field set for the configured template.'
+  - 'Known visitor values are prefilled on revisit after successful submission.'
+  - 'Required fields show inline validation errors on empty submit.'
+  - 'Successful submission redirects to the configured destination URL.'
+  - 'Out-of-scope pages remain visually and functionally unchanged.'
