@@ -119,8 +119,15 @@ export default class LandingPageBuilder {
     const url = this.getLPBUrl(ref);
     await this.page.goto(url);
     await this.page.waitForLoadState('domcontentloaded');
-    await this.dismissPopup();
+    if (await this.isDisclaimerVisible()) await this.dismissPopup();
     await this.initFrame();
+  }
+
+  async isDisclaimerVisible() {
+    const iframe = this.page.locator('iframe');
+    const disclaimer = this.page.locator('.disclaimer .nx-dialog');
+    await iframe.or(disclaimer).first().waitFor({ state: 'visible', timeout: 10000 });
+    return disclaimer.isVisible();
   }
 
   async dismissPopup() {
@@ -147,13 +154,13 @@ export default class LandingPageBuilder {
 
   getIframeFrame() {
     if (this.lpbUrlOverride) return this.page;
-    return this.page.frames().find((f) => f.url().includes('aem.live'));
+    return this.page.frames().find((f) => f.url().includes('aem.live') || f.url().includes('localhost'));
   }
 
   async reloadPage() {
     await this.page.reload();
     await this.page.waitForLoadState('domcontentloaded');
-    await this.dismissPopup();
+    if (await this.isDisclaimerVisible()) await this.dismissPopup();
     await this.initFrame();
   }
 
@@ -169,7 +176,7 @@ export default class LandingPageBuilder {
     await this.clearLocalStorage();
     await this.page.reload();
     await this.page.waitForLoadState('domcontentloaded');
-    await this.dismissPopup();
+    if (await this.isDisclaimerVisible()) await this.dismissPopup();
     await this.initFrame();
   }
 

@@ -137,6 +137,7 @@ export function renderForm(form, handleInput, { marketoPOIOptions, hasError = ()
 }
 
 export function renderMarquee(form, handleInput, handleImageChange, hasError = () => '') {
+  const marqueeImgVisible = !(form.gated === 'Ungated' && form.contentType === 'Infographic');
   return html`
     <div class="form-row">
       <h2>Marquee</h2>
@@ -144,14 +145,16 @@ export function renderMarquee(form, handleInput, handleImageChange, hasError = (
         <option value=${form.marqueeEyebrow}>${form.marqueeEyebrow}</option>
       </sl-select>
       <sl-input type="text" name="marqueeDescription" .value=${form.marqueeDescription} placeholder="Marquee Description" label="Marquee Description" @input=${handleInput}></sl-input>
+      ${marqueeImgVisible ? html`
       <div class="image-dropzone-container">
         <label>Marquee Image*</label>
         <div class="dropzone-wrapper">
           <image-dropzone name="marqueeImage" .file=${fileForDisplay(form.marqueeImage)} error=${hasError('marqueeImage')} @image-change=${handleImageChange}>
             <label slot="img-label">Upload Marquee Image</label>
-          </image-dropzone>
+            </image-dropzone>
+          </div>
         </div>
-      </div>
+      ` : nothing}
     </div>
   `;
 }

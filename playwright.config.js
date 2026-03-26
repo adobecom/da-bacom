@@ -48,6 +48,7 @@ const config = {
       use: {
         ...devices['Desktop Chrome'],
         userAgent: USER_AGENT_DESKTOP,
+        launchOptions: { args: ['--disable-features=BlockInsecurePrivateNetworkRequests,LocalNetworkAccessChecks'] },
       },
     },
     {
