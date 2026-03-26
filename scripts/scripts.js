@@ -186,6 +186,9 @@ export const getLCPImages = (doc) => {
 }());
 
 export function setLibs(location) {
+  const miloLibMeta = document.querySelector('meta[name="milo-libs"]');
+  const libpath = miloLibMeta?.content;
+  if (miloLibMeta && libpath) return `https://${libpath}--milo--adobecom.aem.live/libs`;
   const { hostname, search } = location;
   if (!['.aem.', '.hlx.', '.stage.', 'local', '.da.'].some((i) => hostname.includes(i))) return '/libs';
   const branch = new URLSearchParams(search).get('milolibs') || 'main';
