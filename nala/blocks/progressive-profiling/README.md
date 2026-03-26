@@ -1,11 +1,5 @@
 # Progressive Profiling Nala Tests
 
-This suite lives in:
-
-- [progressive-profiling.spec.js](/Users/xiasun/Documents/Workspace/da-bacom/nala/blocks/progressive-profiling/progressive-profiling.spec.js)
-- [progressive-profiling.test.js](/Users/xiasun/Documents/Workspace/da-bacom/nala/blocks/progressive-profiling/progressive-profiling.test.js)
-- [progressive-profiling.page.js](/Users/xiasun/Documents/Workspace/da-bacom/nala/blocks/progressive-profiling/progressive-profiling.page.js)
-
 ## What the suite covers
 
 - `@staged`: staged PP test pages across locales
