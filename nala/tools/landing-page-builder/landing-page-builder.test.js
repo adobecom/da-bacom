@@ -487,6 +487,7 @@ test.describe('Landing Page Builder - Form & Field Tests', () => {
 
     await test.step('Verify localStorage is cleared', async () => {
       const frame = lpb.getIframeFrame();
+      expect(frame).not.toBeNull();
       const stored = await frame.evaluate(() => localStorage.getItem('landing-page-builder'));
       expect(stored).toBeNull();
     });
@@ -614,6 +615,7 @@ test.describe('Landing Page Builder - Form & Field Tests', () => {
 
       await test.step('Verify the selected region is persisted in localStorage', async () => {
         const frame = lpb.getIframeFrame();
+        expect(frame).not.toBeNull();
         const storedRegion = await frame.evaluate(() => JSON.parse(localStorage.getItem('landing-page-builder') || '{}').region);
         expect(storedRegion).toBe(data.storedRegion);
       });

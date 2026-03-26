@@ -150,6 +150,7 @@ class PathInput extends LitElement {
     }, duration);
   }
 
+  // TODO: Allow subfolders in path and sanitize each segment
   sanitizeInput(input) {
     if (!input) return '';
     return input

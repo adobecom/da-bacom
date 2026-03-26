@@ -33,14 +33,15 @@ export default class LandingPagePreview {
     this.email = page.locator('#Email');
     this.firstName = page.locator('#FirstName');
     this.lastName = page.locator('#LastName');
-    this.company = page.locator('#Company');
+    this.company = page.locator('#Company, input[name="mktoFormsCompany"]');
     this.country = page.locator('#Country');
     this.state = page.locator('#State');
     this.zipCode = page.locator('#Postal_Code__c, #PostalCode');
     this.phone = page.locator('#Phone');
-    this.jobTitle = page.locator('#mktoFormCol_Job_Title, select[name="functionalArea"], #functionalArea');
-    this.department = page.locator('#Department, select[name="mktoFormCol_Department"]');
+    this.jobTitle = page.locator('#mktoFormCol_Job_Title, select[name="mktoFormsJobTitle"], #mktoFormsJobTitle');
+    this.department = page.locator('#Department, select[name="mktoFormsFunctionalArea"], #mktoFormsFunctionalArea');
     this.submitButton = page.locator('.marketo button[type="submit"], .marketo .mktoButton').first();
+    this.validationErrors = page.locator('.show-warnings .mktoFormRowTop .mktoInvalid');
 
     // Thank-you / success state
     this.thankYouMessage = page.getByText(/thank you/i).first();
@@ -81,6 +82,11 @@ export default class LandingPagePreview {
     await expect(this.marqueeImage).toBeVisible({ timeout: 15000 });
     const src = await this.marqueeImage.getAttribute('src');
     expect(src).toBeTruthy();
+  }
+
+  async verifyMarqueeImageNotVisible() {
+    const elementCount = await this.marqueeImage.count();
+    expect(elementCount).toBe(0);
   }
 
   async verifyCardContent(title, description) {
@@ -160,12 +166,15 @@ export default class LandingPagePreview {
     await fillIfVisible(() => this.lastName, testData.lastName);
     await fillIfVisible(() => this.email, testData.email);
     await fillIfVisible(() => this.company, testData.company);
+    await selectIfVisible(() => this.jobTitle, testData.jobTitle);
+    await selectIfVisible(() => this.department, testData.department);
     await selectIfVisible(() => this.country, testData.country);
     await selectIfVisible(() => this.state, testData.state);
     await fillIfVisible(() => this.zipCode, testData.zipCode);
     await fillIfVisible(() => this.phone, testData.phone);
 
     await this.submitButton.click();
+    await expect(this.validationErrors).toHaveCount(0, { timeout: 10000 });
   }
 
   async verifyThankYouState(contentType) {
