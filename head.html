@@ -3,6 +3,9 @@
 <link rel="preload" href="/styles/styles.css" as="style"/>
 <script>
   const libs = (() => {
+    const miloLibMeta = document.querySelector('meta[name="milo-libs"]');
+    const libpath = miloLibMeta?.content;
+    if (miloLibMeta && libpath) return `https://${libpath}--milo--adobecom.aem.live/libs`
     const { hostname, search } = window.location;
     if (!['.aem.', '.hlx.', '.stage.', 'local'].some((i) => hostname.includes(i))) return '/libs';
     const branch = new URLSearchParams(search).get('milolibs') || 'main';
