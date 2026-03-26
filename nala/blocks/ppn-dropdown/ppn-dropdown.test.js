@@ -4,6 +4,8 @@ import PPNDropdown from './ppn-dropdown.page.js';
 
 let ppnDropdown;
 
+test.use({ storageState: './nala/utils/auth.json' });
+
 test.describe('Primary Product Name Dropdown test suite', () => {
   test.beforeEach(async ({ page }) => {
     ppnDropdown = new PPNDropdown(page);
