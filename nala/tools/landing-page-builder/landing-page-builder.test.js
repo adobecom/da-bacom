@@ -630,4 +630,113 @@ test.describe('Landing Page Builder - Form & Field Tests', () => {
       });
     });
   });
+
+  // =============================================================
+  // 2.1 Infographic Gating — Marquee Image Requirements
+  // =============================================================
+
+  test(`${features[24].name}, ${features[24].tags}`, async () => {
+    const { data } = features[24];
+
+    await test.step('Navigate, fill core options as Gated Infographic, and confirm', async () => {
+      await lpb.navigateFresh(LPB_REF);
+      await lpb.fillCoreOptionsAndConfirm(data);
+    });
+
+    await test.step('Verify marquee image dropzone is visible', async () => {
+      await expect(lpb.marqueeImageDropzone).toBeVisible();
+    });
+
+    await test.step('Verify marquee image label shows required indicator', async () => {
+      const label = lpb.marqueeSection.locator('label', { hasText: 'Marquee Image*' });
+      await expect(label).toBeVisible();
+    });
+  });
+
+  test(`${features[25].name}, ${features[25].tags}`, async () => {
+    const { data } = features[25];
+
+    await test.step('Navigate, fill core options as Ungated Infographic, and confirm', async () => {
+      await lpb.navigateFresh(LPB_REF);
+      await lpb.fillCoreOptionsAndConfirm(data);
+    });
+
+    await test.step('Verify marquee image field is NOT visible', async () => {
+      await expect(lpb.marqueeImageContainer).not.toBeVisible();
+    });
+  });
+
+  test(`${features[26].name}, ${features[26].tags}`, async () => {
+    const { data } = features[26];
+
+    await test.step('Navigate, fill core options as Gated Infographic, and confirm', async () => {
+      await lpb.navigateFresh(LPB_REF);
+      await lpb.fillCoreOptionsAndConfirm(data);
+    });
+
+    await test.step('Click Save & Preview without uploading marquee image', async () => {
+      await lpb.clickSaveAndPreview();
+    });
+
+    await test.step('Verify error toast appears', async () => {
+      await lpb.waitForToast('Please complete all required fields', 'error');
+    });
+
+    await test.step('Verify inline error appears on the marquee image field', async () => {
+      await expect(lpb.marqueeImageError).toBeVisible();
+      const errorText = await lpb.marqueeImageError.textContent();
+      expect(errorText.trim()).toBeTruthy();
+      for (const jargon of DEV_JARGON) {
+        expect(errorText.toLowerCase()).not.toContain(jargon);
+      }
+    });
+  });
+
+  test(`${features[27].name}, ${features[27].tags}`, async () => {
+    const { data } = features[27];
+
+    await test.step('Navigate, fill core options as Gated Infographic, and confirm', async () => {
+      await lpb.navigateFresh(LPB_REF);
+      await lpb.fillCoreOptionsAndConfirm(data);
+    });
+
+    await test.step('Verify marquee image dropzone is initially visible', async () => {
+      await expect(lpb.marqueeImageDropzone).toBeVisible();
+    });
+
+    await test.step('Switch gating to Ungated without reloading', async () => {
+      await lpb.selectGated('Ungated');
+    });
+
+    await test.step('Verify marquee image field is no longer visible', async () => {
+      await expect(lpb.marqueeImageContainer).not.toBeVisible();
+    });
+  });
+
+  test(`${features[28].name}, ${features[28].tags}`, async () => {
+    const { data } = features[28];
+
+    await test.step('Navigate, fill core options as Ungated Infographic, and confirm', async () => {
+      await lpb.navigateFresh(LPB_REF);
+      await lpb.fillCoreOptionsAndConfirm(data);
+    });
+
+    await test.step('Verify marquee image field is initially NOT visible', async () => {
+      await expect(lpb.marqueeImageContainer).not.toBeVisible();
+    });
+
+    await test.step('Switch gating to Gated without reloading', async () => {
+      await lpb.selectGated('Gated');
+    });
+
+    await test.step('Verify marquee image dropzone is now visible', async () => {
+      await expect(lpb.marqueeImageDropzone).toBeVisible();
+    });
+
+    await test.step('Attempt to save without marquee image and verify inline error', async () => {
+      await lpb.clickSaveAndPreview();
+      await lpb.waitForToast('Please complete all required fields', 'error');
+      await expect(lpb.marqueeImageError).toBeVisible();
+    });
+  });
 });
