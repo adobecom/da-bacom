@@ -148,7 +148,7 @@ const CONFIG = {
   mepLingoCountryToRegion: {
     africa: ['ke', 'mu', 'ng', 'za'],
     la: ['bo', 'cr', 'do', 'ec', 'gt', 'pa', 'pr', 'py', 'sv', 'uy', 've', 'ar', 'co', 'cl', 'mx', 'pe'],
-    mena_en: ['bh', 'dz', 'iq', 'ir', 'jo', 'lb', 'ly', 'om', 'ps', 'sy', 'tn', 'ye'],
+    mena_en: ['bh', 'dz', 'iq', 'ir', 'jo', 'lb', 'ly', 'om', 'ps', 'qa', 'sy', 'tn', 'ye'],
   },
   lingoProjectSuccessLogging: 'on',
 };
