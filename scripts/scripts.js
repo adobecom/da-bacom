@@ -138,6 +138,7 @@ const CONFIG = {
     },
     '.business-graybox.adobe.com': { 'business.adobe.com': 'origin' },
   },
+  marketo: { showError: true, iframeTimeout: 3000 },
   jarvis: {
     id: 'BACOMChat1-Worldwide',
     version: '1.0',
