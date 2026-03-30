@@ -98,6 +98,10 @@ export default class LandingPageBuilder {
     this.fieldErrors = root.locator('.error-message');
     this.requiredFieldError = root.locator('.inputfield-error');
 
+    // Marquee image error (inline validation)
+    this.marqueeImageError = this.marqueeSection.locator('image-dropzone .error-message');
+    this.marqueeImageContainer = this.marqueeSection.locator('.image-dropzone-container');
+
     // Section headers
     this.sectionHeaders = root.locator('.form-row h2');
   }

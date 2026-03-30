@@ -327,5 +327,69 @@ module.exports = {
         headline: 'Nala AU Region Test',
       },
     },
+
+    // =========================================================
+    // 2.1 Infographic Gating — Marquee Image Requirements
+    // =========================================================
+    {
+      tcid: '24',
+      name: '@lpb-infographic-gated-marquee-visible: Gated Infographic shows marquee image field as required',
+      path: '/tools/generator/landing-page',
+      tags: '@lpb @lpb-non-e2e @smoke @infographic @gated @validation @regression @bacom',
+      data: {
+        contentType: 'Infographic',
+        gated: 'Gated',
+        region: 'US',
+        headline: 'Nala Infographic Gated Marquee Visible',
+      },
+    },
+    {
+      tcid: '25',
+      name: '@lpb-infographic-ungated-marquee-hidden: Ungated Infographic hides marquee image field',
+      path: '/tools/generator/landing-page',
+      tags: '@lpb @lpb-non-e2e @smoke @infographic @ungated @validation @regression @bacom',
+      data: {
+        contentType: 'Infographic',
+        gated: 'Ungated',
+        region: 'US',
+        headline: 'Nala Infographic Ungated Marquee Hidden',
+      },
+    },
+    {
+      tcid: '26',
+      name: '@lpb-infographic-gated-save-blocked: Gated Infographic save blocked with inline error when marquee image missing',
+      path: '/tools/generator/landing-page',
+      tags: '@lpb @lpb-non-e2e @smoke @infographic @gated @validation @regression @bacom',
+      data: {
+        contentType: 'Infographic',
+        gated: 'Gated',
+        region: 'US',
+        headline: 'Nala Infographic Gated Save Blocked',
+      },
+    },
+    {
+      tcid: '27',
+      name: '@lpb-infographic-toggle-gated-to-ungated: Switching Gated to Ungated removes marquee image requirement without reload',
+      path: '/tools/generator/landing-page',
+      tags: '@lpb @lpb-non-e2e @infographic @gated @ungated @validation @regression @bacom',
+      data: {
+        contentType: 'Infographic',
+        gated: 'Gated',
+        region: 'US',
+        headline: 'Nala Infographic Toggle Gated To Ungated',
+      },
+    },
+    {
+      tcid: '28',
+      name: '@lpb-infographic-toggle-ungated-to-gated: Switching Ungated to Gated enforces marquee image requirement without reload',
+      path: '/tools/generator/landing-page',
+      tags: '@lpb @lpb-non-e2e @infographic @gated @ungated @validation @regression @bacom',
+      data: {
+        contentType: 'Infographic',
+        gated: 'Ungated',
+        region: 'US',
+        headline: 'Nala Infographic Toggle Ungated To Gated',
+      },
+    },
   ],
 };
