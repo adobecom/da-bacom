@@ -604,7 +604,12 @@ class LandingPageForm extends LitElement {
     const assetPath = rawUrl ? getRepoRelativePath(getPathFromUrl(rawUrl)) : null;
     const assetPreviewPath = rawPreviewUrl ? getRepoRelativePath(getPathFromUrl(rawPreviewUrl)) : null;
     if (DEBUG) console.log('[LPB][Response] POST asset:', type, { path: assetPath, previewPath: assetPreviewPath, previewUnavailable });
-    return { path: assetPath, previewPath: assetPreviewPath, previewUnavailable };
+    return {
+      path: assetPath,
+      previewPath: assetPreviewPath,
+      previewUnavailable,
+      fileName: result.fileName,
+    };
   }
 
   handleImageChange(e) {
@@ -622,10 +627,10 @@ class LandingPageForm extends LitElement {
     const assetDirPath = computeAssetDirFromUrl(this.form.url);
     if (DEBUG) console.log('[LPB][Image] upload start:', name, file.name, assetDirPath);
     this.uploadAsset(file, assetDirPath, 'image')
-      .then(async ({ path, previewPath, previewUnavailable }) => {
+      .then(async ({ path, previewPath, previewUnavailable, fileName }) => {
         if (!path) return;
         if (DEBUG) console.log('[LPB][Image] upload response:', name, { path, previewPath, previewUnavailable });
-        this.form[name] = { path, previewPath, name: file.name };
+        this.form[name] = { path, previewPath, name: fileName };
         showToast(MESSAGES.IMAGE_UPLOADED, TOAST_TYPES.SUCCESS, 5000);
         if (previewUnavailable) {
           showToast(MESSAGES.IMAGE_UPLOAD_PREVIEW_UNAVAILABLE, TOAST_TYPES.ERROR, 5000);
@@ -676,7 +681,7 @@ class LandingPageForm extends LitElement {
         throw new Error('Upload failed');
       }
 
-      this.form.pdfAsset = { path: result.path, previewPath: result.previewPath, name: file.name };
+      this.form.pdfAsset = { path: result.path, previewPath: result.previewPath, name: result.fileName };
       showToast(MESSAGES.PDF_UPLOADED, TOAST_TYPES.SUCCESS, 5000);
       if (!result.previewUnavailable && !(await this.previewAsset(result.previewPath))) {
         if (DEBUG) console.error('[PDF] preview failed:', result.previewPath);
