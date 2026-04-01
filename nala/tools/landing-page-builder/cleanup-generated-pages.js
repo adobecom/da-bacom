@@ -19,14 +19,14 @@ const PAGE_PREFIXES = [
 ];
 
 const REGIONS = ['', '/jp', '/kr', '/au'];
-const CONTENT_TYPES = ['guide', 'report', 'infographic', 'video-demo'];
+const CONTENT_DIRS = ['sdk', 'guides', 'reports', 'infographics', 'videos'];
 const EXECUTE = process.argv.includes('--execute');
 
 function getFolderPaths() {
   const folders = [];
   REGIONS.forEach((region) => {
-    CONTENT_TYPES.forEach((contentType) => {
-      folders.push(`${region}/resources/${contentType}`);
+    CONTENT_DIRS.forEach((dir) => {
+      folders.push(`${region}/resources/${dir}`);
     });
   });
   return folders;
