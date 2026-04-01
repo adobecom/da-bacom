@@ -40,10 +40,17 @@ function optionsSelect(form, handleInput, optionName, optionLabel, options, hasE
 
 export function renderContentType(form, handleInput, regionOptions, { isLocked = false, hasError = () => '', onValidateRequest, onStatusChange } = {}) {
   const getPathPrefix = () => {
-    if (!form.region || !form.contentType) return '';
+    if (!form.region || !form.contentType || !form.gated) return '';
     const region = form.region.replace(/\/$/, '');
-    const contentType = form.contentType.toLowerCase().replace('/', '-');
-    return `${region}/resources/${contentType}/`;
+    const type = form.contentType.toLowerCase();
+    const isGated = form.gated === 'Gated';
+    const DIR_MAP = {
+      'video/demo': 'videos',
+      guide: isGated ? 'guides' : 'sdk',
+      infographic: isGated ? 'infographics' : 'sdk',
+      report: isGated ? 'reports' : 'sdk',
+    };
+    return `${region}/resources/${DIR_MAP[type] || type}/`;
   };
 
   const pathPrefix = getPathPrefix();

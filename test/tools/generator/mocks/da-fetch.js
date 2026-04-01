@@ -110,7 +110,7 @@ daFetch.callsFake(async (url, options = {}) => {
   if (url.includes('admin.hlx.page') && url.includes('/preview/') && method === 'POST') {
     return {
       ok: true,
-      json: async () => ({ preview: { status: 200, url: 'https://main--da-bacom--adobecom.aem.page/resources/guide/test-page' } }),
+      json: async () => ({ preview: { status: 200, url: 'https://main--da-bacom--adobecom.aem.page/resources/sdk/test-page' } }),
     };
   }
 
