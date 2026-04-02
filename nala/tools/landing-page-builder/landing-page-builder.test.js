@@ -89,8 +89,7 @@ test.describe('Landing Page Builder - Form & Field Tests', () => {
     await test.step('Verify path input is populated with correct prefix', async () => {
       const prefix = lpb.iframe.locator('.path-input-container .path-prefix');
       const prefixText = await prefix.textContent();
-      expect(prefixText).toContain('resources');
-      expect(prefixText.toLowerCase()).toContain(data.contentType.toLowerCase());
+      expect(prefixText).toContain('/resources/guides/');
     });
 
     await test.step('Verify page name placeholder is auto-generated from headline', async () => {
@@ -737,6 +736,33 @@ test.describe('Landing Page Builder - Form & Field Tests', () => {
       await lpb.clickSaveAndPreview();
       await lpb.waitForToast('Please complete all required fields', 'error');
       await expect(lpb.marqueeImageError).toBeVisible();
+    });
+  });
+
+  // =============================================================
+  // 3.4 Content Type Path Directory Mapping
+  // =============================================================
+
+  [29, 30, 31, 32, 33, 34, 35, 36].forEach((featureIndex) => {
+    test(`${features[featureIndex].name}, ${features[featureIndex].tags}`, async () => {
+      const { data } = features[featureIndex];
+
+      await test.step('Navigate to LPB with fresh state', async () => {
+        await lpb.navigateFresh(LPB_REF);
+      });
+
+      await test.step('Fill core options', async () => {
+        await lpb.selectContentType(data.contentType);
+        await lpb.selectGated(data.gated);
+        await lpb.selectRegion(data.region);
+        await lpb.fillMarqueeHeadline(data.headline);
+      });
+
+      await test.step(`Verify path prefix contains ${data.expectedDir}`, async () => {
+        const prefix = lpb.iframe.locator('.path-input-container .path-prefix');
+        const prefixText = await prefix.textContent();
+        expect(prefixText).toContain(data.expectedDir);
+      });
     });
   });
 });

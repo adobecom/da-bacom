@@ -391,5 +391,113 @@ module.exports = {
         headline: 'Nala Infographic Toggle Ungated To Gated',
       },
     },
+
+    // =========================================================
+    // 3.4 Content Type Path Directory Mapping
+    // =========================================================
+    {
+      tcid: '29',
+      name: '@lpb-path-ungated-guide-sdk: Ungated Guide maps to /sdk/ directory',
+      path: '/tools/generator/landing-page',
+      tags: '@lpb @lpb-non-e2e @smoke @path-mapping @regression @bacom',
+      data: {
+        contentType: 'Guide',
+        gated: 'Ungated',
+        region: 'US',
+        headline: 'Nala Path Ungated Guide',
+        expectedDir: '/resources/sdk/',
+      },
+    },
+    {
+      tcid: '30',
+      name: '@lpb-path-ungated-report-sdk: Ungated Report maps to /sdk/ directory',
+      path: '/tools/generator/landing-page',
+      tags: '@lpb @lpb-non-e2e @path-mapping @regression @bacom',
+      data: {
+        contentType: 'Report',
+        gated: 'Ungated',
+        region: 'US',
+        headline: 'Nala Path Ungated Report',
+        expectedDir: '/resources/sdk/',
+      },
+    },
+    {
+      tcid: '31',
+      name: '@lpb-path-ungated-infographic-sdk: Ungated Infographic maps to /sdk/ directory',
+      path: '/tools/generator/landing-page',
+      tags: '@lpb @lpb-non-e2e @path-mapping @regression @bacom',
+      data: {
+        contentType: 'Infographic',
+        gated: 'Ungated',
+        region: 'US',
+        headline: 'Nala Path Ungated Infographic',
+        expectedDir: '/resources/sdk/',
+      },
+    },
+    {
+      tcid: '32',
+      name: '@lpb-path-gated-guide-guides: Gated Guide maps to /guides/ directory',
+      path: '/tools/generator/landing-page',
+      tags: '@lpb @lpb-non-e2e @path-mapping @regression @bacom',
+      data: {
+        contentType: 'Guide',
+        gated: 'Gated',
+        region: 'US',
+        headline: 'Nala Path Gated Guide',
+        expectedDir: '/resources/guides/',
+      },
+    },
+    {
+      tcid: '33',
+      name: '@lpb-path-gated-infographic-infographics: Gated Infographic maps to /infographics/ directory',
+      path: '/tools/generator/landing-page',
+      tags: '@lpb @lpb-non-e2e @path-mapping @regression @bacom',
+      data: {
+        contentType: 'Infographic',
+        gated: 'Gated',
+        region: 'US',
+        headline: 'Nala Path Gated Infographic',
+        expectedDir: '/resources/infographics/',
+      },
+    },
+    {
+      tcid: '34',
+      name: '@lpb-path-gated-report-reports: Gated Report maps to /reports/ directory',
+      path: '/tools/generator/landing-page',
+      tags: '@lpb @lpb-non-e2e @path-mapping @regression @bacom',
+      data: {
+        contentType: 'Report',
+        gated: 'Gated',
+        region: 'US',
+        headline: 'Nala Path Gated Report',
+        expectedDir: '/resources/reports/',
+      },
+    },
+    {
+      tcid: '35',
+      name: '@lpb-path-gated-video-videos: Gated Video/Demo maps to /videos/ directory',
+      path: '/tools/generator/landing-page',
+      tags: '@lpb @lpb-non-e2e @path-mapping @regression @bacom',
+      data: {
+        contentType: 'Video/Demo',
+        gated: 'Gated',
+        region: 'US',
+        headline: 'Nala Path Gated Video',
+        expectedDir: '/resources/videos/',
+      },
+    },
+    {
+      tcid: '36',
+      name: '@lpb-path-ungated-video-videos: Ungated Video/Demo maps to /videos/ directory',
+      path: '/tools/generator/landing-page',
+      tags: '@lpb @lpb-non-e2e @path-mapping @regression @bacom',
+      data: {
+        contentType: 'Video/Demo',
+        gated: 'Ungated',
+        region: 'US',
+        headline: 'Nala Path Ungated Video',
+        expectedDir: '/resources/videos/',
+      },
+    },
   ],
 };
