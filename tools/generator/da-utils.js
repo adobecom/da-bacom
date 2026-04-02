@@ -155,22 +155,42 @@ function normalizeAemUrl(url) {
   return url.replace('hlx.page', 'aem.page').replace('hlx.live', 'aem.live');
 }
 
-function sanitizeFileName(filename) {
-  if (!filename || typeof filename !== 'string') return 'asset';
-  const lastDot = filename.lastIndexOf('.');
-  const ext = lastDot > 0 ? filename.slice(lastDot) : '';
-  let base = lastDot > 0 ? filename.slice(0, lastDot) : filename;
+export const AEM_MAX_FULL_PATH_LENGTH = 900;
+
+export function sanitizeFileName(filename, pathPrefix = '') {
+  if (pathPrefix.length >= AEM_MAX_FULL_PATH_LENGTH) return null;
+  const maxNameLen = AEM_MAX_FULL_PATH_LENGTH - pathPrefix.length;
+  if (maxNameLen < 1) return null;
+
+  const lower = filename && typeof filename === 'string' ? filename.toLowerCase() : '';
+  const lastDot = lower.lastIndexOf('.');
+  let ext = lastDot > 0 ? lower.slice(lastDot) : '';
+  if (ext) {
+    const extBody = ext.slice(1).replace(/[^a-z0-9]/g, '');
+    ext = extBody ? `.${extBody}` : '';
+  }
+  let base = lastDot > 0 ? lower.slice(0, lastDot) : lower;
   base = base
-    .replace(/\s+/g, '-')
-    .replace(/\u202F/g, '-')
-    .replace(/[^a-zA-Z0-9_-]+/g, '-')
+    .replace(/[^a-z0-9]+/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '') || 'asset';
-  return base + ext;
+
+  if (ext.length > maxNameLen) return null;
+  const maxBaseLen = maxNameLen - ext.length;
+  if (maxBaseLen < 1) return null;
+  if (base.length > maxBaseLen) {
+    base = base.slice(0, maxBaseLen).replace(/-+$/, '') || 'a';
+  }
+  const name = base + ext;
+  return name.length <= maxNameLen ? name : null;
 }
 
 export async function saveFile(path, file) {
-  const safeName = sanitizeFileName(file.name);
+  const safeName = sanitizeFileName(file.name, path);
+  if (!safeName) {
+    console.error(`Couldn't save file: path exceeds AEM ${AEM_MAX_FULL_PATH_LENGTH} character limit or file name cannot fit`);
+    return null;
+  }
   const fileToUpload = safeName !== file.name ? new File([file], safeName, { type: file.type }) : file;
   const daPath = getDaPath(`${path}${fileToUpload.name}`, false);
   const formData = new FormData();
@@ -184,7 +204,7 @@ export async function saveFile(path, file) {
       const liveUrl = normalizeAemUrl(json?.aem?.liveUrl);
       const previewUrl = normalizeAemUrl(json?.aem?.previewUrl);
 
-      return { source: json?.source, aem: { liveUrl, previewUrl } };
+      return { source: json?.source, aem: { liveUrl, previewUrl }, fileName: safeName };
     }
     /* c8 ignore next 7 */
     return null;
