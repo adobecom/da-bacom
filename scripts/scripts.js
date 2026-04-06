@@ -284,6 +284,11 @@ async function loadPage() {
   if (eventMD && eventUtils?.setEventConfig) eventUtils.setEventConfig({ cmsType: 'DA' }, CONFIG);
   if (eventMD && eventUtils?.decorateEvent) eventUtils.decorateEvent(document);
 
+  const iswaTypography = getMetadata('iswa-typography');
+  if (iswaTypography === 'on') {
+    loadStyle('/styles/iswa.css');
+  }
+
   loadLana({
     clientId: 'bacom',
     tags: 'bacom',
@@ -293,6 +298,18 @@ async function loadPage() {
   transformExlLinks(getLocale(CONFIG.locales));
 
   await loadArea();
+
+  if (iswaTypography === 'on') {
+    const main = document.querySelector('main');
+    if (main) {
+      main.classList.add('iswa-main');
+      main.querySelectorAll('.section > div[class]').forEach((block) => {
+        if (!block.classList.contains('icon-block') && block.classList.length > 0) {
+          block.classList.add('iswa');
+        }
+      });
+    }
+  }
 
   if (eventMD && eventUtils?.eventsDelayedActions) {
     eventUtils.eventsDelayedActions();
