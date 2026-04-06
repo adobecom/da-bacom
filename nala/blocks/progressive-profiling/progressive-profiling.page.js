@@ -16,7 +16,6 @@ const GENERIC_FORM_TIMEOUT_MS = Number(process.env.PP_FORM_LOAD_TIMEOUT_MS || '1
  * - Business email (Email)
  * - Organization name (mktoFormsCompany)
  * - Country (Country)
- * - Company type* (mktoFormsCompanyType) - Depends on POI
  *
  * Expanded / Medium (flex_event):
  * - First name (FirstName)
@@ -26,7 +25,6 @@ const GENERIC_FORM_TIMEOUT_MS = Number(process.env.PP_FORM_LOAD_TIMEOUT_MS || '1
  * - Department (mktoFormsFunctionalArea)
  * - Organization name (mktoFormsCompany)
  * - Country (Country)
- * - Company type* (mktoFormsCompanyType) - Depends on POI
  *
  * Full / Long (flex_contact / RFI):
  * - First name (FirstName)
@@ -80,11 +78,6 @@ export default class ProgressiveProfilingForm {
     this.primaryProductInterest = this.marketo.locator('select[name="mktoFormsPrimaryProductInterest"]');
 
     // ==========================================================================
-    // Conditional field (depends on POI)
-    // ==========================================================================
-    this.companyType = this.marketo.locator('select[name="mktoFormsCompanyType"]');
-
-    // ==========================================================================
     // Form elements
     // ==========================================================================
     this.submitButton = this.marketo.locator('#mktoButton_new, .mktoButton, button[type="submit"]').first();
@@ -107,7 +100,6 @@ export default class ProgressiveProfilingForm {
       state: this.state,
       postalCode: this.postalCode,
       primaryProductInterest: this.primaryProductInterest,
-      companyType: this.companyType,
     };
   }
 
