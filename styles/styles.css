@@ -236,6 +236,12 @@ body.disable-scroll #adbMsgClientWrapper #adbmsgContainer .adbmsgCta {
   padding: 0;
 }
 
+/* hide the first play icon if there is a second play icon */
+.marquee span.icon-play svg:has(+ svg), 
+.hero-marquee span.icon-play svg:has(+ svg) {
+  display: none;
+}
+
 @media screen and (max-width: 375px) {
   .brick.iswa {
     min-height: 540px;
