@@ -205,6 +205,15 @@ export const LIBS = setLibs(window.location);
   paths.forEach(loadStyle);
 }());
 
+export function applyIswaTypography() {
+  const main = document.querySelector('main');
+  if (!main) return;
+  main.classList.add('iswa-main');
+  main.querySelectorAll('.section > div[class]').forEach((block) => {
+    if (!block.classList.contains('icon-block') && block.classList.length > 0) block.classList.add('iswa');
+  });
+}
+
 export function transformExlLinks(locale) {
   if (locale.ietf === 'en-US' || !locale.exl) return;
   const exLinks = document.querySelectorAll('a[href*="experienceleague.adobe.com"]');
@@ -294,16 +303,7 @@ async function loadPage() {
 
   await loadArea();
 
-  const iswaTypography = getMetadata('iswa-typography');
-  if (iswaTypography === 'on') {
-    const main = document.querySelector('main');
-    if (main) {
-      main.classList.add('iswa-main');
-      main.querySelectorAll('.section > div[class]').forEach((block) => {
-        if (!block.classList.contains('icon-block') && block.classList.length > 0) block.classList.add('iswa');
-      });
-    }
-  }
+  if (getMetadata('iswa-typography') === 'on') applyIswaTypography();
 
   if (eventMD && eventUtils?.eventsDelayedActions) {
     eventUtils.eventsDelayedActions();
