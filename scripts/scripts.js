@@ -284,11 +284,6 @@ async function loadPage() {
   if (eventMD && eventUtils?.setEventConfig) eventUtils.setEventConfig({ cmsType: 'DA' }, CONFIG);
   if (eventMD && eventUtils?.decorateEvent) eventUtils.decorateEvent(document);
 
-  const iswaTypography = getMetadata('iswa-typography');
-  if (iswaTypography === 'on') {
-    loadStyle('/styles/iswa.css');
-  }
-
   loadLana({
     clientId: 'bacom',
     tags: 'bacom',
@@ -299,6 +294,7 @@ async function loadPage() {
 
   await loadArea();
 
+  const iswaTypography = getMetadata('iswa-typography');
   if (iswaTypography === 'on') {
     const main = document.querySelector('main');
     if (main) {
