@@ -300,9 +300,7 @@ async function loadPage() {
     if (main) {
       main.classList.add('iswa-main');
       main.querySelectorAll('.section > div[class]').forEach((block) => {
-        if (!block.classList.contains('icon-block') && block.classList.length > 0) {
-          block.classList.add('iswa');
-        }
+        if (!block.classList.contains('icon-block') && block.classList.length > 0) block.classList.add('iswa');
       });
     }
   }
