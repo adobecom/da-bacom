@@ -1,6 +1,7 @@
 const STYLES = ['/styles/styles.css'];
 const CONFIG = {
   imsClientId: 'bacom',
+  imsScope: 'AdobeID,openid,gnav,pps.read,firefly_api,additional_info.roles,read_organizations,account_cluster.read',
   local: {
     pdfViewerClientId: '3b685312b5784de6943647df19f1f492',
     pdfViewerReportSuite: 'adbadobedxqa',
