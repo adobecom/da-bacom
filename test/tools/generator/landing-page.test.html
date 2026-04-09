@@ -200,7 +200,7 @@
 
           const updatedPathInput = shadowRoot.querySelector('path-input');
           expect(updatedPathInput.disabled).to.be.false;
-          expect(updatedPathInput.prefix).to.include('/resources/guide/');
+          expect(updatedPathInput.prefix).to.include('/resources/sdk/');
 
           setPageName();
           await tick(100);
@@ -213,13 +213,43 @@
           expect(marqueeSection).to.exist;
         });
 
+        it('maps content type and gated status to correct path directory', async () => {
+          const cases = [
+            { contentType: 'Guide', gated: 'Ungated', expected: '/resources/sdk/' },
+            { contentType: 'Infographic', gated: 'Ungated', expected: '/resources/sdk/' },
+            { contentType: 'Report', gated: 'Ungated', expected: '/resources/sdk/' },
+            { contentType: 'Guide', gated: 'Gated', expected: '/resources/guides/' },
+            { contentType: 'Infographic', gated: 'Gated', expected: '/resources/infographics/' },
+            { contentType: 'Report', gated: 'Gated', expected: '/resources/reports/' },
+            { contentType: 'Video/Demo', gated: 'Gated', expected: '/resources/videos/' },
+            { contentType: 'Video/Demo', gated: 'Ungated', expected: '/resources/videos/' },
+          ];
+
+          for (const { contentType, gated, expected } of cases) {
+            generator.resetForm();
+            await tick(100);
+
+            setValue('contentType', contentType);
+            setValue('gated', gated);
+            setValue('region', '/');
+            setValue('marqueeHeadline', 'Test');
+            await tick(100);
+
+            const pathInput = shadowRoot.querySelector('path-input');
+            expect(pathInput.prefix).to.include(
+              expected,
+              `${contentType} + ${gated} should map to ${expected}, got ${pathInput.prefix}`
+            );
+          }
+        });
+
         it('completes all fields and submits successfully', async () => {
           fillCoreFields();
           await tick(100);
           setPageName();
           await tick(100);
 
-          expect(generator.form.url).to.equal('/resources/guide/test-page.html');
+          expect(generator.form.url).to.equal('/resources/sdk/test-page.html');
           expect(generator.form.pageName).to.equal('test-page');
 
           shadowRoot.querySelector('sl-button.confirm').click();
@@ -247,7 +277,7 @@
           for (let i = 0; i < 50; i++) {
             await tick(100);
             previewCall = daFetch.getCalls().find(
-              (call) => call.args[0].includes('/resources/guide/test-page') && call.args[1]?.method === 'POST'
+              (call) => call.args[0].includes('/resources/sdk/test-page') && call.args[1]?.method === 'POST'
             );
             if (previewCall) break;
           }

@@ -2,7 +2,7 @@
 
 TAGS=""
 REPORTER=""
-EXCLUDE_PATTERN="nopr|lpb"
+EXCLUDE_PATTERN="nopr|lpb|pp"
 EXIT_STATUS=0
 
 echo "GITHUB_REF: $GITHUB_REF"

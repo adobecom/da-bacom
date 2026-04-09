@@ -1,0 +1,98 @@
+<!-- npm run test:file "test/tools/generator/da-utils.test.html" -->
+<!-- Document naming restrictions: https://www.aem.live/docs/limits -->
+<html>
+
+<head>
+  <script type="importmap">
+      {
+        "imports": {
+          "da-fetch": "./mocks/da-fetch.js",
+          "constants": "https://da.live/nx/public/utils/constants.js"
+        }
+      }
+  </script>
+</head>
+
+<body>
+  <script type="module">
+    import { runTests } from '@web/test-runner-mocha';
+    import { expect } from '@esm-bundle/chai';
+    import { sanitizeFileName, saveFile } from '../../../tools/generator/da-utils.js';
+    import { daFetch } from './mocks/da-fetch.js';
+
+    runTests(() => {
+      describe('sanitizeFileName — AEM EDS document naming (aem.live/docs/limits)', () => {
+        it('leaves names that already use only a-z, 0-9, and hyphens unchanged', () => {
+          expect(sanitizeFileName('report-2024-v2.png')).to.equal('report-2024-v2.png');
+        });
+
+        it('maps a typical Office-style name to a lowercase dash slug (underscores/spaces/parens/periods in base → -)', () => {
+          expect(sanitizeFileName('My_File Name (Final).docx')).to.equal('my-file-name-final.docx');
+        });
+
+        it('does not preserve underscore (not in a-z, 0-9, -)', () => {
+          expect(sanitizeFileName('hello_world.png')).to.equal('hello-world.png');
+        });
+
+        it('uses lowercase letters in URLs (alphabetical characters are lowercase a-z)', () => {
+          expect(sanitizeFileName('HELLO.PNG')).to.equal('hello.png');
+        });
+
+        it('replaces unsupported characters with a single dash per run and collapses repeated dashes', () => {
+          expect(sanitizeFileName('a   b@@c.png')).to.equal('a-b-c.png');
+        });
+
+        it('replaces periods in the base segment; extension after the last dot stays for binary names', () => {
+          expect(sanitizeFileName('file.name.backup.txt')).to.equal('file-name-backup.txt');
+        });
+
+        it('removes leading and trailing dashes from the final name', () => {
+          expect(sanitizeFileName('--report--.pdf')).to.equal('report.pdf');
+        });
+
+        it('replaces non-ASCII letters with a dash and normalizes', () => {
+          expect(sanitizeFileName('caf\u00e9.png')).to.equal('caf.png');
+        });
+
+        it('replaces punctuation such as &, @, +, () with dashes and lowercases', () => {
+          expect(sanitizeFileName('A&B@C+(D).png')).to.equal('a-b-c-d.png');
+        });
+      });
+
+      describe('saveFile — full file path length (docs/limits: max 900 characters)', () => {
+        beforeEach(() => {
+          daFetch.resetHistory();
+          daFetch.callsFake(async (url, options = {}) => {
+            const method = options.method || 'GET';
+            if (method === 'POST' && String(url).includes('/source/')) {
+              return {
+                ok: true,
+                json: async () => ({
+                  source: { contentUrl: '/mock' },
+                  aem: {
+                    liveUrl: 'https://example.hlx.live/x',
+                    previewUrl: 'https://example.hlx.page/x',
+                  },
+                }),
+              };
+            }
+            return { ok: false, json: async () => ({}) };
+          });
+        });
+
+        it('does not POST when the full repo path would exceed 900 characters', async () => {
+          const folder = `/${'f'.repeat(895)}/`;
+          const file = new File(['x'], 'x.png', { type: 'image/png' });
+          const result = await saveFile(folder, file);
+          expect(
+            daFetch.called,
+            'upload must be skipped when full path would exceed 900 characters (aem.live/docs/limits)',
+          ).to.be.false;
+          expect(result).to.be.null;
+        });
+      });
+    });
+  </script>
+</body>
+
+</html>

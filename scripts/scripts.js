@@ -1,6 +1,7 @@
 const STYLES = ['/styles/styles.css'];
 const CONFIG = {
   imsClientId: 'bacom',
+  imsScope: 'AdobeID,openid,gnav,pps.read,firefly_api,additional_info.roles,read_organizations,account_cluster.read',
   local: {
     pdfViewerClientId: '3b685312b5784de6943647df19f1f492',
     pdfViewerReportSuite: 'adbadobedxqa',
@@ -148,7 +149,7 @@ const CONFIG = {
   mepLingoCountryToRegion: {
     africa: ['ke', 'mu', 'ng', 'za'],
     la: ['bo', 'cr', 'do', 'ec', 'gt', 'pa', 'pr', 'py', 'sv', 'uy', 've', 'ar', 'co', 'cl', 'mx', 'pe'],
-    mena_en: ['bh', 'dz', 'iq', 'ir', 'jo', 'lb', 'ly', 'om', 'ps', 'sy', 'tn', 'ye'],
+    mena_en: ['bh', 'dz', 'iq', 'ir', 'jo', 'lb', 'ly', 'om', 'ps', 'qa', 'sy', 'tn', 'ye'],
   },
   lingoProjectSuccessLogging: 'on',
   onlybanner: true,
@@ -204,6 +205,15 @@ export const LIBS = setLibs(window.location);
   }
   paths.forEach(loadStyle);
 }());
+
+export function applyIswaTypography() {
+  const main = document.querySelector('main');
+  if (!main) return;
+  main.classList.add('iswa-main');
+  main.querySelectorAll('.section > div[class]').forEach((block) => {
+    if (!block.classList.contains('icon-block') && block.classList.length > 0) block.classList.add('iswa');
+  });
+}
 
 export function transformExlLinks(locale) {
   if (locale.ietf === 'en-US' || !locale.exl) return;
@@ -293,6 +303,8 @@ async function loadPage() {
   transformExlLinks(getLocale(CONFIG.locales));
 
   await loadArea();
+
+  if (getMetadata('iswa-typography') === 'on') applyIswaTypography();
 
   if (eventMD && eventUtils?.eventsDelayedActions) {
     eventUtils.eventsDelayedActions();
