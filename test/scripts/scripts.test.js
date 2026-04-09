@@ -1,6 +1,6 @@
 import { readFile, setViewport } from '@web/test-runner-commands';
 import { expect } from '@esm-bundle/chai';
-import { setLibs, LIBS, getLCPImages, transformExlLinks } from '../../scripts/scripts.js';
+import { setLibs, LIBS, getLCPImages, transformExlLinks, applyIswaTypography } from '../../scripts/scripts.js';
 
 describe('Libs', () => {
   const tests = [
@@ -161,5 +161,44 @@ describe('Transform Experience League Links', () => {
     transformExlLinks(locale);
     const links = document.querySelectorAll('a');
     expect(links[3].href).to.equal('https://business.adobe.com/');
+  });
+});
+
+describe('ISWA Typography', () => {
+  beforeEach(() => {
+    document.body.innerHTML = `
+      <main>
+        <div class="section">
+          <div class="text center">Text block</div>
+          <div class="carousel">Carousel block</div>
+          <div class="icon-block">Icon block</div>
+          <div class="brick">Brick block</div>
+        </div>
+      </main>
+    `;
+  });
+
+  it('adds iswa-main class to main', () => {
+    applyIswaTypography();
+    const main = document.querySelector('main');
+    expect(main.classList.contains('iswa-main')).to.be.true;
+  });
+
+  it('adds iswa class to blocks', () => {
+    applyIswaTypography();
+    expect(document.querySelector('.text').classList.contains('iswa')).to.be.true;
+    expect(document.querySelector('.carousel').classList.contains('iswa')).to.be.true;
+    expect(document.querySelector('.brick').classList.contains('iswa')).to.be.true;
+  });
+
+  it('does not add iswa class to icon-block', () => {
+    applyIswaTypography();
+    expect(document.querySelector('.icon-block').classList.contains('iswa')).to.be.false;
+  });
+
+  it('does nothing when main is not present', () => {
+    document.body.innerHTML = '';
+    applyIswaTypography();
+    expect(document.querySelector('.iswa-main')).to.not.exist;
   });
 });
