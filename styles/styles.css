@@ -226,6 +226,16 @@ body.disable-scroll #adbMsgClientWrapper #adbmsgContainer .adbmsgCta {
   font-weight: 800;
 }
 
+/* ceros iframe styles */
+.ceros-iframe {
+  height: 756px;
+}
+
+.ceros-iframe .milo-iframe {
+  height: 100%;
+  padding: 0;
+}
+
 @media screen and (max-width: 375px) {
   .brick.iswa {
     min-height: 540px;
@@ -242,6 +252,16 @@ body.disable-scroll #adbMsgClientWrapper #adbmsgContainer .adbmsgCta {
   .text.center.iswa {
     padding-bottom: 48px;
   }
+
+  /* ceros iframe styles */
+.ceros-iframe {
+  height: unset
+}
+
+.ceros-iframe .milo-iframe {
+  height: unset;
+  padding: unset
+}
 }
 
 @media screen and (min-width: 1200px) {
