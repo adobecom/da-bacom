@@ -81,12 +81,12 @@ html {
   line-height: 98%;
 }
 
-.animated-photo-banner-title.iswa h2 {
+.animated-photo-banner-title h2 {
   font-weight: 800;
   margin-bottom: 0;
 }
 
-.animated-photo-banner-title.iswa h1 {
+.animated-photo-banner-title h1 {
   font-weight: 700;
   font-size: 32px;
   margin: 16px 0 32px;
@@ -208,11 +208,11 @@ html {
     margin: 2rem 0;
   }
 
-  .animated-photo-banner-title.iswa h1 {
+  .animated-photo-banner-title h1 {
     font-size: 64px;
   }
 
-  .animated-photo-banner-title.iswa h2 {
+  .animated-photo-banner-title  h2 {
     font-size: 80px;
   }
 
@@ -274,7 +274,7 @@ html {
     font-weight: 700px;
   }
   
-  .animated-photo-banner-title.iswa h2 {
+  .animated-photo-banner-title h2 {
     font-size: 80px;
     letter-spacing: -2px;
     font-weight: 700px;
