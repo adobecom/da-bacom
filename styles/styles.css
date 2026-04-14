@@ -254,10 +254,10 @@ body.disable-scroll #adbMsgClientWrapper #adbmsgContainer .adbmsgCta {
   }
 
   /* ceros iframe styles */
-.ceros-iframe .milo-iframe {
-  height: 100%;
-  padding: unset
-}
+  .ceros-iframe .milo-iframe {
+    height: 100%;
+    padding: unset
+  }
 }
 
 @media screen and (min-width: 1200px) {
