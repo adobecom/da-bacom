@@ -56,4 +56,24 @@ describe('Generator', () => {
     const remainingFields = result.match(/{{[^}]+}}/g) || [];
     expect(remainingFields).to.deep.equal([]);
   });
+
+  it('replaces asset-headline placeholder with provided h2 content', () => {
+    const template = '<div>{{asset-headline}}<p>{{pdf-asset}}</p></div>';
+    const result = applyTemplateData(template, {
+      assetHeadline: '<h2>Digital Trends Report</h2>',
+      pdfAsset: '/path/to/pdf',
+    });
+    expect(result).to.include('<h2>Digital Trends Report</h2>');
+    expect(result).to.not.include('{{asset-headline}}');
+  });
+
+  it('removes asset-headline placeholder when value is empty', () => {
+    const template = '<div>{{asset-headline}}<p>{{pdf-asset}}</p></div>';
+    const result = applyTemplateData(template, {
+      assetHeadline: '',
+      pdfAsset: '/path/to/pdf',
+    });
+    expect(result).to.not.include('{{asset-headline}}');
+    expect(result).to.not.include('<h2>');
+  });
 });

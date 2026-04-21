@@ -114,6 +114,7 @@ const FORM_SCHEMA = {
   seoMetadataTitle: '',
   seoMetadataDescription: '',
   experienceFragment: '',
+  assetHeadline: '',
   videoAsset: '',
   pdfAsset: null,
   url: '',
@@ -433,6 +434,8 @@ class LandingPageForm extends LitElement {
     const videoVisible = this.form.contentType === 'Video/Demo';
     const pdfVisible = !videoVisible;
 
+    const assetHeadlineVisible = form.gated === 'Gated' && !videoVisible;
+
     const placeholders = {
       ...form,
       marketoDataUrl: marketoUrl(marketoState),
@@ -446,6 +449,7 @@ class LandingPageForm extends LitElement {
       marqueeImage: marqueeImgVisible ? getContentUrl(form.marqueeImage?.path) : '',
       bodyImage: getContentUrl(form.bodyImage?.path),
       cardImage: getContentUrl(form.cardImage?.path),
+      assetHeadline: assetHeadlineVisible && form.assetHeadline ? `<h2>${form.assetHeadline}</h2>` : '',
       pdfAsset: pdfVisible && form.pdfAsset ? getAemPageUrl(form.pdfAsset?.path) : '',
       pdfAssetName: pdfVisible && form.pdfAsset ? form.pdfAsset?.name : '',
       videoAsset: videoVisible ? form.videoAsset : '',
