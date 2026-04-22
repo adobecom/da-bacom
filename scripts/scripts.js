@@ -240,7 +240,7 @@ export const EVENT_LIBS = (() => {
 
 let eventsError;
 
-async function loadPage() {
+export async function loadPage() {
   const {
     loadArea, loadLana, setConfig, createTag, getMetadata, getLocale,
   } = await import(`${LIBS}/utils/utils.js`);
@@ -336,6 +336,9 @@ loadPage();
   if (!new URL(window.location.href).searchParams.get('dapreview')) return;
   // eslint-disable-next-line import/no-unresolved
   import('https://da.live/scripts/dapreview.js').then(({ default: daPreview }) => daPreview(loadPage));
+  const hasQE = searchParams.has('quick-edit');
+  // eslint-disable-next-line import/no-unresolved
+  if (hasQE) import('./quick-edit.js').then((mod) => mod.default());
 }());
 
 if (eventsError) {
