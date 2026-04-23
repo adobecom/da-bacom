@@ -301,5 +301,6 @@ body.disable-scroll #adbMsgClientWrapper #adbmsgContainer .adbmsgCta {
 @media screen and (min-width: 1440px) {
   main.iswa-main {
     --grid-container-width: 1440px;
+    --grid-margins-width: calc((100% - var(--grid-container-width)) / 2);
   }
 }
