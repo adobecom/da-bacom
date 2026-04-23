@@ -258,6 +258,10 @@ body.disable-scroll #adbMsgClientWrapper #adbmsgContainer .adbmsgCta {
     height: 100%;
     padding: unset
   }
+
+  .hero-marquee.iswa div.foreground.cols-2 .copy {
+    padding-inline-end: 0;
+  }
 }
 
 @media screen and (min-width: 1200px) {
@@ -287,6 +291,10 @@ body.disable-scroll #adbMsgClientWrapper #adbmsgContainer .adbmsgCta {
     font-size: 80px;
     letter-spacing: -2px;
     line-height: 98%;
+  }
+
+  .iswa h2.heading-s {
+    font-size: 44px;
   }
 }
 
