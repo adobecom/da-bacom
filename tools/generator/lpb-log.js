@@ -54,33 +54,74 @@ export function deriveContentType(path) {
   return map[bucket] ?? bucket;
 }
 
+/** Base64url-decode a JWT payload segment (padding is required for atob). */
+export function decodeJwtPayloadSegment(segment) {
+  if (!segment || typeof segment !== 'string') return null;
+  const base64 = segment.replace(/-/g, '+').replace(/_/g, '/');
+  const pad = (4 - (base64.length % 4)) % 4;
+  const padded = base64 + '='.repeat(pad);
+  try {
+    return JSON.parse(atob(padded));
+  } catch {
+    return null;
+  }
+}
+
+function imsPublisherFromPayload(payload) {
+  if (!payload || typeof payload !== 'object') return null;
+  if (payload.email) return String(payload.email);
+  if (payload.preferred_username) return String(payload.preferred_username);
+  if (payload.name && String(payload.name).trim()) return String(payload.name).trim();
+  if (payload.user_id) return String(payload.user_id);
+  if (payload.sub) return String(payload.sub);
+  for (const key of Object.keys(payload)) {
+    if (key.includes('adobelogin.com') || key.includes('adobe.com')) {
+      const v = payload[key];
+      if (typeof v === 'string' && v.includes('@')) return v;
+      if (v && typeof v === 'object') {
+        const inner = v.email || v.username || v.name || v.userId || v.user_id;
+        if (inner) return String(inner);
+      }
+    }
+  }
+  return null;
+}
+
 /**
- * Decode an Adobe IMS JWT and return a best-effort publisher identifier.
- * Falls back to 'unknown' if the token can't be decoded.
+ * Decode an Adobe IMS access token JWT and return a best-effort publisher id.
+ * Falls back to 'unknown' if the token is opaque or cannot be decoded.
  */
 export function publisherFromToken(token) {
   if (!token || typeof token !== 'string') return 'unknown';
   const parts = token.split('.');
   if (parts.length < 2) return 'unknown';
-  try {
-    const payload = JSON.parse(
-      decodeURIComponent(
-        atob(parts[1].replace(/-/g, '+').replace(/_/g, '/'))
-          .split('')
-          .map((c) => `%${(`00${c.charCodeAt(0).toString(16)}`).slice(-2)}`)
-          .join(''),
-      ),
-    );
-    return payload.email || payload.user_id || payload.sub || 'unknown';
-  } catch {
-    return 'unknown';
-  }
+  const payload = decodeJwtPayloadSegment(parts[1]);
+  return imsPublisherFromPayload(payload) || 'unknown';
 }
 
-export function resolvePublisher(context, token) {
-  return context?.user?.email
-    || context?.user?.id
-    || publisherFromToken(token);
+/**
+ * Resolve publisher for the log row.
+ * @param {object} sdkOrContext - DA SDK `{ context, token }` or plain `context` (tests / legacy).
+ * @param {string} [imsAccessToken] - IMS bearer from initIms (used when sdk.token is absent).
+ */
+export function resolvePublisher(sdkOrContext, imsAccessToken) {
+  const ctx = sdkOrContext?.context ?? sdkOrContext;
+  const bearer = imsAccessToken ?? sdkOrContext?.token;
+  const u = ctx?.user ?? sdkOrContext?.user;
+
+  if (typeof u === 'string' && u.trim()) return u.trim();
+  if (u && typeof u === 'object') {
+    const direct = u.email || u.mail || u.username
+      || u.preferredUsername || u.preferred_username
+      || u.displayName || u.name || u.givenName || u.given_name
+      || u.userId || u.user_id || u.id || u.sub;
+    if (direct) return String(direct);
+  }
+  if (ctx?.email) return String(ctx.email);
+  if (ctx?.userEmail) return String(ctx.userEmail);
+  if (ctx?.userName) return String(ctx.userName);
+
+  return publisherFromToken(bearer);
 }
 
 async function readLog() {

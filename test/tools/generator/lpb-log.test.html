@@ -23,6 +23,7 @@
     import {
       extractMarker,
       deriveContentType,
+      decodeJwtPayloadSegment,
       publisherFromToken,
       resolvePublisher,
       appendLogRow,
@@ -111,9 +112,18 @@
           });
         });
 
+        describe('decodeJwtPayloadSegment', () => {
+          it('decodes base64url payloads that omit padding (common for IMS)', () => {
+            const payload = { sub: 'type1|abc', user_id: 'USER@AdobeID' };
+            let body = btoa(JSON.stringify(payload)).replace(/\+/g, '-').replace(/\//g, '_');
+            body = body.replace(/=+$/, '');
+            expect(decodeJwtPayloadSegment(body)).to.deep.equal(payload);
+          });
+        });
+
         describe('publisherFromToken', () => {
           const encodeJwt = (payload) => {
-            const body = btoa(JSON.stringify(payload)).replace(/=+$/, '');
+            const body = btoa(JSON.stringify(payload)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
             return `header.${body}.sig`;
           };
 
@@ -125,6 +135,11 @@
           it('falls back to user_id when email is missing', () => {
             const token = encodeJwt({ user_id: 'X@AdobeID' });
             expect(publisherFromToken(token)).to.equal('X@AdobeID');
+          });
+
+          it('prefers preferred_username over sub when email is missing', () => {
+            const token = encodeJwt({ preferred_username: 'dev@adobe.com', sub: 'opaque' });
+            expect(publisherFromToken(token)).to.equal('dev@adobe.com');
           });
 
           it('returns "unknown" for malformed tokens', () => {
@@ -146,8 +161,19 @@
           });
 
           it('falls back to decoded token when user is unavailable', () => {
-            const token = `header.${btoa(JSON.stringify({ email: 'jwt@adobe.com' }))}.sig`;
+            const body = btoa(JSON.stringify({ email: 'jwt@adobe.com' })).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+            const token = `header.${body}.sig`;
             expect(resolvePublisher({}, token)).to.equal('jwt@adobe.com');
+          });
+
+          it('reads user from full DA SDK shape { context, token }', () => {
+            const sdk = { context: { user: { email: 'sdkctx@adobe.com' } }, token: 'ignored' };
+            expect(resolvePublisher(sdk, null)).to.equal('sdkctx@adobe.com');
+          });
+
+          it('uses preferred_username on context.user', () => {
+            const ctx = { user: { preferred_username: 'pref@adobe.com' } };
+            expect(resolvePublisher(ctx, null)).to.equal('pref@adobe.com');
           });
         });
 

@@ -834,7 +834,8 @@ class LandingPageForm extends LitElement {
 
   async logPublish() {
     try {
-      const publisher = resolvePublisher(daContext, this.token);
+      const freshSdk = await DA_SDK.catch(() => null);
+      const publisher = resolvePublisher(freshSdk ?? daContext, this.token);
       const contentType = this.form.contentType && this.form.gated
         ? `${this.form.contentType}-${this.form.gated}`.toLowerCase()
         : '';
