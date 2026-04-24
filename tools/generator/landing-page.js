@@ -11,6 +11,7 @@ import { LIBS } from '../../scripts/scripts.js';
 import { createToast, TOAST_TYPES } from './toast/toast.js';
 import { STATUS as PATH_STATUS } from './path-input/path-input.js';
 import { getSource, saveSource, saveFile, getSheets, checkPath } from './da-utils.js';
+import { appendLogRow, resolvePublisher } from './lpb-log.js';
 import {
   STAGE_ORIGIN,
   ADMIN_STATUS_URL,
@@ -41,7 +42,8 @@ import {
 } from './form-sections.js';
 
 const withTimeout = (p, ms, def = null) => Promise.race([p, new Promise((r) => { setTimeout(() => r(def), ms); })]);
-await withTimeout(DA_SDK, 5000);
+const sdk = await withTimeout(DA_SDK, 5000);
+const daContext = sdk?.context || null;
 
 const style = await getStyle(import.meta.url.split('?')[0]);
 const searchParams = new URLSearchParams(window.location.search);
@@ -826,6 +828,24 @@ class LandingPageForm extends LitElement {
     if (pageResult.success && pdfResult.success) {
       showToast(MESSAGES.PREVIEW_UPDATED, TOAST_TYPES.SUCCESS, 5000);
       window.open(getCacheBustUrl(STAGE_ORIGIN + this.previewPath), '_blank');
+      this.logPublish();
+    }
+  }
+
+  async logPublish() {
+    try {
+      const publisher = resolvePublisher(daContext, this.token);
+      const contentType = this.form.contentType && this.form.gated
+        ? `${this.form.contentType}-${this.form.gated}`.toLowerCase()
+        : '';
+      await appendLogRow({
+        url: this.form.url,
+        publisher,
+        version: LPB_VERSION,
+        contentType,
+      });
+    } catch (error) {
+      if (DEBUG) console.warn('[LPB] log append failed:', error);
     }
   }
 

@@ -1,0 +1,372 @@
+<!-- npm run test:file "test/tools/generator/lpb-log.test.html" -->
+<html>
+
+<head>
+  <script type="importmap">
+    {
+      "imports": {
+        "da-fetch": "./mocks/da-fetch.js",
+        "constants": "https://da.live/nx/public/utils/constants.js",
+        "https://da.live/nx/public/utils/tree.js": "./mocks/tree.js"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <script type="module">
+    import { runTests } from '@web/test-runner-mocha';
+    import { expect } from '@esm-bundle/chai';
+    import sinon from 'sinon';
+    import { daFetch } from './mocks/da-fetch.js';
+    import { crawl, setCrawlItems } from './mocks/tree.js';
+    import {
+      extractMarker,
+      deriveContentType,
+      publisherFromToken,
+      resolvePublisher,
+      appendLogRow,
+      rebuildLog,
+      LOG_PATH,
+      SCAN_ROOT,
+    } from '../../../tools/generator/lpb-log.js';
+
+    const buildMarkerHtml = ({ name = 'landing-page-builder', version = '1.0.0', extra = '' } = {}) => `
+      <html><body><main>
+        <div><div class="table hide-block page-builder">
+          <div><div>name</div><div>${name}</div></div>
+          <div><div>version</div><div>${version}</div></div>
+          ${extra}
+        </div></div>
+      </main></body></html>
+    `;
+
+    const buildSheetResponse = (rows) => ({
+      ':type': 'sheet',
+      data: rows,
+      total: rows.length,
+      limit: rows.length,
+      offset: 0,
+    });
+
+    runTests(() => {
+      describe('lpb-log module', () => {
+        let ogLana;
+
+        beforeEach(() => {
+          ogLana = window.lana;
+          window.lana = { log: sinon.spy() };
+          daFetch.resetHistory();
+          daFetch.resetBehavior();
+        });
+
+        afterEach(() => {
+          window.lana = ogLana;
+        });
+
+        describe('extractMarker', () => {
+          const parse = (html) => new DOMParser().parseFromString(html, 'text/html');
+
+          it('returns data object when marker matches landing-page-builder', () => {
+            const doc = parse(buildMarkerHtml({ version: '1.2.3' }));
+            const marker = extractMarker(doc);
+            expect(marker).to.deep.include({ name: 'landing-page-builder', version: '1.2.3' });
+          });
+
+          it('returns null when marker is missing', () => {
+            const doc = parse('<html><body><main>no marker</main></body></html>');
+            expect(extractMarker(doc)).to.be.null;
+          });
+
+          it('returns null when marker has wrong name', () => {
+            const doc = parse(buildMarkerHtml({ name: 'something-else' }));
+            expect(extractMarker(doc)).to.be.null;
+          });
+
+          it('handles null/undefined defensively', () => {
+            expect(extractMarker(null)).to.be.null;
+            expect(extractMarker(undefined)).to.be.null;
+          });
+        });
+
+        describe('deriveContentType', () => {
+          it('maps /resources/guides/* to "guide"', () => {
+            expect(deriveContentType('/resources/guides/foo')).to.equal('guide');
+          });
+          it('maps /resources/reports/* to "report"', () => {
+            expect(deriveContentType('/resources/reports/foo')).to.equal('report');
+          });
+          it('maps /resources/videos/* to "video/demo"', () => {
+            expect(deriveContentType('/resources/videos/foo')).to.equal('video/demo');
+          });
+          it('maps /resources/infographics/* to "infographic"', () => {
+            expect(deriveContentType('/resources/infographics/foo')).to.equal('infographic');
+          });
+          it('maps /resources/sdk/* to "ungated"', () => {
+            expect(deriveContentType('/resources/sdk/foo')).to.equal('ungated');
+          });
+          it('returns null for non-matching paths', () => {
+            expect(deriveContentType('/other/bar')).to.be.null;
+            expect(deriveContentType(null)).to.be.null;
+          });
+        });
+
+        describe('publisherFromToken', () => {
+          const encodeJwt = (payload) => {
+            const body = btoa(JSON.stringify(payload)).replace(/=+$/, '');
+            return `header.${body}.sig`;
+          };
+
+          it('returns email when present in JWT payload', () => {
+            const token = encodeJwt({ email: 'pm@adobe.com', user_id: 'X@AdobeID' });
+            expect(publisherFromToken(token)).to.equal('pm@adobe.com');
+          });
+
+          it('falls back to user_id when email is missing', () => {
+            const token = encodeJwt({ user_id: 'X@AdobeID' });
+            expect(publisherFromToken(token)).to.equal('X@AdobeID');
+          });
+
+          it('returns "unknown" for malformed tokens', () => {
+            expect(publisherFromToken('not-a-jwt')).to.equal('unknown');
+            expect(publisherFromToken('')).to.equal('unknown');
+            expect(publisherFromToken(null)).to.equal('unknown');
+          });
+        });
+
+        describe('resolvePublisher', () => {
+          it('prefers context.user.email', () => {
+            const ctx = { user: { email: 'user@adobe.com' } };
+            expect(resolvePublisher(ctx, 'any')).to.equal('user@adobe.com');
+          });
+
+          it('falls back to context.user.id when email missing', () => {
+            const ctx = { user: { id: 'abc@AdobeID' } };
+            expect(resolvePublisher(ctx, null)).to.equal('abc@AdobeID');
+          });
+
+          it('falls back to decoded token when user is unavailable', () => {
+            const token = `header.${btoa(JSON.stringify({ email: 'jwt@adobe.com' }))}.sig`;
+            expect(resolvePublisher({}, token)).to.equal('jwt@adobe.com');
+          });
+        });
+
+        describe('appendLogRow', () => {
+          const logSourcePath = `/source/adobecom/da-bacom${LOG_PATH}`;
+
+          it('creates a new row when the url is new', async () => {
+            daFetch.callsFake(async (url, opts = {}) => {
+              const method = opts.method || 'GET';
+              if (url.includes(logSourcePath) && method === 'GET') {
+                return { ok: true, json: async () => buildSheetResponse([]) };
+              }
+              if (url.includes(logSourcePath) && method === 'PUT') {
+                return { ok: true, json: async () => ({}) };
+              }
+              if (url.includes('admin.hlx.page') && url.includes('/preview/')) {
+                return { ok: true, json: async () => ({}) };
+              }
+              return { ok: false, json: async () => ({}) };
+            });
+
+            const res = await appendLogRow({
+              url: '/resources/guides/my-page.html',
+              publisher: 'pm@adobe.com',
+              version: '1.0.0',
+              contentType: 'guide-ungated',
+            });
+
+            expect(res?.ok).to.be.true;
+            const putCall = daFetch.getCalls().find((c) => c.args[1]?.method === 'PUT');
+            expect(putCall, 'PUT should have been issued').to.exist;
+
+            const formData = putCall.args[1].body;
+            const blob = formData.get('data');
+            const text = await blob.text();
+            const saved = JSON.parse(text);
+            expect(saved[':type']).to.equal('sheet');
+            expect(saved.data).to.have.lengthOf(1);
+            expect(saved.data[0]).to.include({
+              url: '/resources/guides/my-page',
+              publisher: 'pm@adobe.com',
+              version: '1.0.0',
+              contentType: 'guide-ungated',
+              status: 'active',
+            });
+            expect(saved.data[0].publishedAt).to.be.a('string');
+            expect(saved.data[0].lastSeenAt).to.be.a('string');
+          });
+
+          it('preserves publishedAt and refreshes lastSeenAt when the url exists', async () => {
+            const existingPublishedAt = '2024-01-01T00:00:00.000Z';
+            const existingRows = [{
+              url: '/resources/guides/my-page',
+              publishedAt: existingPublishedAt,
+              publisher: 'original@adobe.com',
+              version: '1.0.0',
+              contentType: 'guide-ungated',
+              lastSeenAt: existingPublishedAt,
+              status: 'active',
+            }];
+
+            daFetch.callsFake(async (url, opts = {}) => {
+              const method = opts.method || 'GET';
+              if (url.includes(logSourcePath) && method === 'GET') {
+                return { ok: true, json: async () => buildSheetResponse(existingRows) };
+              }
+              if (url.includes(logSourcePath) && method === 'PUT') {
+                return { ok: true, json: async () => ({}) };
+              }
+              if (url.includes('admin.hlx.page')) return { ok: true, json: async () => ({}) };
+              return { ok: false, json: async () => ({}) };
+            });
+
+            await appendLogRow({
+              url: '/resources/guides/my-page.html',
+              publisher: 'other@adobe.com',
+              version: '1.0.1',
+              contentType: 'guide-ungated',
+            });
+
+            const putCall = daFetch.getCalls().find((c) => c.args[1]?.method === 'PUT');
+            const saved = JSON.parse(await putCall.args[1].body.get('data').text());
+            expect(saved.data).to.have.lengthOf(1);
+            expect(saved.data[0].publishedAt).to.equal(existingPublishedAt);
+            expect(saved.data[0].publisher).to.equal('other@adobe.com');
+            expect(saved.data[0].version).to.equal('1.0.1');
+            expect(saved.data[0].lastSeenAt).to.not.equal(existingPublishedAt);
+          });
+
+          it('returns null and logs a warning when url is missing', async () => {
+            const res = await appendLogRow({});
+            expect(res).to.be.null;
+            expect(daFetch.called).to.be.false;
+          });
+
+          it('does not throw when save fails; logs via lana', async () => {
+            daFetch.callsFake(async () => { throw new Error('boom'); });
+            const res = await appendLogRow({ url: '/resources/guides/x', publisher: 'p' });
+            expect(res).to.be.null;
+            expect(window.lana.log.called).to.be.true;
+          });
+        });
+
+        describe('rebuildLog', () => {
+          const logSourcePath = `/source/adobecom/da-bacom${LOG_PATH}`;
+
+          it('crawls, extracts markers, merges with existing rows, and soft-deletes missing', async () => {
+            setCrawlItems([
+              { path: `/adobecom/da-bacom${SCAN_ROOT}/guides/foo.html`, ext: 'html' },
+              { path: `/adobecom/da-bacom${SCAN_ROOT}/reports/bar.html`, ext: 'html' },
+              { path: `/adobecom/da-bacom${SCAN_ROOT}/guides/not-lpb.html`, ext: 'html' },
+              { path: `/adobecom/da-bacom${SCAN_ROOT}/guides`, ext: undefined },
+            ]);
+
+            const existingRows = [
+              {
+                url: '/resources/guides/foo',
+                publishedAt: '2024-02-01T00:00:00.000Z',
+                publisher: 'origPM@adobe.com',
+                version: '1.0.0',
+                contentType: 'guide-ungated',
+                lastSeenAt: '2024-02-01T00:00:00.000Z',
+                status: 'active',
+              },
+              {
+                url: '/resources/guides/gone',
+                publishedAt: '2023-12-01T00:00:00.000Z',
+                publisher: 'prev@adobe.com',
+                version: '1.0.0',
+                contentType: 'guide-ungated',
+                lastSeenAt: '2024-01-15T00:00:00.000Z',
+                status: 'active',
+              },
+            ];
+
+            daFetch.callsFake(async (url, opts = {}) => {
+              const method = opts.method || 'GET';
+              if (url.includes(logSourcePath) && method === 'GET') {
+                return { ok: true, json: async () => buildSheetResponse(existingRows) };
+              }
+              if (url.includes(logSourcePath) && method === 'PUT') {
+                return { ok: true, json: async () => ({}) };
+              }
+              if (url.includes('admin.hlx.page')) return { ok: true, json: async () => ({}) };
+              if (url.includes('/source/') && url.includes('guides/foo')) {
+                return { ok: true, text: async () => buildMarkerHtml({ version: '1.0.1' }) };
+              }
+              if (url.includes('/source/') && url.includes('reports/bar')) {
+                return { ok: true, text: async () => buildMarkerHtml({ version: '1.0.0' }) };
+              }
+              if (url.includes('/source/') && url.includes('not-lpb')) {
+                return { ok: true, text: async () => '<html><body><main>regular page</main></body></html>' };
+              }
+              return { ok: false, json: async () => ({}) };
+            });
+
+            const progressSpy = sinon.spy();
+            const result = await rebuildLog({ onProgress: progressSpy });
+
+            expect(crawl.calledOnce).to.be.true;
+            expect(crawl.firstCall.args[0].path).to.equal(`/adobecom/da-bacom${SCAN_ROOT}`);
+            expect(progressSpy.called).to.be.true;
+
+            expect(result.active).to.equal(2);
+            expect(result.removed).to.equal(1);
+            expect(result.saved).to.be.true;
+
+            const putCall = daFetch.getCalls().find((c) => c.args[1]?.method === 'PUT');
+            const saved = JSON.parse(await putCall.args[1].body.get('data').text());
+
+            const fooRow = saved.data.find((r) => r.url === '/resources/guides/foo');
+            expect(fooRow).to.exist;
+            expect(fooRow.publishedAt).to.equal('2024-02-01T00:00:00.000Z'); // preserved
+            expect(fooRow.publisher).to.equal('origPM@adobe.com'); // preserved
+            expect(fooRow.version).to.equal('1.0.1'); // updated from marker
+            expect(fooRow.status).to.equal('active');
+
+            const barRow = saved.data.find((r) => r.url === '/resources/reports/bar');
+            expect(barRow).to.exist;
+            expect(barRow.publisher).to.equal('unknown');
+            expect(barRow.contentType).to.equal('report');
+
+            const goneRow = saved.data.find((r) => r.url === '/resources/guides/gone');
+            expect(goneRow).to.exist;
+            expect(goneRow.status).to.equal('removed');
+            expect(goneRow.removedAt).to.be.a('string');
+          });
+
+          it('skips non-html items in the crawl callback', async () => {
+            setCrawlItems([
+              { path: `/adobecom/da-bacom${SCAN_ROOT}/img.png`, ext: 'png' },
+              { path: `/adobecom/da-bacom${SCAN_ROOT}/sub`, ext: undefined },
+            ]);
+
+            daFetch.callsFake(async (url, opts = {}) => {
+              const method = opts.method || 'GET';
+              if (url.includes(logSourcePath) && method === 'GET') {
+                return { ok: true, json: async () => buildSheetResponse([]) };
+              }
+              if (url.includes(logSourcePath) && method === 'PUT') {
+                return { ok: true, json: async () => ({}) };
+              }
+              if (url.includes('admin.hlx.page')) return { ok: true, json: async () => ({}) };
+              return { ok: false, json: async () => ({}) };
+            });
+
+            const result = await rebuildLog();
+            expect(result.active).to.equal(0);
+            expect(result.removed).to.equal(0);
+
+            const sourceGetForPngOrDir = daFetch.getCalls().some(
+              (c) => c.args[0].includes('/source/') && (c.args[0].includes('img.png') || c.args[0].endsWith('/sub')),
+            );
+            expect(sourceGetForPngOrDir, 'non-html items must not be fetched for source').to.be.false;
+          });
+        });
+      });
+    });
+  </script>
+</body>
+
+</html>

@@ -68,6 +68,11 @@
         "description": "Admin tools for Milo Graybox",
         "image": "https://publish-p133406-e1301188.adobeaemcloud.com/content/dam/milo/app-icons/graybox.jpg",
         "url": "https://da.live/app/adobecom/milo/tools/graybox"
+      },
+      {
+        "title": "Landing Page Log",
+        "description": "Audit of pages built with the Landing Page Builder.",
+        "url": "https://da.live/app/adobecom/da-bacom/tools/lpb-log/lpb-log"
       }
     ]
 }
