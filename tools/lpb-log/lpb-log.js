@@ -17,6 +17,8 @@ const COLUMNS = [
   { key: 'lastSeenAt', label: 'Last Seen' },
   { key: 'status', label: 'Status' },
 ];
+/** Same as table columns plus audit field for CSV only */
+const CSV_COLUMNS = [...COLUMNS, { key: 'removedAt', label: 'Removed At' }];
 
 const state = {
   rows: [],
@@ -62,6 +64,45 @@ function getVisibleRows() {
   else if (state.filter === 'removed') rows = rows.filter((r) => r.status === 'removed');
   rows.sort((a, b) => compareRows(a, b, state.sortKey, state.sortDir));
   return rows;
+}
+
+function escapeCsvCell(value) {
+  const s = value == null ? '' : String(value);
+  if (/[",\r\n]/.test(s)) {
+    return `"${s.replace(/"/g, '""')}"`;
+  }
+  return s;
+}
+
+function buildCsv(rows) {
+  const headerLine = CSV_COLUMNS.map((col) => escapeCsvCell(col.label)).join(',');
+  const dataLines = rows.map((row) => CSV_COLUMNS.map((col) => {
+    let v = row[col.key];
+    if (col.key === 'status') v = STATUS_LABELS[v] || v || '';
+    return escapeCsvCell(v ?? '');
+  }).join(','));
+  return [headerLine, ...dataLines].join('\r\n');
+}
+
+function triggerCsvDownload(filename, text) {
+  const blob = new Blob([`\uFEFF${text}`], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function handleDownloadCsv() {
+  const rows = getVisibleRows();
+  if (rows.length === 0) return;
+  const dateStamp = new Date().toISOString().slice(0, 10);
+  const filename = `lpb-log-${state.filter}-${dateStamp}.csv`;
+  triggerCsvDownload(filename, buildCsv(rows));
 }
 
 function renderTable(rows) {
@@ -157,6 +198,9 @@ function bindEvents() {
 
   const rebuildBtn = root.querySelector('[data-action="rebuild"]');
   if (rebuildBtn) rebuildBtn.addEventListener('click', handleRebuild);
+
+  const csvBtn = root.querySelector('[data-action="download-csv"]');
+  if (csvBtn) csvBtn.addEventListener('click', handleDownloadCsv);
 }
 
 function render() {
@@ -172,6 +216,9 @@ function render() {
         <div class="lpb-actions">
           <a class="lpb-btn lpb-btn-secondary" href="${escapeHtml(EDIT_URL)}" target="_blank" rel="noopener">Open sheet</a>
           <a class="lpb-btn lpb-btn-secondary" href="${escapeHtml(PUBLIC_URL)}" target="_blank" rel="noopener">Public JSON</a>
+          <button type="button" class="lpb-btn lpb-btn-secondary" data-action="download-csv" ${rows.length === 0 ? 'disabled' : ''} title="Exports the current tab and sort order as CSV">
+            Download CSV
+          </button>
           <button class="lpb-btn lpb-btn-primary" data-action="rebuild" ${state.scanning ? 'disabled' : ''}>
             ${state.scanning ? 'Scanning…' : 'Rebuild from scan'}
           </button>
