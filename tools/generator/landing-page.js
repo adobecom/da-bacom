@@ -259,8 +259,9 @@ class LandingPageForm extends LitElement {
     super.connectedCallback();
     if (DEBUG) console.clear();
     document.addEventListener('show-toast', this.handleToast);
-    const token = await initIms();
-    this.token = token?.accessToken?.token;
+    const ims = await initIms();
+    this.imsDetails = ims;
+    this.token = ims?.accessToken?.token;
     this.loadFormState();
 
     if (!this.form.contentType || !this.form.gated || !this.form.region) this.form.pageName = '';
@@ -709,7 +710,13 @@ class LandingPageForm extends LitElement {
       console.table(placeholders);
     }
     let generatedPage = applyTemplateData(this.templateHTML, placeholders);
-    generatedPage = addHiddenTable(generatedPage, { name: FORM_STORAGE_KEY, version: LPB_VERSION }, 'page-builder');
+    const freshSdk = await DA_SDK.catch(() => null);
+    const publishedBy = resolvePublisher(freshSdk ?? daContext, this.token, this.imsDetails);
+    generatedPage = addHiddenTable(generatedPage, {
+      name: FORM_STORAGE_KEY,
+      version: LPB_VERSION,
+      publishedBy,
+    }, 'page-builder');
     if (DEBUG) generatedPage = addHiddenTable(generatedPage, this.form, 'form-data');
 
     try {
@@ -835,7 +842,7 @@ class LandingPageForm extends LitElement {
   async logPublish() {
     try {
       const freshSdk = await DA_SDK.catch(() => null);
-      const publisher = resolvePublisher(freshSdk ?? daContext, this.token);
+      const publisher = resolvePublisher(freshSdk ?? daContext, this.token, this.imsDetails);
       const contentType = this.form.contentType && this.form.gated
         ? `${this.form.contentType}-${this.form.gated}`.toLowerCase()
         : '';

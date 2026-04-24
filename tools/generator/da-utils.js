@@ -38,24 +38,71 @@ export async function getSheets(path) {
   return null;
 }
 
-export async function getSource(path) {
+/**
+ * Best-effort: read "last modified by" / editor attribution from a Source GET response.
+ * DA does not document a stable header name; we try known keys then fuzzy-match `x-da-*`.
+ * Note: browsers only expose headers listed in Access-Control-Expose-Headers for CORS responses.
+ */
+export function lastModifiedByFromSourceResponse(response) {
+  if (!response?.headers?.get) return null;
+  const h = response.headers;
+  const directKeys = [
+    'x-da-last-modified-by',
+    'x-da-modified-by',
+    'x-da-editor',
+    'x-da-user',
+    'x-da-author',
+    'x-github-commit-author',
+  ];
+  for (let i = 0; i < directKeys.length; i += 1) {
+    const v = h.get(directKeys[i]);
+    if (v && String(v).trim()) return String(v).trim();
+  }
+  try {
+    const entries = typeof h.entries === 'function' ? [...h.entries()] : [];
+    for (let i = 0; i < entries.length; i += 1) {
+      const [key, value] = entries[i];
+      if (value && String(value).trim()) {
+        const kl = key.toLowerCase();
+        if ((kl.startsWith('x-da-') || kl.includes('da-'))
+          && (kl.includes('user') || kl.includes('author') || kl.includes('editor') || kl.includes('by'))) {
+          return String(value).trim();
+        }
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+/**
+ * GET HTML source and parse document, plus optional DA "last modified by" from response headers.
+ */
+export async function getSourceWithMeta(path) {
   const daPath = getDaPath(path, true);
   const opts = { method: 'GET', headers: { accept: '*/*' } };
 
   try {
     const response = await daFetch(daPath, opts);
-    if (response.ok) {
-      const html = await response.text();
-      const newParser = new DOMParser();
-      const parsedPage = newParser.parseFromString(html, 'text/html');
-
-      return parsedPage;
+    if (!response.ok) {
+      return { doc: null, lastModifiedBy: null };
     }
+    const lastModifiedBy = lastModifiedByFromSourceResponse(response);
+    const html = await response.text();
+    const newParser = new DOMParser();
+    const parsedPage = newParser.parseFromString(html, 'text/html');
+    return { doc: parsedPage, lastModifiedBy };
   /* c8 ignore next 5 */
   } catch (error) {
     console.log(`Error fetching document ${daPath}`, error);
   }
-  return null;
+  return { doc: null, lastModifiedBy: null };
+}
+
+export async function getSource(path) {
+  const { doc } = await getSourceWithMeta(path);
+  return doc;
 }
 
 function createSheetObject(data, sheetName = 'data') {

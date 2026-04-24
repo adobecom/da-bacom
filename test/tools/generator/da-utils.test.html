@@ -17,7 +17,7 @@
   <script type="module">
     import { runTests } from '@web/test-runner-mocha';
     import { expect } from '@esm-bundle/chai';
-    import { sanitizeFileName, saveFile } from '../../../tools/generator/da-utils.js';
+    import { sanitizeFileName, saveFile, lastModifiedByFromSourceResponse } from '../../../tools/generator/da-utils.js';
     import { daFetch } from './mocks/da-fetch.js';
 
     runTests(() => {
@@ -56,6 +56,20 @@
 
         it('replaces punctuation such as &, @, +, () with dashes and lowercases', () => {
           expect(sanitizeFileName('A&B@C+(D).png')).to.equal('a-b-c-d.png');
+        });
+      });
+
+      describe('lastModifiedByFromSourceResponse', () => {
+        it('reads x-da-last-modified-by when present', () => {
+          const headers = new Headers();
+          headers.set('x-da-last-modified-by', 'ste76106');
+          expect(lastModifiedByFromSourceResponse({ headers })).to.equal('ste76106');
+        });
+
+        it('returns null when headers are missing or empty', () => {
+          expect(lastModifiedByFromSourceResponse(null)).to.be.null;
+          expect(lastModifiedByFromSourceResponse({})).to.be.null;
+          expect(lastModifiedByFromSourceResponse({ headers: new Headers() })).to.be.null;
         });
       });
 

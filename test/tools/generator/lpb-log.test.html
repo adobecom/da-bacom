@@ -25,6 +25,7 @@
       deriveContentType,
       decodeJwtPayloadSegment,
       publisherFromToken,
+      publisherFromImsDetails,
       resolvePublisher,
       appendLogRow,
       rebuildLog,
@@ -149,7 +150,24 @@
           });
         });
 
+        describe('publisherFromImsDetails', () => {
+          it('returns email when present', () => {
+            expect(publisherFromImsDetails({ email: ' ims@adobe.com ' })).to.equal('ims@adobe.com');
+          });
+          it('returns null when anonymous or missing', () => {
+            expect(publisherFromImsDetails({ anonymous: true })).to.be.null;
+            expect(publisherFromImsDetails(null)).to.be.null;
+          });
+        });
+
         describe('resolvePublisher', () => {
+          it('prefers ims profile (third arg) over context and token', () => {
+            const ctx = { user: { email: 'ctx@adobe.com' } };
+            const body = btoa(JSON.stringify({ email: 'jwt@adobe.com' })).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+            const token = `header.${body}.sig`;
+            expect(resolvePublisher(ctx, token, { email: 'ims@adobe.com' })).to.equal('ims@adobe.com');
+          });
+
           it('prefers context.user.email', () => {
             const ctx = { user: { email: 'user@adobe.com' } };
             expect(resolvePublisher(ctx, 'any')).to.equal('user@adobe.com');
@@ -319,10 +337,13 @@
               }
               if (url.includes('admin.hlx.page')) return { ok: true, json: async () => ({}) };
               if (url.includes('/source/') && url.includes('guides/foo')) {
-                return { ok: true, text: async () => buildMarkerHtml({ version: '1.0.1' }) };
+                const h = new Headers();
+                return { ok: true, headers: h, text: async () => buildMarkerHtml({ version: '1.0.1' }) };
               }
               if (url.includes('/source/') && url.includes('reports/bar')) {
-                return { ok: true, text: async () => buildMarkerHtml({ version: '1.0.0' }) };
+                const h = new Headers();
+                h.set('x-da-last-modified-by', 'ste76106');
+                return { ok: true, headers: h, text: async () => buildMarkerHtml({ version: '1.0.0' }) };
               }
               if (url.includes('/source/') && url.includes('not-lpb')) {
                 return { ok: true, text: async () => '<html><body><main>regular page</main></body></html>' };
@@ -353,7 +374,7 @@
 
             const barRow = saved.data.find((r) => r.url === '/resources/reports/bar');
             expect(barRow).to.exist;
-            expect(barRow.publisher).to.equal('unknown');
+            expect(barRow.publisher).to.equal('ste76106');
             expect(barRow.contentType).to.equal('report');
 
             const goneRow = saved.data.find((r) => r.url === '/resources/guides/gone');
@@ -388,6 +409,42 @@
               (c) => c.args[0].includes('/source/') && (c.args[0].includes('img.png') || c.args[0].endsWith('/sub')),
             );
             expect(sourceGetForPngOrDir, 'non-html items must not be fetched for source').to.be.false;
+          });
+
+          it('prefers marker publishedBy over DA last-modified header when both exist', async () => {
+            setCrawlItems([
+              { path: `/adobecom/da-bacom${SCAN_ROOT}/guides/both.html`, ext: 'html' },
+            ]);
+
+            daFetch.callsFake(async (url, opts = {}) => {
+              const method = opts.method || 'GET';
+              if (url.includes(logSourcePath) && method === 'GET') {
+                return { ok: true, json: async () => buildSheetResponse([]) };
+              }
+              if (url.includes(logSourcePath) && method === 'PUT') {
+                return { ok: true, json: async () => ({}) };
+              }
+              if (url.includes('admin.hlx.page')) return { ok: true, json: async () => ({}) };
+              if (url.includes('/source/') && url.includes('guides/both')) {
+                const h = new Headers();
+                h.set('x-da-last-modified-by', 'headerOnly');
+                return {
+                  ok: true,
+                  headers: h,
+                  text: async () => buildMarkerHtml({
+                    version: '1.0.0',
+                    extra: '<div><div>publishedBy</div><div>marker@adobe.com</div></div>',
+                  }),
+                };
+              }
+              return { ok: false, json: async () => ({}) };
+            });
+
+            await rebuildLog();
+            const putCall = daFetch.getCalls().find((c) => c.args[1]?.method === 'PUT');
+            const saved = JSON.parse(await putCall.args[1].body.get('data').text());
+            const row = saved.data.find((r) => r.url === '/resources/guides/both');
+            expect(row.publisher).to.equal('marker@adobe.com');
           });
         });
       });

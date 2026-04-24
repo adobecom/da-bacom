@@ -1,7 +1,7 @@
 /* eslint-disable import/no-unresolved */
 import { daFetch } from 'da-fetch';
 import { crawl } from 'https://da.live/nx/public/utils/tree.js';
-import { getSource, getSheets, saveSheets } from './da-utils.js';
+import { getSourceWithMeta, getSheets, saveSheets } from './da-utils.js';
 import { ORG, REPO, getAdminPreviewUrl } from './paths-config.js';
 
 export const LOG_PATH = '/tools/page-builder/landing-page/data/lpb-log';
@@ -100,11 +100,42 @@ export function publisherFromToken(token) {
 }
 
 /**
+ * From initIms() / loadIms(): getProfile() merged with accessToken (see da.live ims.js).
+ */
+export function publisherFromImsDetails(ims) {
+  if (!ims || ims.anonymous === true) return null;
+  if (typeof ims.email === 'string' && ims.email.trim()) return ims.email.trim();
+  if (typeof ims.displayName === 'string' && ims.displayName.trim()) return ims.displayName.trim();
+  if (ims.name) {
+    if (typeof ims.name === 'string' && ims.name.trim()) return ims.name.trim();
+    if (typeof ims.name === 'object') {
+      const fn = ims.name.first_name || ims.name.first;
+      const ln = ims.name.last_name || ims.name.last;
+      const full = ims.name.full_name || ims.name.fullName;
+      if (full) return String(full).trim();
+      if (fn || ln) return [fn, ln].filter(Boolean).join(' ').trim() || null;
+    }
+  }
+  const fn = ims.first_name || ims.firstName;
+  const ln = ims.last_name || ims.lastName;
+  if (fn || ln) return [fn, ln].filter(Boolean).join(' ').trim() || null;
+  if (ims.userId) return String(ims.userId);
+  if (ims.user_id) return String(ims.user_id);
+  if (ims.username) return String(ims.username);
+  if (ims.sub) return String(ims.sub);
+  return null;
+}
+
+/**
  * Resolve publisher for the log row.
  * @param {object} sdkOrContext - DA SDK `{ context, token }` or plain `context` (tests / legacy).
  * @param {string} [imsAccessToken] - IMS bearer from initIms (used when sdk.token is absent).
+ * @param {object} [imsDetails] - Full return value of initIms() (getProfile + accessToken).
  */
-export function resolvePublisher(sdkOrContext, imsAccessToken) {
+export function resolvePublisher(sdkOrContext, imsAccessToken, imsDetails) {
+  const fromImsProfile = publisherFromImsDetails(imsDetails);
+  if (fromImsProfile) return fromImsProfile;
+
   const ctx = sdkOrContext?.context ?? sdkOrContext;
   const bearer = imsAccessToken ?? sdkOrContext?.token;
   const u = ctx?.user ?? sdkOrContext?.user;
@@ -174,12 +205,17 @@ export async function scanResources({ onProgress, throttle = 10 } = {}) {
     if (item.ext !== 'html') return;
     const relativePath = toRepoRelative(item.path);
     onProgress?.(relativePath);
-    const doc = await getSource(relativePath).catch(() => null);
+    const { doc, lastModifiedBy } = await getSourceWithMeta(relativePath).catch(() => (
+      { doc: null, lastModifiedBy: null }
+    ));
     const marker = extractMarker(doc);
     if (marker) {
+      const fromMarker = (marker.publishedBy || marker.publisher || '').trim();
+      const fromDa = (lastModifiedBy || '').trim();
       found.push({
         url: stripHtmlExt(relativePath),
         version: marker.version ?? '',
+        publisher: fromMarker || fromDa,
         contentType: deriveContentType(relativePath) || '',
       });
     }
@@ -205,10 +241,11 @@ export async function rebuildLog({ onProgress, throttle = 10 } = {}) {
 
   const active = found.map((row) => {
     const prev = byUrl.get(row.url);
+    const publisherOnDoc = row.publisher?.trim();
     return {
       url: row.url,
       publishedAt: prev?.publishedAt || now,
-      publisher: prev?.publisher || 'unknown',
+      publisher: publisherOnDoc || prev?.publisher || 'unknown',
       version: row.version || prev?.version || '',
       contentType: row.contentType || prev?.contentType || '',
       lastSeenAt: now,
