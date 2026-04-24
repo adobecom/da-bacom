@@ -89,8 +89,13 @@ main {
 }
 
 .lpb-btn:disabled {
-  opacity: 0.6;
+  opacity: 0.75;
   cursor: not-allowed;
+}
+
+/* Keep disabled actions visible (e.g. CSV when the filtered list is empty). */
+.lpb-btn[data-action='download-csv']:disabled {
+  opacity: 0.85;
 }
 
 .lpb-btn-primary {
