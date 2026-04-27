@@ -152,6 +152,11 @@ main {
   margin-right: 6px;
 }
 
+.lpb-reconcile-sub {
+  color: var(--lpb-text-muted);
+  font-weight: 400;
+}
+
 .lpb-progress {
   margin-top: 8px;
   padding: 8px 12px;

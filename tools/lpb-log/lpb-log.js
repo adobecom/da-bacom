@@ -8,6 +8,7 @@ const EDIT_URL = `https://da.live/sheet#/${ORG}/${REPO}${LOG_PATH}`;
 const PUBLIC_URL = `${AEM_LIVE_ORIGIN}${LOG_PATH}.json`;
 
 const STATUS_LABELS = { active: 'Active', removed: 'Removed' };
+const LS_LAST_REBUILD = 'da-bacom-lpb-log-last-rebuild';
 const COLUMNS = [
   { key: 'url', label: 'Page URL' },
   { key: 'publishedAt', label: 'Published' },
@@ -31,11 +32,52 @@ const state = {
   scanning: false,
   progress: '',
   error: null,
+  /** ISO time of last successful Rebuild from scan (this browser). */
+  lastRebuildAt: null,
 };
 
 const DEFAULT_SORT = { key: 'publishedAt', dir: 'desc' };
 
 let root;
+
+function slugHeaderKey(key) {
+  return String(key || '')
+    .toLowerCase()
+    .replace(/[\s_-]+/g, '');
+}
+
+/** Sheet JSON may use different column headers than our code (camelCase). */
+function normalizeLogRow(row) {
+  if (!row || typeof row !== 'object') return row;
+  const out = { ...row };
+  const lastSeenSlugs = new Set(['lastseen', 'lastseenat', 'lastupdate', 'lastupdatedat']);
+  for (const [k, v] of Object.entries(row)) {
+    if (v != null && v !== '' && lastSeenSlugs.has(slugHeaderKey(k))) {
+      out.lastSeenAt = v;
+      break;
+    }
+  }
+  if (out.status != null && out.status !== '') {
+    out.status = String(out.status).trim().toLowerCase();
+  }
+  return out;
+}
+
+function readLastRebuildFromStorage() {
+  try {
+    return sessionStorage.getItem(LS_LAST_REBUILD) || null;
+  } catch {
+    return null;
+  }
+}
+
+function writeLastRebuildToStorage(iso) {
+  try {
+    sessionStorage.setItem(LS_LAST_REBUILD, iso);
+  } catch {
+    /* private mode / blocked */
+  }
+}
 
 function escapeHtml(value) {
   if (value == null) return '';
@@ -83,12 +125,20 @@ function inferLastFullReconcileAt(rows) {
   return times[0];
 }
 
-function buildReconcileHtml(rows, activeCount) {
+function buildReconcileHtml(rows, activeCount, lastRebuildBrowserAt) {
+  if (lastRebuildBrowserAt) {
+    const dt = escapeHtml(lastRebuildBrowserAt);
+    const human = formatDate(lastRebuildBrowserAt);
+    return '<p class="lpb-reconcile"><span class="lpb-reconcile-label">Last rebuild</span> '
+      + `<time datetime="${dt}">${human}</time>`
+      + '<span class="lpb-reconcile-sub"> (scan from this browser)</span></p>';
+  }
   const reconcileAt = inferLastFullReconcileAt(rows);
   if (reconcileAt) {
     const dt = escapeHtml(reconcileAt);
     const human = formatDate(reconcileAt);
-    return `<p class="lpb-reconcile"><span class="lpb-reconcile-label">Last full reconciliation (scan)</span> <time datetime="${dt}">${human}</time></p>`;
+    return '<p class="lpb-reconcile"><span class="lpb-reconcile-label">Last full reconciliation (scan)</span> '
+      + `<time datetime="${dt}">${human}</time></p>`;
   }
   if (activeCount > 0) {
     const hint = 'No single scan time to show — active rows were updated at different times '
@@ -174,7 +224,8 @@ function renderTable(rows) {
 
 async function loadLog() {
   try {
-    state.rows = await getLog();
+    const raw = await getLog();
+    state.rows = Array.isArray(raw) ? raw.map(normalizeLogRow) : [];
     state.sortKey = DEFAULT_SORT.key;
     state.sortDir = DEFAULT_SORT.dir;
   } catch (error) {
@@ -194,6 +245,9 @@ async function handleRebuild() {
   try {
     const result = await rebuildLog({ onProgress: (path) => { state.progress = path; render(); } });
     if (!result.saved) throw new Error('Save failed');
+    const rebuildIso = new Date().toISOString();
+    state.lastRebuildAt = rebuildIso;
+    writeLastRebuildToStorage(rebuildIso);
     await loadLog();
   } catch (error) {
     state.error = `Rebuild failed: ${error?.message || error}`;
@@ -238,7 +292,7 @@ function render() {
   const total = state.rows.length;
   const active = state.rows.filter((r) => r.status !== 'removed').length;
   const removed = total - active;
-  const reconcileHtml = buildReconcileHtml(state.rows, active);
+  const reconcileHtml = buildReconcileHtml(state.rows, active, state.lastRebuildAt);
 
   root.innerHTML = `
     <header class="lpb-header">
@@ -294,5 +348,6 @@ function render() {
     return;
   }
 
+  state.lastRebuildAt = readLastRebuildFromStorage();
   await loadLog();
 }());
