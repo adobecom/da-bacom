@@ -236,6 +236,12 @@ body.disable-scroll #adbMsgClientWrapper #adbmsgContainer .adbmsgCta {
   padding: 0;
 }
 
+/* hide the first play icon if there is a second play icon */
+.marquee span.icon-play svg:has(+ svg), 
+.hero-marquee span.icon-play svg:has(+ svg) {
+  display: none;
+}
+
 @media screen and (max-width: 375px) {
   .brick.iswa {
     min-height: 540px;
@@ -257,6 +263,10 @@ body.disable-scroll #adbMsgClientWrapper #adbmsgContainer .adbmsgCta {
   .ceros-iframe .milo-iframe {
     height: 100%;
     padding: unset
+  }
+
+  .hero-marquee.iswa div.foreground.cols-2 .copy {
+    padding-inline-end: 0;
   }
 }
 
@@ -288,10 +298,15 @@ body.disable-scroll #adbMsgClientWrapper #adbmsgContainer .adbmsgCta {
     letter-spacing: -2px;
     line-height: 98%;
   }
+
+  .iswa h2.heading-s {
+    font-size: 44px;
+  }
 }
 
 @media screen and (min-width: 1440px) {
   main.iswa-main {
     --grid-container-width: 1440px;
+    --grid-margins-width: calc((100% - var(--grid-container-width)) / 2);
   }
 }
