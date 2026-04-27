@@ -155,6 +155,8 @@ const CONFIG = {
   onlybanner: true,
 };
 
+const PLAY_SVG = '<svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 0 18 18" width="18" class="icon-milo icon-milo-play"><path fill="currentColor" fill-rule="evenodd" d="M4.73,2H3.5a.5.5,0,0,0-.5.5v13a.5.5,0,0,0,.5.5H4.73a1,1,0,0,0,.5035-.136l11.032-6.433a.5.5,0,0,0,0-.862L5.2335,2.136A1,1,0,0,0,4.73,2Z"/></svg>';
+
 const eagerLoad = (img) => {
   img?.setAttribute('loading', 'eager');
   img?.setAttribute('fetchpriority', 'high');
@@ -228,6 +230,23 @@ export function transformExlLinks(locale) {
   });
 }
 
+export function injectMarqueePlayIcon(MILO_EVENTS) {
+  const marquee = document.querySelector('.marquee, .hero-marquee');
+  const marqueePlayIcon = marquee?.querySelector('span.icon-play');
+  if (!marqueePlayIcon) return;
+
+  marqueePlayIcon.innerHTML = PLAY_SVG;
+  marqueePlayIcon.dataset.svgInjected = 'true';
+  marqueePlayIcon.classList.add('margin-inline-end');
+  document.addEventListener(MILO_EVENTS.DEFERRED, async () => {
+    const marqueePlaySvg = marqueePlayIcon.querySelector('svg');
+    const { default: loadIcons } = await import(`${LIBS}/features/icons/icons.js`);
+    delete marqueePlayIcon.dataset.svgInjected;
+    await loadIcons([marqueePlayIcon]);
+    marqueePlaySvg?.remove();
+  }, { once: true });
+}
+
 export const EVENT_LIBS = (() => {
   const version = 'v1';
   const { hostname, search } = window.location;
@@ -243,7 +262,7 @@ let eventsError;
 
 async function loadPage() {
   const {
-    loadArea, loadLana, setConfig, createTag, getMetadata, getLocale,
+    loadArea, loadLana, setConfig, createTag, getMetadata, getLocale, MILO_EVENTS,
   } = await import(`${LIBS}/utils/utils.js`);
 
   let eventUtils;
@@ -302,6 +321,7 @@ async function loadPage() {
     endpointStage: 'https://business.stage.adobe.com/lana/ll',
   });
   transformExlLinks(getLocale(CONFIG.locales));
+  injectMarqueePlayIcon(MILO_EVENTS);
 
   await loadArea();
 

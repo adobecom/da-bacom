@@ -1,6 +1,13 @@
 import { readFile, setViewport } from '@web/test-runner-commands';
 import { expect } from '@esm-bundle/chai';
-import { setLibs, LIBS, getLCPImages, transformExlLinks, applyIswaTypography } from '../../scripts/scripts.js';
+import {
+  setLibs,
+  LIBS,
+  getLCPImages,
+  transformExlLinks,
+  applyIswaTypography,
+  injectMarqueePlayIcon,
+} from '../../scripts/scripts.js';
 
 describe('Libs', () => {
   const tests = [
@@ -200,5 +207,38 @@ describe('ISWA Typography', () => {
     document.body.innerHTML = '';
     applyIswaTypography();
     expect(document.querySelector('.iswa-main')).to.not.exist;
+  });
+});
+
+describe('injectMarqueePlayIcon', () => {
+  const MILO_EVENTS = { DEFERRED: 'milo:deferred-test' };
+
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('injects play SVG and marks the icon when marquee contains span.icon-play', () => {
+    document.body.innerHTML = `
+      <div class="marquee">
+        <span class="icon icon-play"></span>
+      </div>
+    `;
+    injectMarqueePlayIcon(MILO_EVENTS);
+    const icon = document.querySelector('span.icon-play');
+    expect(icon.querySelector('svg.icon-milo-play')).to.exist;
+    expect(icon.dataset.svgInjected).to.equal('true');
+    expect(icon.classList.contains('margin-inline-end')).to.be.true;
+  });
+
+  it('does nothing when there is no marquee', () => {
+    document.body.innerHTML = '<div class="aside">Aside block<span class="icon icon-play"></span></div>';
+    injectMarqueePlayIcon(MILO_EVENTS);
+    expect(document.querySelector('svg')).to.not.exist;
+  });
+
+  it('does nothing when marquee has no play icon', () => {
+    document.body.innerHTML = '<div class="marquee"><span class="icon icon-other"></span></div>';
+    injectMarqueePlayIcon(MILO_EVENTS);
+    expect(document.querySelector('svg')).to.not.exist;
   });
 });
