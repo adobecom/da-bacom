@@ -411,7 +411,7 @@
             expect(sourceGetForPngOrDir, 'non-html items must not be fetched for source').to.be.false;
           });
 
-          it('prefers marker publishedBy over DA last-modified header when both exist', async () => {
+          it('prefers DA last-modified header over marker publishedBy when both exist', async () => {
             setCrawlItems([
               { path: `/adobecom/da-bacom${SCAN_ROOT}/guides/both.html`, ext: 'html' },
             ]);
@@ -444,7 +444,7 @@
             const putCall = daFetch.getCalls().find((c) => c.args[1]?.method === 'PUT');
             const saved = JSON.parse(await putCall.args[1].body.get('data').text());
             const row = saved.data.find((r) => r.url === '/resources/guides/both');
-            expect(row.publisher).to.equal('marker@adobe.com');
+            expect(row.publisher).to.equal('headerOnly');
           });
         });
       });

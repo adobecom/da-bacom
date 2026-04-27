@@ -215,7 +215,7 @@ export async function scanResources({ onProgress, throttle = 10 } = {}) {
       found.push({
         url: stripHtmlExt(relativePath),
         version: marker.version ?? '',
-        publisher: fromMarker || fromDa,
+        publisher: fromDa || fromMarker,
         contentType: deriveContentType(relativePath) || '',
       });
     }

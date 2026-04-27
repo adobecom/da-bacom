@@ -32,7 +32,7 @@ const state = {
   scanning: false,
   progress: '',
   error: null,
-  /** ISO time of last successful Rebuild from scan (this browser). */
+  /** ISO time of last successful Rebuild From Scan (this browser). */
   lastRebuildAt: null,
 };
 
@@ -142,7 +142,7 @@ function buildReconcileHtml(rows, activeCount, lastRebuildBrowserAt) {
   }
   if (activeCount > 0) {
     const hint = 'No single scan time to show — active rows were updated at different times '
-      + '(for example after individual publishes). Run <strong>Rebuild from scan</strong> '
+      + '(for example after individual publishes). Run <strong>Rebuild From Scan</strong> '
       + 'to refresh every active row at once.';
     return `<p class="lpb-reconcile lpb-reconcile-muted">${hint}</p>`;
   }
@@ -305,7 +305,7 @@ function render() {
             Download CSV
           </button>
           <button class="lpb-btn lpb-btn-primary" data-action="rebuild" ${state.scanning ? 'disabled' : ''}>
-            ${state.scanning ? 'Scanning…' : 'Rebuild from scan'}
+            ${state.scanning ? 'Scanning…' : 'Rebuild From Scan'}
           </button>
         </div>
       </div>
