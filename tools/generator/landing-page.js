@@ -26,6 +26,7 @@ import {
   setStorageItem,
   marketoUrl,
   applyTemplateData,
+  injectAssetHeadlineIfMissing,
   addHiddenTable,
 } from './generator.js';
 import {
@@ -711,6 +712,12 @@ class LandingPageForm extends LitElement {
       console.table(placeholders);
     }
     let generatedPage = applyTemplateData(this.templateHTML, placeholders);
+    generatedPage = injectAssetHeadlineIfMissing(
+      this.templateHTML,
+      generatedPage,
+      placeholders.assetHeadline,
+      placeholders.pdfAsset,
+    );
     generatedPage = addHiddenTable(generatedPage, { name: FORM_STORAGE_KEY, version: LPB_VERSION }, 'page-builder');
     if (DEBUG) generatedPage = addHiddenTable(generatedPage, this.form, 'form-data');
 
