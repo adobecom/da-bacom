@@ -14,11 +14,14 @@ const COLUMNS = [
   { key: 'publisher', label: 'Publisher' },
   { key: 'contentType', label: 'Content Type' },
   { key: 'version', label: 'LPB Version' },
-  { key: 'lastSeenAt', label: 'Last Seen' },
-  { key: 'status', label: 'Status' },
 ];
-/** Same as table columns plus audit field for CSV only */
-const CSV_COLUMNS = [...COLUMNS, { key: 'removedAt', label: 'Removed At' }];
+/** Table columns plus audit fields useful in spreadsheets */
+const CSV_COLUMNS = [
+  ...COLUMNS,
+  { key: 'status', label: 'Status' },
+  { key: 'lastSeenAt', label: 'Last Seen (sheet)' },
+  { key: 'removedAt', label: 'Removed At' },
+];
 
 const state = {
   rows: [],
@@ -64,6 +67,36 @@ function getVisibleRows() {
   else if (state.filter === 'removed') rows = rows.filter((r) => r.status === 'removed');
   rows.sort((a, b) => compareRows(a, b, state.sortKey, state.sortDir));
   return rows;
+}
+
+/** After rebuild, active rows share the same `lastSeenAt` (shown as last full scan). */
+function inferLastFullReconcileAt(rows) {
+  const active = rows.filter((r) => r.status !== 'removed');
+  if (active.length === 0) return null;
+  const times = active.map((r) => r.lastSeenAt).filter(Boolean);
+  if (times.length !== active.length) return null;
+  const ms = times.map((t) => new Date(t).getTime());
+  if (ms.some((n) => Number.isNaN(n))) return null;
+  const min = Math.min(...ms);
+  const max = Math.max(...ms);
+  if (max - min > 2000) return null;
+  return times[0];
+}
+
+function buildReconcileHtml(rows, activeCount) {
+  const reconcileAt = inferLastFullReconcileAt(rows);
+  if (reconcileAt) {
+    const dt = escapeHtml(reconcileAt);
+    const human = formatDate(reconcileAt);
+    return `<p class="lpb-reconcile"><span class="lpb-reconcile-label">Last full reconciliation (scan)</span> <time datetime="${dt}">${human}</time></p>`;
+  }
+  if (activeCount > 0) {
+    const hint = 'No single scan time to show — active rows were updated at different times '
+      + '(for example after individual publishes). Run <strong>Rebuild from scan</strong> '
+      + 'to refresh every active row at once.';
+    return `<p class="lpb-reconcile lpb-reconcile-muted">${hint}</p>`;
+  }
+  return '';
 }
 
 function escapeCsvCell(value) {
@@ -120,7 +153,6 @@ function renderTable(rows) {
   const body = rows.map((row) => {
     const livePath = row.url.startsWith('/') ? row.url : `/${row.url}`;
     const liveHref = `${AEM_LIVE_ORIGIN}${livePath}`;
-    const statusLabel = STATUS_LABELS[row.status] || row.status || '—';
     return `
       <tr class="row-${escapeHtml(row.status || 'active')}">
         <td class="col-url"><a href="${escapeHtml(liveHref)}" target="_blank" rel="noopener">${escapeHtml(row.url)}</a></td>
@@ -128,8 +160,6 @@ function renderTable(rows) {
         <td>${escapeHtml(row.publisher || '—')}</td>
         <td>${escapeHtml(row.contentType || '—')}</td>
         <td>${escapeHtml(row.version || '—')}</td>
-        <td>${formatDate(row.lastSeenAt)}</td>
-        <td><span class="status-pill status-${escapeHtml(row.status || 'active')}">${escapeHtml(statusLabel)}</span></td>
       </tr>
     `;
   }).join('');
@@ -208,6 +238,7 @@ function render() {
   const total = state.rows.length;
   const active = state.rows.filter((r) => r.status !== 'removed').length;
   const removed = total - active;
+  const reconcileHtml = buildReconcileHtml(state.rows, active);
 
   root.innerHTML = `
     <header class="lpb-header">
@@ -232,6 +263,7 @@ function render() {
         <span class="lpb-chip lpb-chip-muted"><strong>${removed}</strong> removed</span>
         <span class="lpb-chip lpb-chip-muted"><strong>${total}</strong> total</span>
       </div>
+      ${reconcileHtml}
       ${state.scanning && state.progress ? `<div class="lpb-progress">Scanning: <code>${escapeHtml(state.progress)}</code></div>` : ''}
       ${state.error ? `<div class="lpb-error" role="alert">${escapeHtml(state.error)}</div>` : ''}
       <div class="lpb-filters" role="tablist">

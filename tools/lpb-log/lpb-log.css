@@ -137,6 +137,21 @@ main {
   color: var(--lpb-text-muted);
 }
 
+.lpb-reconcile {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--lpb-text);
+}
+
+.lpb-reconcile-muted {
+  color: var(--lpb-text-muted);
+}
+
+.lpb-reconcile-label {
+  font-weight: 600;
+  margin-right: 6px;
+}
+
 .lpb-progress {
   margin-top: 8px;
   padding: 8px 12px;
