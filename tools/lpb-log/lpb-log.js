@@ -1,11 +1,8 @@
 /* eslint-disable import/no-unresolved */
 /* eslint-disable no-use-before-define */
 import DA_SDK from 'da-sdk';
-import { getLog, rebuildLog, LOG_PATH } from '../generator/lpb-log.js';
-import { ORG, REPO, AEM_LIVE_ORIGIN } from '../generator/paths-config.js';
-
-const EDIT_URL = `https://da.live/sheet#/${ORG}/${REPO}${LOG_PATH}`;
-const PUBLIC_URL = `${AEM_LIVE_ORIGIN}${LOG_PATH}.json`;
+import { getLog, rebuildLog } from '../generator/lpb-log.js';
+import { AEM_LIVE_ORIGIN } from '../generator/paths-config.js';
 
 const STATUS_LABELS = { active: 'Active', removed: 'Removed' };
 const LS_LAST_REBUILD = 'da-bacom-lpb-log-last-rebuild';
@@ -299,8 +296,6 @@ function render() {
       <div class="lpb-title-row">
         <h1>Landing Page Builder Log</h1>
         <div class="lpb-actions">
-          <a class="lpb-btn lpb-btn-secondary" href="${escapeHtml(EDIT_URL)}" target="_blank" rel="noopener">Open sheet</a>
-          <a class="lpb-btn lpb-btn-secondary" href="${escapeHtml(PUBLIC_URL)}" target="_blank" rel="noopener">Public JSON</a>
           <button type="button" class="lpb-btn lpb-btn-secondary" data-action="download-csv" ${rows.length === 0 ? 'disabled' : ''} title="Exports the current tab and sort order as CSV">
             Download CSV
           </button>
