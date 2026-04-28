@@ -13,7 +13,7 @@
   })();
 
   const flagMeta = document.querySelector('meta[name="head-loaded"]');
-  const headAlreadyLoaded = flagMeta?.content === 'true';
+  const headAlreadyLoaded = flagMeta.content === 'true';
 
   if (!headAlreadyLoaded) {
     const miloStyles = document.createElement('link');
