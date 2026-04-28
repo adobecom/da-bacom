@@ -13,9 +13,9 @@
   })();
 
   const flagMeta = document.querySelector('meta[name="head-loaded"]');
-  const ssrFlag = flagMeta?.content === 'true';
+  const headAlreadyLoaded = flagMeta?.content === 'true';
 
-  if (!ssrFlag) {
+  if (!headAlreadyLoaded) {
     const miloStyles = document.createElement('link');
     const miloUtils = document.createElement('link');
     const miloDecorate = document.createElement('link');
@@ -118,7 +118,7 @@
       }
     } 
 
-    if (isAllowedAgent && !ssrFlag) {
+    if (isAllowedAgent && !headAlreadyLoaded) {
       fetchAndParseSitemap();
     }
   })();
@@ -132,7 +132,7 @@
     "url": window.location.href 
   }
 
-  if (!ssrFlag) {
+  if (!headAlreadyLoaded) {
     const jsonLD = document.createElement('script');
     jsonLD.setAttribute('type', 'application/ld+json');
     jsonLD.innerText = JSON.stringify(schema);
