@@ -262,6 +262,10 @@ body.disable-scroll #adbMsgClientWrapper #adbmsgContainer .adbmsgCta {
   .hero-marquee.iswa div.foreground.cols-2 .copy {
     padding-inline-end: 0;
   }
+  
+  .section.xl-spacing-top.xl-spacing-top-iswa {
+    padding-top: 80px;
+  }
 }
 
 @media screen and (min-width: 1200px) {
@@ -303,4 +307,12 @@ body.disable-scroll #adbMsgClientWrapper #adbmsgContainer .adbmsgCta {
     --grid-container-width: 1440px;
     --grid-margins-width: calc((100% - var(--grid-container-width)) / 2);
   }
+}
+
+.iswa .brick-text .body-s {
+  height: 106px;
+}
+
+.iswa .brick-text .heading-m {
+  height: 62px;
 }
