@@ -99,7 +99,7 @@ module.exports = {
       path: '/tools/generator/landing-page',
       tags: '@lpb @lpb-non-e2e @smoke @image @regression @bacom',
       data: {
-        contentType: 'Guide',
+        contentType: 'Report',
         gated: 'Ungated',
         region: 'US',
         headline: 'Nala Image Upload Test',
@@ -112,7 +112,7 @@ module.exports = {
       path: '/tools/generator/landing-page',
       tags: '@lpb @lpb-non-e2e @image @regression @bacom',
       data: {
-        contentType: 'Guide',
+        contentType: 'Report',
         gated: 'Ungated',
         region: 'US',
         headline: 'Nala Image Delete Test',
@@ -497,6 +497,58 @@ module.exports = {
         region: 'US',
         headline: 'Nala Path Ungated Video',
         expectedDir: '/resources/videos/',
+      },
+    },
+
+    // =========================================================
+    // 2.2 Guide Gating — Marquee Image & Body Description
+    // =========================================================
+    {
+      tcid: '37',
+      name: '@lpb-guide-ungated-marquee-hidden-body-optional: Ungated Guide hides marquee image and makes body description optional',
+      path: '/tools/generator/landing-page',
+      tags: '@lpb @lpb-non-e2e @smoke @guide @ungated @validation @regression @bacom',
+      data: {
+        contentType: 'Guide',
+        gated: 'Ungated',
+        region: 'US',
+        headline: 'Nala Guide Ungated Marquee Body Optional',
+      },
+    },
+    {
+      tcid: '38',
+      name: '@lpb-guide-gated-marquee-body-required: Gated Guide shows marquee image and body description as required',
+      path: '/tools/generator/landing-page',
+      tags: '@lpb @lpb-non-e2e @smoke @guide @gated @validation @regression @bacom',
+      data: {
+        contentType: 'Guide',
+        gated: 'Gated',
+        region: 'US',
+        headline: 'Nala Guide Gated Marquee Body Required',
+      },
+    },
+    {
+      tcid: '39',
+      name: '@lpb-guide-toggle-gated-to-ungated-marquee: Switching Gated Guide to Ungated removes marquee image requirement without reload',
+      path: '/tools/generator/landing-page',
+      tags: '@lpb @lpb-non-e2e @guide @gated @ungated @validation @regression @bacom',
+      data: {
+        contentType: 'Guide',
+        gated: 'Gated',
+        region: 'US',
+        headline: 'Nala Guide Toggle Gated To Ungated',
+      },
+    },
+    {
+      tcid: '40',
+      name: '@lpb-guide-toggle-ungated-to-gated-marquee: Switching Ungated Guide to Gated enforces marquee image requirement without reload',
+      path: '/tools/generator/landing-page',
+      tags: '@lpb @lpb-non-e2e @guide @gated @ungated @validation @regression @bacom',
+      data: {
+        contentType: 'Guide',
+        gated: 'Ungated',
+        region: 'US',
+        headline: 'Nala Guide Toggle Ungated To Gated',
       },
     },
   ],

@@ -38,6 +38,8 @@ import {
   renderSeo,
   renderExperienceFragment,
   renderAssetDelivery,
+  isMarqueeImageHidden,
+  isBodyDescriptionOptional,
 } from './form-sections.js';
 
 const withTimeout = (p, ms, def = null) => Promise.race([p, new Promise((r) => { setTimeout(() => r(def), ms); })]);
@@ -429,7 +431,7 @@ class LandingPageForm extends LitElement {
       minute: 'numeric',
       hour12: false,
     });
-    const marqueeImgVisible = !(this.form.gated === 'Ungated' && this.form.contentType === 'Infographic');
+    const marqueeImgVisible = !isMarqueeImageHidden(this.form);
     const videoVisible = this.form.contentType === 'Video/Demo';
     const pdfVisible = !videoVisible;
 
@@ -852,8 +854,13 @@ class LandingPageForm extends LitElement {
       required.push('formTemplate', 'campaignId', 'marketoPOI');
     }
 
-    if (this.form.gated === 'Ungated' && this.form.contentType === 'Infographic') {
-      required.splice(required.indexOf('marqueeImage'), 1);
+    if (isMarqueeImageHidden(this.form)) {
+      const mi = required.indexOf('marqueeImage');
+      if (mi !== -1) required.splice(mi, 1);
+    }
+    if (isBodyDescriptionOptional(this.form)) {
+      const bd = required.indexOf('bodyDescription');
+      if (bd !== -1) required.splice(bd, 1);
     }
 
     const typeKey = (this.form.contentType || '').toLowerCase();

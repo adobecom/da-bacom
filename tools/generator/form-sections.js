@@ -13,6 +13,16 @@ function fileForDisplay(file) {
   return url ? { ...file, url } : file;
 }
 
+/** Marquee image is omitted from Ungated Infographic and Ungated Guide templates. */
+export function isMarqueeImageHidden(form) {
+  return form.gated === 'Ungated' && (form.contentType === 'Infographic' || form.contentType === 'Guide');
+}
+
+/** Body description is optional only for Ungated Guide. */
+export function isBodyDescriptionOptional(form) {
+  return form.gated === 'Ungated' && form.contentType === 'Guide';
+}
+
 function optionsSelect(form, handleInput, optionName, optionLabel, options, hasError = () => '') {
   if (!options || options.length <= 1) {
     const value = options?.[0]?.value || '';
@@ -144,7 +154,7 @@ export function renderForm(form, handleInput, { marketoPOIOptions, hasError = ()
 }
 
 export function renderMarquee(form, handleInput, handleImageChange, hasError = () => '') {
-  const marqueeImgVisible = !(form.gated === 'Ungated' && form.contentType === 'Infographic');
+  const marqueeImgVisible = !isMarqueeImageHidden(form);
   return html`
     <div class="form-row">
       <h2>Marquee</h2>
@@ -167,13 +177,14 @@ export function renderMarquee(form, handleInput, handleImageChange, hasError = (
 }
 
 export function renderBody(form, handleInput, handleImageChange, hasError = () => '') {
+  const bodyLabel = isBodyDescriptionOptional(form) ? 'Body Description' : 'Body Description*';
   return html`
     <div class="form-row">
       <h2>Body</h2>
       <text-editor 
         name="bodyDescription" 
         .value=${form.bodyDescription} 
-        label="Body Description*" 
+        label=${bodyLabel}
         error=${hasError('bodyDescription')}
         @input=${handleInput}>
       </text-editor>
