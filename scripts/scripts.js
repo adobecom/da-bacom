@@ -199,6 +199,17 @@ export function setLibs(location) {
   return branch.includes('--') ? `https://${branch}.aem.live/libs` : `https://${branch}--milo--adobecom.aem.live/libs`;
 }
 
+export function getMarketoLibs(location = window.location, getMetadata = null) {
+  const { search } = location;
+  const branch = new URLSearchParams(search).get('marketolibs') || getMetadata?.('marketo-libs');
+  if (!branch) return null;
+  if (!/^[a-zA-Z0-9_-]+$/.test(branch)) throw new Error('Invalid branch name.');
+
+  if (branch === 'local') return 'http://localhost:6586/mkto';
+  if (branch === 'main') return 'https://main--da-marketo--adobecom.aem.live/mkto';
+  return branch.includes('--') ? `https://${branch}.aem.live/mkto` : `https://${branch}--da-marketo--adobecom.aem.live/mkto`;
+}
+
 export const LIBS = setLibs(window.location);
 
 (function loadStyles() {
@@ -262,7 +273,7 @@ let eventsError;
 
 async function loadPage() {
   const {
-    loadArea, loadLana, setConfig, createTag, getMetadata, getLocale, MILO_EVENTS,
+    loadArea, loadLana, setConfig, getConfig, createTag, getMetadata, getLocale, MILO_EVENTS,
   } = await import(`${LIBS}/utils/utils.js`);
 
   let eventUtils;
@@ -322,6 +333,17 @@ async function loadPage() {
   });
   transformExlLinks(getLocale(CONFIG.locales));
   injectMarqueePlayIcon(MILO_EVENTS);
+
+  const MARKETO_LIBS = getMarketoLibs(window.location, getMetadata);
+
+  if (MARKETO_LIBS) {
+    try {
+      const mkto = await import(`${MARKETO_LIBS}/libs.js`);
+      mkto.register({ getConfig, setConfig });
+    } catch (e) {
+      window.lana?.log(`Could not load marketo-libs. ${e}`, { tags: 'marketo-libs', severity: 'error' });
+    }
+  }
 
   await loadArea();
 
