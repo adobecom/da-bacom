@@ -7,6 +7,20 @@ import './text-editor/text-editor.js';
 import { STATUS as PATH_STATUS } from './path-input/path-input.js';
 import { getTemplateLink, getDisplayUrl } from './paths-config.js';
 
+/** Canonical gated/ungated values (must match `<sl-select name="gated">` option `value`s). */
+export const LPB_GATED = {
+  GATED: 'Gated',
+  UNGATED: 'Ungated',
+};
+
+/** Canonical content type values (must match `<sl-select name="contentType">` option `value`s). */
+export const LPB_CONTENT_TYPE = {
+  GUIDE: 'Guide',
+  INFOGRAPHIC: 'Infographic',
+  REPORT: 'Report',
+  VIDEO_DEMO: 'Video/Demo',
+};
+
 function fileForDisplay(file) {
   if (!file) return file;
   const url = getDisplayUrl(file.path);
@@ -15,12 +29,13 @@ function fileForDisplay(file) {
 
 /** Marquee image is omitted from Ungated Infographic and Ungated Guide templates. */
 export function isMarqueeImageHidden(form) {
-  return form.gated === 'Ungated' && (form.contentType === 'Infographic' || form.contentType === 'Guide');
+  return form.gated === LPB_GATED.UNGATED
+    && (form.contentType === LPB_CONTENT_TYPE.INFOGRAPHIC || form.contentType === LPB_CONTENT_TYPE.GUIDE);
 }
 
 /** Body description is optional only for Ungated Guide. */
 export function isBodyDescriptionOptional(form) {
-  return form.gated === 'Ungated' && form.contentType === 'Guide';
+  return form.gated === LPB_GATED.UNGATED && form.contentType === LPB_CONTENT_TYPE.GUIDE;
 }
 
 function optionsSelect(form, handleInput, optionName, optionLabel, options, hasError = () => '') {
@@ -53,7 +68,7 @@ export function renderContentType(form, handleInput, regionOptions, { isLocked =
     if (!form.region || !form.contentType || !form.gated) return '';
     const region = form.region.replace(/\/$/, '');
     const type = form.contentType.toLowerCase();
-    const isGated = form.gated === 'Gated';
+    const isGated = form.gated === LPB_GATED.GATED;
     const DIR_MAP = {
       'video/demo': 'videos',
       guide: isGated ? 'guides' : 'sdk',
@@ -87,10 +102,10 @@ export function renderContentType(form, handleInput, regionOptions, { isLocked =
         error=${hasError('contentType')}
         @change=${handleInput}>
         <option value="" ?selected=${form.contentType === ''}>--Select--</option>
-        <option value="Guide" ?selected=${form.contentType === 'Guide'}>Guide</option>
-        <option value="Infographic" ?selected=${form.contentType === 'Infographic'}>Infographic</option>
-        <option value="Report" ?selected=${form.contentType === 'Report'}>Report</option>
-        <option value="Video/Demo" ?selected=${form.contentType === 'Video/Demo'}>Video/Demo</option>
+        <option value=${LPB_CONTENT_TYPE.GUIDE} ?selected=${form.contentType === LPB_CONTENT_TYPE.GUIDE}>Guide</option>
+        <option value=${LPB_CONTENT_TYPE.INFOGRAPHIC} ?selected=${form.contentType === LPB_CONTENT_TYPE.INFOGRAPHIC}>Infographic</option>
+        <option value=${LPB_CONTENT_TYPE.REPORT} ?selected=${form.contentType === LPB_CONTENT_TYPE.REPORT}>Report</option>
+        <option value=${LPB_CONTENT_TYPE.VIDEO_DEMO} ?selected=${form.contentType === LPB_CONTENT_TYPE.VIDEO_DEMO}>Video/Demo</option>
       </sl-select>
       <sl-select
         .value=${form.gated}
@@ -99,8 +114,8 @@ export function renderContentType(form, handleInput, regionOptions, { isLocked =
         error=${hasError('gated')}
         @change=${handleInput}>
           <option value="" ?selected=${form.gated === ''}>--Select--</option>
-          <option value="Ungated" ?selected=${form.gated === 'Ungated'}>Ungated</option>
-          <option value="Gated" ?selected=${form.gated === 'Gated'}>Gated</option>
+          <option value=${LPB_GATED.UNGATED} ?selected=${form.gated === LPB_GATED.UNGATED}>Ungated</option>
+          <option value=${LPB_GATED.GATED} ?selected=${form.gated === LPB_GATED.GATED}>Gated</option>
       </sl-select>
       ${optionsSelect(form, handleInput, 'region', 'Region*', regionOptions, hasError)}
       <sl-input type="text" name="marqueeHeadline" .value=${form.marqueeHeadline} placeholder="Marquee Headline*" label="Marquee Headline*" error=${hasError('marqueeHeadline')} @input=${handleInput}></sl-input>
@@ -125,7 +140,7 @@ export function renderForm(form, handleInput, { marketoPOIOptions, hasError = ()
   // https://wiki.corp.adobe.com/display/adobedotcom/BACOM+Marketo+Forms+Hub
   return html`
     <div class="form-row">
-    ${form.gated === 'Gated' ? html`
+    ${form.gated === LPB_GATED.GATED ? html`
       <h2>Form</h2>
       <sl-select 
         .value=${form.formTemplate} 
@@ -252,7 +267,7 @@ export function renderAssetDelivery(form, handleInput, handlePdfChange, hasError
   return html`
     <div class="form-row">
       <h2>Asset Delivery</h2>
-      ${(form.contentType || '').toLowerCase().includes('video') ? html`
+      ${form.contentType === LPB_CONTENT_TYPE.VIDEO_DEMO ? html`
         <sl-input type="text" name="videoAsset" .value=${form.videoAsset} placeholder="https://video.tv.adobe.com/v/..." label="Video Asset*" error=${hasError('videoAsset')} @input=${handleInput}></sl-input>`
     : html`
         <div class="pdf-upload-container">

@@ -40,6 +40,8 @@ import {
   renderAssetDelivery,
   isMarqueeImageHidden,
   isBodyDescriptionOptional,
+  LPB_GATED,
+  LPB_CONTENT_TYPE,
 } from './form-sections.js';
 
 const withTimeout = (p, ms, def = null) => Promise.race([p, new Promise((r) => { setTimeout(() => r(def), ms); })]);
@@ -385,7 +387,7 @@ class LandingPageForm extends LitElement {
       });
     };
 
-    if (form.gated === 'Gated' && form.formTemplate) {
+    if (form.gated === LPB_GATED.GATED && form.formTemplate) {
       const templateKey = FORM_TEMPLATE_MAP[form.formTemplate];
       const selectedRules = this.templateRules[templateKey] || null;
       marketoState['form.template'] = templateKey;
@@ -400,10 +402,10 @@ class LandingPageForm extends LitElement {
 
   getCaasContentType(contentType) {
     const CAAS_CONTENT_TYPE_MAP = {
-      Guide: 'caas:content-type/guide',
-      Infographic: 'caas:content-type/infographic',
-      Report: 'caas:content-type/report',
-      'Video/Demo': 'caas:content-type/demos-and-video',
+      [LPB_CONTENT_TYPE.GUIDE]: 'caas:content-type/guide',
+      [LPB_CONTENT_TYPE.INFOGRAPHIC]: 'caas:content-type/infographic',
+      [LPB_CONTENT_TYPE.REPORT]: 'caas:content-type/report',
+      [LPB_CONTENT_TYPE.VIDEO_DEMO]: 'caas:content-type/demos-and-video',
     };
     return CAAS_CONTENT_TYPE_MAP[contentType] || '';
   }
@@ -432,7 +434,7 @@ class LandingPageForm extends LitElement {
       hour12: false,
     });
     const marqueeImgVisible = !isMarqueeImageHidden(this.form);
-    const videoVisible = this.form.contentType === 'Video/Demo';
+    const videoVisible = this.form.contentType === LPB_CONTENT_TYPE.VIDEO_DEMO;
     const pdfVisible = !videoVisible;
 
     const placeholders = {
@@ -850,7 +852,7 @@ class LandingPageForm extends LitElement {
       'experienceFragment',
     ];
 
-    if (this.form.gated === 'Gated') {
+    if (this.form.gated === LPB_GATED.GATED) {
       required.push('formTemplate', 'campaignId', 'marketoPOI');
     }
 
@@ -864,7 +866,7 @@ class LandingPageForm extends LitElement {
     }
 
     const typeKey = (this.form.contentType || '').toLowerCase();
-    if (typeKey === 'video/demo') {
+    if (typeKey === LPB_CONTENT_TYPE.VIDEO_DEMO.toLowerCase()) {
       required.push('videoAsset');
     } else {
       required.push('pdfAsset');
