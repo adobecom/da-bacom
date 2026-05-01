@@ -7,6 +7,7 @@
     background: var(--color-gray-100);
     border-radius: 40px;
     max-width: 480px;
+    margin-inline: auto;
   }
 
   & audio {
