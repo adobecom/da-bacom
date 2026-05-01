@@ -232,9 +232,9 @@ export function applyIswaTypography() {
   });
 }
 
-export function transformExlLinks(locale) {
+export function transformExlLinks(locale, root = document) {
   if (locale.ietf === 'en-US' || !locale.exl) return;
-  const exLinks = document.querySelectorAll('a[href*="experienceleague.adobe.com"]');
+  const exLinks = root.querySelectorAll('a[href*="experienceleague.adobe.com"]');
   exLinks.forEach((link) => {
     if (link.href.includes('#_dnt')) return;
     if (link.href.includes('.html?lang=en')) {
@@ -323,7 +323,13 @@ async function loadPage() {
     };
   }
 
-  setConfig({ ...CONFIG, ...eventConfigItems, miloLibs: LIBS });
+  const locale = getLocale(CONFIG.locales);
+  const baseDecorateArea = eventConfigItems?.decorateArea;
+  const decorateArea = (area) => {
+    transformExlLinks(locale, area);
+    baseDecorateArea?.(area);
+  };
+  setConfig({ ...CONFIG, ...eventConfigItems, decorateArea, miloLibs: LIBS });
 
   if (eventMD && eventUtils?.setEventConfig) eventUtils.setEventConfig({ cmsType: 'DA' }, CONFIG);
   if (eventMD && eventUtils?.decorateEvent) eventUtils.decorateEvent(document);
@@ -334,7 +340,7 @@ async function loadPage() {
     endpoint: 'https://business.adobe.com/lana/ll',
     endpointStage: 'https://business.stage.adobe.com/lana/ll',
   });
-  transformExlLinks(getLocale(CONFIG.locales));
+  transformExlLinks(locale);
   injectMarqueePlayIcon(MILO_EVENTS);
 
   const MARKETO_LIBS = getMarketoLibs(window.location, getMetadata);
