@@ -247,11 +247,18 @@ describe('injectMarqueePlayIcon', () => {
 describe('Marketo Libs', () => {
   const tests = [
     ['https://business.adobe.com', '', null],
+    ['https://business.adobe.com?marketolibs=main', '', 'https://main--da-marketo--adobecom.aem.live/mkto'],
+    ['https://business.adobe.com?marketolibs=stage', '', 'https://stage--da-marketo--adobecom.aem.live/mkto'],
+    ['https://business.adobe.com?marketolibs=foo', '', null],
+    ['https://business.adobe.com?marketolibs=awesome--da-marketo--forkedowner', '', null],
     ['https://business.adobe.com', 'main', 'https://main--da-marketo--adobecom.aem.live/mkto'],
-    ['https://business.adobe.com?marketolibs=foo', '', 'https://foo--da-marketo--adobecom.aem.live/mkto'],
+    ['https://business.adobe.com', 'stage', 'https://stage--da-marketo--adobecom.aem.live/mkto'],
+    ['https://business.adobe.com', 'local', null],
+    ['https://business.adobe.com', 'foo', null],
     ['https://business.stage.adobe.com', '', null],
-    ['https://business.stage.adobe.com?marketolibs=foo', '', 'https://foo--da-marketo--adobecom.aem.live/mkto'],
+    ['https://business.stage.adobe.com?marketolibs=main', '', 'https://main--da-marketo--adobecom.aem.live/mkto'],
     ['https://business.stage.adobe.com?marketolibs=awesome--da-marketo--forkedowner', '', 'https://awesome--da-marketo--forkedowner.aem.live/mkto'],
+    ['https://business.stage.adobe.com', 'awesome--da-marketo--forkedowner', 'https://awesome--da-marketo--forkedowner.aem.live/mkto'],
     ['https://main--da-bacom--adobecom.aem.page/', '', null],
     ['https://main--da-bacom--adobecom.aem.page/?marketolibs=foo', '', 'https://foo--da-marketo--adobecom.aem.live/mkto'],
     ['https://main--da-bacom--adobecom.aem.page/?marketolibs=local', '', 'http://localhost:6586/mkto'],
@@ -263,7 +270,7 @@ describe('Marketo Libs', () => {
   ];
 
   tests.forEach(([url, metadata, expected]) => {
-    it(`Sets marketo libs for ${url} with metadata ${metadata}`, () => {
+    it(`Sets marketo libs for ${url} ${metadata ? `with metadata ${metadata}` : ''}`, () => {
       const location = new URL(url);
       const libs = getMarketoLibs(location, () => metadata);
 
