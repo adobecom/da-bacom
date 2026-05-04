@@ -7,6 +7,7 @@ import {
   transformExlLinks,
   applyIswaTypography,
   injectMarqueePlayIcon,
+  getMarketoLibs,
 } from '../../scripts/scripts.js';
 
 describe('Libs', () => {
@@ -240,5 +241,33 @@ describe('injectMarqueePlayIcon', () => {
     document.body.innerHTML = '<div class="marquee"><span class="icon icon-other"></span></div>';
     injectMarqueePlayIcon(MILO_EVENTS);
     expect(document.querySelector('svg')).to.not.exist;
+  });
+});
+
+describe('Marketo Libs', () => {
+  const tests = [
+    ['https://business.adobe.com', '', null],
+    ['https://business.adobe.com', 'main', 'https://main--da-marketo--adobecom.aem.live/mkto'],
+    ['https://business.adobe.com?marketolibs=foo', '', 'https://foo--da-marketo--adobecom.aem.live/mkto'],
+    ['https://business.stage.adobe.com', '', null],
+    ['https://business.stage.adobe.com?marketolibs=foo', '', 'https://foo--da-marketo--adobecom.aem.live/mkto'],
+    ['https://business.stage.adobe.com?marketolibs=awesome--da-marketo--forkedowner', '', 'https://awesome--da-marketo--forkedowner.aem.live/mkto'],
+    ['https://main--da-bacom--adobecom.aem.page/', '', null],
+    ['https://main--da-bacom--adobecom.aem.page/?marketolibs=foo', '', 'https://foo--da-marketo--adobecom.aem.live/mkto'],
+    ['https://main--da-bacom--adobecom.aem.page/?marketolibs=local', '', 'http://localhost:6586/mkto'],
+    ['https://main--da-bacom--adobecom.aem.page/?marketolibs=awesome--da-marketo--forkedowner', '', 'https://awesome--da-marketo--forkedowner.aem.live/mkto'],
+    ['http://localhost:3000', '', null],
+    ['http://localhost:3000?marketolibs=foo', '', 'https://foo--da-marketo--adobecom.aem.live/mkto'],
+    ['http://localhost:3000?marketolibs=local', '', 'http://localhost:6586/mkto'],
+    ['http://localhost:3000?marketolibs=awesome--da-marketo--forkedowner', '', 'https://awesome--da-marketo--forkedowner.aem.live/mkto'],
+  ];
+
+  tests.forEach(([url, metadata, expected]) => {
+    it(`Sets marketo libs for ${url} with metadata ${metadata}`, () => {
+      const location = new URL(url);
+      const libs = getMarketoLibs(location, () => metadata);
+
+      expect(libs).to.equal(expected);
+    });
   });
 });
