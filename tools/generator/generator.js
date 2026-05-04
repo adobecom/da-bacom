@@ -35,8 +35,8 @@ export function addHiddenTable(text, data, extraClass = '') {
   return text.replace('</main>', `${hiddenTable}</main>`);
 }
 
-/** Placeholders that resolve to image URLs for meta tags (plain URL only, no img element). */
-const RAW_URL_IMAGE_PLACEHOLDERS = new Set(['social-share-image']);
+/** {{social-share-image}} and similar: plain URL for meta tags, not wrapped in an img element. */
+const isRawUrlImagePlaceholder = (fieldLc) => fieldLc === 'social-share-image';
 
 export function applyTemplateData(templateStr, data) {
   const fields = findPlaceholders(templateStr);
@@ -45,7 +45,7 @@ export function applyTemplateData(templateStr, data) {
     const fieldValue = data[fieldName];
     if (!fieldValue) return text.replaceAll(`{{${field}}}`, '');
     const fieldLc = field.toLowerCase();
-    if (fieldLc.includes('image') && fieldValue.startsWith('http') && !RAW_URL_IMAGE_PLACEHOLDERS.has(fieldLc)) {
+    if (fieldLc.includes('image') && fieldValue.startsWith('http') && !isRawUrlImagePlaceholder(fieldLc)) {
       const imgHtml = `<img src="${fieldValue}" alt="${fieldName}" />`;
       return text.replaceAll(`{{${field}}}`, imgHtml);
     }
