@@ -35,13 +35,17 @@ export function addHiddenTable(text, data, extraClass = '') {
   return text.replace('</main>', `${hiddenTable}</main>`);
 }
 
+/** Placeholders that resolve to image URLs for meta tags (plain URL only, no img element). */
+const RAW_URL_IMAGE_PLACEHOLDERS = new Set(['social-share-image']);
+
 export function applyTemplateData(templateStr, data) {
   const fields = findPlaceholders(templateStr);
   const html = fields.reduce((text, field) => {
     const fieldName = placeholderToFieldName(field);
     const fieldValue = data[fieldName];
     if (!fieldValue) return text.replaceAll(`{{${field}}}`, '');
-    if (field.includes('image') && fieldValue.startsWith('http')) {
+    const fieldLc = field.toLowerCase();
+    if (fieldLc.includes('image') && fieldValue.startsWith('http') && !RAW_URL_IMAGE_PLACEHOLDERS.has(fieldLc)) {
       const imgHtml = `<img src="${fieldValue}" alt="${fieldName}" />`;
       return text.replaceAll(`{{${field}}}`, imgHtml);
     }
