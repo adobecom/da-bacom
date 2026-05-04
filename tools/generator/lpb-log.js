@@ -262,14 +262,39 @@ export async function rebuildLog({ onProgress, throttle = 10 } = {}) {
     }));
 
   const next = [...active, ...removed];
-  const res = await saveSheets(LOG_PATH, next).catch((error) => {
-    window.lana?.log?.(`LPB log rebuild save failed: ${error?.message || error}`, { severity: 'warning', tags: 'landing-page-builder,lpb-log' });
-    return null;
-  });
-  if (res?.ok) {
-    try { await daFetch(getAdminPreviewUrl(`${LOG_PATH}.json`), { method: 'POST' }); } catch { /* preview best-effort */ }
+  let res;
+  try {
+    res = await saveSheets(LOG_PATH, next);
+  } catch (error) {
+    const msg = error?.message || String(error);
+    window.lana?.log?.(`LPB log rebuild save failed: ${msg}`, { severity: 'warning', tags: 'landing-page-builder,lpb-log' });
+    return {
+      rows: next,
+      active: active.length,
+      removed: removed.length,
+      saved: false,
+      saveError: msg,
+    };
   }
-  return { rows: next, active: active.length, removed: removed.length, saved: !!res?.ok };
+  if (!res?.ok) {
+    let saveError = `HTTP ${res.status || 'unknown'}`;
+    try {
+      const body = await res.text();
+      if (body) saveError = `${saveError} — ${body.slice(0, 400)}`;
+    } catch {
+      /* ignore */
+    }
+    window.lana?.log?.(`LPB log rebuild save not ok: ${saveError}`, { severity: 'warning', tags: 'landing-page-builder,lpb-log' });
+    return {
+      rows: next,
+      active: active.length,
+      removed: removed.length,
+      saved: false,
+      saveError,
+    };
+  }
+  try { await daFetch(getAdminPreviewUrl(`${LOG_PATH}.json`), { method: 'POST' }); } catch { /* preview best-effort */ }
+  return { rows: next, active: active.length, removed: removed.length, saved: true };
 }
 
 export async function getLog() {

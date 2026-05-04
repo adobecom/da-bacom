@@ -241,7 +241,9 @@ async function handleRebuild() {
 
   try {
     const result = await rebuildLog({ onProgress: (path) => { state.progress = path; render(); } });
-    if (!result.saved) throw new Error('Save failed');
+    if (!result.saved) {
+      throw new Error(result.saveError || 'Save failed (no details)');
+    }
     const rebuildIso = new Date().toISOString();
     state.lastRebuildAt = rebuildIso;
     writeLastRebuildToStorage(rebuildIso);
