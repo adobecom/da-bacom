@@ -53,7 +53,7 @@ await withTimeout(DA_SDK, 5000);
 const style = await getStyle(import.meta.url.split('?')[0]);
 const searchParams = new URLSearchParams(window.location.search);
 
-const LPB_VERSION = '1.0.0';
+const LPB_VERSION = '1.1.1';
 const FORM_STORAGE_KEY = 'landing-page-builder';
 const OPTIONS_LOADING = [{ value: 'loading', label: 'Loading...' }];
 const OPTIONS_ERROR = [{ value: 'error', label: 'Error loading options' }];
@@ -140,8 +140,10 @@ const MESSAGES = {
   FILL_CORE_OPTIONS: 'Please fill in all core options before confirming',
   IMAGE_UPLOADED: 'Image Uploaded',
   IMAGE_UPLOAD_FAILED: 'Image upload failed. Please try again.',
-  UPLOAD_REJECTED_PATH: 'Upload failed: the page path or image file name is too long, or the file name could not be used. Try a shorter page name or a shorter image file name.',
-  UPLOAD_REJECTED_SERVER: 'Upload failed: the server did not accept the file. Check that you are signed in and try again.',
+  UPLOAD_REJECTED_PATH_IMAGE: 'Image not uploaded: the combined page path and file name exceed AEM\'s limit (900 characters), or the file name could not be normalized. Try a shorter page address or a shorter image file name.',
+  UPLOAD_REJECTED_PATH_PDF: 'PDF not uploaded: the combined page path and file name exceed AEM\'s limit (900 characters), or the file name could not be normalized. Try a shorter page address or a shorter PDF file name.',
+  UPLOAD_REJECTED_SERVER_IMAGE: 'Image not uploaded: the server rejected the upload. Confirm you are signed in and try a supported format, then retry.',
+  UPLOAD_REJECTED_SERVER_PDF: 'PDF not uploaded: the server rejected the upload. Confirm you are signed in and that the file is a valid PDF, then retry.',
   IMAGE_UPLOAD_PREVIEW_UNAVAILABLE: 'Image saved but preview link is not ready yet. Try Save & Preview in a moment.',
   IMAGE_PREVIEW_FAILED: 'Image uploaded, but could not be previewed. Please try again.',
   PDF_CLEARED: 'PDF cleared',
@@ -606,23 +608,26 @@ class LandingPageForm extends LitElement {
     super.disconnectedCallback();
   }
 
-  async uploadAsset(file, path, type = 'image') {
+  async uploadAsset(file, path, uploadKind = 'image') {
+    // uploadKind: 'image' | 'pdf' — distinct user-facing errors for path/server failures
     // TODO: Handle subfolders in path
-    if (DEBUG) console.log('[LPB][Request] POST asset:', type, path + file.name, file.name);
+    if (DEBUG) console.log('[LPB][Request] POST asset:', uploadKind, path + file.name, file.name);
     if (!sanitizeFileName(file.name, path)) {
-      throw new Error(MESSAGES.UPLOAD_REJECTED_PATH);
+      const msg = uploadKind === 'pdf' ? MESSAGES.UPLOAD_REJECTED_PATH_PDF : MESSAGES.UPLOAD_REJECTED_PATH_IMAGE;
+      throw new Error(msg);
     }
     const result = await saveFile(path, file);
     if (!result) {
-      if (DEBUG) console.error('[Response] POST asset failed:', type, path + file.name);
-      throw new Error(MESSAGES.UPLOAD_REJECTED_SERVER);
+      if (DEBUG) console.error('[Response] POST asset failed:', uploadKind, path + file.name);
+      const msg = uploadKind === 'pdf' ? MESSAGES.UPLOAD_REJECTED_SERVER_PDF : MESSAGES.UPLOAD_REJECTED_SERVER_IMAGE;
+      throw new Error(msg);
     }
     const rawUrl = result?.source?.contentUrl ?? result?.aem?.previewUrl ?? result?.aem?.liveUrl ?? null;
     const rawPreviewUrl = result?.aem?.previewUrl ?? result?.aem?.liveUrl ?? null;
     const previewUnavailable = !rawPreviewUrl && result?.source;
     const assetPath = rawUrl ? getRepoRelativePath(getPathFromUrl(rawUrl)) : null;
     const assetPreviewPath = rawPreviewUrl ? getRepoRelativePath(getPathFromUrl(rawPreviewUrl)) : null;
-    if (DEBUG) console.log('[LPB][Response] POST asset:', type, { path: assetPath, previewPath: assetPreviewPath, previewUnavailable });
+    if (DEBUG) console.log('[LPB][Response] POST asset:', uploadKind, { path: assetPath, previewPath: assetPreviewPath, previewUnavailable });
     return {
       path: assetPath,
       previewPath: assetPreviewPath,
@@ -694,10 +699,10 @@ class LandingPageForm extends LitElement {
     showToast(MESSAGES.UPLOADING_PDF, TOAST_TYPES.INFO, 3000);
 
     try {
-      const result = await this.uploadAsset(file, path, 'file');
+      const result = await this.uploadAsset(file, path, 'pdf');
       if (DEBUG) console.log('[LPB][PDF] upload response:', { path: result?.path, previewPath: result?.previewPath, previewUnavailable: result?.previewUnavailable });
       if (!result.path) {
-        throw new Error('Upload failed');
+        throw new Error(MESSAGES.UPLOAD_REJECTED_SERVER_PDF);
       }
 
       this.form.pdfAsset = { path: result.path, previewPath: result.previewPath, name: result.fileName };
