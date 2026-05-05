@@ -64,6 +64,7 @@ function readLastRebuildFromStorage() {
   try {
     return sessionStorage.getItem(LS_LAST_REBUILD) || null;
   } catch {
+    /* Storage can throw (private mode, disabled cookies/storage). Hint is optional. */
     return null;
   }
 }
@@ -72,7 +73,7 @@ function writeLastRebuildToStorage(iso) {
   try {
     sessionStorage.setItem(LS_LAST_REBUILD, iso);
   } catch {
-    /* private mode / blocked */
+    /* Same as read: optional UX hint only; do not fail rebuild/render. */
   }
 }
 
