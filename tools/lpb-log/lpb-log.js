@@ -76,20 +76,10 @@ function writeLastRebuildToStorage(iso) {
   }
 }
 
-function escapeHtml(value) {
-  if (value == null) return '';
-  return String(value)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-}
-
 function formatDate(value) {
   if (!value) return '—';
   const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return escapeHtml(value);
+  if (Number.isNaN(d.getTime())) return String(value);
   return d.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
@@ -122,28 +112,52 @@ function inferLastFullReconcileAt(rows) {
   return times[0];
 }
 
-function buildReconcileHtml(rows, activeCount, lastRebuildBrowserAt) {
+/** Trusted copy only (no sheet data). */
+function appendReconcileHint(p) {
+  p.innerHTML = 'No single scan time to show — active rows were updated at different times '
+    + '(for example after individual publishes). Run <strong>Rebuild From Scan</strong> '
+    + 'to refresh every active row at once.';
+}
+
+function createReconcileEl(rows, activeCount, lastRebuildBrowserAt) {
   if (lastRebuildBrowserAt) {
-    const dt = escapeHtml(lastRebuildBrowserAt);
-    const human = formatDate(lastRebuildBrowserAt);
-    return '<p class="lpb-reconcile"><span class="lpb-reconcile-label">Last rebuild</span> '
-      + `<time datetime="${dt}">${human}</time>`
-      + '<span class="lpb-reconcile-sub"> (scan from this browser)</span></p>';
+    const p = document.createElement('p');
+    p.className = 'lpb-reconcile';
+    const label = document.createElement('span');
+    label.className = 'lpb-reconcile-label';
+    label.textContent = 'Last rebuild';
+    p.append(label, document.createTextNode(' '));
+    const time = document.createElement('time');
+    time.dateTime = lastRebuildBrowserAt;
+    time.textContent = formatDate(lastRebuildBrowserAt);
+    p.append(time);
+    const sub = document.createElement('span');
+    sub.className = 'lpb-reconcile-sub';
+    sub.textContent = ' (scan from this browser)';
+    p.appendChild(sub);
+    return p;
   }
   const reconcileAt = inferLastFullReconcileAt(rows);
   if (reconcileAt) {
-    const dt = escapeHtml(reconcileAt);
-    const human = formatDate(reconcileAt);
-    return '<p class="lpb-reconcile"><span class="lpb-reconcile-label">Last full reconciliation (scan)</span> '
-      + `<time datetime="${dt}">${human}</time></p>`;
+    const p = document.createElement('p');
+    p.className = 'lpb-reconcile';
+    const label = document.createElement('span');
+    label.className = 'lpb-reconcile-label';
+    label.textContent = 'Last full reconciliation (scan)';
+    p.append(label, document.createTextNode(' '));
+    const time = document.createElement('time');
+    time.dateTime = reconcileAt;
+    time.textContent = formatDate(reconcileAt);
+    p.appendChild(time);
+    return p;
   }
   if (activeCount > 0) {
-    const hint = 'No single scan time to show — active rows were updated at different times '
-      + '(for example after individual publishes). Run <strong>Rebuild From Scan</strong> '
-      + 'to refresh every active row at once.';
-    return `<p class="lpb-reconcile lpb-reconcile-muted">${hint}</p>`;
+    const p = document.createElement('p');
+    p.className = 'lpb-reconcile lpb-reconcile-muted';
+    appendReconcileHint(p);
+    return p;
   }
-  return '';
+  return null;
 }
 
 function escapeCsvCell(value) {
@@ -185,38 +199,79 @@ function handleDownloadCsv() {
   triggerCsvDownload(filename, buildCsv(rows));
 }
 
-function renderTable(rows) {
+function rowStatusClass(status) {
+  const s = String(status || 'active').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '') || 'active';
+  return `row-${s}`;
+}
+
+function createTableEl(rows) {
   if (rows.length === 0) {
-    return '<div class="lpb-empty">No pages logged yet. Publish a landing page or run a scan.</div>';
+    const empty = document.createElement('div');
+    empty.className = 'lpb-empty';
+    empty.textContent = 'No pages logged yet. Publish a landing page or run a scan.';
+    return empty;
   }
 
-  const head = COLUMNS.map((col) => {
-    const active = state.sortKey === col.key;
-    let indicator = '';
-    if (active) indicator = state.sortDir === 'asc' ? ' ▲' : ' ▼';
-    return `<th data-sort-key="${col.key}" class="${active ? 'sorted' : ''}">${escapeHtml(col.label)}${indicator}</th>`;
-  }).join('');
+  const table = document.createElement('table');
+  table.className = 'lpb-table';
 
-  const body = rows.map((row) => {
-    const livePath = row.url.startsWith('/') ? row.url : `/${row.url}`;
-    const liveHref = `${AEM_LIVE_ORIGIN}${livePath}`;
-    return `
-      <tr class="row-${escapeHtml(row.status || 'active')}">
-        <td class="col-url"><a href="${escapeHtml(liveHref)}" target="_blank" rel="noopener">${escapeHtml(row.url)}</a></td>
-        <td>${formatDate(row.publishedAt)}</td>
-        <td>${escapeHtml(row.publisher || '—')}</td>
-        <td>${escapeHtml(row.contentType || '—')}</td>
-        <td>${escapeHtml(row.version || '—')}</td>
-      </tr>
-    `;
-  }).join('');
+  const thead = document.createElement('thead');
+  const trHead = document.createElement('tr');
+  COLUMNS.forEach((col) => {
+    const th = document.createElement('th');
+    th.dataset.sortKey = col.key;
+    if (state.sortKey === col.key) {
+      th.classList.add('sorted');
+      th.textContent = `${col.label}${state.sortDir === 'asc' ? ' ▲' : ' ▼'}`;
+    } else {
+      th.textContent = col.label;
+    }
+    trHead.appendChild(th);
+  });
+  thead.appendChild(trHead);
+  table.appendChild(thead);
 
-  return `
-    <table class="lpb-table">
-      <thead><tr>${head}</tr></thead>
-      <tbody>${body}</tbody>
-    </table>
-  `;
+  const tbody = document.createElement('tbody');
+  rows.forEach((row) => {
+    const tr = document.createElement('tr');
+    tr.className = rowStatusClass(row.status);
+
+    const urlPath = String(row.url ?? '');
+    const livePath = urlPath.startsWith('/') ? urlPath : `/${urlPath}`;
+    const urlTd = document.createElement('td');
+    urlTd.className = 'col-url';
+    const a = document.createElement('a');
+    a.href = `${AEM_LIVE_ORIGIN}${livePath}`;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.textContent = urlPath;
+    urlTd.appendChild(a);
+    tr.appendChild(urlTd);
+
+    const pubTd = document.createElement('td');
+    pubTd.textContent = formatDate(row.publishedAt);
+    tr.appendChild(pubTd);
+
+    ['publisher', 'contentType', 'version'].forEach((key) => {
+      const td = document.createElement('td');
+      const v = row[key];
+      td.textContent = v != null && v !== '' ? String(v) : '—';
+      tr.appendChild(td);
+    });
+
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  return table;
+}
+
+function appendStatChip(parent, count, label, muted) {
+  const span = document.createElement('span');
+  span.className = muted ? 'lpb-chip lpb-chip-muted' : 'lpb-chip';
+  const strong = document.createElement('strong');
+  strong.textContent = String(count);
+  span.append(strong, document.createTextNode(` ${label}`));
+  parent.appendChild(span);
 }
 
 async function loadLog() {
@@ -291,44 +346,88 @@ function render() {
   const total = state.rows.length;
   const active = state.rows.filter((r) => r.status !== 'removed').length;
   const removed = total - active;
-  const reconcileHtml = buildReconcileHtml(state.rows, active, state.lastRebuildAt);
 
-  root.innerHTML = `
-    <header class="lpb-header">
-      <div class="lpb-title-row">
-        <h1>Landing Page Builder Log</h1>
-        <div class="lpb-actions">
-          <button type="button" class="lpb-btn lpb-btn-secondary" data-action="download-csv" ${rows.length === 0 ? 'disabled' : ''} title="Exports the current tab and sort order as CSV">
-            Download CSV
-          </button>
-          <button class="lpb-btn lpb-btn-primary" data-action="rebuild" ${state.scanning ? 'disabled' : ''}>
-            ${state.scanning ? 'Scanning…' : 'Rebuild From Scan'}
-          </button>
-        </div>
-      </div>
-      <p class="lpb-subtitle">
-        Pages built with the landing page builder, logged in real time on publish and reconciled via a crawl of <code>/resources</code>.
-      </p>
-      <div class="lpb-stats">
-        <span class="lpb-chip"><strong>${active}</strong> active</span>
-        <span class="lpb-chip lpb-chip-muted"><strong>${removed}</strong> removed</span>
-        <span class="lpb-chip lpb-chip-muted"><strong>${total}</strong> total</span>
-      </div>
-      ${reconcileHtml}
-      ${state.scanning && state.progress ? `<div class="lpb-progress">Scanning: <code>${escapeHtml(state.progress)}</code></div>` : ''}
-      ${state.error ? `<div class="lpb-error" role="alert">${escapeHtml(state.error)}</div>` : ''}
-      <div class="lpb-filters" role="tablist">
-        ${['active', 'removed', 'all'].map((f) => `
-          <button role="tab" aria-selected="${state.filter === f}" class="lpb-filter ${state.filter === f ? 'is-active' : ''}" data-filter="${f}">
-            ${f[0].toUpperCase()}${f.slice(1)}
-          </button>
-        `).join('')}
-      </div>
-    </header>
-    <section class="lpb-table-wrap">
-      ${renderTable(rows)}
-    </section>
-  `;
+  root.replaceChildren();
+
+  const header = document.createElement('header');
+  header.className = 'lpb-header';
+
+  const titleRow = document.createElement('div');
+  titleRow.className = 'lpb-title-row';
+  const h1 = document.createElement('h1');
+  h1.textContent = 'Landing Page Builder Log';
+  titleRow.appendChild(h1);
+
+  const actions = document.createElement('div');
+  actions.className = 'lpb-actions';
+  const csvBtn = document.createElement('button');
+  csvBtn.type = 'button';
+  csvBtn.className = 'lpb-btn lpb-btn-secondary';
+  csvBtn.dataset.action = 'download-csv';
+  csvBtn.title = 'Exports the current tab and sort order as CSV';
+  csvBtn.textContent = 'Download CSV';
+  csvBtn.disabled = rows.length === 0;
+  actions.appendChild(csvBtn);
+  const rebuildBtn = document.createElement('button');
+  rebuildBtn.className = 'lpb-btn lpb-btn-primary';
+  rebuildBtn.dataset.action = 'rebuild';
+  rebuildBtn.textContent = state.scanning ? 'Scanning…' : 'Rebuild From Scan';
+  rebuildBtn.disabled = state.scanning;
+  actions.appendChild(rebuildBtn);
+  titleRow.appendChild(actions);
+  header.appendChild(titleRow);
+
+  const subtitle = document.createElement('p');
+  subtitle.className = 'lpb-subtitle';
+  subtitle.innerHTML = 'Pages built with the landing page builder, logged in real time on publish and reconciled via a crawl of <code>/resources</code>.';
+  header.appendChild(subtitle);
+
+  const stats = document.createElement('div');
+  stats.className = 'lpb-stats';
+  appendStatChip(stats, active, 'active', false);
+  appendStatChip(stats, removed, 'removed', true);
+  appendStatChip(stats, total, 'total', true);
+  header.appendChild(stats);
+
+  const reconcileEl = createReconcileEl(state.rows, active, state.lastRebuildAt);
+  if (reconcileEl) header.appendChild(reconcileEl);
+
+  if (state.scanning && state.progress) {
+    const progress = document.createElement('div');
+    progress.className = 'lpb-progress';
+    const code = document.createElement('code');
+    code.textContent = state.progress;
+    progress.append(document.createTextNode('Scanning: '), code);
+    header.appendChild(progress);
+  }
+
+  if (state.error) {
+    const err = document.createElement('div');
+    err.className = 'lpb-error';
+    err.setAttribute('role', 'alert');
+    err.textContent = state.error;
+    header.appendChild(err);
+  }
+
+  const filters = document.createElement('div');
+  filters.className = 'lpb-filters';
+  filters.setAttribute('role', 'tablist');
+  ['active', 'removed', 'all'].forEach((f) => {
+    const btn = document.createElement('button');
+    btn.setAttribute('role', 'tab');
+    btn.setAttribute('aria-selected', state.filter === f ? 'true' : 'false');
+    btn.className = `lpb-filter${state.filter === f ? ' is-active' : ''}`;
+    btn.dataset.filter = f;
+    btn.textContent = `${f[0].toUpperCase()}${f.slice(1)}`;
+    filters.appendChild(btn);
+  });
+  header.appendChild(filters);
+
+  const section = document.createElement('section');
+  section.className = 'lpb-table-wrap';
+  section.appendChild(createTableEl(rows));
+
+  root.append(header, section);
 
   bindEvents();
 }
