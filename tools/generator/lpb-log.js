@@ -216,25 +216,12 @@ export async function scanResources({ onProgress, throttle = 10 } = {}) {
   const roots = getScanRoots();
   const rootsTotal = roots.length;
   let rootsDone = 0;
-  const found = [];
+  const htmlPaths = [];
 
-  const callback = async (item) => {
-    if (item.ext !== 'html') return;
-    const relativePath = toRepoRelative(item.path);
-    const { doc, lastModifiedBy } = await getSourceWithMeta(relativePath).catch(() => (
-      { doc: null, lastModifiedBy: null }
-    ));
-    const marker = extractMarker(doc);
-    if (marker) {
-      const fromMarker = (marker.publishedBy || marker.publisher || '').trim();
-      const fromDa = (lastModifiedBy || '').trim();
-      found.push({
-        url: stripHtmlExt(relativePath),
-        version: marker.version ?? '',
-        publisher: fromDa || fromMarker,
-        contentType: deriveContentType(relativePath) || '',
-      });
-    }
+  // Synchronous callback — crawl utilities do not await async callbacks,
+  // so async I/O here would complete after results resolves and be lost.
+  const callback = (item) => {
+    if (item.ext === 'html') htmlPaths.push(item.path);
   };
 
   await Promise.all(
@@ -242,8 +229,29 @@ export async function scanResources({ onProgress, throttle = 10 } = {}) {
       const { results } = crawl({ path: `${REPO_PREFIX}${root}`, callback, throttle });
       return results.then(() => {
         rootsDone += 1;
-        onProgress?.({ rootsDone, rootsTotal, pagesFound: found.length });
+        onProgress?.({ rootsDone, rootsTotal, pagesFound: htmlPaths.length });
       });
+    }),
+  );
+
+  const found = [];
+  await Promise.all(
+    htmlPaths.map(async (path) => {
+      const relativePath = toRepoRelative(path);
+      const { doc, lastModifiedBy } = await getSourceWithMeta(relativePath).catch(() => (
+        { doc: null, lastModifiedBy: null }
+      ));
+      const marker = extractMarker(doc);
+      if (marker) {
+        const fromMarker = (marker.publishedBy || marker.publisher || '').trim();
+        const fromDa = (lastModifiedBy || '').trim();
+        found.push({
+          url: stripHtmlExt(relativePath),
+          version: marker.version ?? '',
+          publisher: fromDa || fromMarker,
+          contentType: deriveContentType(relativePath) || '',
+        });
+      }
     }),
   );
   return found;

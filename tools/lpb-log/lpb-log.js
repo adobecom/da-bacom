@@ -24,7 +24,7 @@ const CSV_COLUMNS = [
 
 const state = {
   rows: [],
-  filter: 'published',
+  filter: 'all',
   sortKey: 'publishedAt',
   sortDir: 'desc',
   scanning: false,
