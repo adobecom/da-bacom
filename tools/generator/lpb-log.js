@@ -256,7 +256,7 @@ export async function scanResources({ onProgress, throttle = 10 } = {}) {
   const found = [];
   let htmlChecked = 0;
   let checkCursor = 0;
-  const CRAWL_BATCH = 10;
+  const CRAWL_BATCH = 3;
   const FETCH_BATCH = 60;
 
   // Check paths found since the last call without blocking the next crawl batch.
