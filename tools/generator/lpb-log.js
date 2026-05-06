@@ -2,7 +2,7 @@
 import { daFetch } from 'da-fetch';
 import { crawl } from 'https://da.live/nx/public/utils/tree.js';
 import { getSourceWithMeta, getSheets, saveSheets } from './da-utils.js';
-import { ORG, REPO, getAdminPreviewUrl, getHelixResourceStatusUrl, getScanRoots } from './paths-config.js';
+import { ORG, REPO, AEM_LIVE_ORIGIN, getAdminPreviewUrl, getScanRoots } from './paths-config.js';
 
 export const LOG_PATH = '/tools/page-builder/landing-page/data/lpb-log';
 export const SCAN_ROOT = '/resources';
@@ -177,11 +177,10 @@ export function resolvePublisher(sdkOrContext, imsAccessToken, imsDetails) {
 
 async function fetchPublishState(repoRelativePath) {
   try {
-    const htmlPath = `${String(repoRelativePath || '').replace(/\.html$/, '')}.html`;
-    const res = await daFetch(getHelixResourceStatusUrl(htmlPath));
-    if (!res.ok) return 'unpublished';
-    const json = await res.json();
-    return json.live?.lastModified ? 'published' : 'unpublished';
+    const path = String(repoRelativePath || '').replace(/\.html$/, '');
+    // HEAD the AEM live CDN — public content, no CORS restriction, semantically correct
+    const res = await fetch(`${AEM_LIVE_ORIGIN}${path}`, { method: 'HEAD' });
+    return res.ok ? 'published' : 'unpublished';
   } catch {
     return 'unpublished';
   }
