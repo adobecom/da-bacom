@@ -314,10 +314,9 @@ async function handleRebuild() {
     const result = await rebuildLog({
       onProgress: (p) => {
         if (p.phase === 'check') {
-          const msg = `Scanning: ${p.htmlChecked} / ${p.htmlTotal} — ${p.lpbFound} LPB pages found`;
-          state.progress = msg;
+          state.progress = `Scanning: ${p.htmlChecked} / ${p.htmlTotal} — ${p.lpbFound} LPB pages found`;
         } else {
-          state.progress = `Crawled ${p.completedRoot} — ${p.htmlFound} pages to check`;
+          state.progress = `Scanning: root ${p.rootsDone} of ${p.rootsTotal} — ${p.htmlFound} pages indexed`;
         }
         render();
       },
