@@ -8,6 +8,7 @@ const STATUS_LABELS = { active: 'Active', removed: 'Removed' };
 const LS_LAST_REBUILD = 'da-bacom-lpb-log-last-rebuild';
 const COLUMNS = [
   { key: 'url', label: 'Page URL' },
+  { key: 'author', label: 'Author' },
   { key: 'publishedAt', label: 'First Previewed' },
   { key: 'publishState', label: 'Publish State' },
   { key: 'publisher', label: 'Publisher' },
@@ -174,6 +175,7 @@ function buildCsv(rows) {
   const headerLine = CSV_COLUMNS.map((col) => escapeCsvCell(col.label)).join(',');
   const dataLines = rows.map((row) => CSV_COLUMNS.map((col) => {
     let v = row[col.key];
+    if (col.key === 'author') v = getDAEditUrl(row.url) ?? '';
     if (col.key === 'status') v = STATUS_LABELS[v] || v || '';
     return escapeCsvCell(v ?? '');
   }).join(','));
@@ -248,14 +250,19 @@ function createTableEl(rows) {
     a.rel = 'noopener';
     a.textContent = urlPath;
     urlTd.appendChild(a);
-    const editA = document.createElement('a');
-    editA.href = getDAEditUrl(livePath);
-    editA.target = '_blank';
-    editA.rel = 'noopener';
-    editA.className = 'col-url-edit';
-    editA.textContent = 'Author';
-    urlTd.appendChild(editA);
     tr.appendChild(urlTd);
+
+    const authorTd = document.createElement('td');
+    const editUrl = getDAEditUrl(livePath);
+    if (editUrl) {
+      const editA = document.createElement('a');
+      editA.href = editUrl;
+      editA.target = '_blank';
+      editA.rel = 'noopener';
+      editA.textContent = 'Link';
+      authorTd.appendChild(editA);
+    }
+    tr.appendChild(authorTd);
 
     const pubTd = document.createElement('td');
     pubTd.textContent = formatDate(row.publishedAt);
