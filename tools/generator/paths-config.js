@@ -13,6 +13,7 @@ export const AEM_PAGE_ORIGIN = `https://${BRANCH}--${REPO}--${ORG}.aem.page`;
 export const AEM_LIVE_ORIGIN = `https://${BRANCH}--${REPO}--${ORG}.aem.live`;
 
 export const CONTENT_PATH_PREFIX = `/${ORG}/${REPO}`;
+export const DA_ORIGIN = 'https://da.live';
 export const TEMPLATES_BASE_PATH = '/docs/library/templates/';
 
 export const ADMIN_STATUS_URL = `${ADMIN_ORIGIN}/status/${ORG}/${REPO}/${BRANCH}/`;
@@ -26,6 +27,12 @@ export const ADMIN_STATUS_URL = `${ADMIN_ORIGIN}/status/${ORG}/${REPO}/${BRANCH}
 export function getScanRoots(subPath = '/resources') {
   const sub = subPath.startsWith('/') ? subPath : `/${subPath}`;
   return Object.keys(LOCALES).map((prefix) => (prefix ? `/${prefix}${sub}` : sub));
+}
+
+export function getDAEditUrl(repoRelativePath) {
+  if (!repoRelativePath) return undefined;
+  const p = repoRelativePath.startsWith('/') ? repoRelativePath : `/${repoRelativePath}`;
+  return `${DA_ORIGIN}/edit#${CONTENT_PATH_PREFIX}${p}`;
 }
 
 export function getPathFromUrl(url) {

@@ -2,7 +2,7 @@
 /* eslint-disable no-use-before-define */
 import DA_SDK from 'da-sdk';
 import { getLog, rebuildLog } from '../generator/lpb-log.js';
-import { AEM_LIVE_ORIGIN } from '../generator/paths-config.js';
+import { AEM_LIVE_ORIGIN, getDAEditUrl } from '../generator/paths-config.js';
 
 const STATUS_LABELS = { active: 'Active', removed: 'Removed' };
 const LS_LAST_REBUILD = 'da-bacom-lpb-log-last-rebuild';
@@ -12,7 +12,6 @@ const COLUMNS = [
   { key: 'publishState', label: 'Publish State' },
   { key: 'publisher', label: 'Publisher' },
   { key: 'contentType', label: 'Content Type' },
-  { key: 'version', label: 'LPB Version' },
 ];
 /** Table columns plus audit fields useful in spreadsheets */
 const CSV_COLUMNS = [
@@ -249,13 +248,20 @@ function createTableEl(rows) {
     a.rel = 'noopener';
     a.textContent = urlPath;
     urlTd.appendChild(a);
+    const editA = document.createElement('a');
+    editA.href = getDAEditUrl(livePath);
+    editA.target = '_blank';
+    editA.rel = 'noopener';
+    editA.className = 'col-url-edit';
+    editA.textContent = 'Author';
+    urlTd.appendChild(editA);
     tr.appendChild(urlTd);
 
     const pubTd = document.createElement('td');
     pubTd.textContent = formatDate(row.publishedAt);
     tr.appendChild(pubTd);
 
-    ['publishState', 'publisher', 'contentType', 'version'].forEach((key) => {
+    ['publishState', 'publisher', 'contentType'].forEach((key) => {
       const td = document.createElement('td');
       const v = row[key];
       td.textContent = v != null && v !== '' ? String(v) : '—';
