@@ -243,15 +243,14 @@ export async function scanResources({ onProgress, throttle = 10 } = {}) {
     if (item.ext === 'html') htmlPaths.push(item.path);
   };
 
-  await Promise.all(
-    roots.map((root) => {
-      const { results } = crawl({ path: `${REPO_PREFIX}${root}`, callback, throttle });
-      return results.then(() => {
-        rootsDone += 1;
-        onProgress?.({ rootsDone, rootsTotal, pagesFound: htmlPaths.length, completedRoot: root });
-      });
-    }),
-  );
+  // Sequential — parallel crawls flood admin.da.live/list and exhaust browser connections
+  for (const root of roots) {
+    const { results } = crawl({ path: `${REPO_PREFIX}${root}`, callback, throttle });
+    // eslint-disable-next-line no-await-in-loop
+    await results;
+    rootsDone += 1;
+    onProgress?.({ rootsDone, rootsTotal, pagesFound: htmlPaths.length, completedRoot: root });
+  }
 
   const found = [];
   // Process in throttle-sized chunks — avoids overwhelming the DA source API
