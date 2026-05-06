@@ -312,8 +312,13 @@ async function handleRebuild() {
 
   try {
     const result = await rebuildLog({
-      onProgress: ({ rootsDone, rootsTotal, pagesFound, completedRoot }) => {
-        state.progress = `Scanned ${completedRoot} (${rootsDone} of ${rootsTotal} roots) — ${pagesFound} pages found`;
+      onProgress: (p) => {
+        if (p.phase === 'check') {
+          const msg = `Checking: ${p.htmlChecked} / ${p.htmlTotal} — ${p.lpbFound} LPB pages found`;
+          state.progress = msg;
+        } else {
+          state.progress = `Crawled ${p.completedRoot} — ${p.htmlFound} pages to check`;
+        }
         render();
       },
     });
@@ -391,7 +396,7 @@ function render() {
   const rebuildBtn = document.createElement('button');
   rebuildBtn.className = 'lpb-btn lpb-btn-primary';
   rebuildBtn.dataset.action = 'rebuild';
-  rebuildBtn.textContent = state.scanning ? 'Scanning…' : 'Rebuild From Scan';
+  rebuildBtn.textContent = state.scanning ? 'Scanning' : 'Rebuild From Scan';
   rebuildBtn.disabled = state.scanning;
   actions.appendChild(rebuildBtn);
   titleRow.appendChild(actions);

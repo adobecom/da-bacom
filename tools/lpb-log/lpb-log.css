@@ -93,6 +93,18 @@ main {
   cursor: not-allowed;
 }
 
+@keyframes lpb-ellipsis {
+  0%,  24% { content: '.'; }
+  25%, 49% { content: '..'; }
+  50%, 74% { content: '...'; }
+  75%, 99% { content: ''; }
+}
+
+.lpb-btn[data-action='rebuild']:disabled::after {
+  content: '.';
+  animation: lpb-ellipsis 1.2s infinite;
+}
+
 /* Keep disabled actions visible (e.g. CSV when the filtered list is empty). */
 .lpb-btn[data-action='download-csv']:disabled {
   opacity: 0.85;

@@ -265,10 +265,12 @@ export async function scanResources({ onProgress, throttle = 10 } = {}) {
     // eslint-disable-next-line no-await-in-loop
     await results;
     rootsDone += 1;
-    onProgress?.({ rootsDone, rootsTotal, pagesFound: htmlPaths.length, completedRoot: root });
+    onProgress?.({ phase: 'crawl', rootsDone, rootsTotal, htmlFound: htmlPaths.length, completedRoot: root });
   }
 
   const found = [];
+  const htmlTotal = htmlPaths.length;
+  let htmlChecked = 0;
   // Process in throttle-sized chunks — avoids overwhelming the DA source API
   for (let i = 0; i < htmlPaths.length; i += throttle) {
     const chunk = htmlPaths.slice(i, i + throttle);
@@ -288,6 +290,8 @@ export async function scanResources({ onProgress, throttle = 10 } = {}) {
         });
       }
     }));
+    htmlChecked += chunk.length;
+    onProgress?.({ phase: 'check', htmlChecked, htmlTotal, lpbFound: found.length });
   }
   return found;
 }
