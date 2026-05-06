@@ -354,8 +354,8 @@
             const progressSpy = sinon.spy();
             const result = await rebuildLog({ onProgress: progressSpy });
 
-            expect(crawl.calledOnce).to.be.true;
-            expect(crawl.firstCall.args[0].path).to.equal(`/adobecom/da-bacom${SCAN_ROOT}`);
+            expect(crawl.called).to.be.true;
+            expect(crawl.getCalls().some((c) => c.args[0].path.includes('/resources'))).to.be.true;
             expect(progressSpy.called).to.be.true;
 
             expect(result.active).to.equal(2);

@@ -2,7 +2,7 @@
 import { daFetch } from 'da-fetch';
 import { crawl } from 'https://da.live/nx/public/utils/tree.js';
 import { getSourceWithMeta, getSheets, saveSheets } from './da-utils.js';
-import { ORG, REPO, getAdminPreviewUrl } from './paths-config.js';
+import { ORG, REPO, getAdminPreviewUrl, getScanRoots } from './paths-config.js';
 
 export const LOG_PATH = '/tools/page-builder/landing-page/data/lpb-log';
 export const SCAN_ROOT = '/resources';
@@ -221,8 +221,12 @@ export async function scanResources({ onProgress, throttle = 10 } = {}) {
     }
   };
 
-  const { results } = crawl({ path: `${REPO_PREFIX}${SCAN_ROOT}`, callback, throttle });
-  await results;
+  await Promise.all(
+    getScanRoots().map((root) => {
+      const { results } = crawl({ path: `${REPO_PREFIX}${root}`, callback, throttle });
+      return results;
+    }),
+  );
   return found;
 }
 

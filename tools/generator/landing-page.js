@@ -835,7 +835,7 @@ class LandingPageForm extends LitElement {
     if (pageResult.success && pdfResult.success) {
       showToast(MESSAGES.PREVIEW_UPDATED, TOAST_TYPES.SUCCESS, 5000);
       window.open(getCacheBustUrl(STAGE_ORIGIN + this.previewPath), '_blank');
-      this.logPublish();
+      await this.logPublish();
     }
   }
 

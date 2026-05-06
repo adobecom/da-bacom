@@ -380,7 +380,7 @@ function render() {
 
   const subtitle = document.createElement('p');
   subtitle.className = 'lpb-subtitle';
-  subtitle.innerHTML = 'Pages built with the landing page builder, logged in real time on publish and reconciled via a crawl of <code>/resources</code>.';
+  subtitle.innerHTML = 'Pages built with the landing page builder, logged in real time on Save &amp; Preview and reconciled via a crawl of <code>/resources</code>.';
   header.appendChild(subtitle);
 
   const stats = document.createElement('div');
