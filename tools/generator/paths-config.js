@@ -1,5 +1,3 @@
-import { LOCALES } from '../../scripts/locales.js';
-
 export const ORG = 'adobecom';
 export const REPO = 'da-bacom';
 export const BRANCH = 'main';
@@ -17,17 +15,6 @@ export const DA_ORIGIN = 'https://da.live';
 export const TEMPLATES_BASE_PATH = '/docs/library/templates/';
 
 export const ADMIN_STATUS_URL = `${ADMIN_ORIGIN}/status/${ORG}/${REPO}/${BRANCH}/`;
-
-/**
- * Returns the per-locale `/resources` roots used for LPB log scanning.
- * Keys come from `CONFIG.locales` in `scripts/scripts.js`. Empty key is the
- * en-US root (no prefix), so it maps to `/resources`; everything else maps to
- * `/${locale}/resources` (e.g. `/jp/resources`, `/de/resources`).
- */
-export function getScanRoots(subPath = '/resources') {
-  const sub = subPath.startsWith('/') ? subPath : `/${subPath}`;
-  return Object.keys(LOCALES).map((prefix) => (prefix ? `/${prefix}${sub}` : sub));
-}
 
 export function getDAEditUrl(repoRelativePath) {
   if (!repoRelativePath) return undefined;
