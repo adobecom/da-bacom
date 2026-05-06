@@ -85,6 +85,20 @@
             expect(extractMarker(doc)).to.be.null;
           });
 
+          it('detects marker in DA authoring table format (block name as text in first cell)', () => {
+            const html = `<html><body><main>
+              <table>
+                <tbody>
+                  <tr><td colspan="2">table (hide-block, page-builder)</td></tr>
+                  <tr><td>name</td><td>landing-page-builder</td></tr>
+                  <tr><td>version</td><td>1.0.0</td></tr>
+                </tbody>
+              </table>
+            </main></body></html>`;
+            const marker = extractMarker(parse(html));
+            expect(marker).to.deep.include({ name: 'landing-page-builder', version: '1.0.0' });
+          });
+
           it('handles null/undefined defensively', () => {
             expect(extractMarker(null)).to.be.null;
             expect(extractMarker(undefined)).to.be.null;
