@@ -221,9 +221,6 @@
               if (url.includes(logSourcePath) && method === 'PUT') {
                 return { ok: true, json: async () => ({}) };
               }
-              if (url.includes('admin.hlx.page') && url.includes('/preview/')) {
-                return { ok: true, json: async () => ({}) };
-              }
               return { ok: false, json: async () => ({}) };
             });
 

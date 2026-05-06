@@ -2,7 +2,7 @@
 import { daFetch } from 'da-fetch';
 import { crawl } from 'https://da.live/nx/public/utils/tree.js';
 import { getSheets, saveSheets } from './da-utils.js';
-import { ORG, REPO, ADMIN_DA_ORIGIN, getAdminPreviewUrl, getHelixResourceStatusUrl } from './paths-config.js';
+import { ORG, REPO, ADMIN_DA_ORIGIN, getHelixResourceStatusUrl } from './paths-config.js';
 
 export const LOG_PATH = '/tools/page-builder/landing-page/data/lpb-log';
 export const SCAN_ROOT = '/resources';
@@ -194,8 +194,6 @@ async function fetchPublishState(repoRelativePath) {
     const res = await daFetch(getHelixResourceStatusUrl(`${path}.html`));
     if (!res.ok) return 'unpublished';
     const json = await res.json();
-    // eslint-disable-next-line no-console
-    console.log('[lpb-status]', path, json);
     return json.live?.lastModified ? 'published' : 'unpublished';
   } catch {
     return 'unpublished';
@@ -232,11 +230,7 @@ export async function appendLogRow({ url, publisher, version, contentType } = {}
     const next = index >= 0
       ? existing.map((r, i) => (i === index ? { ...r, ...row } : r))
       : [...existing, row];
-    const res = await saveSheets(LOG_PATH, next);
-    if (res?.ok) {
-      try { await daFetch(getAdminPreviewUrl(`${LOG_PATH}.json`), { method: 'POST' }); } catch { /* preview best-effort */ }
-    }
-    return res;
+    return await saveSheets(LOG_PATH, next);
   } catch (error) {
     window.lana?.log?.(`LPB log append failed: ${error?.message || error}`, { severity: 'warning', tags: 'landing-page-builder,lpb-log' });
     return null;
@@ -366,7 +360,6 @@ export async function rebuildLog({ onProgress, throttle = 10 } = {}) {
       saveError,
     };
   }
-  try { await daFetch(getAdminPreviewUrl(`${LOG_PATH}.json`), { method: 'POST' }); } catch { /* preview best-effort */ }
   return { rows: next, active: active.length, removed: removed.length, saved: true };
 }
 
