@@ -316,7 +316,7 @@ async function handleRebuild() {
         if (p.phase === 'check') {
           state.progress = `Scanning: ${p.htmlChecked} / ${p.htmlTotal} — ${p.lpbFound} LPB pages found`;
         } else {
-          state.progress = `Scanning: root ${p.rootsDone} of ${p.rootsTotal} — ${p.htmlFound} pages indexed`;
+          state.progress = `Scanning ${p.completedRoot} (${p.rootsDone} of ${p.rootsTotal}) — ${p.htmlFound} pages indexed`;
         }
         render();
       },
