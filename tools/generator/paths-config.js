@@ -1,4 +1,4 @@
-import LOCALE_PREFIXES from '../../scripts/locales.js';
+import LOCALES from '../../scripts/locales.js';
 
 export const ORG = 'adobecom';
 export const REPO = 'da-bacom';
@@ -20,7 +20,7 @@ export const ADMIN_STATUS_URL = `${ADMIN_ORIGIN}/status/${ORG}/${REPO}/${BRANCH}
 
 export function getScanRoots(subPath = '/resources') {
   const sub = subPath.startsWith('/') ? subPath : `/${subPath}`;
-  return LOCALE_PREFIXES.map((prefix) => (prefix ? `/${prefix}${sub}` : sub));
+  return Object.keys(LOCALES).map((prefix) => (prefix ? `/${prefix}${sub}` : sub));
 }
 
 export function getDAEditUrl(repoRelativePath) {
