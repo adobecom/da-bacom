@@ -249,7 +249,7 @@ export async function scanResources({ onProgress, throttle = 10 } = {}) {
       const { results } = crawl({ path: `${REPO_PREFIX}${root}`, callback, throttle });
       return results.then(() => {
         rootsDone += 1;
-        onProgress?.({ rootsDone, rootsTotal, pagesFound: htmlPaths.length });
+        onProgress?.({ rootsDone, rootsTotal, pagesFound: htmlPaths.length, completedRoot: root });
       });
     }),
   );

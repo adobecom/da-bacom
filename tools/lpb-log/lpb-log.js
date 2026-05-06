@@ -312,8 +312,8 @@ async function handleRebuild() {
 
   try {
     const result = await rebuildLog({
-      onProgress: ({ rootsDone, rootsTotal, pagesFound }) => {
-        state.progress = `Scanning root ${rootsDone} of ${rootsTotal} — ${pagesFound} pages found`;
+      onProgress: ({ rootsDone, rootsTotal, pagesFound, completedRoot }) => {
+        state.progress = `Scanned ${completedRoot} (${rootsDone} of ${rootsTotal} roots) — ${pagesFound} pages found`;
         render();
       },
     });
