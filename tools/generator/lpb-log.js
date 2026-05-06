@@ -1,8 +1,8 @@
 /* eslint-disable import/no-unresolved */
 import { daFetch } from 'da-fetch';
 import { crawl } from 'https://da.live/nx/public/utils/tree.js';
-import { getSourceWithMeta, getSheets, saveSheets } from './da-utils.js';
-import { ORG, REPO, AEM_LIVE_ORIGIN, getAdminPreviewUrl, getScanRoots } from './paths-config.js';
+import { getSheets, saveSheets } from './da-utils.js';
+import { ORG, REPO, ADMIN_DA_ORIGIN, getAdminPreviewUrl, getHelixResourceStatusUrl } from './paths-config.js';
 
 export const LOG_PATH = '/tools/page-builder/landing-page/data/lpb-log';
 export const SCAN_ROOT = '/resources';
@@ -175,12 +175,28 @@ export function resolvePublisher(sdkOrContext, imsAccessToken, imsDetails) {
   return publisherFromToken(bearer);
 }
 
+async function fetchSourceDoc(repoRelativePath) {
+  try {
+    const path = repoRelativePath.startsWith('/') ? repoRelativePath : `/${repoRelativePath}`;
+    const res = await daFetch(`${ADMIN_DA_ORIGIN}/source/${ORG}/${REPO}${path}`);
+    if (!res.ok) return { doc: null, lastModifiedBy: null };
+    const lastModifiedBy = res.headers.get('x-da-last-modified-by') || null;
+    const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+    return { doc, lastModifiedBy };
+  } catch {
+    return { doc: null, lastModifiedBy: null };
+  }
+}
+
 async function fetchPublishState(repoRelativePath) {
   try {
     const path = String(repoRelativePath || '').replace(/\.html$/, '');
-    // HEAD the AEM live CDN — public content, no CORS restriction, semantically correct
-    const res = await fetch(`${AEM_LIVE_ORIGIN}${path}`, { method: 'HEAD' });
-    return res.ok ? 'published' : 'unpublished';
+    const res = await daFetch(getHelixResourceStatusUrl(`${path}.html`));
+    if (!res.ok) return 'unpublished';
+    const json = await res.json();
+    // eslint-disable-next-line no-console
+    console.log('[lpb-status]', path, json);
+    return json.live?.lastModified ? 'published' : 'unpublished';
   } catch {
     return 'unpublished';
   }
@@ -232,7 +248,7 @@ export async function appendLogRow({ url, publisher, version, contentType } = {}
  * extracting the LPB marker table when present.
  */
 export async function scanResources({ onProgress, throttle = 10 } = {}) {
-  const roots = getScanRoots();
+  const roots = [SCAN_ROOT];
   const rootsTotal = roots.length;
   let rootsDone = 0;
   const htmlPaths = [];
@@ -259,9 +275,7 @@ export async function scanResources({ onProgress, throttle = 10 } = {}) {
     // eslint-disable-next-line no-await-in-loop
     await Promise.all(chunk.map(async (path) => {
       const relativePath = toRepoRelative(path);
-      const { doc, lastModifiedBy } = await getSourceWithMeta(relativePath).catch(() => (
-        { doc: null, lastModifiedBy: null }
-      ));
+      const { doc, lastModifiedBy } = await fetchSourceDoc(relativePath);
       const marker = extractMarker(doc);
       if (marker) {
         const fromMarker = (marker.publishedBy || marker.publisher || '').trim();
@@ -272,9 +286,6 @@ export async function scanResources({ onProgress, throttle = 10 } = {}) {
           publisher: fromDa || fromMarker,
           contentType: deriveContentType(relativePath) || '',
         });
-      } else {
-        // eslint-disable-next-line no-console
-        console.log('[lpb-scan] no marker:', relativePath, doc ? 'source ok' : 'source unavailable');
       }
     }));
   }

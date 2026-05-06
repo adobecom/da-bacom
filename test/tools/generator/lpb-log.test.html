@@ -403,16 +403,10 @@
             expect(goneRow.removedAt).to.be.a('string');
           });
 
-          it('sets publishState to published when page is live on aem.live', async () => {
+          it('sets publishState to published when Helix reports the page is live', async () => {
             setCrawlItems([
               { path: `/adobecom/da-bacom${SCAN_ROOT}/guides/live-page.html`, ext: 'html' },
             ]);
-
-            // Stub global fetch for the AEM live HEAD check (fetchPublishState uses fetch, not daFetch)
-            const fetchStub = sinon.stub(globalThis, 'fetch').callsFake(async (url) => {
-              if (url.includes('aem.live') && url.includes('live-page')) return { ok: true };
-              return { ok: false };
-            });
 
             daFetch.callsFake(async (url, opts = {}) => {
               const method = opts.method || 'GET';
@@ -422,6 +416,9 @@
               if (url.includes(logSourcePath) && method === 'PUT') {
                 return { ok: true, json: async () => ({}) };
               }
+              if (url.includes('admin.hlx.page/status') && url.includes('live-page.html')) {
+                return { ok: true, json: async () => ({ live: { lastModified: 'Wed, 25 Sep 2024 17:42:18 GMT' } }) };
+              }
               if (url.includes('admin.hlx.page')) return { ok: true, json: async () => ({}) };
               if (url.includes('/source/') && url.includes('guides/live-page')) {
                 return { ok: true, headers: new Headers(), text: async () => buildMarkerHtml({ version: '1.0.0' }) };
@@ -429,17 +426,14 @@
               return { ok: false, json: async () => ({}) };
             });
 
-            try {
-              await rebuildLog();
-              const putCall = daFetch.getCalls().find((c) => c.args[1]?.method === 'PUT');
-              const saved = JSON.parse(await putCall.args[1].body.get('data').text());
-              const row = saved.data.find((r) => r.url === '/resources/guides/live-page');
-              expect(row).to.exist;
-              expect(row.publishState).to.equal('published');
-              expect(fetchStub.getCalls().some((c) => c.args[0].includes('aem.live') && c.args[0].includes('live-page'))).to.be.true;
-            } finally {
-              fetchStub.restore();
-            }
+            await rebuildLog();
+            const putCall = daFetch.getCalls().find((c) => c.args[1]?.method === 'PUT');
+            const saved = JSON.parse(await putCall.args[1].body.get('data').text());
+            const row = saved.data.find((r) => r.url === '/resources/guides/live-page');
+            expect(row).to.exist;
+            expect(row.publishState).to.equal('published');
+            // Verify status URL included .html extension (H1 fix)
+            expect(daFetch.getCalls().some((c) => c.args[0].includes('live-page.html'))).to.be.true;
           });
 
           it('skips non-html items in the crawl callback', async () => {
