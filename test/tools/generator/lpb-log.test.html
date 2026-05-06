@@ -236,6 +236,7 @@
               version: '1.0.0',
               contentType: 'guide-ungated',
               status: 'active',
+              publishState: 'unpublished',
             });
             expect(saved.data[0].publishedAt).to.be.a('string');
             expect(saved.data[0].lastSeenAt).to.be.a('string');
@@ -246,6 +247,7 @@
             const existingRows = [{
               url: '/resources/guides/my-page',
               publishedAt: existingPublishedAt,
+              publishState: 'published',
               publisher: 'original@adobe.com',
               version: '1.0.0',
               contentType: 'guide-ungated',
@@ -276,6 +278,7 @@
             const saved = JSON.parse(await putCall.args[1].body.get('data').text());
             expect(saved.data).to.have.lengthOf(1);
             expect(saved.data[0].publishedAt).to.equal(existingPublishedAt);
+            expect(saved.data[0].publishState).to.equal('published');
             expect(saved.data[0].publisher).to.equal('other@adobe.com');
             expect(saved.data[0].version).to.equal('1.0.1');
             expect(saved.data[0].lastSeenAt).to.not.equal(existingPublishedAt);
@@ -357,6 +360,7 @@
             expect(crawl.called).to.be.true;
             expect(crawl.getCalls().some((c) => c.args[0].path.includes('/resources'))).to.be.true;
             expect(progressSpy.called).to.be.true;
+            expect(progressSpy.getCalls().some((c) => c.args[0]?.rootsTotal > 0)).to.be.true;
 
             expect(result.active).to.equal(2);
             expect(result.removed).to.equal(1);
@@ -371,16 +375,50 @@
             expect(fooRow.publisher).to.equal('origPM@adobe.com'); // preserved
             expect(fooRow.version).to.equal('1.0.1'); // updated from marker
             expect(fooRow.status).to.equal('active');
+            expect(fooRow.publishState).to.equal('unpublished'); // Helix mock returns {}
 
             const barRow = saved.data.find((r) => r.url === '/resources/reports/bar');
             expect(barRow).to.exist;
             expect(barRow.publisher).to.equal('ste76106');
             expect(barRow.contentType).to.equal('report');
+            expect(barRow.publishState).to.equal('unpublished'); // Helix mock returns {}
 
             const goneRow = saved.data.find((r) => r.url === '/resources/guides/gone');
             expect(goneRow).to.exist;
             expect(goneRow.status).to.equal('removed');
             expect(goneRow.removedAt).to.be.a('string');
+          });
+
+          it('sets publishState to published when Helix live.lastModified is present', async () => {
+            setCrawlItems([
+              { path: `/adobecom/da-bacom${SCAN_ROOT}/guides/live-page.html`, ext: 'html' },
+            ]);
+
+            daFetch.callsFake(async (url, opts = {}) => {
+              const method = opts.method || 'GET';
+              if (url.includes(logSourcePath) && method === 'GET') {
+                return { ok: true, json: async () => buildSheetResponse([]) };
+              }
+              if (url.includes(logSourcePath) && method === 'PUT') {
+                return { ok: true, json: async () => ({}) };
+              }
+              if (url.includes('admin.hlx.page/status/')) {
+                return { ok: true, json: async () => ({ live: { lastModified: '2024-06-01T00:00:00.000Z' } }) };
+              }
+              if (url.includes('admin.hlx.page')) return { ok: true, json: async () => ({}) };
+              if (url.includes('/source/') && url.includes('guides/live-page')) {
+                return { ok: true, headers: new Headers(), text: async () => buildMarkerHtml({ version: '1.0.0' }) };
+              }
+              return { ok: false, json: async () => ({}) };
+            });
+
+            await rebuildLog();
+            const putCall = daFetch.getCalls().find((c) => c.args[1]?.method === 'PUT');
+            const saved = JSON.parse(await putCall.args[1].body.get('data').text());
+            const row = saved.data.find((r) => r.url === '/resources/guides/live-page');
+            expect(row).to.exist;
+            expect(row.publishState).to.equal('published');
+            expect(daFetch.getCalls().some((c) => c.args[0].includes('live-page.html'))).to.be.true;
           });
 
           it('skips non-html items in the crawl callback', async () => {

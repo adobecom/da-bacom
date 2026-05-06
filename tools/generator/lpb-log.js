@@ -2,7 +2,7 @@
 import { daFetch } from 'da-fetch';
 import { crawl } from 'https://da.live/nx/public/utils/tree.js';
 import { getSourceWithMeta, getSheets, saveSheets } from './da-utils.js';
-import { ORG, REPO, getAdminPreviewUrl, getScanRoots } from './paths-config.js';
+import { ORG, REPO, getAdminPreviewUrl, getHelixResourceStatusUrl, getScanRoots } from './paths-config.js';
 
 export const LOG_PATH = '/tools/page-builder/landing-page/data/lpb-log';
 export const SCAN_ROOT = '/resources';
@@ -155,6 +155,18 @@ export function resolvePublisher(sdkOrContext, imsAccessToken, imsDetails) {
   return publisherFromToken(bearer);
 }
 
+async function fetchPublishState(repoRelativePath) {
+  try {
+    const htmlPath = `${String(repoRelativePath || '').replace(/\.html$/, '')}.html`;
+    const res = await daFetch(getHelixResourceStatusUrl(htmlPath));
+    if (!res.ok) return 'unpublished';
+    const json = await res.json();
+    return json.live?.lastModified ? 'published' : 'unpublished';
+  } catch {
+    return 'unpublished';
+  }
+}
+
 async function readLog() {
   const sheet = await getSheets(LOG_PATH).catch(() => null);
   return Array.isArray(sheet?.data) ? sheet.data : [];
@@ -175,6 +187,7 @@ export async function appendLogRow({ url, publisher, version, contentType } = {}
     const row = {
       url: normalizedUrl,
       publishedAt: prev?.publishedAt || now,
+      publishState: prev?.publishState || 'unpublished',
       publisher: publisher || prev?.publisher || 'unknown',
       version: version || prev?.version || '',
       contentType: contentType || prev?.contentType || deriveContentType(normalizedUrl) || '',
@@ -200,11 +213,14 @@ export async function appendLogRow({ url, publisher, version, contentType } = {}
  * extracting the LPB marker table when present.
  */
 export async function scanResources({ onProgress, throttle = 10 } = {}) {
+  const roots = getScanRoots();
+  const rootsTotal = roots.length;
+  let rootsDone = 0;
   const found = [];
+
   const callback = async (item) => {
     if (item.ext !== 'html') return;
     const relativePath = toRepoRelative(item.path);
-    onProgress?.(relativePath);
     const { doc, lastModifiedBy } = await getSourceWithMeta(relativePath).catch(() => (
       { doc: null, lastModifiedBy: null }
     ));
@@ -222,9 +238,12 @@ export async function scanResources({ onProgress, throttle = 10 } = {}) {
   };
 
   await Promise.all(
-    getScanRoots().map((root) => {
+    roots.map((root) => {
       const { results } = crawl({ path: `${REPO_PREFIX}${root}`, callback, throttle });
-      return results;
+      return results.then(() => {
+        rootsDone += 1;
+        onProgress?.({ rootsDone, rootsTotal, pagesFound: found.length });
+      });
     }),
   );
   return found;
@@ -243,12 +262,15 @@ export async function rebuildLog({ onProgress, throttle = 10 } = {}) {
   const byUrl = new Map(existing.map((row) => [row.url, row]));
   const foundUrls = new Set(found.map((row) => row.url));
 
-  const active = found.map((row) => {
+  const publishStates = await Promise.all(found.map((row) => fetchPublishState(row.url)));
+
+  const active = found.map((row, i) => {
     const prev = byUrl.get(row.url);
     const publisherOnDoc = row.publisher?.trim();
     return {
       url: row.url,
       publishedAt: prev?.publishedAt || now,
+      publishState: publishStates[i],
       publisher: publisherOnDoc || prev?.publisher || 'unknown',
       version: row.version || prev?.version || '',
       contentType: row.contentType || prev?.contentType || '',

@@ -8,7 +8,8 @@ const STATUS_LABELS = { active: 'Active', removed: 'Removed' };
 const LS_LAST_REBUILD = 'da-bacom-lpb-log-last-rebuild';
 const COLUMNS = [
   { key: 'url', label: 'Page URL' },
-  { key: 'publishedAt', label: 'Published' },
+  { key: 'publishedAt', label: 'First Previewed' },
+  { key: 'publishState', label: 'Publish State' },
   { key: 'publisher', label: 'Publisher' },
   { key: 'contentType', label: 'Content Type' },
   { key: 'version', label: 'LPB Version' },
@@ -23,7 +24,7 @@ const CSV_COLUMNS = [
 
 const state = {
   rows: [],
-  filter: 'active',
+  filter: 'published',
   sortKey: 'publishedAt',
   sortDir: 'desc',
   scanning: false,
@@ -93,8 +94,9 @@ function compareRows(a, b, key, dir) {
 
 function getVisibleRows() {
   let rows = state.rows.slice();
-  if (state.filter === 'active') rows = rows.filter((r) => r.status !== 'removed');
-  else if (state.filter === 'removed') rows = rows.filter((r) => r.status === 'removed');
+  if (state.filter === 'published') rows = rows.filter((r) => r.status !== 'removed' && r.publishState === 'published');
+  else if (state.filter === 'unpublished') rows = rows.filter((r) => r.status !== 'removed' && r.publishState !== 'published');
+  else if (state.filter === 'deleted') rows = rows.filter((r) => r.status === 'removed');
   rows.sort((a, b) => compareRows(a, b, state.sortKey, state.sortDir));
   return rows;
 }
@@ -253,7 +255,7 @@ function createTableEl(rows) {
     pubTd.textContent = formatDate(row.publishedAt);
     tr.appendChild(pubTd);
 
-    ['publisher', 'contentType', 'version'].forEach((key) => {
+    ['publishState', 'publisher', 'contentType', 'version'].forEach((key) => {
       const td = document.createElement('td');
       const v = row[key];
       td.textContent = v != null && v !== '' ? String(v) : '—';
@@ -296,7 +298,12 @@ async function handleRebuild() {
   render();
 
   try {
-    const result = await rebuildLog({ onProgress: (path) => { state.progress = path; render(); } });
+    const result = await rebuildLog({
+      onProgress: ({ rootsDone, rootsTotal, pagesFound }) => {
+        state.progress = `Scanning root ${rootsDone} of ${rootsTotal} — ${pagesFound} pages found`;
+        render();
+      },
+    });
     if (!result.saved) {
       throw new Error(result.saveError || 'Save failed (no details)');
     }
@@ -346,7 +353,6 @@ function render() {
   const rows = getVisibleRows();
   const total = state.rows.length;
   const active = state.rows.filter((r) => r.status !== 'removed').length;
-  const removed = total - active;
 
   root.replaceChildren();
 
@@ -383,22 +389,25 @@ function render() {
   subtitle.innerHTML = 'Pages built with the landing page builder, logged in real time on Save &amp; Preview and reconciled via a crawl of <code>/resources</code>.';
   header.appendChild(subtitle);
 
+  const published = state.rows.filter((r) => r.status !== 'removed' && r.publishState === 'published').length;
+  const unpublished = state.rows.filter((r) => r.status !== 'removed' && r.publishState !== 'published').length;
+  const deleted = total - active;
+
   const stats = document.createElement('div');
   stats.className = 'lpb-stats';
-  appendStatChip(stats, active, 'active', false);
-  appendStatChip(stats, removed, 'removed', true);
+  appendStatChip(stats, published, 'published', false);
+  appendStatChip(stats, unpublished, 'unpublished', true);
+  appendStatChip(stats, deleted, 'deleted', true);
   appendStatChip(stats, total, 'total', true);
   header.appendChild(stats);
 
   const reconcileEl = createReconcileEl(state.rows, active, state.lastRebuildAt);
   if (reconcileEl) header.appendChild(reconcileEl);
 
-  if (state.scanning && state.progress) {
+  if (state.scanning) {
     const progress = document.createElement('div');
     progress.className = 'lpb-progress';
-    const code = document.createElement('code');
-    code.textContent = state.progress;
-    progress.append(document.createTextNode('Scanning: '), code);
+    progress.textContent = state.progress || 'Scanning…';
     header.appendChild(progress);
   }
 
@@ -413,7 +422,7 @@ function render() {
   const filters = document.createElement('div');
   filters.className = 'lpb-filters';
   filters.setAttribute('role', 'tablist');
-  ['active', 'removed', 'all'].forEach((f) => {
+  ['published', 'unpublished', 'deleted', 'all'].forEach((f) => {
     const btn = document.createElement('button');
     btn.setAttribute('role', 'tab');
     btn.setAttribute('aria-selected', state.filter === f ? 'true' : 'false');

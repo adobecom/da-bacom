@@ -835,11 +835,11 @@ class LandingPageForm extends LitElement {
     if (pageResult.success && pdfResult.success) {
       showToast(MESSAGES.PREVIEW_UPDATED, TOAST_TYPES.SUCCESS, 5000);
       window.open(getCacheBustUrl(STAGE_ORIGIN + this.previewPath), '_blank');
-      await this.logPublish();
+      await this.logPreview();
     }
   }
 
-  async logPublish() {
+  async logPreview() {
     try {
       const freshSdk = await DA_SDK.catch(() => null);
       const publisher = resolvePublisher(freshSdk ?? daContext, this.token, this.imsDetails);
