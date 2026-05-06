@@ -311,13 +311,16 @@ async function handleRebuild() {
   render();
 
   try {
+    let crawlMsg = '';
+    let checkMsg = '';
     const result = await rebuildLog({
       onProgress: (p) => {
-        if (p.phase === 'check') {
-          state.progress = `Scanning: ${p.htmlChecked} / ${p.htmlTotal} — ${p.lpbFound} LPB pages found`;
+        if (p.phase === 'crawl') {
+          crawlMsg = `Crawled ${p.rootsDone}/${p.rootsTotal} roots (${p.htmlFound} pages found)`;
         } else {
-          state.progress = `Scanning ${p.completedRoot} (${p.rootsDone} of ${p.rootsTotal}) — ${p.htmlFound} pages indexed`;
+          checkMsg = `Scanning: ${p.htmlChecked} / ${p.htmlTotal} — ${p.lpbFound} LPB pages found`;
         }
+        state.progress = [crawlMsg, checkMsg].filter(Boolean).join(' · ');
         render();
       },
     });

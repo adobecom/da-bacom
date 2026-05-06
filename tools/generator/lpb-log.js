@@ -253,40 +253,58 @@ export async function scanResources({ onProgress, throttle = 10 } = {}) {
     if (item.ext === 'html') htmlPaths.push(item.path);
   };
 
-  // Sequential — parallel crawls flood admin.da.live/list and exhaust browser connections
-  for (const root of roots) {
-    const { results } = crawl({ path: `${REPO_PREFIX}${root}`, callback, throttle });
-    // eslint-disable-next-line no-await-in-loop
-    await results;
-    rootsDone += 1;
-    onProgress?.({ phase: 'crawl', rootsDone, rootsTotal, htmlFound: htmlPaths.length, completedRoot: root });
-  }
-
   const found = [];
-  const htmlTotal = htmlPaths.length;
   let htmlChecked = 0;
-  // Process in throttle-sized chunks — avoids overwhelming the DA source API
-  for (let i = 0; i < htmlPaths.length; i += throttle) {
-    const chunk = htmlPaths.slice(i, i + throttle);
+  let checkCursor = 0;
+  const CRAWL_BATCH = 10;
+  const FETCH_BATCH = 60;
+
+  // Check paths found since the last call without blocking the next crawl batch.
+  // checkCursor is claimed synchronously pre-await so concurrent calls never duplicate work.
+  const processNewPaths = async () => {
+    const batch = htmlPaths.slice(checkCursor);
+    if (!batch.length) return;
+    checkCursor = htmlPaths.length;
+    for (let i = 0; i < batch.length; i += FETCH_BATCH) {
+      const chunk = batch.slice(i, i + FETCH_BATCH);
+      // eslint-disable-next-line no-await-in-loop
+      await Promise.all(chunk.map(async (path) => {
+        const relativePath = toRepoRelative(path);
+        const { doc, lastModifiedBy } = await fetchSourceDoc(relativePath);
+        const marker = extractMarker(doc);
+        if (marker) {
+          const fromMarker = (marker.publishedBy || marker.publisher || '').trim();
+          const fromDa = (lastModifiedBy || '').trim();
+          found.push({
+            url: stripHtmlExt(relativePath),
+            version: marker.version ?? '',
+            publisher: fromDa || fromMarker,
+            contentType: deriveContentType(relativePath) || '',
+          });
+        }
+      }));
+      htmlChecked += chunk.length;
+      onProgress?.({ phase: 'check', htmlChecked, htmlTotal: htmlPaths.length, lpbFound: found.length });
+    }
+  };
+
+  // Crawl roots in batches, pipelining source checks for paths discovered so far
+  const checkPromises = [];
+  for (let bi = 0; bi < roots.length; bi += CRAWL_BATCH) {
+    const batch = roots.slice(bi, bi + CRAWL_BATCH);
     // eslint-disable-next-line no-await-in-loop
-    await Promise.all(chunk.map(async (path) => {
-      const relativePath = toRepoRelative(path);
-      const { doc, lastModifiedBy } = await fetchSourceDoc(relativePath);
-      const marker = extractMarker(doc);
-      if (marker) {
-        const fromMarker = (marker.publishedBy || marker.publisher || '').trim();
-        const fromDa = (lastModifiedBy || '').trim();
-        found.push({
-          url: stripHtmlExt(relativePath),
-          version: marker.version ?? '',
-          publisher: fromDa || fromMarker,
-          contentType: deriveContentType(relativePath) || '',
-        });
-      }
+    await Promise.all(batch.map(async (root) => {
+      const { results } = crawl({ path: `${REPO_PREFIX}${root}`, callback, throttle });
+      await results;
     }));
-    htmlChecked += chunk.length;
-    onProgress?.({ phase: 'check', htmlChecked, htmlTotal, lpbFound: found.length });
+    rootsDone += batch.length;
+    onProgress?.({ phase: 'crawl', rootsDone, rootsTotal, htmlFound: htmlPaths.length, completedRoot: batch[batch.length - 1] });
+    // Fire-and-forget check for newly found paths — runs concurrently with the next crawl batch
+    checkPromises.push(processNewPaths());
   }
+  await Promise.all(checkPromises);
+  await processNewPaths(); // drain any paths added during the final crawl batch
+
   return found;
 }
 
