@@ -55,6 +55,33 @@ export function applyTemplateData(templateStr, data) {
   return html.replaceAll('template-', '');
 }
 
+const ASSET_HEADLINE_PLACEHOLDER = /\{\{\s*asset-headline\s*\}\}/i;
+
+/**
+ * When the authoring template omits {{asset-headline}}, inject the authored h2
+ * immediately before the PDF link so gated Guide / Infographic / Report pages
+ * still show the asset headline (LPB always supplies placeholders.assetHeadline).
+ */
+export function injectAssetHeadlineIfMissing(
+  templateHtml,
+  generatedHtml,
+  assetHeadlineHtml,
+  pdfAssetUrl,
+) {
+  if (!assetHeadlineHtml || !pdfAssetUrl) return generatedHtml;
+  if (ASSET_HEADLINE_PLACEHOLDER.test(templateHtml)) return generatedHtml;
+  if (generatedHtml.includes(assetHeadlineHtml)) return generatedHtml;
+
+  const escaped = pdfAssetUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const paraAnchor = new RegExp(`(<p[^>]*>\\s*)(<a href="${escaped}"[^>]*>)`, 'i');
+  if (paraAnchor.test(generatedHtml)) {
+    return generatedHtml.replace(paraAnchor, `${assetHeadlineHtml}$1$2`);
+  }
+  const bareAnchor = new RegExp(`(<a href="${escaped}"[^>]*>)`, 'i');
+  if (!bareAnchor.test(generatedHtml)) return generatedHtml;
+  return generatedHtml.replace(bareAnchor, `${assetHeadlineHtml}$1`);
+}
+
 export function getStorageItem(key, defaultValue = null) {
   try {
     const item = localStorage.getItem(key);

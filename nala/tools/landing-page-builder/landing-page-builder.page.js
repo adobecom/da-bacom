@@ -80,6 +80,8 @@ export default class LandingPageBuilder {
     this.experienceFragment = root.locator('sl-select[name="experienceFragment"]');
 
     // Asset delivery
+    this.assetDeliverySection = root.locator('.form-row').filter({ has: root.locator('h2', { hasText: 'Asset Delivery' }) });
+    this.assetHeadline = root.locator('sl-input[name="assetHeadline"]');
     this.videoAsset = root.locator('sl-input[name="videoAsset"]');
     this.pdfFileInput = root.locator('input.pdf-file-input');
     this.pdfFileInfo = root.locator('.file-info');
@@ -380,6 +382,12 @@ export default class LandingPageBuilder {
   }
 
   // --- Asset Delivery ---
+
+  async fillAssetHeadline(text) {
+    const input = this.assetHeadline.locator('input');
+    await input.fill(text);
+    await input.dispatchEvent('input');
+  }
 
   async fillVideoUrl(url) {
     const input = this.videoAsset.locator('input');

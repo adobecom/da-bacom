@@ -26,6 +26,7 @@ import {
   setStorageItem,
   marketoUrl,
   applyTemplateData,
+  injectAssetHeadlineIfMissing,
   addHiddenTable,
 } from './generator.js';
 import {
@@ -114,6 +115,7 @@ const FORM_SCHEMA = {
   seoMetadataTitle: '',
   seoMetadataDescription: '',
   experienceFragment: '',
+  assetHeadline: '',
   videoAsset: '',
   pdfAsset: null,
   url: '',
@@ -433,6 +435,8 @@ class LandingPageForm extends LitElement {
     const videoVisible = this.form.contentType === 'Video/Demo';
     const pdfVisible = !videoVisible;
 
+    const assetHeadlineVisible = form.gated === 'Gated' && !videoVisible;
+
     const placeholders = {
       ...form,
       marketoDataUrl: marketoUrl(marketoState),
@@ -446,6 +450,7 @@ class LandingPageForm extends LitElement {
       marqueeImage: marqueeImgVisible ? getContentUrl(form.marqueeImage?.path) : '',
       bodyImage: getContentUrl(form.bodyImage?.path),
       cardImage: getContentUrl(form.cardImage?.path),
+      assetHeadline: assetHeadlineVisible && form.assetHeadline ? `<h2>${form.assetHeadline}</h2>` : '',
       pdfAsset: pdfVisible && form.pdfAsset ? getAemPageUrl(form.pdfAsset?.path) : '',
       pdfAssetName: pdfVisible && form.pdfAsset ? form.pdfAsset?.name : '',
       videoAsset: videoVisible ? form.videoAsset : '',
@@ -707,6 +712,12 @@ class LandingPageForm extends LitElement {
       console.table(placeholders);
     }
     let generatedPage = applyTemplateData(this.templateHTML, placeholders);
+    generatedPage = injectAssetHeadlineIfMissing(
+      this.templateHTML,
+      generatedPage,
+      placeholders.assetHeadline,
+      placeholders.pdfAsset,
+    );
     generatedPage = addHiddenTable(generatedPage, { name: FORM_STORAGE_KEY, version: LPB_VERSION }, 'page-builder');
     if (DEBUG) generatedPage = addHiddenTable(generatedPage, this.form, 'form-data');
 
