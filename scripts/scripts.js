@@ -385,7 +385,8 @@ loadPage();
 
 // DA Live Preview
 (async function loadDa() {
-  if (!new URL(window.location.href).searchParams.get('dapreview')) return;
+  const { searchParams } = new URL(window.location.href);
+  if (!searchParams.get('dapreview')) return;
   // eslint-disable-next-line import/no-unresolved
   import('https://da.live/scripts/dapreview.js').then(({ default: daPreview }) => daPreview(loadPage));
   const hasQE = searchParams.has('quick-edit');

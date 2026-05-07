@@ -820,6 +820,99 @@ test.describe('Landing Page Builder - Form & Field Tests', () => {
   });
 
   // =============================================================
+  // 2.3 Guide Gating — Marquee Image & Body Description
+  // =============================================================
+
+  test(`${features[41].name}, ${features[41].tags}`, async () => {
+    const { data } = features[41];
+
+    await test.step('Navigate, fill core options as Ungated Guide, and confirm', async () => {
+      await lpb.navigateFresh(LPB_REF);
+      await lpb.fillCoreOptionsAndConfirm(data);
+    });
+
+    await test.step('Verify marquee image field is NOT visible', async () => {
+      await expect(lpb.marqueeImageContainer).not.toBeVisible();
+    });
+
+    await test.step('Verify body description label is optional (no asterisk)', async () => {
+      await expect(lpb.iframe.getByText('Body Description', { exact: true })).toBeVisible();
+      await expect(lpb.iframe.getByText('Body Description*')).not.toBeVisible();
+    });
+  });
+
+  test(`${features[42].name}, ${features[42].tags}`, async () => {
+    const { data } = features[42];
+
+    await test.step('Navigate, fill core options as Gated Guide, and confirm', async () => {
+      await lpb.navigateFresh(LPB_REF);
+      await lpb.fillCoreOptionsAndConfirm(data);
+    });
+
+    await test.step('Verify marquee image dropzone is visible', async () => {
+      await expect(lpb.marqueeImageDropzone).toBeVisible();
+    });
+
+    await test.step('Verify marquee image and body description show required indicators', async () => {
+      const marqueeLabel = lpb.marqueeSection.locator('label', { hasText: 'Marquee Image*' });
+      await expect(marqueeLabel).toBeVisible();
+      await expect(lpb.iframe.getByText('Body Description*')).toBeVisible();
+    });
+  });
+
+  test(`${features[43].name}, ${features[43].tags}`, async () => {
+    const { data } = features[43];
+
+    await test.step('Navigate, fill core options as Gated Guide, and confirm', async () => {
+      await lpb.navigateFresh(LPB_REF);
+      await lpb.fillCoreOptionsAndConfirm(data);
+    });
+
+    await test.step('Verify marquee image dropzone is initially visible', async () => {
+      await expect(lpb.marqueeImageDropzone).toBeVisible();
+    });
+
+    await test.step('Switch gating to Ungated without reloading', async () => {
+      await lpb.selectGated('Ungated');
+    });
+
+    await test.step('Verify marquee image field is no longer visible', async () => {
+      await expect(lpb.marqueeImageContainer).not.toBeVisible();
+    });
+
+    await test.step('Verify body description label is optional', async () => {
+      await expect(lpb.iframe.getByText('Body Description', { exact: true })).toBeVisible();
+    });
+  });
+
+  test(`${features[44].name}, ${features[44].tags}`, async () => {
+    const { data } = features[44];
+
+    await test.step('Navigate, fill core options as Ungated Guide, and confirm', async () => {
+      await lpb.navigateFresh(LPB_REF);
+      await lpb.fillCoreOptionsAndConfirm(data);
+    });
+
+    await test.step('Verify marquee image field is initially NOT visible', async () => {
+      await expect(lpb.marqueeImageContainer).not.toBeVisible();
+    });
+
+    await test.step('Switch gating to Gated without reloading', async () => {
+      await lpb.selectGated('Gated');
+    });
+
+    await test.step('Verify marquee image dropzone is now visible', async () => {
+      await expect(lpb.marqueeImageDropzone).toBeVisible();
+    });
+
+    await test.step('Attempt to save without marquee image and verify inline error', async () => {
+      await lpb.clickSaveAndPreview();
+      await lpb.waitForToast('Please complete all required fields', 'error');
+      await expect(lpb.marqueeImageError).toBeVisible();
+    });
+  });
+
+  // =============================================================
   // 3.4 Content Type Path Directory Mapping
   // =============================================================
 

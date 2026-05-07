@@ -329,6 +329,30 @@
           expect(missingFields).to.include('marketoPOI');
         });
 
+        it('does not require marquee image or body description for Ungated Guide', () => {
+          generator.form.contentType = 'Guide';
+          generator.form.gated = 'Ungated';
+          const required = generator.getRequiredFields();
+          expect(required).to.not.include('marqueeImage');
+          expect(required).to.not.include('bodyDescription');
+        });
+
+        it('requires marquee image and body description for Gated Guide', () => {
+          generator.form.contentType = 'Guide';
+          generator.form.gated = 'Gated';
+          const required = generator.getRequiredFields();
+          expect(required).to.include('marqueeImage');
+          expect(required).to.include('bodyDescription');
+        });
+
+        it('does not require marquee image for Ungated Infographic but still requires body description', () => {
+          generator.form.contentType = 'Infographic';
+          generator.form.gated = 'Ungated';
+          const required = generator.getRequiredFields();
+          expect(required).to.not.include('marqueeImage');
+          expect(required).to.include('bodyDescription');
+        });
+
         it('shows asset headline field for gated non-video content types', async () => {
           setValue('contentType', 'Report');
           setValue('gated', 'Gated');
