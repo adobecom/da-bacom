@@ -14,7 +14,7 @@ function addImportmap() {
   document.head.appendChild(importmapEl);
 }
 
-async function loadMoudle(origin, payload) {
+async function loadModule(origin, payload) {
   const { default: loadQuickEdit } = await import(`${origin}/nx/public/plugins/quick-edit/quick-edit.js`);
   loadQuickEdit(payload, loadPage);
 }
