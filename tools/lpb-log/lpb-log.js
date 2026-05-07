@@ -9,7 +9,8 @@ const LS_LAST_REBUILD = 'da-bacom-lpb-log-last-rebuild';
 const COLUMNS = [
   { key: 'url', label: 'Page URL' },
   { key: 'author', label: 'Edit Link' },
-  { key: 'publishedAt', label: 'First Previewed' },
+  { key: 'previewedAt', label: 'Previewed' },
+  { key: 'publishedAt', label: 'Published' },
   { key: 'publishState', label: 'Publish State' },
   { key: 'publisher', label: 'Publisher' },
   { key: 'contentType', label: 'Content Type' },
@@ -85,9 +86,14 @@ function formatDate(value) {
   return d.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
+function getRowSortValue(row, key) {
+  if (key === 'publishedAt') return row.publishedAt || row.previewedAt || '';
+  return row[key] ?? '';
+}
+
 function compareRows(a, b, key, dir) {
-  const av = a[key] ?? '';
-  const bv = b[key] ?? '';
+  const av = getRowSortValue(a, key);
+  const bv = getRowSortValue(b, key);
   const cmp = String(av).localeCompare(String(bv), undefined, { numeric: true, sensitivity: 'base' });
   return dir === 'asc' ? cmp : -cmp;
 }
@@ -269,9 +275,13 @@ function createTableEl(rows) {
     }
     tr.appendChild(authorTd);
 
-    const pubTd = document.createElement('td');
-    pubTd.textContent = formatDate(row.publishedAt);
-    tr.appendChild(pubTd);
+    const previewedTd = document.createElement('td');
+    previewedTd.textContent = formatDate(row.previewedAt);
+    tr.appendChild(previewedTd);
+
+    const publishedTd = document.createElement('td');
+    publishedTd.textContent = formatDate(row.publishedAt);
+    tr.appendChild(publishedTd);
 
     ['publishState', 'publisher', 'contentType'].forEach((key) => {
       const td = document.createElement('td');

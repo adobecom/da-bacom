@@ -188,15 +188,21 @@ async function fetchSourceDoc(repoRelativePath) {
   }
 }
 
-async function fetchPublishState(repoRelativePath) {
+async function fetchPageStatus(repoRelativePath) {
   try {
     const path = String(repoRelativePath || '').replace(/\.html$/, '');
     const res = await daFetch(getHelixResourceStatusUrl(`${path}.html`));
-    if (!res.ok) return 'unpublished';
+    if (!res.ok) return { publishState: 'unpublished', previewedAt: null, publishedAt: null };
     const json = await res.json();
-    return json.live?.lastModified ? 'published' : 'unpublished';
+    return {
+      publishState: json.live?.lastModified ? 'published' : 'unpublished',
+      previewedAt: json.preview?.lastModified
+        ? new Date(json.preview.lastModified).toISOString() : null,
+      publishedAt: json.live?.lastModified
+        ? new Date(json.live.lastModified).toISOString() : null,
+    };
   } catch {
-    return 'unpublished';
+    return { publishState: 'unpublished', previewedAt: null, publishedAt: null };
   }
 }
 
@@ -219,7 +225,7 @@ export async function appendLogRow({ url, publisher, version, contentType } = {}
     const prev = index >= 0 ? existing[index] : null;
     const row = {
       url: normalizedUrl,
-      publishedAt: prev?.publishedAt || now,
+      previewedAt: prev?.previewedAt || now,
       publishState: prev?.publishState || 'unpublished',
       publisher: publisher || prev?.publisher || 'unknown',
       version: version || prev?.version || '',
@@ -322,15 +328,17 @@ export async function rebuildLog({ onProgress, throttle = 10 } = {}) {
   const byUrl = new Map(existing.map((row) => [row.url, row]));
   const foundUrls = new Set(found.map((row) => row.url));
 
-  const publishStates = await Promise.all(found.map((row) => fetchPublishState(row.url)));
+  const pageStatuses = await Promise.all(found.map((row) => fetchPageStatus(row.url)));
 
   const active = found.map((row, i) => {
     const prev = byUrl.get(row.url);
     const publisherOnDoc = row.publisher?.trim();
+    const { publishState, previewedAt, publishedAt } = pageStatuses[i];
     return {
       url: row.url,
-      publishedAt: prev?.publishedAt || now,
-      publishState: publishStates[i],
+      previewedAt,
+      publishedAt,
+      publishState,
       publisher: publisherOnDoc || prev?.publisher || 'unknown',
       version: row.version || prev?.version || '',
       contentType: row.contentType || prev?.contentType || '',
