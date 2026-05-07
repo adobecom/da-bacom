@@ -26,6 +26,7 @@ import {
   setStorageItem,
   marketoUrl,
   applyTemplateData,
+  injectAssetHeadlineIfMissing,
   addHiddenTable,
 } from './generator.js';
 import {
@@ -38,6 +39,10 @@ import {
   renderSeo,
   renderExperienceFragment,
   renderAssetDelivery,
+  isMarqueeImageHidden,
+  isBodyDescriptionOptional,
+  LPB_GATED,
+  LPB_CONTENT_TYPE,
 } from './form-sections.js';
 
 const withTimeout = (p, ms, def = null) => Promise.race([p, new Promise((r) => { setTimeout(() => r(def), ms); })]);
@@ -114,6 +119,7 @@ const FORM_SCHEMA = {
   seoMetadataTitle: '',
   seoMetadataDescription: '',
   experienceFragment: '',
+  assetHeadline: '',
   videoAsset: '',
   pdfAsset: null,
   url: '',
@@ -383,7 +389,7 @@ class LandingPageForm extends LitElement {
       });
     };
 
-    if (form.gated === 'Gated' && form.formTemplate) {
+    if (form.gated === LPB_GATED.GATED && form.formTemplate) {
       const templateKey = FORM_TEMPLATE_MAP[form.formTemplate];
       const selectedRules = this.templateRules[templateKey] || null;
       marketoState['form.template'] = templateKey;
@@ -398,10 +404,10 @@ class LandingPageForm extends LitElement {
 
   getCaasContentType(contentType) {
     const CAAS_CONTENT_TYPE_MAP = {
-      Guide: 'caas:content-type/guide',
-      Infographic: 'caas:content-type/infographic',
-      Report: 'caas:content-type/report',
-      'Video/Demo': 'caas:content-type/demos-and-video',
+      [LPB_CONTENT_TYPE.GUIDE]: 'caas:content-type/guide',
+      [LPB_CONTENT_TYPE.INFOGRAPHIC]: 'caas:content-type/infographic',
+      [LPB_CONTENT_TYPE.REPORT]: 'caas:content-type/report',
+      [LPB_CONTENT_TYPE.VIDEO_DEMO]: 'caas:content-type/demos-and-video',
     };
     return CAAS_CONTENT_TYPE_MAP[contentType] || '';
   }
@@ -429,9 +435,11 @@ class LandingPageForm extends LitElement {
       minute: 'numeric',
       hour12: false,
     });
-    const marqueeImgVisible = !(this.form.gated === 'Ungated' && this.form.contentType === 'Infographic');
-    const videoVisible = this.form.contentType === 'Video/Demo';
+    const marqueeImgVisible = !isMarqueeImageHidden(this.form);
+    const videoVisible = this.form.contentType === LPB_CONTENT_TYPE.VIDEO_DEMO;
     const pdfVisible = !videoVisible;
+
+    const assetHeadlineVisible = form.gated === 'Gated' && !videoVisible;
 
     const placeholders = {
       ...form,
@@ -446,6 +454,7 @@ class LandingPageForm extends LitElement {
       marqueeImage: marqueeImgVisible ? getContentUrl(form.marqueeImage?.path) : '',
       bodyImage: getContentUrl(form.bodyImage?.path),
       cardImage: getContentUrl(form.cardImage?.path),
+      assetHeadline: assetHeadlineVisible && form.assetHeadline ? `<h2>${form.assetHeadline}</h2>` : '',
       pdfAsset: pdfVisible && form.pdfAsset ? getAemPageUrl(form.pdfAsset?.path) : '',
       pdfAssetName: pdfVisible && form.pdfAsset ? form.pdfAsset?.name : '',
       videoAsset: videoVisible ? form.videoAsset : '',
@@ -707,6 +716,12 @@ class LandingPageForm extends LitElement {
       console.table(placeholders);
     }
     let generatedPage = applyTemplateData(this.templateHTML, placeholders);
+    generatedPage = injectAssetHeadlineIfMissing(
+      this.templateHTML,
+      generatedPage,
+      placeholders.assetHeadline,
+      placeholders.pdfAsset,
+    );
     generatedPage = addHiddenTable(generatedPage, { name: FORM_STORAGE_KEY, version: LPB_VERSION }, 'page-builder');
     if (DEBUG) generatedPage = addHiddenTable(generatedPage, this.form, 'form-data');
 
@@ -848,16 +863,21 @@ class LandingPageForm extends LitElement {
       'experienceFragment',
     ];
 
-    if (this.form.gated === 'Gated') {
+    if (this.form.gated === LPB_GATED.GATED) {
       required.push('formTemplate', 'campaignId', 'marketoPOI');
     }
 
-    if (this.form.gated === 'Ungated' && this.form.contentType === 'Infographic') {
-      required.splice(required.indexOf('marqueeImage'), 1);
+    if (isMarqueeImageHidden(this.form)) {
+      const mi = required.indexOf('marqueeImage');
+      if (mi !== -1) required.splice(mi, 1);
+    }
+    if (isBodyDescriptionOptional(this.form)) {
+      const bd = required.indexOf('bodyDescription');
+      if (bd !== -1) required.splice(bd, 1);
     }
 
     const typeKey = (this.form.contentType || '').toLowerCase();
-    if (typeKey === 'video/demo') {
+    if (typeKey === LPB_CONTENT_TYPE.VIDEO_DEMO.toLowerCase()) {
       required.push('videoAsset');
     } else {
       required.push('pdfAsset');

@@ -232,9 +232,9 @@ export function applyIswaTypography() {
   });
 }
 
-export function transformExlLinks(locale) {
+export function transformExlLinks(locale, root = document) {
   if (locale.ietf === 'en-US' || !locale.exl) return;
-  const exLinks = document.querySelectorAll('a[href*="experienceleague.adobe.com"]');
+  const exLinks = root.querySelectorAll('a[href*="experienceleague.adobe.com"]');
   exLinks.forEach((link) => {
     if (link.href.includes('#_dnt')) return;
     if (link.href.includes('.html?lang=en')) {
@@ -274,7 +274,7 @@ export const EVENT_LIBS = (() => {
 
 let eventsError;
 
-async function loadPage() {
+export async function loadPage() {
   const {
     loadArea, loadLana, setConfig, getConfig, createTag, getMetadata, getLocale, MILO_EVENTS,
   } = await import(`${LIBS}/utils/utils.js`);
@@ -323,7 +323,13 @@ async function loadPage() {
     };
   }
 
-  setConfig({ ...CONFIG, ...eventConfigItems, miloLibs: LIBS });
+  const locale = getLocale(CONFIG.locales);
+  const baseDecorateArea = eventConfigItems?.decorateArea;
+  const decorateArea = (area) => {
+    transformExlLinks(locale, area);
+    baseDecorateArea?.(area);
+  };
+  setConfig({ ...CONFIG, ...eventConfigItems, decorateArea, miloLibs: LIBS });
 
   if (eventMD && eventUtils?.setEventConfig) eventUtils.setEventConfig({ cmsType: 'DA' }, CONFIG);
   if (eventMD && eventUtils?.decorateEvent) eventUtils.decorateEvent(document);
@@ -334,7 +340,7 @@ async function loadPage() {
     endpoint: 'https://business.adobe.com/lana/ll',
     endpointStage: 'https://business.stage.adobe.com/lana/ll',
   });
-  transformExlLinks(getLocale(CONFIG.locales));
+  transformExlLinks(locale);
   injectMarqueePlayIcon(MILO_EVENTS);
 
   const MARKETO_LIBS = getMarketoLibs(window.location, getMetadata);
@@ -379,9 +385,13 @@ loadPage();
 
 // DA Live Preview
 (async function loadDa() {
-  if (!new URL(window.location.href).searchParams.get('dapreview')) return;
+  const { searchParams } = new URL(window.location.href);
+  if (!searchParams.get('dapreview')) return;
   // eslint-disable-next-line import/no-unresolved
   import('https://da.live/scripts/dapreview.js').then(({ default: daPreview }) => daPreview(loadPage));
+  const hasQE = searchParams.has('quick-edit');
+  // eslint-disable-next-line import/no-unresolved
+  if (hasQE) import('./quick-edit.js').then((mod) => mod.default());
 }());
 
 if (eventsError) {

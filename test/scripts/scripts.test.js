@@ -170,6 +170,15 @@ describe('Transform Experience League Links', () => {
     const links = document.querySelectorAll('a');
     expect(links[3].href).to.equal('https://business.adobe.com/');
   });
+
+  it('transforms links in a custom root element (e.g. fragment content)', () => {
+    const locale = { ietf: 'fr-FR', exl: 'fr' };
+    const root = document.createElement('div');
+    root.innerHTML = '<a href="https://experienceleague.adobe.com/en/docs/experience-manager">Link</a>';
+    transformExlLinks(locale, root);
+    const link = root.querySelector('a');
+    expect(link.href).to.equal('https://experienceleague.adobe.com/fr/docs/experience-manager');
+  });
 });
 
 describe('ISWA Typography', () => {
