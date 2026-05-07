@@ -358,9 +358,7 @@
                 return { ok: true, headers: h, text: async () => buildMarkerHtml({ version: '1.0.1' }) };
               }
               if (url.includes('/source/') && url.includes('reports/bar')) {
-                const h = new Headers();
-                h.set('x-da-last-modified-by', 'ste76106');
-                return { ok: true, headers: h, text: async () => buildMarkerHtml({ version: '1.0.0' }) };
+                return { ok: true, headers: new Headers(), text: async () => buildMarkerHtml({ version: '1.0.0', extra: '<div><div>publishedBy</div><div>barPM@adobe.com</div></div>' }) };
               }
               if (url.includes('/source/') && url.includes('not-lpb')) {
                 return { ok: true, text: async () => '<html><body><main>regular page</main></body></html>' };
@@ -393,7 +391,7 @@
 
             const barRow = saved.data.find((r) => r.url === '/resources/reports/bar');
             expect(barRow).to.exist;
-            expect(barRow.publisher).to.equal('ste76106');
+            expect(barRow.publisher).to.equal('barPM@adobe.com');
             expect(barRow.contentType).to.equal('report');
             expect(barRow.publishState).to.equal('unpublished'); // Helix mock returns {}
 
@@ -496,7 +494,7 @@
             expect(sourceGetForPngOrDir, 'non-html items must not be fetched for source').to.be.false;
           });
 
-          it('prefers DA last-modified header over marker publishedBy when both exist', async () => {
+          it('uses marker publishedBy as publisher, ignoring DA last-modified header', async () => {
             setCrawlItems([
               { path: `/adobecom/da-bacom${SCAN_ROOT}/guides/both.html`, ext: 'html' },
             ]);
@@ -512,13 +510,13 @@
               if (url.includes('admin.hlx.page')) return { ok: true, json: async () => ({}) };
               if (url.includes('/source/') && url.includes('guides/both')) {
                 const h = new Headers();
-                h.set('x-da-last-modified-by', 'headerOnly');
+                h.set('x-da-last-modified-by', 'lastTouched@adobe.com');
                 return {
                   ok: true,
                   headers: h,
                   text: async () => buildMarkerHtml({
                     version: '1.0.0',
-                    extra: '<div><div>publishedBy</div><div>marker@adobe.com</div></div>',
+                    extra: '<div><div>publishedBy</div><div>actualPublisher@adobe.com</div></div>',
                   }),
                 };
               }
@@ -529,7 +527,7 @@
             const putCall = daFetch.getCalls().find((c) => c.args[1]?.method === 'PUT');
             const saved = JSON.parse(await putCall.args[1].body.get('data').text());
             const row = saved.data.find((r) => r.url === '/resources/guides/both');
-            expect(row.publisher).to.equal('headerOnly');
+            expect(row.publisher).to.equal('actualPublisher@adobe.com');
           });
         });
       });

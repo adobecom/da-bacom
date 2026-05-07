@@ -121,11 +121,15 @@ function inferLastFullReconcileAt(rows) {
   return times[0];
 }
 
-/** Trusted copy only (no sheet data). */
 function appendReconcileHint(p) {
-  p.innerHTML = 'No single scan time to show — active rows were updated at different times '
-    + '(for example after individual publishes). Run <strong>Rebuild From Scan</strong> '
-    + 'to refresh every active row at once.';
+  const strong = document.createElement('strong');
+  strong.textContent = 'Rebuild From Scan';
+  p.append(
+    'No single scan time to show. Active rows were updated at different times '
+    + '(for example after individual publishes). Run ',
+    strong,
+    ' to refresh every active row at once.',
+  );
 }
 
 function createReconcileEl(rows, activeCount, lastRebuildBrowserAt) {

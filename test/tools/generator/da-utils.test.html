@@ -20,8 +20,6 @@
     import {
       sanitizeFileName,
       saveFile,
-      lastModifiedByFromSourceResponse,
-      lastAuthorFromVersionListPayload,
     } from '../../../tools/generator/da-utils.js';
     import { daFetch } from './mocks/da-fetch.js';
 
@@ -61,35 +59,6 @@
 
         it('replaces punctuation such as &, @, +, () with dashes and lowercases', () => {
           expect(sanitizeFileName('A&B@C+(D).png')).to.equal('a-b-c-d.png');
-        });
-      });
-
-      describe('lastModifiedByFromSourceResponse', () => {
-        it('reads x-da-last-modified-by when present', () => {
-          const headers = new Headers();
-          headers.set('x-da-last-modified-by', 'ste76106');
-          expect(lastModifiedByFromSourceResponse({ headers })).to.equal('ste76106');
-        });
-
-        it('returns null when headers are missing or empty', () => {
-          expect(lastModifiedByFromSourceResponse(null)).to.be.null;
-          expect(lastModifiedByFromSourceResponse({})).to.be.null;
-          expect(lastModifiedByFromSourceResponse({ headers: new Headers() })).to.be.null;
-        });
-      });
-
-      describe('lastAuthorFromVersionListPayload', () => {
-        it('returns null for non-array or empty', () => {
-          expect(lastAuthorFromVersionListPayload(null)).to.be.null;
-          expect(lastAuthorFromVersionListPayload([])).to.be.null;
-        });
-
-        it('returns email from newest version by timestamp', () => {
-          const data = [
-            { timestamp: 100, users: [{ email: 'old@adobe.com' }] },
-            { timestamp: 200, users: [{ email: 'new@adobe.com' }] },
-          ];
-          expect(lastAuthorFromVersionListPayload(data)).to.equal('new@adobe.com');
         });
       });
 

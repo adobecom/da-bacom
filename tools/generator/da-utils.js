@@ -6,8 +6,6 @@ import {
   ORG,
   REPO,
   ADMIN_DA_ORIGIN,
-  getHelixResourceStatusUrl,
-  getAdminDaVersionListUrl,
 } from './paths-config.js';
 
 function getDaPath(path, isHtml) {
@@ -43,127 +41,19 @@ export async function getSheets(path) {
   return null;
 }
 
-/**
- * Best-effort: read "last modified by" / editor attribution from a Source GET response.
- * DA does not document a stable header name; we try known keys then fuzzy-match `x-da-*`.
- * Note: browsers only expose headers listed in Access-Control-Expose-Headers for CORS responses.
- */
-export function lastModifiedByFromSourceResponse(response) {
-  if (!response?.headers?.get) return null;
-  const h = response.headers;
-  const directKeys = [
-    'x-da-last-modified-by',
-    'x-da-modified-by',
-    'x-da-editor',
-    'x-da-user',
-    'x-da-author',
-    'x-github-commit-author',
-  ];
-  for (let i = 0; i < directKeys.length; i += 1) {
-    const v = h.get(directKeys[i]);
-    if (v && String(v).trim()) return String(v).trim();
-  }
-  try {
-    const entries = typeof h.entries === 'function' ? [...h.entries()] : [];
-    for (let i = 0; i < entries.length; i += 1) {
-      const [key, value] = entries[i];
-      if (value && String(value).trim()) {
-        const kl = key.toLowerCase();
-        if ((kl.startsWith('x-da-') || kl.includes('da-'))
-          && (kl.includes('user') || kl.includes('author') || kl.includes('editor') || kl.includes('by'))) {
-          return String(value).trim();
-        }
-      }
-    }
-  } catch {
-    /* ignore */
-  }
-  return null;
-}
-
-/**
- * Parse DA `versionlist` JSON: newest version first, return first usable user label/email.
- */
-export function lastAuthorFromVersionListPayload(data) {
-  if (!Array.isArray(data) || data.length === 0) return null;
-  const sorted = [...data].sort(
-    (a, b) => (Number(b.timestamp) || 0) - (Number(a.timestamp) || 0),
-  );
-  for (let i = 0; i < sorted.length; i += 1) {
-    const users = sorted[i]?.users;
-    if (Array.isArray(users)) {
-      for (let j = 0; j < users.length; j += 1) {
-        const u = users[j];
-        if (u) {
-          if (typeof u === 'string' && u.trim()) return u.trim();
-          if (typeof u.email === 'string' && u.email.trim()) return u.email.trim();
-          if (typeof u.name === 'string' && u.name.trim()) return u.name.trim();
-        }
-      }
-    }
-  }
-  return null;
-}
-
-async function fetchVersionListLastAuthor(repoRelativePath) {
-  try {
-    const url = getAdminDaVersionListUrl(repoRelativePath);
-    const res = await daFetch(url, { method: 'GET', headers: { accept: 'application/json' } });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return lastAuthorFromVersionListPayload(data);
-  } catch {
-    return null;
-  }
-}
-
-async function fetchHelixLastModifiedBy(repoRelativePath) {
-  try {
-    const url = getHelixResourceStatusUrl(repoRelativePath);
-    const res = await daFetch(url, { method: 'GET', headers: { accept: 'application/json' } });
-    if (!res.ok) return null;
-    const data = await res.json();
-    const by = data?.live?.lastModifiedBy || data?.preview?.lastModifiedBy;
-    if (by && String(by).trim()) return String(by).trim();
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * GET HTML source and parse document, plus optional DA "last modified by" from response headers.
- */
-export async function getSourceWithMeta(path) {
+export async function getSource(path) {
   const daPath = getDaPath(path, true);
   const opts = { method: 'GET', headers: { accept: '*/*' } };
-
   try {
     const response = await daFetch(daPath, opts);
-    if (!response.ok) {
-      return { doc: null, lastModifiedBy: null };
-    }
-    let lastModifiedBy = lastModifiedByFromSourceResponse(response);
-    if (!lastModifiedBy) {
-      lastModifiedBy = await fetchVersionListLastAuthor(path);
-    }
-    if (!lastModifiedBy) {
-      lastModifiedBy = await fetchHelixLastModifiedBy(path);
-    }
+    if (!response.ok) return null;
     const html = await response.text();
-    const newParser = new DOMParser();
-    const parsedPage = newParser.parseFromString(html, 'text/html');
-    return { doc: parsedPage, lastModifiedBy };
-  /* c8 ignore next 5 */
+    return new DOMParser().parseFromString(html, 'text/html');
+  /* c8 ignore next 3 */
   } catch (error) {
     console.log(`Error fetching document ${daPath}`, error);
   }
-  return { doc: null, lastModifiedBy: null };
-}
-
-export async function getSource(path) {
-  const { doc } = await getSourceWithMeta(path);
-  return doc;
+  return null;
 }
 
 function createSheetObject(data, sheetName = 'data') {
