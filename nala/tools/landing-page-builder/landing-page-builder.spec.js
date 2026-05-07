@@ -393,10 +393,62 @@ module.exports = {
     },
 
     // =========================================================
-    // 3.4 Content Type Path Directory Mapping
+    // 2.2 Asset Headline — Gated non-video content types
     // =========================================================
     {
       tcid: '29',
+      name: '@lpb-asset-headline-gated-report-visible: Gated Report shows Asset Headline field in Asset Delivery',
+      path: '/tools/generator/landing-page',
+      tags: '@lpb @lpb-non-e2e @smoke @asset-headline @gated @regression @bacom',
+      data: {
+        contentType: 'Report',
+        gated: 'Gated',
+        region: 'US',
+        headline: 'Nala Asset Headline Gated Report',
+      },
+    },
+    {
+      tcid: '30',
+      name: '@lpb-asset-headline-ungated-guide-hidden: Ungated Guide hides Asset Headline field',
+      path: '/tools/generator/landing-page',
+      tags: '@lpb @lpb-non-e2e @asset-headline @ungated @regression @bacom',
+      data: {
+        contentType: 'Guide',
+        gated: 'Ungated',
+        region: 'US',
+        headline: 'Nala Asset Headline Ungated Guide',
+      },
+    },
+    {
+      tcid: '31',
+      name: '@lpb-asset-headline-gated-video-hidden: Gated Video/Demo hides Asset Headline field',
+      path: '/tools/generator/landing-page',
+      tags: '@lpb @lpb-non-e2e @asset-headline @gated @content-type @regression @bacom',
+      data: {
+        contentType: 'Video/Demo',
+        gated: 'Gated',
+        region: 'US',
+        headline: 'Nala Asset Headline Gated Video',
+      },
+    },
+    {
+      tcid: '32',
+      name: '@lpb-asset-headline-toggle-gated-to-ungated: Switching Gated Report to Ungated hides Asset Headline without reload',
+      path: '/tools/generator/landing-page',
+      tags: '@lpb @lpb-non-e2e @asset-headline @gated @ungated @regression @bacom',
+      data: {
+        contentType: 'Report',
+        gated: 'Gated',
+        region: 'US',
+        headline: 'Nala Asset Headline Toggle',
+      },
+    },
+
+    // =========================================================
+    // 3.4 Content Type Path Directory Mapping
+    // =========================================================
+    {
+      tcid: '33',
       name: '@lpb-path-ungated-guide-sdk: Ungated Guide maps to /sdk/ directory',
       path: '/tools/generator/landing-page',
       tags: '@lpb @lpb-non-e2e @smoke @path-mapping @regression @bacom',
@@ -409,7 +461,7 @@ module.exports = {
       },
     },
     {
-      tcid: '30',
+      tcid: '34',
       name: '@lpb-path-ungated-report-sdk: Ungated Report maps to /sdk/ directory',
       path: '/tools/generator/landing-page',
       tags: '@lpb @lpb-non-e2e @path-mapping @regression @bacom',
@@ -422,7 +474,7 @@ module.exports = {
       },
     },
     {
-      tcid: '31',
+      tcid: '35',
       name: '@lpb-path-ungated-infographic-sdk: Ungated Infographic maps to /sdk/ directory',
       path: '/tools/generator/landing-page',
       tags: '@lpb @lpb-non-e2e @path-mapping @regression @bacom',
@@ -435,7 +487,7 @@ module.exports = {
       },
     },
     {
-      tcid: '32',
+      tcid: '36',
       name: '@lpb-path-gated-guide-guides: Gated Guide maps to /guides/ directory',
       path: '/tools/generator/landing-page',
       tags: '@lpb @lpb-non-e2e @path-mapping @regression @bacom',
@@ -448,7 +500,7 @@ module.exports = {
       },
     },
     {
-      tcid: '33',
+      tcid: '37',
       name: '@lpb-path-gated-infographic-infographics: Gated Infographic maps to /infographics/ directory',
       path: '/tools/generator/landing-page',
       tags: '@lpb @lpb-non-e2e @path-mapping @regression @bacom',
@@ -461,7 +513,7 @@ module.exports = {
       },
     },
     {
-      tcid: '34',
+      tcid: '38',
       name: '@lpb-path-gated-report-reports: Gated Report maps to /reports/ directory',
       path: '/tools/generator/landing-page',
       tags: '@lpb @lpb-non-e2e @path-mapping @regression @bacom',
@@ -474,7 +526,7 @@ module.exports = {
       },
     },
     {
-      tcid: '35',
+      tcid: '39',
       name: '@lpb-path-gated-video-videos: Gated Video/Demo maps to /videos/ directory',
       path: '/tools/generator/landing-page',
       tags: '@lpb @lpb-non-e2e @path-mapping @regression @bacom',
@@ -487,7 +539,7 @@ module.exports = {
       },
     },
     {
-      tcid: '36',
+      tcid: '40',
       name: '@lpb-path-ungated-video-videos: Ungated Video/Demo maps to /videos/ directory',
       path: '/tools/generator/landing-page',
       tags: '@lpb @lpb-non-e2e @path-mapping @regression @bacom',
@@ -501,10 +553,10 @@ module.exports = {
     },
 
     // =========================================================
-    // 2.2 Guide Gating — Marquee Image & Body Description
+    // 2.3 Guide Gating — Marquee Image & Body Description
     // =========================================================
     {
-      tcid: '37',
+      tcid: '41',
       name: '@lpb-guide-ungated-marquee-hidden-body-optional: Ungated Guide hides marquee image and makes body description optional',
       path: '/tools/generator/landing-page',
       tags: '@lpb @lpb-non-e2e @smoke @guide @ungated @validation @regression @bacom',
@@ -516,7 +568,7 @@ module.exports = {
       },
     },
     {
-      tcid: '38',
+      tcid: '42',
       name: '@lpb-guide-gated-marquee-body-required: Gated Guide shows marquee image and body description as required',
       path: '/tools/generator/landing-page',
       tags: '@lpb @lpb-non-e2e @smoke @guide @gated @validation @regression @bacom',
@@ -528,7 +580,7 @@ module.exports = {
       },
     },
     {
-      tcid: '39',
+      tcid: '43',
       name: '@lpb-guide-toggle-gated-to-ungated-marquee: Switching Gated Guide to Ungated removes marquee image requirement without reload',
       path: '/tools/generator/landing-page',
       tags: '@lpb @lpb-non-e2e @guide @gated @ungated @validation @regression @bacom',
@@ -540,7 +592,7 @@ module.exports = {
       },
     },
     {
-      tcid: '40',
+      tcid: '44',
       name: '@lpb-guide-toggle-ungated-to-gated-marquee: Switching Ungated Guide to Gated enforces marquee image requirement without reload',
       path: '/tools/generator/landing-page',
       tags: '@lpb @lpb-non-e2e @guide @gated @ungated @validation @regression @bacom',

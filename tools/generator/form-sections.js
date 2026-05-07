@@ -264,10 +264,14 @@ export function renderExperienceFragment(form, handleInput, { fragmentOptions },
 export function renderAssetDelivery(form, handleInput, handlePdfChange, hasError = () => '') {
   const pdfError = hasError('pdfAsset');
   const pdfViewUrl = getDisplayUrl(form.pdfAsset?.path);
+  const isVideo = (form.contentType || '').toLowerCase().includes('video');
+  const showAssetHeadline = form.gated === 'Gated' && !isVideo;
   return html`
     <div class="form-row">
       <h2>Asset Delivery</h2>
-      ${form.contentType === LPB_CONTENT_TYPE.VIDEO_DEMO ? html`
+      ${showAssetHeadline ? html`
+        <sl-input type="text" name="assetHeadline" .value=${form.assetHeadline} placeholder="Asset Headline" label="Asset Headline" @input=${handleInput}></sl-input>` : nothing}
+      ${isVideo ? html`
         <sl-input type="text" name="videoAsset" .value=${form.videoAsset} placeholder="https://video.tv.adobe.com/v/..." label="Video Asset*" error=${hasError('videoAsset')} @input=${handleInput}></sl-input>`
     : html`
         <div class="pdf-upload-container">

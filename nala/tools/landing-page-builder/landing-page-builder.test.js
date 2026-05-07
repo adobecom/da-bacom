@@ -740,11 +740,91 @@ test.describe('Landing Page Builder - Form & Field Tests', () => {
   });
 
   // =============================================================
-  // 2.2 Guide Gating — Marquee Image & Body Description
+  // 2.2 Asset Headline — Gated non-video content types
   // =============================================================
 
-  test(`${features[37].name}, ${features[37].tags}`, async () => {
-    const { data } = features[37];
+  test(`${features[29].name}, ${features[29].tags}`, async () => {
+    const { data } = features[29];
+
+    await test.step('Navigate, fill core options as Gated Report, and confirm', async () => {
+      await lpb.navigateFresh(LPB_REF);
+      await lpb.fillCoreOptionsAndConfirm(data);
+    });
+
+    await test.step('Verify Asset Delivery section is visible', async () => {
+      const headers = await lpb.getVisibleSectionHeaders();
+      expect(headers).toContain('Asset Delivery');
+    });
+
+    await test.step('Verify Asset Headline input is visible with correct label', async () => {
+      await expect(lpb.assetHeadline).toBeVisible();
+      const label = await lpb.assetHeadline.getAttribute('label');
+      expect(label).toBe('Asset Headline');
+    });
+
+    await test.step('Verify Asset Headline input sits within the Asset Delivery section', async () => {
+      const scoped = lpb.assetDeliverySection.locator('sl-input[name="assetHeadline"]');
+      await expect(scoped).toBeVisible();
+    });
+  });
+
+  test(`${features[30].name}, ${features[30].tags}`, async () => {
+    const { data } = features[30];
+
+    await test.step('Navigate, fill core options as Ungated Guide, and confirm', async () => {
+      await lpb.navigateFresh(LPB_REF);
+      await lpb.fillCoreOptionsAndConfirm(data);
+    });
+
+    await test.step('Verify Asset Headline input is NOT visible', async () => {
+      await expect(lpb.assetHeadline).not.toBeVisible();
+    });
+  });
+
+  test(`${features[31].name}, ${features[31].tags}`, async () => {
+    const { data } = features[31];
+
+    await test.step('Navigate, fill core options as Gated Video/Demo, and confirm', async () => {
+      await lpb.navigateFresh(LPB_REF);
+      await lpb.fillCoreOptionsAndConfirm(data);
+    });
+
+    await test.step('Verify Video Asset input is visible (video branch of Asset Delivery)', async () => {
+      await expect(lpb.videoAsset).toBeVisible();
+    });
+
+    await test.step('Verify Asset Headline input is NOT visible for Video/Demo', async () => {
+      await expect(lpb.assetHeadline).not.toBeVisible();
+    });
+  });
+
+  test(`${features[32].name}, ${features[32].tags}`, async () => {
+    const { data } = features[32];
+
+    await test.step('Navigate, fill core options as Gated Report, and confirm', async () => {
+      await lpb.navigateFresh(LPB_REF);
+      await lpb.fillCoreOptionsAndConfirm(data);
+    });
+
+    await test.step('Verify Asset Headline input is initially visible', async () => {
+      await expect(lpb.assetHeadline).toBeVisible();
+    });
+
+    await test.step('Switch gating to Ungated without reloading', async () => {
+      await lpb.selectGated('Ungated');
+    });
+
+    await test.step('Verify Asset Headline input is no longer visible', async () => {
+      await expect(lpb.assetHeadline).not.toBeVisible();
+    });
+  });
+
+  // =============================================================
+  // 2.3 Guide Gating — Marquee Image & Body Description
+  // =============================================================
+
+  test(`${features[41].name}, ${features[41].tags}`, async () => {
+    const { data } = features[41];
 
     await test.step('Navigate, fill core options as Ungated Guide, and confirm', async () => {
       await lpb.navigateFresh(LPB_REF);
@@ -761,8 +841,8 @@ test.describe('Landing Page Builder - Form & Field Tests', () => {
     });
   });
 
-  test(`${features[38].name}, ${features[38].tags}`, async () => {
-    const { data } = features[38];
+  test(`${features[42].name}, ${features[42].tags}`, async () => {
+    const { data } = features[42];
 
     await test.step('Navigate, fill core options as Gated Guide, and confirm', async () => {
       await lpb.navigateFresh(LPB_REF);
@@ -780,8 +860,8 @@ test.describe('Landing Page Builder - Form & Field Tests', () => {
     });
   });
 
-  test(`${features[39].name}, ${features[39].tags}`, async () => {
-    const { data } = features[39];
+  test(`${features[43].name}, ${features[43].tags}`, async () => {
+    const { data } = features[43];
 
     await test.step('Navigate, fill core options as Gated Guide, and confirm', async () => {
       await lpb.navigateFresh(LPB_REF);
@@ -805,8 +885,8 @@ test.describe('Landing Page Builder - Form & Field Tests', () => {
     });
   });
 
-  test(`${features[40].name}, ${features[40].tags}`, async () => {
-    const { data } = features[40];
+  test(`${features[44].name}, ${features[44].tags}`, async () => {
+    const { data } = features[44];
 
     await test.step('Navigate, fill core options as Ungated Guide, and confirm', async () => {
       await lpb.navigateFresh(LPB_REF);
@@ -836,7 +916,7 @@ test.describe('Landing Page Builder - Form & Field Tests', () => {
   // 3.4 Content Type Path Directory Mapping
   // =============================================================
 
-  [29, 30, 31, 32, 33, 34, 35, 36].forEach((featureIndex) => {
+  [33, 34, 35, 36, 37, 38, 39, 40].forEach((featureIndex) => {
     test(`${features[featureIndex].name}, ${features[featureIndex].tags}`, async () => {
       const { data } = features[featureIndex];
 

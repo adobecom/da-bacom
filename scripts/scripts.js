@@ -199,6 +199,20 @@ export function setLibs(location) {
   return branch.includes('--') ? `https://${branch}.aem.live/libs` : `https://${branch}--milo--adobecom.aem.live/libs`;
 }
 
+export function getMarketoLibs(location = window.location, getMetadata = null) {
+  const { search, hostname } = location;
+  const branch = new URLSearchParams(search).get('marketolibs') || getMetadata?.('marketo-libs');
+  if (!branch) return null;
+  if (!/^[a-zA-Z0-9_-]+$/.test(branch)) throw new Error('Invalid branch name.');
+  if (!['.aem.', '.hlx.', '.stage.', 'local', '.da.'].some((i) => hostname.includes(i))) {
+    if (branch === 'main') return 'https://main--da-marketo--adobecom.aem.live/mkto';
+    if (branch === 'stage') return 'https://stage--da-marketo--adobecom.aem.live/mkto';
+    return null;
+  }
+  if (branch === 'local') return 'http://localhost:6586/mkto';
+  return branch.includes('--') ? `https://${branch}.aem.live/mkto` : `https://${branch}--da-marketo--adobecom.aem.live/mkto`;
+}
+
 export const LIBS = setLibs(window.location);
 
 (function loadStyles() {
@@ -218,9 +232,9 @@ export function applyIswaTypography() {
   });
 }
 
-export function transformExlLinks(locale) {
+export function transformExlLinks(locale, root = document) {
   if (locale.ietf === 'en-US' || !locale.exl) return;
-  const exLinks = document.querySelectorAll('a[href*="experienceleague.adobe.com"]');
+  const exLinks = root.querySelectorAll('a[href*="experienceleague.adobe.com"]');
   exLinks.forEach((link) => {
     if (link.href.includes('#_dnt')) return;
     if (link.href.includes('.html?lang=en')) {
@@ -260,9 +274,9 @@ export const EVENT_LIBS = (() => {
 
 let eventsError;
 
-async function loadPage() {
+export async function loadPage() {
   const {
-    loadArea, loadLana, setConfig, createTag, getMetadata, getLocale, MILO_EVENTS,
+    loadArea, loadLana, setConfig, getConfig, createTag, getMetadata, getLocale, MILO_EVENTS,
   } = await import(`${LIBS}/utils/utils.js`);
 
   let eventUtils;
@@ -309,7 +323,13 @@ async function loadPage() {
     };
   }
 
-  setConfig({ ...CONFIG, ...eventConfigItems, miloLibs: LIBS });
+  const locale = getLocale(CONFIG.locales);
+  const baseDecorateArea = eventConfigItems?.decorateArea;
+  const decorateArea = (area) => {
+    transformExlLinks(locale, area);
+    baseDecorateArea?.(area);
+  };
+  setConfig({ ...CONFIG, ...eventConfigItems, decorateArea, miloLibs: LIBS });
 
   if (eventMD && eventUtils?.setEventConfig) eventUtils.setEventConfig({ cmsType: 'DA' }, CONFIG);
   if (eventMD && eventUtils?.decorateEvent) eventUtils.decorateEvent(document);
@@ -320,8 +340,19 @@ async function loadPage() {
     endpoint: 'https://business.adobe.com/lana/ll',
     endpointStage: 'https://business.stage.adobe.com/lana/ll',
   });
-  transformExlLinks(getLocale(CONFIG.locales));
+  transformExlLinks(locale);
   injectMarqueePlayIcon(MILO_EVENTS);
+
+  const MARKETO_LIBS = getMarketoLibs(window.location, getMetadata);
+
+  if (MARKETO_LIBS) {
+    try {
+      const mkto = await import(`${MARKETO_LIBS}/libs.js`);
+      mkto.register({ getConfig, setConfig });
+    } catch (e) {
+      window.lana?.log(`Could not load marketo-libs. ${e}`, { tags: 'marketo-libs', severity: 'error' });
+    }
+  }
 
   await loadArea();
 
@@ -354,9 +385,13 @@ loadPage();
 
 // DA Live Preview
 (async function loadDa() {
-  if (!new URL(window.location.href).searchParams.get('dapreview')) return;
+  const { searchParams } = new URL(window.location.href);
+  if (!searchParams.get('dapreview')) return;
   // eslint-disable-next-line import/no-unresolved
   import('https://da.live/scripts/dapreview.js').then(({ default: daPreview }) => daPreview(loadPage));
+  const hasQE = searchParams.has('quick-edit');
+  // eslint-disable-next-line import/no-unresolved
+  if (hasQE) import('./quick-edit.js').then((mod) => mod.default());
 }());
 
 if (eventsError) {

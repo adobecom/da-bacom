@@ -353,6 +353,35 @@
           expect(required).to.include('bodyDescription');
         });
 
+        it('shows asset headline field for gated non-video content types', async () => {
+          setValue('contentType', 'Report');
+          setValue('gated', 'Gated');
+          setValue('region', '/');
+          setValue('marqueeHeadline', 'Test Report');
+
+          setPageName('test-report');
+          await tick(100);
+
+          shadowRoot.querySelector('sl-button.confirm').click();
+          await tick(100);
+
+          const assetHeadline = shadowRoot.querySelector('[name="assetHeadline"]');
+          expect(assetHeadline).to.exist;
+          expect(assetHeadline.getAttribute('label')).to.equal('Asset Headline');
+        });
+
+        it('hides asset headline field for ungated content types', async () => {
+          fillCoreFields();
+          setPageName();
+          await tick(100);
+
+          shadowRoot.querySelector('sl-button.confirm').click();
+          await tick(100);
+
+          const assetHeadline = shadowRoot.querySelector('[name="assetHeadline"]');
+          expect(assetHeadline).to.not.exist;
+        });
+
         it('isEmpty correctly identifies empty values', () => {
           const testCases = [
             { input: '', expected: true, description: 'empty string' },

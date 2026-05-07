@@ -268,6 +268,10 @@ body.disable-scroll #adbMsgClientWrapper #adbmsgContainer .adbmsgCta {
   .hero-marquee.iswa div.foreground.cols-2 .copy {
     padding-inline-end: 0;
   }
+  
+  .section.xl-spacing-top.xl-spacing-top-iswa {
+    padding-top: 104px;
+  }
 }
 
 @media screen and (min-width: 1200px) {
