@@ -23,9 +23,15 @@ const init = (el) => {
       const preview = descHtml.slice(0, PREVIEW_LENGTH);
       const button = document.createElement('button');
 
+      button.type = 'button';
       button.innerText = readMoreText;
-      button.addEventListener('click', (event) => {
-        event.target.parentElement.innerHTML = descHtml;
+      const READ_LESS = 'Read less';
+      let expanded = false;
+      button.addEventListener('click', () => {
+        expanded = !expanded;
+        desc.innerHTML = expanded ? descHtml : `${preview}<span class="ellipsis">...</span>`;
+        button.innerText = expanded ? READ_LESS : readMoreText;
+        desc.appendChild(button);
       });
       desc.innerHTML = `${preview}<span class="ellipsis">...</span>`;
       desc.appendChild(button);
