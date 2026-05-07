@@ -33,6 +33,6 @@ async function getEnvEps() {
     appLoc = getAppLocWithCollab(appLoc, search);
     window.location.replace(appLoc);
   } catch (error) {
-    console.error('Error initializing app:', error);
+    window.lana.log(`Error initializing app: ${error}`, { severity: 'error', tags: 'stream' });
   }
 })();
