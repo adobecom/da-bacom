@@ -1,6 +1,14 @@
 import { readFile, setViewport } from '@web/test-runner-commands';
 import { expect } from '@esm-bundle/chai';
-import { setLibs, LIBS, getLCPImages, transformExlLinks, applyIswaTypography } from '../../scripts/scripts.js';
+import {
+  setLibs,
+  LIBS,
+  getLCPImages,
+  transformExlLinks,
+  applyIswaTypography,
+  injectMarqueePlayIcon,
+  getMarketoLibs,
+} from '../../scripts/scripts.js';
 
 describe('Libs', () => {
   const tests = [
@@ -162,6 +170,15 @@ describe('Transform Experience League Links', () => {
     const links = document.querySelectorAll('a');
     expect(links[3].href).to.equal('https://business.adobe.com/');
   });
+
+  it('transforms links in a custom root element (e.g. fragment content)', () => {
+    const locale = { ietf: 'fr-FR', exl: 'fr' };
+    const root = document.createElement('div');
+    root.innerHTML = '<a href="https://experienceleague.adobe.com/en/docs/experience-manager">Link</a>';
+    transformExlLinks(locale, root);
+    const link = root.querySelector('a');
+    expect(link.href).to.equal('https://experienceleague.adobe.com/fr/docs/experience-manager');
+  });
 });
 
 describe('ISWA Typography', () => {
@@ -200,5 +217,73 @@ describe('ISWA Typography', () => {
     document.body.innerHTML = '';
     applyIswaTypography();
     expect(document.querySelector('.iswa-main')).to.not.exist;
+  });
+});
+
+describe('injectMarqueePlayIcon', () => {
+  const MILO_EVENTS = { DEFERRED: 'milo:deferred-test' };
+
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('injects play SVG and marks the icon when marquee contains span.icon-play', () => {
+    document.body.innerHTML = `
+      <div class="marquee">
+        <span class="icon icon-play"></span>
+      </div>
+    `;
+    injectMarqueePlayIcon(MILO_EVENTS);
+    const icon = document.querySelector('span.icon-play');
+    expect(icon.querySelector('svg.icon-milo-play')).to.exist;
+    expect(icon.dataset.svgInjected).to.equal('true');
+    expect(icon.classList.contains('margin-inline-end')).to.be.true;
+  });
+
+  it('does nothing when there is no marquee', () => {
+    document.body.innerHTML = '<div class="aside">Aside block<span class="icon icon-play"></span></div>';
+    injectMarqueePlayIcon(MILO_EVENTS);
+    expect(document.querySelector('svg')).to.not.exist;
+  });
+
+  it('does nothing when marquee has no play icon', () => {
+    document.body.innerHTML = '<div class="marquee"><span class="icon icon-other"></span></div>';
+    injectMarqueePlayIcon(MILO_EVENTS);
+    expect(document.querySelector('svg')).to.not.exist;
+  });
+});
+
+describe('Marketo Libs', () => {
+  const tests = [
+    ['https://business.adobe.com', '', null],
+    ['https://business.adobe.com?marketolibs=main', '', 'https://main--da-marketo--adobecom.aem.live/mkto'],
+    ['https://business.adobe.com?marketolibs=stage', '', 'https://stage--da-marketo--adobecom.aem.live/mkto'],
+    ['https://business.adobe.com?marketolibs=foo', '', null],
+    ['https://business.adobe.com?marketolibs=awesome--da-marketo--forkedowner', '', null],
+    ['https://business.adobe.com', 'main', 'https://main--da-marketo--adobecom.aem.live/mkto'],
+    ['https://business.adobe.com', 'stage', 'https://stage--da-marketo--adobecom.aem.live/mkto'],
+    ['https://business.adobe.com', 'local', null],
+    ['https://business.adobe.com', 'foo', null],
+    ['https://business.stage.adobe.com', '', null],
+    ['https://business.stage.adobe.com?marketolibs=main', '', 'https://main--da-marketo--adobecom.aem.live/mkto'],
+    ['https://business.stage.adobe.com?marketolibs=awesome--da-marketo--forkedowner', '', 'https://awesome--da-marketo--forkedowner.aem.live/mkto'],
+    ['https://business.stage.adobe.com', 'awesome--da-marketo--forkedowner', 'https://awesome--da-marketo--forkedowner.aem.live/mkto'],
+    ['https://main--da-bacom--adobecom.aem.page/', '', null],
+    ['https://main--da-bacom--adobecom.aem.page/?marketolibs=foo', '', 'https://foo--da-marketo--adobecom.aem.live/mkto'],
+    ['https://main--da-bacom--adobecom.aem.page/?marketolibs=local', '', 'http://localhost:6586/mkto'],
+    ['https://main--da-bacom--adobecom.aem.page/?marketolibs=awesome--da-marketo--forkedowner', '', 'https://awesome--da-marketo--forkedowner.aem.live/mkto'],
+    ['http://localhost:3000', '', null],
+    ['http://localhost:3000?marketolibs=foo', '', 'https://foo--da-marketo--adobecom.aem.live/mkto'],
+    ['http://localhost:3000?marketolibs=local', '', 'http://localhost:6586/mkto'],
+    ['http://localhost:3000?marketolibs=awesome--da-marketo--forkedowner', '', 'https://awesome--da-marketo--forkedowner.aem.live/mkto'],
+  ];
+
+  tests.forEach(([url, metadata, expected]) => {
+    it(`Sets marketo libs for ${url} ${metadata ? `with metadata ${metadata}` : ''}`, () => {
+      const location = new URL(url);
+      const libs = getMarketoLibs(location, () => metadata);
+
+      expect(libs).to.equal(expected);
+    });
   });
 });
