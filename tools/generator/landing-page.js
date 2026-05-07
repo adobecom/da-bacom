@@ -739,10 +739,10 @@ class LandingPageForm extends LitElement {
       await saveSource(this.form.url, generatedPage);
       if (DEBUG) console.log('[LPB][Response] PUT page ok:', this.form.url);
       this.requestUpdate();
-      return true;
+      return { success: true, publishedBy };
     } catch (error) {
       if (DEBUG) console.error('[Response] PUT page failed:', this.form.url, error);
-      return false;
+      return { success: false };
     }
   }
 
@@ -822,8 +822,8 @@ class LandingPageForm extends LitElement {
     }
 
     showToast(MESSAGES.SAVING_PAGE, TOAST_TYPES.INFO, 5000);
-    const saveSuccess = await this.savePage();
-    if (!saveSuccess) {
+    const saveResult = await this.savePage();
+    if (!saveResult.success) {
       if (DEBUG) console.error('[Save & Preview] save failed, aborting');
       showToast(MESSAGES.SAVE_PAGE_FAILED, TOAST_TYPES.ERROR, 5000);
       return;
@@ -850,20 +850,21 @@ class LandingPageForm extends LitElement {
     if (pageResult.success && pdfResult.success) {
       showToast(MESSAGES.PREVIEW_UPDATED, TOAST_TYPES.SUCCESS, 5000);
       window.open(getCacheBustUrl(STAGE_ORIGIN + this.previewPath), '_blank');
-      await this.logPreview();
+    }
+    if (pageResult.success) {
+      await this.logPreview(saveResult.publishedBy);
     }
   }
 
-  async logPreview() {
+  async logPreview(publisher) {
     try {
-      const freshSdk = await DA_SDK.catch(() => null);
-      const publisher = resolvePublisher(freshSdk ?? daContext, this.token, this.imsDetails);
+      const resolvedPublisher = publisher ?? resolvePublisher(daContext, this.token, this.imsDetails);
       const contentType = this.form.contentType && this.form.gated
         ? `${this.form.contentType}-${this.form.gated}`.toLowerCase()
         : '';
       await appendLogRow({
         url: this.form.url,
-        publisher,
+        publisher: resolvedPublisher,
         version: LPB_VERSION,
         contentType,
       });

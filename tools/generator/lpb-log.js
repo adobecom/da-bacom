@@ -200,7 +200,7 @@ async function fetchPublishState(repoRelativePath) {
   }
 }
 
-async function readLog() {
+export async function getLog() {
   const sheet = await getSheets(LOG_PATH).catch(() => null);
   return Array.isArray(sheet?.data) ? sheet.data : [];
 }
@@ -214,7 +214,7 @@ export async function appendLogRow({ url, publisher, version, contentType } = {}
   const normalizedUrl = stripHtmlExt(url);
   const now = new Date().toISOString();
   try {
-    const existing = await readLog();
+    const existing = await getLog();
     const index = existing.findIndex((row) => row.url === normalizedUrl);
     const prev = index >= 0 ? existing[index] : null;
     const row = {
@@ -273,6 +273,7 @@ export async function scanResources({ onProgress, throttle = 10 } = {}) {
         const { doc, lastModifiedBy } = await fetchSourceDoc(relativePath);
         const marker = extractMarker(doc);
         if (marker) {
+          // addHiddenTable writes the key as `publishedBy`; older pages may use `publisher`
           const fromMarker = (marker.publishedBy || marker.publisher || '').trim();
           const fromDa = (lastModifiedBy || '').trim();
           found.push({
@@ -315,7 +316,7 @@ export async function scanResources({ onProgress, throttle = 10 } = {}) {
 export async function rebuildLog({ onProgress, throttle = 10 } = {}) {
   const [found, existing] = await Promise.all([
     scanResources({ onProgress, throttle }),
-    readLog(),
+    getLog(),
   ]);
   const now = new Date().toISOString();
   const byUrl = new Map(existing.map((row) => [row.url, row]));
@@ -379,8 +380,4 @@ export async function rebuildLog({ onProgress, throttle = 10 } = {}) {
     };
   }
   return { rows: next, active: active.length, removed: removed.length, saved: true };
-}
-
-export async function getLog() {
-  return readLog();
 }

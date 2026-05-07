@@ -8,7 +8,7 @@ const STATUS_LABELS = { active: 'Active', removed: 'Removed' };
 const LS_LAST_REBUILD = 'da-bacom-lpb-log-last-rebuild';
 const COLUMNS = [
   { key: 'url', label: 'Page URL' },
-  { key: 'author', label: 'Author' },
+  { key: 'author', label: 'Edit Link' },
   { key: 'publishedAt', label: 'First Previewed' },
   { key: 'publishState', label: 'Publish State' },
   { key: 'publisher', label: 'Publisher' },
@@ -175,6 +175,11 @@ function buildCsv(rows) {
   const headerLine = CSV_COLUMNS.map((col) => escapeCsvCell(col.label)).join(',');
   const dataLines = rows.map((row) => CSV_COLUMNS.map((col) => {
     let v = row[col.key];
+    if (col.key === 'url') {
+      const urlPath = String(v ?? '');
+      const livePath = urlPath.startsWith('/') ? urlPath : `/${urlPath}`;
+      v = `${AEM_LIVE_ORIGIN}${livePath}`;
+    }
     if (col.key === 'author') v = getDAEditUrl(row.url) ?? '';
     if (col.key === 'status') v = STATUS_LABELS[v] || v || '';
     return escapeCsvCell(v ?? '');
@@ -196,10 +201,10 @@ function triggerCsvDownload(filename, text) {
 }
 
 function handleDownloadCsv() {
-  const rows = getVisibleRows();
-  if (rows.length === 0) return;
+  if (state.rows.length === 0) return;
+  const rows = state.rows.slice().sort((a, b) => compareRows(a, b, state.sortKey, state.sortDir));
   const dateStamp = new Date().toISOString().slice(0, 10);
-  const filename = `lpb-log-${state.filter}-${dateStamp}.csv`;
+  const filename = `lpb-log-${dateStamp}.csv`;
   triggerCsvDownload(filename, buildCsv(rows));
 }
 
@@ -391,9 +396,9 @@ function render() {
   csvBtn.type = 'button';
   csvBtn.className = 'lpb-btn lpb-btn-secondary';
   csvBtn.dataset.action = 'download-csv';
-  csvBtn.title = 'Exports the current tab and sort order as CSV';
+  csvBtn.title = 'Exports all pages (all tabs) as CSV';
   csvBtn.textContent = 'Download CSV';
-  csvBtn.disabled = rows.length === 0;
+  csvBtn.disabled = state.rows.length === 0;
   actions.appendChild(csvBtn);
   const rebuildBtn = document.createElement('button');
   rebuildBtn.className = 'lpb-btn lpb-btn-primary';
