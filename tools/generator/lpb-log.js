@@ -179,11 +179,12 @@ async function fetchSourceDoc(repoRelativePath) {
   try {
     const path = repoRelativePath.startsWith('/') ? repoRelativePath : `/${repoRelativePath}`;
     const res = await daFetch(`${ADMIN_DA_ORIGIN}/source/${ORG}/${REPO}${path}`);
-    if (!res.ok) return { doc: null };
+    if (!res.ok) return { doc: null, lastModifiedBy: null };
+    const lastModifiedBy = res.headers.get('x-da-last-modified-by') || null;
     const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
-    return { doc };
+    return { doc, lastModifiedBy };
   } catch {
-    return { doc: null };
+    return { doc: null, lastModifiedBy: null };
   }
 }
 
@@ -275,14 +276,15 @@ export async function scanResources({ onProgress, throttle = 10 } = {}) {
       // eslint-disable-next-line no-await-in-loop
       await Promise.all(chunk.map(async (path) => {
         const relativePath = toRepoRelative(path);
-        const { doc } = await fetchSourceDoc(relativePath);
+        const { doc, lastModifiedBy } = await fetchSourceDoc(relativePath);
         const marker = extractMarker(doc);
         if (marker) {
-          // addHiddenTable writes the key as `publishedBy`; older pages may use `publisher`
+          const fromMarker = (marker.publishedBy || marker.publisher || '').trim();
+          const validMarker = fromMarker && fromMarker !== 'unknown';
           found.push({
             url: stripHtmlExt(relativePath),
             version: marker.version ?? '',
-            publisher: (marker.publishedBy || marker.publisher || '').trim(),
+            publisher: validMarker ? fromMarker : (lastModifiedBy || '').trim(),
             contentType: deriveContentType(relativePath) || '',
           });
         }

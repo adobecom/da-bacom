@@ -384,7 +384,7 @@
             const fooRow = saved.data.find((r) => r.url === '/resources/guides/foo');
             expect(fooRow).to.exist;
             expect(fooRow.previewedAt).to.equal(new Date('Mon, 01 Apr 2024 10:00:00 GMT').toISOString());
-            expect(fooRow.publisher).to.equal('unknown'); // no publishedBy in marker, prev not used
+            expect(fooRow.publisher).to.equal('unknown'); // no publishedBy in marker, no DA header
             expect(fooRow.version).to.equal('1.0.1'); // updated from marker
             expect(fooRow.status).to.equal('active');
             expect(fooRow.publishState).to.equal('unpublished'); // Helix mock returns {}
@@ -494,7 +494,7 @@
             expect(sourceGetForPngOrDir, 'non-html items must not be fetched for source').to.be.false;
           });
 
-          it('uses marker publishedBy as publisher, ignoring DA last-modified header', async () => {
+          it('uses marker publishedBy over DA last-modified-by when marker has a real value', async () => {
             setCrawlItems([
               { path: `/adobecom/da-bacom${SCAN_ROOT}/guides/both.html`, ext: 'html' },
             ]);
@@ -528,6 +528,71 @@
             const saved = JSON.parse(await putCall.args[1].body.get('data').text());
             const row = saved.data.find((r) => r.url === '/resources/guides/both');
             expect(row.publisher).to.equal('actualPublisher@adobe.com');
+          });
+
+          it('falls back to DA last-modified-by when marker publishedBy is "unknown"', async () => {
+            setCrawlItems([
+              { path: `/adobecom/da-bacom${SCAN_ROOT}/guides/unknown-marker.html`, ext: 'html' },
+            ]);
+
+            daFetch.callsFake(async (url, opts = {}) => {
+              const method = opts.method || 'GET';
+              if (url.includes(logSourcePath) && method === 'GET') {
+                return { ok: true, json: async () => buildSheetResponse([]) };
+              }
+              if (url.includes(logSourcePath) && method === 'PUT') {
+                return { ok: true, json: async () => ({}) };
+              }
+              if (url.includes('admin.hlx.page')) return { ok: true, json: async () => ({}) };
+              if (url.includes('/source/') && url.includes('unknown-marker')) {
+                const h = new Headers();
+                h.set('x-da-last-modified-by', 'realPerson@adobe.com');
+                return {
+                  ok: true,
+                  headers: h,
+                  text: async () => buildMarkerHtml({
+                    version: '1.0.0',
+                    extra: '<div><div>publishedBy</div><div>unknown</div></div>',
+                  }),
+                };
+              }
+              return { ok: false, json: async () => ({}) };
+            });
+
+            await rebuildLog();
+            const putCall = daFetch.getCalls().find((c) => c.args[1]?.method === 'PUT');
+            const saved = JSON.parse(await putCall.args[1].body.get('data').text());
+            const row = saved.data.find((r) => r.url === '/resources/guides/unknown-marker');
+            expect(row.publisher).to.equal('realPerson@adobe.com');
+          });
+
+          it('falls back to DA last-modified-by when marker has no publishedBy', async () => {
+            setCrawlItems([
+              { path: `/adobecom/da-bacom${SCAN_ROOT}/guides/no-publisher.html`, ext: 'html' },
+            ]);
+
+            daFetch.callsFake(async (url, opts = {}) => {
+              const method = opts.method || 'GET';
+              if (url.includes(logSourcePath) && method === 'GET') {
+                return { ok: true, json: async () => buildSheetResponse([]) };
+              }
+              if (url.includes(logSourcePath) && method === 'PUT') {
+                return { ok: true, json: async () => ({}) };
+              }
+              if (url.includes('admin.hlx.page')) return { ok: true, json: async () => ({}) };
+              if (url.includes('/source/') && url.includes('no-publisher')) {
+                const h = new Headers();
+                h.set('x-da-last-modified-by', 'daUser@adobe.com');
+                return { ok: true, headers: h, text: async () => buildMarkerHtml({ version: '1.0.0' }) };
+              }
+              return { ok: false, json: async () => ({}) };
+            });
+
+            await rebuildLog();
+            const putCall = daFetch.getCalls().find((c) => c.args[1]?.method === 'PUT');
+            const saved = JSON.parse(await putCall.args[1].body.get('data').text());
+            const row = saved.data.find((r) => r.url === '/resources/guides/no-publisher');
+            expect(row.publisher).to.equal('daUser@adobe.com');
           });
         });
       });
