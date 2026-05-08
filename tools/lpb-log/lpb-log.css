@@ -198,6 +198,11 @@ main {
   font-size: 13px;
 }
 
+@keyframes lpb-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
 .lpb-warning {
   margin-top: 8px;
   padding: 8px 12px;
@@ -205,6 +210,7 @@ main {
   color: #b45309;
   border-radius: 4px;
   font-size: 13px;
+  animation: lpb-pulse 2s ease-in-out infinite;
 }
 
 .lpb-filters {
