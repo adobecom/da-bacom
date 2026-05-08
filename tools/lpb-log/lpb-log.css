@@ -198,6 +198,15 @@ main {
   font-size: 13px;
 }
 
+.lpb-warning {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #fff3e0;
+  color: #b45309;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
 .lpb-filters {
   display: flex;
   gap: 4px;

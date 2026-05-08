@@ -30,6 +30,7 @@ const state = {
   sortKey: 'publishedAt',
   sortDir: 'desc',
   scanning: false,
+  signedIn: false,
   progress: '',
   error: null,
   /** ISO time of last successful Rebuild From Scan (this browser). */
@@ -100,7 +101,7 @@ function compareRows(a, b, key, dir) {
 }
 
 function getVisibleRows() {
-  let rows = state.rows.slice();
+  let rows = state.rows.filter((r) => !String(r.url || '').includes('nala'));
   if (state.filter === 'published') rows = rows.filter((r) => r.status !== 'removed' && r.publishState === 'published');
   else if (state.filter === 'unpublished') rows = rows.filter((r) => r.status !== 'removed' && r.publishState !== 'published');
   else if (state.filter === 'deleted') rows = rows.filter((r) => r.status === 'removed');
@@ -324,7 +325,7 @@ async function loadLog() {
 }
 
 async function handleRebuild() {
-  if (state.scanning) return;
+  if (state.scanning || !state.signedIn) return;
   state.scanning = true;
   state.progress = '';
   state.error = null;
@@ -419,7 +420,7 @@ function render() {
   rebuildBtn.className = 'lpb-btn lpb-btn-primary';
   rebuildBtn.dataset.action = 'rebuild';
   rebuildBtn.textContent = state.scanning ? 'Scanning...' : 'Rebuild From Scan';
-  rebuildBtn.disabled = state.scanning;
+  rebuildBtn.disabled = state.scanning || !state.signedIn;
   actions.appendChild(rebuildBtn);
   titleRow.appendChild(actions);
   header.appendChild(titleRow);
@@ -444,7 +445,12 @@ function render() {
   const reconcileEl = createReconcileEl(state.rows, active, state.lastRebuildAt);
   if (reconcileEl) header.appendChild(reconcileEl);
 
-  if (state.scanning) {
+  if (!state.signedIn) {
+    const warn = document.createElement('div');
+    warn.className = 'lpb-warning';
+    warn.textContent = 'You must be signed in to run a scan.';
+    header.appendChild(warn);
+  } else if (state.scanning) {
     const progress = document.createElement('div');
     progress.className = 'lpb-progress';
     progress.textContent = state.progress || 'Scanning…';
@@ -494,6 +500,7 @@ function render() {
     return;
   }
 
+  state.signedIn = !!sdk.token;
   state.lastRebuildAt = readLastRebuildFromStorage();
   await loadLog();
 }());
