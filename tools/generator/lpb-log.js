@@ -336,7 +336,7 @@ export async function rebuildLog({ onProgress, throttle = 10 } = {}) {
       previewedAt,
       publishedAt,
       publishState,
-      publisher: publisherOnDoc || prev?.publisher || 'unknown',
+      publisher: publisherOnDoc || 'unknown',
       version: row.version || prev?.version || '',
       contentType: row.contentType || prev?.contentType || '',
       lastSeenAt: now,

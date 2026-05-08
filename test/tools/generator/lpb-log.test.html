@@ -384,7 +384,7 @@
             const fooRow = saved.data.find((r) => r.url === '/resources/guides/foo');
             expect(fooRow).to.exist;
             expect(fooRow.previewedAt).to.equal(new Date('Mon, 01 Apr 2024 10:00:00 GMT').toISOString());
-            expect(fooRow.publisher).to.equal('origPM@adobe.com'); // preserved
+            expect(fooRow.publisher).to.equal('unknown'); // no publishedBy in marker, prev not used
             expect(fooRow.version).to.equal('1.0.1'); // updated from marker
             expect(fooRow.status).to.equal('active');
             expect(fooRow.publishState).to.equal('unpublished'); // Helix mock returns {}
