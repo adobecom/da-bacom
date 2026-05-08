@@ -858,19 +858,17 @@ class LandingPageForm extends LitElement {
       window.open(getCacheBustUrl(STAGE_ORIGIN + this.previewPath), '_blank');
     }
     if (pageResult.success) {
-      await this.logPreview(saveResult.publishedBy);
+      await this.logPreview();
     }
   }
 
-  async logPreview(publisher) {
+  async logPreview() {
     try {
-      const resolvedPublisher = publisher ?? resolvePublisher(daContext, this.token, this.imsDetails);
       const contentType = this.form.contentType && this.form.gated
         ? `${this.form.contentType}-${this.form.gated}`.toLowerCase()
         : '';
       await appendLogRow({
         url: this.form.url,
-        publisher: resolvedPublisher,
         version: LPB_VERSION,
         contentType,
       });

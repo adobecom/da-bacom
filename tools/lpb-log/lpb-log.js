@@ -12,7 +12,8 @@ const COLUMNS = [
   { key: 'previewedAt', label: 'Previewed' },
   { key: 'publishedAt', label: 'Published' },
   { key: 'publishState', label: 'Publish State' },
-  { key: 'publisher', label: 'Publisher' },
+  { key: 'previewedBy', label: 'Previewed By' },
+  { key: 'publishedBy', label: 'Published By' },
   { key: 'contentType', label: 'Content Type' },
 ];
 /** Table columns plus audit fields useful in spreadsheets */
@@ -287,7 +288,7 @@ function createTableEl(rows) {
     publishedTd.textContent = formatDate(row.publishedAt);
     tr.appendChild(publishedTd);
 
-    ['publishState', 'publisher', 'contentType'].forEach((key) => {
+    ['publishState', 'previewedBy', 'publishedBy', 'contentType'].forEach((key) => {
       const td = document.createElement('td');
       const v = row[key];
       td.textContent = v != null && v !== '' ? String(v) : '—';

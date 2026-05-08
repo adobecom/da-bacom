@@ -226,7 +226,6 @@
 
             const res = await appendLogRow({
               url: '/resources/guides/my-page.html',
-              publisher: 'pm@adobe.com',
               version: '1.0.0',
               contentType: 'guide-ungated',
             });
@@ -243,7 +242,6 @@
             expect(saved.data).to.have.lengthOf(1);
             expect(saved.data[0]).to.include({
               url: '/resources/guides/my-page',
-              publisher: 'pm@adobe.com',
               version: '1.0.0',
               contentType: 'guide-ungated',
               status: 'active',
@@ -280,7 +278,6 @@
 
             await appendLogRow({
               url: '/resources/guides/my-page.html',
-              publisher: 'other@adobe.com',
               version: '1.0.1',
               contentType: 'guide-ungated',
             });
@@ -288,9 +285,6 @@
             const putCall = daFetch.getCalls().find((c) => c.args[1]?.method === 'PUT');
             const saved = JSON.parse(await putCall.args[1].body.get('data').text());
             expect(saved.data).to.have.lengthOf(1);
-            expect(saved.data[0].previewedAt).to.equal(existingPreviewedAt);
-            expect(saved.data[0].publishState).to.equal('published');
-            expect(saved.data[0].publisher).to.equal('other@adobe.com');
             expect(saved.data[0].version).to.equal('1.0.1');
             expect(saved.data[0].lastSeenAt).to.not.equal(existingPreviewedAt);
           });
@@ -303,7 +297,7 @@
 
           it('does not throw when save fails; logs via lana', async () => {
             daFetch.callsFake(async () => { throw new Error('boom'); });
-            const res = await appendLogRow({ url: '/resources/guides/x', publisher: 'p' });
+            const res = await appendLogRow({ url: '/resources/guides/x' });
             expect(res).to.be.null;
             expect(window.lana.log.called).to.be.true;
           });
@@ -386,14 +380,16 @@
             const fooRow = saved.data.find((r) => r.url === '/resources/guides/foo');
             expect(fooRow).to.exist;
             expect(fooRow.previewedAt).to.equal(new Date('Mon, 01 Apr 2024 10:00:00 GMT').toISOString());
-            expect(fooRow.publisher).to.equal('unknown'); // no publishedBy in marker, no DA header
+            expect(fooRow.previewedBy).to.equal('');
+            expect(fooRow.publishedBy).to.equal('');
             expect(fooRow.version).to.equal('1.0.1'); // updated from marker
             expect(fooRow.status).to.equal('active');
             expect(fooRow.publishState).to.equal('unpublished'); // Helix mock returns {}
 
             const barRow = saved.data.find((r) => r.url === '/resources/reports/bar');
             expect(barRow).to.exist;
-            expect(barRow.publisher).to.equal('barPM@adobe.com');
+            expect(barRow.previewedBy).to.equal('');
+            expect(barRow.publishedBy).to.equal('');
             expect(barRow.contentType).to.equal('report');
             expect(barRow.publishState).to.equal('unpublished'); // Helix mock returns {}
 
@@ -496,9 +492,9 @@
             expect(sourceGetForPngOrDir, 'non-html items must not be fetched for source').to.be.false;
           });
 
-          it('uses marker publishedBy over versionlist when marker has a real value', async () => {
+          it('populates previewedBy and publishedBy from Helix status API', async () => {
             setCrawlItems([
-              { path: `/adobecom/da-bacom${SCAN_ROOT}/guides/both.html`, ext: 'html' },
+              { path: `/adobecom/da-bacom${SCAN_ROOT}/guides/attributed.html`, ext: 'html' },
             ]);
 
             daFetch.callsFake(async (url, opts = {}) => {
@@ -509,86 +505,47 @@
               if (url.includes(logSourcePath) && method === 'PUT') {
                 return { ok: true, json: async () => ({}) };
               }
-              if (url.includes('admin.hlx.page')) return { ok: true, json: async () => ({}) };
-              if (url.includes('/source/') && url.includes('guides/both')) {
+              if (url.includes('admin.hlx.page/status') && url.includes('attributed')) {
                 return {
                   ok: true,
-                  headers: new Headers(),
-                  text: async () => buildMarkerHtml({
-                    version: '1.0.0',
-                    extra: '<div><div>publishedBy</div><div>actualPublisher@adobe.com</div></div>',
+                  json: async () => ({
+                    preview: { lastModified: 'Mon, 01 Apr 2024 10:00:00 GMT', lastModifiedBy: 'previewer@adobe.com' },
+                    live: { lastModified: 'Tue, 02 Apr 2024 10:00:00 GMT', lastModifiedBy: 'publisher@adobe.com' },
                   }),
                 };
               }
-              if (url.includes('/versionlist/') && url.includes('guides/both')) {
-                return { ok: true, json: async () => [{ users: [{ email: 'versionUser@adobe.com' }], timestamp: 1000 }] };
-              }
-              return { ok: false, json: async () => ({}) };
-            });
-
-            await rebuildLog();
-            const putCall = daFetch.getCalls().find((c) => c.args[1]?.method === 'PUT');
-            const saved = JSON.parse(await putCall.args[1].body.get('data').text());
-            const row = saved.data.find((r) => r.url === '/resources/guides/both');
-            expect(row.publisher).to.equal('actualPublisher@adobe.com');
-          });
-
-          it('falls back to versionlist when marker publishedBy is "unknown"', async () => {
-            setCrawlItems([
-              { path: `/adobecom/da-bacom${SCAN_ROOT}/guides/unknown-marker.html`, ext: 'html' },
-            ]);
-
-            daFetch.callsFake(async (url, opts = {}) => {
-              const method = opts.method || 'GET';
-              if (url.includes(logSourcePath) && method === 'GET') {
-                return { ok: true, json: async () => buildSheetResponse([]) };
-              }
-              if (url.includes(logSourcePath) && method === 'PUT') {
-                return { ok: true, json: async () => ({}) };
-              }
               if (url.includes('admin.hlx.page')) return { ok: true, json: async () => ({}) };
-              if (url.includes('/source/') && url.includes('unknown-marker')) {
-                return {
-                  ok: true,
-                  headers: new Headers(),
-                  text: async () => buildMarkerHtml({
-                    version: '1.0.0',
-                    extra: '<div><div>publishedBy</div><div>unknown</div></div>',
-                  }),
-                };
-              }
-              if (url.includes('/versionlist/') && url.includes('unknown-marker')) {
-                return { ok: true, json: async () => [{ users: [{ email: 'realPerson@adobe.com' }], timestamp: 1000 }] };
-              }
-              return { ok: false, json: async () => ({}) };
-            });
-
-            await rebuildLog();
-            const putCall = daFetch.getCalls().find((c) => c.args[1]?.method === 'PUT');
-            const saved = JSON.parse(await putCall.args[1].body.get('data').text());
-            const row = saved.data.find((r) => r.url === '/resources/guides/unknown-marker');
-            expect(row.publisher).to.equal('realPerson@adobe.com');
-          });
-
-          it('falls back to versionlist when marker has no publishedBy', async () => {
-            setCrawlItems([
-              { path: `/adobecom/da-bacom${SCAN_ROOT}/guides/no-publisher.html`, ext: 'html' },
-            ]);
-
-            daFetch.callsFake(async (url, opts = {}) => {
-              const method = opts.method || 'GET';
-              if (url.includes(logSourcePath) && method === 'GET') {
-                return { ok: true, json: async () => buildSheetResponse([]) };
-              }
-              if (url.includes(logSourcePath) && method === 'PUT') {
-                return { ok: true, json: async () => ({}) };
-              }
-              if (url.includes('admin.hlx.page')) return { ok: true, json: async () => ({}) };
-              if (url.includes('/source/') && url.includes('no-publisher')) {
+              if (url.includes('/source/') && url.includes('guides/attributed')) {
                 return { ok: true, headers: new Headers(), text: async () => buildMarkerHtml({ version: '1.0.0' }) };
               }
-              if (url.includes('/versionlist/') && url.includes('no-publisher')) {
-                return { ok: true, json: async () => [{ users: [{ email: 'versionUser@adobe.com' }], timestamp: 1000 }] };
+              return { ok: false, json: async () => ({}) };
+            });
+
+            await rebuildLog();
+            const putCall = daFetch.getCalls().find((c) => c.args[1]?.method === 'PUT');
+            const saved = JSON.parse(await putCall.args[1].body.get('data').text());
+            const row = saved.data.find((r) => r.url === '/resources/guides/attributed');
+            expect(row.previewedBy).to.equal('previewer@adobe.com');
+            expect(row.publishedBy).to.equal('publisher@adobe.com');
+            expect(row.publishState).to.equal('published');
+          });
+
+          it('leaves previewedBy and publishedBy empty when Helix has no attribution', async () => {
+            setCrawlItems([
+              { path: `/adobecom/da-bacom${SCAN_ROOT}/guides/no-attr.html`, ext: 'html' },
+            ]);
+
+            daFetch.callsFake(async (url, opts = {}) => {
+              const method = opts.method || 'GET';
+              if (url.includes(logSourcePath) && method === 'GET') {
+                return { ok: true, json: async () => buildSheetResponse([]) };
+              }
+              if (url.includes(logSourcePath) && method === 'PUT') {
+                return { ok: true, json: async () => ({}) };
+              }
+              if (url.includes('admin.hlx.page')) return { ok: true, json: async () => ({}) };
+              if (url.includes('/source/') && url.includes('guides/no-attr')) {
+                return { ok: true, headers: new Headers(), text: async () => buildMarkerHtml({ version: '1.0.0' }) };
               }
               return { ok: false, json: async () => ({}) };
             });
@@ -596,8 +553,9 @@
             await rebuildLog();
             const putCall = daFetch.getCalls().find((c) => c.args[1]?.method === 'PUT');
             const saved = JSON.parse(await putCall.args[1].body.get('data').text());
-            const row = saved.data.find((r) => r.url === '/resources/guides/no-publisher');
-            expect(row.publisher).to.equal('versionUser@adobe.com');
+            const row = saved.data.find((r) => r.url === '/resources/guides/no-attr');
+            expect(row.previewedBy).to.equal('');
+            expect(row.publishedBy).to.equal('');
           });
         });
       });

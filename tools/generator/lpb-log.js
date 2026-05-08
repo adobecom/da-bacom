@@ -2,9 +2,7 @@
 import { daFetch } from 'da-fetch';
 import { crawl } from 'https://da.live/nx/public/utils/tree.js';
 import { getSheets, saveSheets } from './da-utils.js';
-import {
-  ORG, REPO, ADMIN_DA_ORIGIN, getHelixResourceStatusUrl, getAdminDaVersionListUrl, getScanRoots,
-} from './paths-config.js';
+import { ORG, REPO, ADMIN_DA_ORIGIN, getHelixResourceStatusUrl, getScanRoots } from './paths-config.js';
 
 export const LOG_PATH = '/tools/page-builder/landing-page/data/lpb-log';
 export const SCAN_ROOT = '/resources';
@@ -189,31 +187,13 @@ async function fetchSourceDoc(repoRelativePath) {
   }
 }
 
-async function fetchVersionListAuthor(repoRelativePath) {
-  try {
-    const url = getAdminDaVersionListUrl(repoRelativePath);
-    const res = await daFetch(url);
-    if (!res.ok) return null;
-    const versions = await res.json();
-    if (!Array.isArray(versions)) return null;
-    const sorted = [...versions].sort(
-      (a, b) => (Number(b.timestamp) || 0) - (Number(a.timestamp) || 0),
-    );
-    for (const v of sorted) {
-      const email = v?.users?.[0]?.email;
-      if (email && String(email).trim()) return String(email).trim();
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
+const EMPTY_STATUS = { publishState: 'unpublished', previewedAt: null, publishedAt: null, previewedBy: null, publishedBy: null };
 
 async function fetchPageStatus(repoRelativePath) {
   try {
     const path = String(repoRelativePath || '').replace(/\.html$/, '');
     const res = await daFetch(getHelixResourceStatusUrl(`${path}.html`));
-    if (!res.ok) return { publishState: 'unpublished', previewedAt: null, publishedAt: null };
+    if (!res.ok) return EMPTY_STATUS;
     const json = await res.json();
     return {
       publishState: json.live?.lastModified ? 'published' : 'unpublished',
@@ -221,9 +201,11 @@ async function fetchPageStatus(repoRelativePath) {
         ? new Date(json.preview.lastModified).toISOString() : null,
       publishedAt: json.live?.lastModified
         ? new Date(json.live.lastModified).toISOString() : null,
+      previewedBy: json.preview?.lastModifiedBy || null,
+      publishedBy: json.live?.lastModifiedBy || null,
     };
   } catch {
-    return { publishState: 'unpublished', previewedAt: null, publishedAt: null };
+    return EMPTY_STATUS;
   }
 }
 
@@ -236,19 +218,24 @@ export async function getLog() {
  * Append or refresh a single row (called from LPB on publish).
  * Non-throwing: logs via lana on failure so publish flow is never blocked.
  */
-export async function appendLogRow({ url, publisher, version, contentType } = {}) {
+export async function appendLogRow({ url, version, contentType } = {}) {
   if (!url) return null;
   const normalizedUrl = stripHtmlExt(url);
   const now = new Date().toISOString();
   try {
-    const existing = await getLog();
+    const [existing, status] = await Promise.all([
+      getLog(),
+      fetchPageStatus(normalizedUrl),
+    ]);
     const index = existing.findIndex((row) => row.url === normalizedUrl);
     const prev = index >= 0 ? existing[index] : null;
     const row = {
       url: normalizedUrl,
-      previewedAt: prev?.previewedAt || now,
-      publishState: prev?.publishState || 'unpublished',
-      publisher: publisher || prev?.publisher || 'unknown',
+      previewedAt: status.previewedAt || prev?.previewedAt || now,
+      publishedAt: status.publishedAt || prev?.publishedAt || null,
+      publishState: status.publishState || prev?.publishState || 'unpublished',
+      previewedBy: status.previewedBy || prev?.previewedBy || '',
+      publishedBy: status.publishedBy || prev?.publishedBy || '',
       version: version || prev?.version || '',
       contentType: contentType || prev?.contentType || deriveContentType(normalizedUrl) || '',
       lastSeenAt: now,
@@ -300,14 +287,9 @@ export async function scanResources({ onProgress, throttle = 10 } = {}) {
         const { doc } = await fetchSourceDoc(relativePath);
         const marker = extractMarker(doc);
         if (marker) {
-          const fromMarker = (marker.publishedBy || marker.publisher || '').trim();
-          const validMarker = fromMarker && fromMarker !== 'unknown';
-          // eslint-disable-next-line no-await-in-loop
-          const publisher = validMarker ? fromMarker : (await fetchVersionListAuthor(relativePath) || '');
           found.push({
             url: stripHtmlExt(relativePath),
             version: marker.version ?? '',
-            publisher,
             contentType: deriveContentType(relativePath) || '',
           });
         }
@@ -354,14 +336,14 @@ export async function rebuildLog({ onProgress, throttle = 10 } = {}) {
 
   const active = found.map((row, i) => {
     const prev = byUrl.get(row.url);
-    const publisherOnDoc = row.publisher?.trim();
-    const { publishState, previewedAt, publishedAt } = pageStatuses[i];
+    const { publishState, previewedAt, publishedAt, previewedBy, publishedBy } = pageStatuses[i];
     return {
       url: row.url,
       previewedAt,
       publishedAt,
       publishState,
-      publisher: publisherOnDoc || 'unknown',
+      previewedBy: previewedBy || '',
+      publishedBy: publishedBy || '',
       version: row.version || prev?.version || '',
       contentType: row.contentType || prev?.contentType || '',
       lastSeenAt: now,
