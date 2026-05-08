@@ -88,3 +88,10 @@ export function getHelixResourceStatusUrl(repoRelativePath) {
   const p = String(repoRelativePath || '').replace(/^\/+/, '');
   return `${ADMIN_ORIGIN}/status/${ORG}/${REPO}/${BRANCH}/${p}`;
 }
+
+export function getAdminDaVersionListUrl(repoRelativePath) {
+  let htmlPath = String(repoRelativePath || '').trim();
+  if (!htmlPath.startsWith('/')) htmlPath = `/${htmlPath}`;
+  if (!htmlPath.endsWith('.html')) htmlPath = `${htmlPath.replace(/\.html$/, '')}.html`;
+  return `${ADMIN_DA_ORIGIN}/versionlist/${ORG}/${REPO}${htmlPath}`;
+}

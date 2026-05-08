@@ -354,8 +354,10 @@
               }
               if (url.includes('admin.hlx.page')) return { ok: true, json: async () => ({}) };
               if (url.includes('/source/') && url.includes('guides/foo')) {
-                const h = new Headers();
-                return { ok: true, headers: h, text: async () => buildMarkerHtml({ version: '1.0.1' }) };
+                return { ok: true, headers: new Headers(), text: async () => buildMarkerHtml({ version: '1.0.1' }) };
+              }
+              if (url.includes('/versionlist/') && url.includes('guides/foo')) {
+                return { ok: false, json: async () => ({}) };
               }
               if (url.includes('/source/') && url.includes('reports/bar')) {
                 return { ok: true, headers: new Headers(), text: async () => buildMarkerHtml({ version: '1.0.0', extra: '<div><div>publishedBy</div><div>barPM@adobe.com</div></div>' }) };
@@ -494,7 +496,7 @@
             expect(sourceGetForPngOrDir, 'non-html items must not be fetched for source').to.be.false;
           });
 
-          it('uses marker publishedBy over DA last-modified-by when marker has a real value', async () => {
+          it('uses marker publishedBy over versionlist when marker has a real value', async () => {
             setCrawlItems([
               { path: `/adobecom/da-bacom${SCAN_ROOT}/guides/both.html`, ext: 'html' },
             ]);
@@ -509,16 +511,17 @@
               }
               if (url.includes('admin.hlx.page')) return { ok: true, json: async () => ({}) };
               if (url.includes('/source/') && url.includes('guides/both')) {
-                const h = new Headers();
-                h.set('x-da-last-modified-by', 'lastTouched@adobe.com');
                 return {
                   ok: true,
-                  headers: h,
+                  headers: new Headers(),
                   text: async () => buildMarkerHtml({
                     version: '1.0.0',
                     extra: '<div><div>publishedBy</div><div>actualPublisher@adobe.com</div></div>',
                   }),
                 };
+              }
+              if (url.includes('/versionlist/') && url.includes('guides/both')) {
+                return { ok: true, json: async () => [{ users: [{ email: 'versionUser@adobe.com' }], timestamp: 1000 }] };
               }
               return { ok: false, json: async () => ({}) };
             });
@@ -530,7 +533,7 @@
             expect(row.publisher).to.equal('actualPublisher@adobe.com');
           });
 
-          it('falls back to DA last-modified-by when marker publishedBy is "unknown"', async () => {
+          it('falls back to versionlist when marker publishedBy is "unknown"', async () => {
             setCrawlItems([
               { path: `/adobecom/da-bacom${SCAN_ROOT}/guides/unknown-marker.html`, ext: 'html' },
             ]);
@@ -545,16 +548,17 @@
               }
               if (url.includes('admin.hlx.page')) return { ok: true, json: async () => ({}) };
               if (url.includes('/source/') && url.includes('unknown-marker')) {
-                const h = new Headers();
-                h.set('x-da-last-modified-by', 'realPerson@adobe.com');
                 return {
                   ok: true,
-                  headers: h,
+                  headers: new Headers(),
                   text: async () => buildMarkerHtml({
                     version: '1.0.0',
                     extra: '<div><div>publishedBy</div><div>unknown</div></div>',
                   }),
                 };
+              }
+              if (url.includes('/versionlist/') && url.includes('unknown-marker')) {
+                return { ok: true, json: async () => [{ users: [{ email: 'realPerson@adobe.com' }], timestamp: 1000 }] };
               }
               return { ok: false, json: async () => ({}) };
             });
@@ -566,7 +570,7 @@
             expect(row.publisher).to.equal('realPerson@adobe.com');
           });
 
-          it('falls back to DA last-modified-by when marker has no publishedBy', async () => {
+          it('falls back to versionlist when marker has no publishedBy', async () => {
             setCrawlItems([
               { path: `/adobecom/da-bacom${SCAN_ROOT}/guides/no-publisher.html`, ext: 'html' },
             ]);
@@ -581,9 +585,10 @@
               }
               if (url.includes('admin.hlx.page')) return { ok: true, json: async () => ({}) };
               if (url.includes('/source/') && url.includes('no-publisher')) {
-                const h = new Headers();
-                h.set('x-da-last-modified-by', 'daUser@adobe.com');
-                return { ok: true, headers: h, text: async () => buildMarkerHtml({ version: '1.0.0' }) };
+                return { ok: true, headers: new Headers(), text: async () => buildMarkerHtml({ version: '1.0.0' }) };
+              }
+              if (url.includes('/versionlist/') && url.includes('no-publisher')) {
+                return { ok: true, json: async () => [{ users: [{ email: 'versionUser@adobe.com' }], timestamp: 1000 }] };
               }
               return { ok: false, json: async () => ({}) };
             });
@@ -592,7 +597,7 @@
             const putCall = daFetch.getCalls().find((c) => c.args[1]?.method === 'PUT');
             const saved = JSON.parse(await putCall.args[1].body.get('data').text());
             const row = saved.data.find((r) => r.url === '/resources/guides/no-publisher');
-            expect(row.publisher).to.equal('daUser@adobe.com');
+            expect(row.publisher).to.equal('versionUser@adobe.com');
           });
         });
       });
