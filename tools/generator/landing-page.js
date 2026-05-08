@@ -266,8 +266,14 @@ class LandingPageForm extends LitElement {
     if (DEBUG) console.clear();
     document.addEventListener('show-toast', this.handleToast);
     const ims = await initIms();
-    this.imsDetails = ims;
     this.token = ims?.accessToken?.token;
+    // DA may pre-seed initIms with only a token (no profile). If so, fetch profile directly.
+    if (ims && !ims.email && !ims.displayName && window.adobeIMS?.isSignedInUser?.()) {
+      const profile = await window.adobeIMS.getProfile().catch(() => null);
+      this.imsDetails = profile ? { ...profile, accessToken: ims.accessToken } : ims;
+    } else {
+      this.imsDetails = ims;
+    }
     this.loadFormState();
 
     if (!this.form.contentType || !this.form.gated || !this.form.region) this.form.pageName = '';
