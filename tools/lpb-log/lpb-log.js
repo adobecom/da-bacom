@@ -448,7 +448,7 @@ function render() {
   if (!state.signedIn) {
     const warn = document.createElement('div');
     warn.className = 'lpb-warning';
-    warn.textContent = 'You must be signed in to run a scan.';
+    warn.textContent = 'Sign in to run a scan or see results.';
     header.appendChild(warn);
   } else if (state.scanning) {
     const progress = document.createElement('div');
