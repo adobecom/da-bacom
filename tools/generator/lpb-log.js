@@ -87,6 +87,25 @@ export function decodeJwtPayloadSegment(segment) {
   }
 }
 
+const ADOBE_ALLOWED_DOMAINS = ['adobe.com', 'adobelogin.com'];
+
+function isAllowedHost(hostname) {
+  const host = String(hostname || '').toLowerCase();
+  return ADOBE_ALLOWED_DOMAINS.some((domain) => host === domain || host.endsWith(`.${domain}`));
+}
+
+function isAdobeNamespacedKey(key) {
+  if (!key || typeof key !== 'string') return false;
+  try {
+    const { hostname } = new URL(key);
+    return !!(hostname && isAllowedHost(hostname));
+  } catch {
+    // Not a URL; fall through to strict token matching.
+  }
+  const lower = key.toLowerCase();
+  return /(^|[./:@_-])(adobe\.com|adobelogin\.com)([./:@_-]|$)/.test(lower);
+}
+
 function imsPublisherFromPayload(payload) {
   if (!payload || typeof payload !== 'object') return null;
   if (payload.email) return String(payload.email);
@@ -95,7 +114,7 @@ function imsPublisherFromPayload(payload) {
   if (payload.user_id) return String(payload.user_id);
   if (payload.sub) return String(payload.sub);
   for (const key of Object.keys(payload)) {
-    if (key.includes('adobelogin.com') || key.includes('adobe.com')) {
+    if (isAdobeNamespacedKey(key)) {
       const v = payload[key];
       if (typeof v === 'string' && v.includes('@')) return v;
       if (v && typeof v === 'object') {
