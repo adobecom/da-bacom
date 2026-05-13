@@ -4,7 +4,7 @@ module.exports = {
     {
       tcid: '0',
       name: '@event-speakers',
-      path: '/test/features/blocks/event-speakers',
+      path: '/drafts/nala/blocks/event-speakers/event-speakers',
       speakerIdx: 1,
       tags: '@event-speakers @smoke @regression @bacom @bacomSmoke',
     },

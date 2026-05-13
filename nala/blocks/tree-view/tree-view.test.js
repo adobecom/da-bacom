@@ -8,7 +8,7 @@ const miloLibs = process.env.MILO_LIBS || '';
 
 test.describe('BACOM Tree-View Block Test Suite', () => {
   test(
-    `${features[0].name}, @bacom_live, ${features[0].tags}, https://bacom.adobe.com`,
+    `${features[0].name}, @bacom_live, ${features[0].tags}`,
     async ({ page, baseURL }) => {
       const treeView = new TreeView(page);
       const testPage = `${baseURL}${features[0].path}${miloLibs}`;
