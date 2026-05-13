@@ -1,4 +1,4 @@
-import LOCALES from '../../scripts/locales.js';
+import { LOCALES } from '../../scripts/scripts.js';
 
 export const ORG = 'adobecom';
 export const REPO = 'da-bacom';
