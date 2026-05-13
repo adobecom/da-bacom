@@ -17,7 +17,10 @@
   <script type="module">
     import { runTests } from '@web/test-runner-mocha';
     import { expect } from '@esm-bundle/chai';
-    import { sanitizeFileName, saveFile } from '../../../tools/generator/da-utils.js';
+    import {
+      sanitizeFileName,
+      saveFile,
+    } from '../../../tools/generator/da-utils.js';
     import { daFetch } from './mocks/da-fetch.js';
 
     runTests(() => {

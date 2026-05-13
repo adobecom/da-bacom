@@ -2,13 +2,16 @@
 /* eslint-disable no-console */
 /* eslint-disable import/no-unresolved */
 import { daFetch, replaceHtml } from 'da-fetch';
-import { DA_ORIGIN } from 'constants';
-import { ORG, REPO } from './paths-config.js';
+import {
+  ORG,
+  REPO,
+  ADMIN_DA_ORIGIN,
+} from './paths-config.js';
 
 function getDaPath(path, isHtml) {
   const basePath = path.replace(/\.html$/, '');
   const htmlPath = isHtml ? `${basePath}.html` : basePath;
-  return `${DA_ORIGIN}/source/${ORG}/${REPO}${htmlPath}`;
+  return `${ADMIN_DA_ORIGIN}/source/${ORG}/${REPO}${htmlPath}`;
 }
 
 function getSheetData(json) {
@@ -41,17 +44,12 @@ export async function getSheets(path) {
 export async function getSource(path) {
   const daPath = getDaPath(path, true);
   const opts = { method: 'GET', headers: { accept: '*/*' } };
-
   try {
     const response = await daFetch(daPath, opts);
-    if (response.ok) {
-      const html = await response.text();
-      const newParser = new DOMParser();
-      const parsedPage = newParser.parseFromString(html, 'text/html');
-
-      return parsedPage;
-    }
-  /* c8 ignore next 5 */
+    if (!response.ok) return null;
+    const html = await response.text();
+    return new DOMParser().parseFromString(html, 'text/html');
+  /* c8 ignore next 3 */
   } catch (error) {
     console.log(`Error fetching document ${daPath}`, error);
   }
@@ -109,7 +107,7 @@ export function toSheetFormat(data) {
 }
 
 export async function saveSheets(path, data) {
-  const daPath = `${DA_ORIGIN}/source/${ORG}/${REPO}${path}`;
+  const daPath = `${ADMIN_DA_ORIGIN}/source/${ORG}/${REPO}${path}`;
   const formData = new FormData();
 
   const jsonData = toSheetFormat(data);
@@ -217,7 +215,7 @@ export async function saveFile(path, file) {
 export async function checkPath(path) {
   const parentDir = path.replace(/\/[^/]+$/, '');
   const fileName = path.split('/').pop();
-  const listUrl = `${DA_ORIGIN}/list/${ORG}/${REPO}${parentDir}`;
+  const listUrl = `${ADMIN_DA_ORIGIN}/list/${ORG}/${REPO}${parentDir}`;
   try {
     const listResponse = await daFetch(listUrl, { method: 'GET' });
     if (!listResponse.ok) return false;

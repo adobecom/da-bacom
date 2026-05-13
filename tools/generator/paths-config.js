@@ -1,17 +1,33 @@
+import LOCALES from '../../scripts/locales.js';
+
 export const ORG = 'adobecom';
 export const REPO = 'da-bacom';
 export const BRANCH = 'main';
 
 export const STAGE_ORIGIN = 'https://business.stage.adobe.com';
 export const CONTENT_ORIGIN = 'https://content.da.live';
+/** DA Admin API (source, list, versionlist) — see https://docs.da.live/developers/api */
+export const ADMIN_DA_ORIGIN = 'https://admin.da.live';
 export const ADMIN_ORIGIN = 'https://admin.hlx.page';
 export const AEM_PAGE_ORIGIN = `https://${BRANCH}--${REPO}--${ORG}.aem.page`;
 export const AEM_LIVE_ORIGIN = `https://${BRANCH}--${REPO}--${ORG}.aem.live`;
 
 export const CONTENT_PATH_PREFIX = `/${ORG}/${REPO}`;
+export const DA_ORIGIN = 'https://da.live';
 export const TEMPLATES_BASE_PATH = '/docs/library/templates/';
 
 export const ADMIN_STATUS_URL = `${ADMIN_ORIGIN}/status/${ORG}/${REPO}/${BRANCH}/`;
+
+export function getScanRoots(subPath = '/resources') {
+  const sub = subPath.startsWith('/') ? subPath : `/${subPath}`;
+  return Object.keys(LOCALES).map((prefix) => (prefix ? `/${prefix}${sub}` : sub));
+}
+
+export function getDAEditUrl(repoRelativePath) {
+  if (!repoRelativePath) return undefined;
+  const p = repoRelativePath.startsWith('/') ? repoRelativePath : `/${repoRelativePath}`;
+  return `${DA_ORIGIN}/edit#${CONTENT_PATH_PREFIX}${p}`;
+}
 
 export function getPathFromUrl(url) {
   if (!url || typeof url !== 'string') return url;
@@ -62,4 +78,20 @@ export function getTemplateLink(name) {
 
 export function getAdminPreviewUrl(path) {
   return `${ADMIN_ORIGIN}/preview/${ORG}/${REPO}/${BRANCH}${path}`;
+}
+
+/**
+ * Helix admin status for one resource (preview/live lastModified, lastModifiedBy).
+ * @param {string} repoRelativePath e.g. `/resources/guides/foo.html`
+ */
+export function getHelixResourceStatusUrl(repoRelativePath) {
+  const p = String(repoRelativePath || '').replace(/^\/+/, '');
+  return `${ADMIN_ORIGIN}/status/${ORG}/${REPO}/${BRANCH}/${p}`;
+}
+
+export function getAdminDaVersionListUrl(repoRelativePath) {
+  let htmlPath = String(repoRelativePath || '').trim();
+  if (!htmlPath.startsWith('/')) htmlPath = `/${htmlPath}`;
+  if (!htmlPath.endsWith('.html')) htmlPath = `${htmlPath.replace(/\.html$/, '')}.html`;
+  return `${ADMIN_DA_ORIGIN}/versionlist/${ORG}/${REPO}${htmlPath}`;
 }

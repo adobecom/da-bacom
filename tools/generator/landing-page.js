@@ -11,6 +11,7 @@ import { LIBS } from '../../scripts/scripts.js';
 import { createToast, TOAST_TYPES } from './toast/toast.js';
 import { STATUS as PATH_STATUS } from './path-input/path-input.js';
 import { getSource, saveSource, saveFile, getSheets, checkPath } from './da-utils.js';
+import { appendLogRow, resolvePublisher } from './lpb-log.js';
 import {
   STAGE_ORIGIN,
   ADMIN_STATUS_URL,
@@ -46,12 +47,13 @@ import {
 } from './form-sections.js';
 
 const withTimeout = (p, ms, def = null) => Promise.race([p, new Promise((r) => { setTimeout(() => r(def), ms); })]);
-await withTimeout(DA_SDK, 5000);
+const sdk = await withTimeout(DA_SDK, 5000);
+const daContext = sdk?.context || null;
 
 const style = await getStyle(import.meta.url.split('?')[0]);
 const searchParams = new URLSearchParams(window.location.search);
 
-const LPB_VERSION = '1.0.0';
+const LPB_VERSION = '1.1.0';
 const FORM_STORAGE_KEY = 'landing-page-builder';
 const OPTIONS_LOADING = [{ value: 'loading', label: 'Loading...' }];
 const OPTIONS_ERROR = [{ value: 'error', label: 'Error loading options' }];
@@ -263,8 +265,15 @@ class LandingPageForm extends LitElement {
     super.connectedCallback();
     if (DEBUG) console.clear();
     document.addEventListener('show-toast', this.handleToast);
-    const token = await initIms();
-    this.token = token?.accessToken?.token;
+    const ims = await initIms();
+    this.token = ims?.accessToken?.token;
+    // DA may pre-seed initIms with only a token (no profile). If so, fetch profile directly.
+    if (ims && !ims.email && !ims.displayName && window.adobeIMS?.isSignedInUser?.()) {
+      const profile = await window.adobeIMS.getProfile().catch(() => null);
+      this.imsDetails = profile ? { ...profile, accessToken: ims.accessToken } : ims;
+    } else {
+      this.imsDetails = ims;
+    }
     this.loadFormState();
 
     if (!this.form.contentType || !this.form.gated || !this.form.region) this.form.pageName = '';
@@ -722,7 +731,13 @@ class LandingPageForm extends LitElement {
       placeholders.assetHeadline,
       placeholders.pdfAsset,
     );
-    generatedPage = addHiddenTable(generatedPage, { name: FORM_STORAGE_KEY, version: LPB_VERSION }, 'page-builder');
+    const freshSdk = await DA_SDK.catch(() => null);
+    const publishedBy = resolvePublisher(freshSdk ?? daContext, this.token, this.imsDetails);
+    generatedPage = addHiddenTable(generatedPage, {
+      name: FORM_STORAGE_KEY,
+      version: LPB_VERSION,
+      publishedBy,
+    }, 'page-builder');
     if (DEBUG) generatedPage = addHiddenTable(generatedPage, this.form, 'form-data');
 
     try {
@@ -730,10 +745,10 @@ class LandingPageForm extends LitElement {
       await saveSource(this.form.url, generatedPage);
       if (DEBUG) console.log('[LPB][Response] PUT page ok:', this.form.url);
       this.requestUpdate();
-      return true;
+      return { success: true, publishedBy };
     } catch (error) {
       if (DEBUG) console.error('[Response] PUT page failed:', this.form.url, error);
-      return false;
+      return { success: false };
     }
   }
 
@@ -813,8 +828,8 @@ class LandingPageForm extends LitElement {
     }
 
     showToast(MESSAGES.SAVING_PAGE, TOAST_TYPES.INFO, 5000);
-    const saveSuccess = await this.savePage();
-    if (!saveSuccess) {
+    const saveResult = await this.savePage();
+    if (!saveResult.success) {
       if (DEBUG) console.error('[Save & Preview] save failed, aborting');
       showToast(MESSAGES.SAVE_PAGE_FAILED, TOAST_TYPES.ERROR, 5000);
       return;
@@ -841,6 +856,24 @@ class LandingPageForm extends LitElement {
     if (pageResult.success && pdfResult.success) {
       showToast(MESSAGES.PREVIEW_UPDATED, TOAST_TYPES.SUCCESS, 5000);
       window.open(getCacheBustUrl(STAGE_ORIGIN + this.previewPath), '_blank');
+    }
+    if (pageResult.success) {
+      await this.logPreview();
+    }
+  }
+
+  async logPreview() {
+    try {
+      const contentType = this.form.contentType && this.form.gated
+        ? `${this.form.contentType}-${this.form.gated}`.toLowerCase()
+        : '';
+      await appendLogRow({
+        url: this.form.url,
+        version: LPB_VERSION,
+        contentType,
+      });
+    } catch (error) {
+      if (DEBUG) console.warn('[LPB] log append failed:', error);
     }
   }
 

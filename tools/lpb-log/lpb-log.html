@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>LPB Log</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="https://use.typekit.net/hah7vzn.css">
+  <link rel="stylesheet" href="./lpb-log.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "da-sdk": "https://da.live/nx/utils/sdk.js",
+        "da-fetch": "https://da.live/nx/utils/daFetch.js",
+        "constants": "https://da.live/nx/public/utils/constants.js"
+      }
+    }
+  </script>
+  <link rel="modulepreload" href="https://da.live/nx/utils/sdk.js">
+  <script src="./lpb-log.js" type="module"></script>
+</head>
+
+<body>
+  <main>
+    <div class="lpb-log-app" aria-busy="true">
+      <div class="lpb-log-loading">Loading landing page log…</div>
+    </div>
+  </main>
+</body>
+
+</html>
