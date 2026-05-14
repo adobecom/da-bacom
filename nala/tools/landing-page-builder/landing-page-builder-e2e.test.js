@@ -166,6 +166,8 @@ test.describe('Landing Page Builder - E2E Journey Tests', () => {
     await test.step('Part A-7: Fill SEO Metadata', async () => {
       await lpb.fillSeoTitle(data.seoTitle);
       await lpb.fillSeoDescription(data.seoDescription);
+      await lpb.uploadSocialShareImage(data.socialShareImage);
+      await lpb.waitForToast('Image Uploaded', 'success', 15000);
     });
 
     await test.step('Part A-8: Fill Primary Product Name and Experience Fragment', async () => {
@@ -227,6 +229,10 @@ test.describe('Landing Page Builder - E2E Journey Tests', () => {
 
     await runCollectedStep(verificationFailures, 'Part C-5: Verify CaaS content type tag', async () => {
       await preview.verifyCaaSContentType(data.contentType);
+    });
+
+    await runCollectedStep(verificationFailures, 'Part C-6: Verify SEO metadata and social image', async () => {
+      await preview.verifySeoMetadata(data.seoTitle, data.seoDescription, { expectOgImage: true });
     });
 
     // Part D: Verify Gated Flow (form submission)
@@ -301,6 +307,8 @@ test.describe('Landing Page Builder - E2E Journey Tests', () => {
     await test.step('Part A-6: Fill SEO Metadata', async () => {
       await lpb.fillSeoTitle(data.seoTitle);
       await lpb.fillSeoDescription(data.seoDescription);
+      await lpb.uploadSocialShareImage(data.socialShareImage);
+      await lpb.waitForToast('Image Uploaded', 'success', 15000);
     });
 
     await test.step('Part A-7: Fill Primary Product Name and Experience Fragment', async () => {
@@ -363,7 +371,7 @@ test.describe('Landing Page Builder - E2E Journey Tests', () => {
     });
 
     await runCollectedStep(verificationFailures, 'Part C-6: Verify SEO metadata', async () => {
-      await preview.verifySeoMetadata(data.seoTitle, data.seoDescription);
+      await preview.verifySeoMetadata(data.seoTitle, data.seoDescription, { expectOgImage: true });
     });
 
     await runCollectedStep(verificationFailures, 'Part C-7: Verify PDF access', async () => {
@@ -412,6 +420,8 @@ test.describe('Landing Page Builder - E2E Journey Tests', () => {
     await test.step('Part A-6: Fill SEO Metadata', async () => {
       await lpb.fillSeoTitle(data.seoTitle);
       await lpb.fillSeoDescription(data.seoDescription);
+      await lpb.uploadSocialShareImage(data.socialShareImage);
+      await lpb.waitForToast('Image Uploaded', 'success', 15000);
     });
 
     await test.step('Part A-7: Fill Primary Product Name and Experience Fragment', async () => {
@@ -476,7 +486,11 @@ test.describe('Landing Page Builder - E2E Journey Tests', () => {
       await preview.verifyCaaSContentType(data.contentType);
     });
 
-    await runCollectedStep(verificationFailures, 'Part C-6: Verify video player presence', async () => {
+    await runCollectedStep(verificationFailures, 'Part C-6: Verify SEO metadata and social image', async () => {
+      await preview.verifySeoMetadata(data.seoTitle, data.seoDescription, { expectOgImage: true });
+    });
+
+    await runCollectedStep(verificationFailures, 'Part C-7: Verify video player presence', async () => {
       await preview.verifyVideoPlayer(data.videoUrl);
     });
 
@@ -519,6 +533,8 @@ test.describe('Landing Page Builder - E2E Journey Tests', () => {
     await test.step('Part A-6: Fill SEO Metadata', async () => {
       await lpb.fillSeoTitle(data.seoTitle);
       await lpb.fillSeoDescription(data.seoDescription);
+      await lpb.uploadSocialShareImage(data.socialShareImage);
+      await lpb.waitForToast('Image Uploaded', 'success', 15000);
     });
 
     await test.step('Part A-7: Fill Primary Product Name and Experience Fragment', async () => {
@@ -571,7 +587,7 @@ test.describe('Landing Page Builder - E2E Journey Tests', () => {
     });
 
     await runCollectedStep(verificationFailures, 'Part C-6: Verify SEO metadata', async () => {
-      await preview.verifySeoMetadata(data.seoTitle, data.seoDescription);
+      await preview.verifySeoMetadata(data.seoTitle, data.seoDescription, { expectOgImage: true });
     });
 
     await runCollectedStep(verificationFailures, 'Part C-7: Verify PDF access', async () => {
@@ -624,6 +640,8 @@ test.describe('Landing Page Builder - E2E Journey Tests', () => {
     await test.step('Part A-7: Fill SEO Metadata', async () => {
       await lpb.fillSeoTitle(data.seoTitle);
       await lpb.fillSeoDescription(data.seoDescription);
+      await lpb.uploadSocialShareImage(data.socialShareImage);
+      await lpb.waitForToast('Image Uploaded', 'success', 15000);
     });
 
     await test.step('Part A-8: Fill Primary Product Name and Experience Fragment', async () => {
@@ -680,7 +698,7 @@ test.describe('Landing Page Builder - E2E Journey Tests', () => {
     });
 
     await runCollectedStep(verificationFailures, 'Part C-6: Verify SEO metadata', async () => {
-      await preview.verifySeoMetadata(data.seoTitle, data.seoDescription);
+      await preview.verifySeoMetadata(data.seoTitle, data.seoDescription, { expectOgImage: true });
     });
 
     // Part D: Verify Gated Flow (form submission)

@@ -109,7 +109,7 @@ export default class LandingPagePreview {
     expect(pageContent).toContain(expectedTag);
   }
 
-  async verifySeoMetadata(title, description) {
+  async verifySeoMetadata(title, description, { expectOgImage = false } = {}) {
     if (title) {
       const ogTitle = await this.metaTitle().getAttribute('content');
       expect(ogTitle).toContain(title);
@@ -117,6 +117,11 @@ export default class LandingPagePreview {
     if (description) {
       const metaDesc = await this.metaDescription().getAttribute('content');
       expect(metaDesc).toContain(description);
+    }
+    if (expectOgImage) {
+      const ogImage = this.page.locator('meta[property="og:image"]');
+      const content = await ogImage.getAttribute('content');
+      expect(content).toMatch(/^https?:\/\//);
     }
   }
 
