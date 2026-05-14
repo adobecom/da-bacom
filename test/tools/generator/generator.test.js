@@ -31,6 +31,10 @@ const data = {
   formSuccessType: 'thank-you',
   formSuccessSection: 'form-success',
   formSuccessContent: 'You will receive a confirmation email shortly.',
+  seoMetadataTitle: 'Page title for SEO',
+  seoMetadataDescription: 'Page description for SEO',
+  primaryProductName: 'Analytics',
+  socialShareImage: 'https://content.da.live/adobecom/da-bacom/resources/share.png',
 };
 
 describe('Generator', () => {
@@ -46,6 +50,14 @@ describe('Generator', () => {
     await loadArea();
     const remainingFields = result.match(/{{[^}]+}}/g) || [];
     expect(remainingFields).to.deep.equal([]);
+  });
+
+  it('replaces social-share-image with a raw URL, not an img element', () => {
+    const tpl = '<div>{{social-share-image}}</div>';
+    const url = 'https://content.da.live/adobecom/da-bacom/media/abc.png';
+    const result = applyTemplateData(tpl, { socialShareImage: url });
+    expect(result).to.equal(`<div>${url}</div>`);
+    expect(result).to.not.include('<img');
   });
 
   it.skip('applies gated template fields correctly', async () => {

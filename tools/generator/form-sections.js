@@ -241,12 +241,20 @@ export function renderCaas(form, handleInput, { primaryProductOptions, industryO
   `;
 }
 
-export function renderSeo(form, handleInput, { primaryProductNameOptions }, hasError = () => '') {
+export function renderSeo(form, handleInput, handleImageChange, { primaryProductNameOptions }, hasError = () => '') {
   return html`
     <div class="form-row">
       <h2>Metadata</h2>
       <sl-input type="text" name="seoMetadataTitle" .value=${form.seoMetadataTitle} placeholder="Max 70 characters" label="SEO Metadata Title*" error=${hasError('seoMetadataTitle')} @input=${handleInput}></sl-input>
       <sl-input type="text" name="seoMetadataDescription" .value=${form.seoMetadataDescription} placeholder="Max 155 characters" label="SEO Metadata Description*" error=${hasError('seoMetadataDescription')} @input=${handleInput}></sl-input>
+      <div class="image-dropzone-container">
+        <label>Social share / OG Image*</label>
+        <div class="dropzone-wrapper">
+          <image-dropzone name="socialShareImage" .file=${fileForDisplay(form.socialShareImage)} error=${hasError('socialShareImage')} @image-change=${handleImageChange}>
+            <label slot="img-label">Upload social share image</label>
+          </image-dropzone>
+        </div>
+      </div>
       ${optionsSelect(form, handleInput, 'primaryProductName', 'Primary Product Name*', primaryProductNameOptions, hasError)}
     </div>
   `;

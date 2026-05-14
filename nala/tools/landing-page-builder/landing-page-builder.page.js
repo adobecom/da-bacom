@@ -72,8 +72,12 @@ export default class LandingPageBuilder {
     this.industry = root.locator('sl-select[name="caasIndustry"]');
 
     // SEO Metadata section
+    this.metadataSection = root.locator('.form-row').filter({ has: root.locator('h2', { hasText: 'Metadata' }) });
     this.seoTitle = root.locator('sl-input[name="seoMetadataTitle"]');
     this.seoDescription = root.locator('sl-input[name="seoMetadataDescription"]');
+    this.socialShareImageDropzone = this.metadataSection.locator('image-dropzone[name="socialShareImage"]');
+    this.socialShareImageInput = this.metadataSection.locator('input.img-file-input');
+    this.socialShareImagePreview = this.metadataSection.locator('img[alt="preview image"]');
     this.primaryProductName = root.locator('sl-select[name="primaryProductName"]');
 
     // Experience Fragment
@@ -369,6 +373,11 @@ export default class LandingPageBuilder {
     await input.dispatchEvent('input');
   }
 
+  async uploadSocialShareImage(filePath) {
+    await this.socialShareImageDropzone.scrollIntoViewIfNeeded();
+    await this.socialShareImageInput.setInputFiles(filePath);
+  }
+
   async selectPrimaryProductName(value) {
     await this.primaryProductName.locator('select').selectOption(value);
     await this.primaryProductName.dispatchEvent('change');
@@ -536,6 +545,7 @@ export default class LandingPageBuilder {
 
     if (data.seoTitle) await this.fillSeoTitle(data.seoTitle);
     if (data.seoDescription) await this.fillSeoDescription(data.seoDescription);
+    if (data.socialShareImage) await this.uploadSocialShareImage(data.socialShareImage);
     if (data.primaryProductName) await this.selectPrimaryProductName(data.primaryProductName);
 
     if (data.experienceFragment) await this.selectExperienceFragment(data.experienceFragment);

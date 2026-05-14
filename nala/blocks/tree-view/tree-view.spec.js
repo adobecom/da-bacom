@@ -4,7 +4,7 @@ module.exports = {
     {
       tcid: '1',
       name: '@BACOM-TreeView-Checks',
-      path: '/test/features/blocks/tree-view',
+      path: '/drafts/nala/blocks/tree-view/tree-view',
       tags: '@tree-view @smoke @regression @bacom @bacomSmoke',
     },
   ],

@@ -10,7 +10,9 @@ import { LitElement, html, nothing } from 'da-lit';
 import { LIBS } from '../../scripts/scripts.js';
 import { createToast, TOAST_TYPES } from './toast/toast.js';
 import { STATUS as PATH_STATUS } from './path-input/path-input.js';
-import { getSource, saveSource, saveFile, getSheets, checkPath } from './da-utils.js';
+import {
+  getSource, saveSource, saveFile, getSheets, checkPath, sanitizeFileName,
+} from './da-utils.js';
 import { appendLogRow, resolvePublisher } from './lpb-log.js';
 import {
   STAGE_ORIGIN,
@@ -53,7 +55,7 @@ const daContext = sdk?.context || null;
 const style = await getStyle(import.meta.url.split('?')[0]);
 const searchParams = new URLSearchParams(window.location.search);
 
-const LPB_VERSION = '1.1.0';
+const LPB_VERSION = '1.1.1';
 const FORM_STORAGE_KEY = 'landing-page-builder';
 const OPTIONS_LOADING = [{ value: 'loading', label: 'Loading...' }];
 const OPTIONS_ERROR = [{ value: 'error', label: 'Error loading options' }];
@@ -80,7 +82,7 @@ const TEMPLATE_MAP = {
 
 const CORE_FIELDS = ['contentType', 'gated', 'region', 'marqueeHeadline', 'pageName'];
 const TEMPLATE_FIELDS = ['contentType', 'gated'];
-const IMAGES = ['marqueeImage', 'bodyImage', 'cardImage'];
+const IMAGES = ['marqueeImage', 'bodyImage', 'cardImage', 'socialShareImage'];
 const FILES = ['pdfAsset'];
 
 const FORM_TEMPLATE_MAP = {
@@ -120,6 +122,7 @@ const FORM_SCHEMA = {
   caasIndustry: '',
   seoMetadataTitle: '',
   seoMetadataDescription: '',
+  socialShareImage: null,
   experienceFragment: '',
   assetHeadline: '',
   videoAsset: '',
@@ -139,6 +142,10 @@ const MESSAGES = {
   FILL_CORE_OPTIONS: 'Please fill in all core options before confirming',
   IMAGE_UPLOADED: 'Image Uploaded',
   IMAGE_UPLOAD_FAILED: 'Image upload failed. Please try again.',
+  UPLOAD_REJECTED_PATH_IMAGE: 'Image not uploaded: the combined page path and file name exceed AEM\'s limit (900 characters), or the file name could not be normalized. Try a shorter page address or a shorter image file name.',
+  UPLOAD_REJECTED_PATH_PDF: 'PDF not uploaded: the combined page path and file name exceed AEM\'s limit (900 characters), or the file name could not be normalized. Try a shorter page address or a shorter PDF file name.',
+  UPLOAD_REJECTED_SERVER_IMAGE: 'Image not uploaded: the server rejected the upload. Confirm you are signed in and try a supported format, then retry.',
+  UPLOAD_REJECTED_SERVER_PDF: 'PDF not uploaded: the server rejected the upload. Confirm you are signed in and that the file is a valid PDF, then retry.',
   IMAGE_UPLOAD_PREVIEW_UNAVAILABLE: 'Image saved but preview link is not ready yet. Try Save & Preview in a moment.',
   IMAGE_PREVIEW_FAILED: 'Image uploaded, but could not be previewed. Please try again.',
   PDF_CLEARED: 'PDF cleared',
@@ -464,6 +471,8 @@ class LandingPageForm extends LitElement {
       bodyImage: getContentUrl(form.bodyImage?.path),
       cardImage: getContentUrl(form.cardImage?.path),
       assetHeadline: assetHeadlineVisible && form.assetHeadline ? `<h2>${form.assetHeadline}</h2>` : '',
+      // Templates: use {{social-share-image}} in page-metadata (og:image, etc.).
+      socialShareImage: getContentUrl(form.socialShareImage?.path),
       pdfAsset: pdfVisible && form.pdfAsset ? getAemPageUrl(form.pdfAsset?.path) : '',
       pdfAssetName: pdfVisible && form.pdfAsset ? form.pdfAsset?.name : '',
       videoAsset: videoVisible ? form.videoAsset : '',
@@ -608,20 +617,26 @@ class LandingPageForm extends LitElement {
     super.disconnectedCallback();
   }
 
-  async uploadAsset(file, path, type = 'image') {
+  async uploadAsset(file, path, uploadKind = 'image') {
+    // uploadKind: 'image' | 'pdf' — distinct user-facing errors for path/server failures
     // TODO: Handle subfolders in path
-    if (DEBUG) console.log('[LPB][Request] POST asset:', type, path + file.name, file.name);
+    if (DEBUG) console.log('[LPB][Request] POST asset:', uploadKind, path + file.name, file.name);
+    if (!sanitizeFileName(file.name, path)) {
+      const msg = uploadKind === 'pdf' ? MESSAGES.UPLOAD_REJECTED_PATH_PDF : MESSAGES.UPLOAD_REJECTED_PATH_IMAGE;
+      throw new Error(msg);
+    }
     const result = await saveFile(path, file);
     if (!result) {
-      if (DEBUG) console.error('[Response] POST asset failed:', type, path + file.name);
-      throw new Error(`Failed to upload ${type}`);
+      if (DEBUG) console.error('[Response] POST asset failed:', uploadKind, path + file.name);
+      const msg = uploadKind === 'pdf' ? MESSAGES.UPLOAD_REJECTED_SERVER_PDF : MESSAGES.UPLOAD_REJECTED_SERVER_IMAGE;
+      throw new Error(msg);
     }
     const rawUrl = result?.source?.contentUrl ?? result?.aem?.previewUrl ?? result?.aem?.liveUrl ?? null;
     const rawPreviewUrl = result?.aem?.previewUrl ?? result?.aem?.liveUrl ?? null;
     const previewUnavailable = !rawPreviewUrl && result?.source;
     const assetPath = rawUrl ? getRepoRelativePath(getPathFromUrl(rawUrl)) : null;
     const assetPreviewPath = rawPreviewUrl ? getRepoRelativePath(getPathFromUrl(rawPreviewUrl)) : null;
-    if (DEBUG) console.log('[LPB][Response] POST asset:', type, { path: assetPath, previewPath: assetPreviewPath, previewUnavailable });
+    if (DEBUG) console.log('[LPB][Response] POST asset:', uploadKind, { path: assetPath, previewPath: assetPreviewPath, previewUnavailable });
     return {
       path: assetPath,
       previewPath: assetPreviewPath,
@@ -659,8 +674,8 @@ class LandingPageForm extends LitElement {
         if (!previewOk) {
           showToast(MESSAGES.IMAGE_PREVIEW_FAILED, TOAST_TYPES.ERROR, 5000);
         }
-      }).catch(() => {
-        showToast(MESSAGES.IMAGE_UPLOAD_FAILED, TOAST_TYPES.ERROR);
+      }).catch((err) => {
+        showToast(err?.message || MESSAGES.IMAGE_UPLOAD_FAILED, TOAST_TYPES.ERROR);
       }).finally(() => {
         document.dispatchEvent(new CustomEvent('upload-complete', { detail: { name }, bubbles: true }));
         this.saveFormState();
@@ -693,10 +708,10 @@ class LandingPageForm extends LitElement {
     showToast(MESSAGES.UPLOADING_PDF, TOAST_TYPES.INFO, 3000);
 
     try {
-      const result = await this.uploadAsset(file, path, 'file');
+      const result = await this.uploadAsset(file, path, 'pdf');
       if (DEBUG) console.log('[LPB][PDF] upload response:', { path: result?.path, previewPath: result?.previewPath, previewUnavailable: result?.previewUnavailable });
       if (!result.path) {
-        throw new Error('Upload failed');
+        throw new Error(MESSAGES.UPLOAD_REJECTED_SERVER_PDF);
       }
 
       this.form.pdfAsset = { path: result.path, previewPath: result.previewPath, name: result.fileName };
@@ -709,7 +724,7 @@ class LandingPageForm extends LitElement {
       }
     } catch (error) {
       if (DEBUG) console.error('[PDF] upload failed:', error);
-      showToast(MESSAGES.PDF_UPLOAD_FAILED, TOAST_TYPES.ERROR);
+      showToast(error?.message || MESSAGES.PDF_UPLOAD_FAILED, TOAST_TYPES.ERROR);
       input.value = '';
     } finally {
       this.saveFormState();
@@ -892,6 +907,7 @@ class LandingPageForm extends LitElement {
       'cardImage',
       'seoMetadataTitle',
       'seoMetadataDescription',
+      'socialShareImage',
       'primaryProductName',
       'experienceFragment',
     ];
@@ -962,7 +978,7 @@ class LandingPageForm extends LitElement {
             ${renderBody(this.form, this.handleInput, this.handleImageChange.bind(this), hasError)}
             ${renderCard(this.form, this.handleInput, this.handleImageChange.bind(this), hasError)}
             ${renderCaas(this.form, this.handleInput, { primaryProductOptions: this.primaryProductOptions, industryOptions: this.industryOptions })}
-            ${renderSeo(this.form, this.handleInput, { primaryProductNameOptions: this.options?.primaryProductName }, hasError)}
+            ${renderSeo(this.form, this.handleInput, this.handleImageChange.bind(this), { primaryProductNameOptions: this.options?.primaryProductName }, hasError)}
             ${renderExperienceFragment(this.form, this.handleInput, { fragmentOptions: this.options?.experienceFragment }, hasError)}
             ${renderAssetDelivery(this.form, this.handleInput, this.handlePdfChange.bind(this), hasError)}
             <div class="submit-row">
