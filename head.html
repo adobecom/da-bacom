@@ -64,7 +64,12 @@
       }
 
       function setCachedMap(cacheKey, map) {
-        try { sessionStorage.setItem(cacheKey, JSON.stringify(map)); } catch {
+        try {
+          Object.keys(sessionStorage)
+            .filter((k) => k.startsWith(HREFLANG_CACHE_PREFIX) && k !== cacheKey)
+            .forEach((k) => sessionStorage.removeItem(k));
+          sessionStorage.setItem(cacheKey, JSON.stringify(map));
+        } catch {
           window.lana?.log('hreflang: sessionStorage quota exceeded', { tags: 'hreflang', severity: 'warning' });
         }
       }
