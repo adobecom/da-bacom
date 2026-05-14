@@ -256,30 +256,40 @@ describe('injectMarqueePlayIcon', () => {
 describe('Marketo Libs', () => {
   const tests = [
     ['https://business.adobe.com', '', null],
-    ['https://business.adobe.com?marketolibs=main', '', 'https://main--da-marketo--adobecom.aem.live/mkto'],
-    ['https://business.adobe.com?marketolibs=stage', '', 'https://stage--da-marketo--adobecom.aem.live/mkto'],
-    ['https://business.adobe.com?marketolibs=foo', '', null],
-    ['https://business.adobe.com?marketolibs=awesome--da-marketo--forkedowner', '', null],
-    ['https://business.adobe.com', 'main', 'https://main--da-marketo--adobecom.aem.live/mkto'],
-    ['https://business.adobe.com', 'stage', 'https://stage--da-marketo--adobecom.aem.live/mkto'],
-    ['https://business.adobe.com', 'local', null],
-    ['https://business.adobe.com', 'foo', null],
+    ['https://business.adobe.com?marketolibs=true', '', '/mkto'],
+    ['https://business.adobe.com', 'true', '/mkto'],
+    ['https://business.adobe.com?marketolibs=main', '', '/mkto'],
+    ['https://business.adobe.com?marketolibs=stage', '', '/mkto'],
+    ['https://business.adobe.com?marketolibs=foo', '', '/mkto'],
+    ['https://business.adobe.com?marketolibs=awesome--da-marketo--forkedowner', '', '/mkto'],
+    ['https://business.adobe.com', 'main', '/mkto'],
+    ['https://business.adobe.com', 'stage', '/mkto'],
+    ['https://business.adobe.com', 'local', '/mkto'],
+    ['https://business.adobe.com', 'foo', '/mkto'],
     ['https://business.stage.adobe.com', '', null],
-    ['https://business.stage.adobe.com?marketolibs=main', '', 'https://main--da-marketo--adobecom.aem.live/mkto'],
+    ['https://business.stage.adobe.com?marketolibs=true', '', '/mkto'],
+    ['https://business.stage.adobe.com', 'true', '/mkto'],
+    ['https://business.stage.adobe.com?marketolibs=stage', '', '/mkto'],
+    ['https://business.stage.adobe.com', 'stage', '/mkto'],
+    ['https://business.stage.adobe.com?marketolibs=main', '', 'http://business.adobe.com/mkto'],
     ['https://business.stage.adobe.com?marketolibs=awesome--da-marketo--forkedowner', '', 'https://awesome--da-marketo--forkedowner.aem.live/mkto'],
     ['https://business.stage.adobe.com', 'awesome--da-marketo--forkedowner', 'https://awesome--da-marketo--forkedowner.aem.live/mkto'],
     ['https://main--da-bacom--adobecom.aem.page/', '', null],
+    ['https://main--da-bacom--adobecom.aem.page/?marketolibs=true', '', '/mkto'],
+    ['https://main--da-bacom--adobecom.aem.page/', 'true', '/mkto'],
     ['https://main--da-bacom--adobecom.aem.page/?marketolibs=foo', '', 'https://foo--da-marketo--adobecom.aem.live/mkto'],
     ['https://main--da-bacom--adobecom.aem.page/?marketolibs=local', '', 'http://localhost:6586/mkto'],
     ['https://main--da-bacom--adobecom.aem.page/?marketolibs=awesome--da-marketo--forkedowner', '', 'https://awesome--da-marketo--forkedowner.aem.live/mkto'],
     ['http://localhost:3000', '', null],
+    ['http://localhost:3000?marketolibs=true', '', '/mkto'],
+    ['http://localhost:3000', 'true', '/mkto'],
     ['http://localhost:3000?marketolibs=foo', '', 'https://foo--da-marketo--adobecom.aem.live/mkto'],
     ['http://localhost:3000?marketolibs=local', '', 'http://localhost:6586/mkto'],
     ['http://localhost:3000?marketolibs=awesome--da-marketo--forkedowner', '', 'https://awesome--da-marketo--forkedowner.aem.live/mkto'],
   ];
 
-  tests.forEach(([url, metadata, expected]) => {
-    it(`Sets marketo libs for ${url} ${metadata ? `with metadata ${metadata}` : ''}`, () => {
+  tests.forEach(([url, metadata, expected], index) => {
+    it(`${index + 1}. Sets marketo libs for ${url} ${metadata ? `with metadata ${metadata}` : ''}`, () => {
       const location = new URL(url);
       const libs = getMarketoLibs(location, () => metadata);
 
