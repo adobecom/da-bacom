@@ -213,11 +213,11 @@ export function getMarketoLibs(location = window.location, getMetadata = null) {
   const branch = new URLSearchParams(search).get('marketolibs') || getMetadata?.('marketo-libs');
   if (!branch) return null;
   if (!/^[a-zA-Z0-9_-]+$/.test(branch)) throw new Error('Invalid branch name.');
-  if (!['.aem.', '.hlx.', '.stage.', 'local', '.da.'].some((i) => hostname.includes(i))) {
-    if (branch === 'main') return 'https://main--da-marketo--adobecom.aem.live/mkto';
-    if (branch === 'stage') return 'https://stage--da-marketo--adobecom.aem.live/mkto';
-    return null;
-  }
+  if (!['.aem.', '.hlx.', '.stage.', 'local', '.da.'].some((i) => hostname.includes(i))) return '/mkto';
+  if (hostname.includes('.stage.') && branch === 'stage') return '/mkto';
+  if (branch === 'true') return '/mkto';
+  if (branch === 'stage') return 'http://business.stage.adobe.com/mkto';
+  if (branch === 'main') return 'http://business.adobe.com/mkto';
   if (branch === 'local') return 'http://localhost:6586/mkto';
   return branch.includes('--') ? `https://${branch}.aem.live/mkto` : `https://${branch}--da-marketo--adobecom.aem.live/mkto`;
 }
