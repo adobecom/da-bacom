@@ -23,7 +23,6 @@ notifications:
         watchers: # Everyone who is an admin on your repository should be a watcher.
           - casalino
           - bmarshal
-          - methomas
         labels: # You can add additional labels to your tickets here. Do not delete/change the first three.
           - "OriginatingProcess=Kodiak"
           - "security"
