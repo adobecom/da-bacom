@@ -130,7 +130,7 @@ function renderDetailRow(row, colSpan) {
           <dl class="detail-grid">
             <div><dt>Block Variant</dt><dd>${row.variantClass || '—'}</dd></div>
             <div><dt>Step Pref</dt><dd>${row.stepPref || '—'}</dd></div>
-            <div><dt>Success Content</dt><dd>${row.successContent || '—'}</dd></div>
+            <div class="success-content"><dt>Success Content</dt><dd>${row.successContent || '—'}</dd></div>
           </dl>
           <div class="aem-btns">
             ${renderAemBtn(AEM_PAGE_ORIGIN, row.path, row.previewedAt, 'Previewed')}
@@ -155,6 +155,7 @@ export default class MktoScan extends LitElement {
     _customPath: { state: true },
     _pagesScanned: { state: true },
     _scanDuration: { state: true },
+    _failedPages: { state: true },
     _expandedRows: { state: true },
   };
 
@@ -171,11 +172,13 @@ export default class MktoScan extends LitElement {
     this._customPath = '';
     this._pagesScanned = 0;
     this._scanDuration = null;
+    this._failedPages = [];
     this._expandedRows = new Set();
     // Plain instance fields — not reactive
     this._cancelCrawl = null;
     this._controller = null;
-    this._startTime = 0;
+    this._getDuration = null;
+    this._loadingStatus = new Set();
   }
 
   async connectedCallback() {
@@ -203,21 +206,32 @@ export default class MktoScan extends LitElement {
   async _processPage(item, signal) {
     if (item.ext !== 'html') return;
     this._pagesScanned += 1;
-    this._scanDuration = ((Date.now() - this._startTime) / 1000).toFixed(1);
+    this._scanDuration = this._getDuration?.();
     const repoPath = getRepoRelativePath(item.path).replace(/\.html$/, '');
-    try {
-      const res = await daFetch(`${ADMIN_DA_ORIGIN}/source/${ORG}/${REPO}${repoPath}.html`, { signal });
-      if (!res.ok) return;
-      const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
-      const blocks = extractMarketoBlocks(doc);
-      if (!blocks.length) return;
-      const status = await fetchPageStatus(repoPath, signal);
-      const newRows = blocks.map((block) => ({ path: repoPath, ...block, ...status }));
-      const updatedRows = [...this._rows, ...newRows];
-      this._rows = updatedRows;
-    } catch (err) {
-      if (err.name === 'AbortError') throw err;
+    const url = `${ADMIN_DA_ORIGIN}/source/${ORG}/${REPO}${repoPath}.html`;
+
+    let res;
+    for (let attempt = 0; attempt <= 3; attempt += 1) {
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        res = await daFetch(url, { signal });
+        if (res.ok || res.status === 404) break;
+        if (attempt === 3) throw new Error(`HTTP ${res.status} fetching ${repoPath}`);
+      } catch (err) {
+        if (err.name === 'AbortError') throw err;
+        if (attempt === 3) throw err;
+      }
     }
+
+    if (!res?.ok) return;
+    const text = await res.text();
+    if (!text.includes('class="marketo')) return;
+    // Small delay before DOM parse to keep main thread responsive
+    await new Promise((r) => { setTimeout(r, 50); });
+    const doc = new DOMParser().parseFromString(text, 'text/html');
+    const blocks = extractMarketoBlocks(doc);
+    if (!blocks.length) return;
+    this._rows = [...this._rows, ...blocks.map((block) => ({ path: repoPath, ...block }))];
   }
 
   async _runScan() {
@@ -228,7 +242,8 @@ export default class MktoScan extends LitElement {
     this._pagesScanned = 0;
     this._scanDuration = null;
     this._expandedRows = new Set();
-    this._startTime = Date.now();
+    this._loadingStatus = new Set();
+    this._failedPages = [];
 
     const controller = new AbortController();
     this._controller = controller;
@@ -236,30 +251,48 @@ export default class MktoScan extends LitElement {
     try {
       const { crawl } = await import('https://da.live/nx/public/utils/tree.js');
       const rootPath = this._locale ? `/${this._locale}${this._customPath}` : this._customPath;
-      const { results, cancelCrawl } = crawl({
+      const { results, cancelCrawl, getDuration, getCallbackErrors } = crawl({
         path: `${REPO_PREFIX}${rootPath}`,
         callback: (item) => this._processPage(item, controller.signal),
-        concurrent: 5,
-        throttle: 100,
+        concurrent: 10,
       });
+      this._getDuration = getDuration;
       this._cancelCrawl = cancelCrawl;
       await results;
+      this._failedPages = getCallbackErrors()
+        .map(({ item }) => getRepoRelativePath(item.path).replace(/\.html$/, ''));
     } catch (err) {
       if (err.name !== 'AbortError') {
         this._error = `Scan failed: ${err?.message || err}`;
         window.lana?.log?.(`mkto-scan failed: ${err?.message || err}`, { severity: 'error', tags: 'mkto-scan' });
       }
     } finally {
-      this._scanDuration = ((Date.now() - this._startTime) / 1000).toFixed(1);
+      this._scanDuration = this._getDuration?.();
       this._scanning = false;
       this._cancelCrawl = null;
       this._controller = null;
+      this._getDuration = null;
     }
   }
 
   _handleCancel() {
     this._cancelCrawl?.();
     this._controller?.abort();
+  }
+
+  _handlePathInput(e) {
+    this._customPath = e.target.value;
+  }
+
+  _handlePathChange(e) {
+    this._customPath = e.target.value.trim() || '/';
+  }
+
+  _clearPath(e) {
+    e.preventDefault();
+    this._customPath = '';
+    const input = this.shadowRoot?.getElementById('mkto-path');
+    input?.focus();
   }
 
   _sortIndicator() {
@@ -275,10 +308,19 @@ export default class MktoScan extends LitElement {
     }
   }
 
-  _toggleRow(path) {
+  async _toggleRow(path) {
     const next = new Set(this._expandedRows);
     if (next.has(path)) next.delete(path); else next.add(path);
     this._expandedRows = next;
+
+    const needsStatus = next.has(path) && !this._loadingStatus.has(path)
+      && this._rows.some((r) => r.path === path && r.previewedAt === undefined);
+    if (!needsStatus) return;
+
+    this._loadingStatus.add(path);
+    const signal = this._controller?.signal ?? new AbortController().signal;
+    const status = await fetchPageStatus(path, signal);
+    this._rows = this._rows.map((r) => (r.path === path ? { ...r, ...status } : r));
   }
 
   _handleDownloadCsv() {
@@ -401,8 +443,16 @@ export default class MktoScan extends LitElement {
           </select>
 
           <label for="mkto-path">Path</label>
-          <input id="mkto-path" type="text" list="mkto-path-list" .value="${this._customPath}"
-                 @change="${(e) => { this._customPath = e.target.value.trim() || '/'; }}" />
+          <div class="path-field${this._customPath ? ' has-clear' : ''}">
+            <input id="mkto-path" type="text" list="mkto-path-list" .value="${this._customPath}"
+                   @input="${this._handlePathInput}"
+                   @change="${this._handlePathChange}" />
+            ${this._customPath
+    ? html`<button type="button" class="path-clear-btn"
+                    aria-label="Clear path"
+                    @click="${this._clearPath}">×</button>`
+    : nothing}
+          </div>
           <datalist id="mkto-path-list">
             ${SUGGESTED_PATHS.map((p) => html`<option value="${p}"></option>`)}
           </datalist>
@@ -420,6 +470,12 @@ export default class MktoScan extends LitElement {
         ${this._error
     ? html`<div class="error" role="alert">${this._error}</div>`
     : nothing}
+        ${this._failedPages.length ? html`
+          <details class="warning">
+            <summary>${this._failedPages.length} page${this._failedPages.length === 1 ? '' : 's'} failed to load — results may be incomplete</summary>
+            <ul>${this._failedPages.map((p) => html`<li>${p}</li>`)}</ul>
+          </details>
+        ` : nothing}
 
         ${this._renderStats()}
 

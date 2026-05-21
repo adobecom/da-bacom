@@ -74,7 +74,7 @@
 }
 
 .scope-row select,
-.scope-row input[type="text"] {
+.path-field input[type="text"] {
   padding: 6px 8px;
   border: 1px solid #ccc;
   border-radius: 4px;
@@ -85,8 +85,43 @@
   min-width: 160px;
 }
 
-.scope-row input[type="text"] {
+.path-field {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.path-field input[type="text"] {
   min-width: 220px;
+}
+
+.path-field.has-clear input[type="text"] {
+  padding-right: 28px;
+}
+
+.path-clear-btn {
+  position: absolute;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  color: #666;
+  font-size: 1.125rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.path-clear-btn:hover {
+  background: rgb(0 0 0 / 8%);
+  color: #333;
+}
+
+.path-clear-btn:focus-visible {
+  outline: 2px solid #1473e6;
+  outline-offset: 1px;
 }
 
 .warning {
@@ -265,10 +300,14 @@
 .detail-grid {
   flex: 1;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 100px);
   gap: 10px 20px;
   margin: 0;
   min-width: 0;
+}
+
+.detail-grid .success-content {
+  grid-column: 1 / -1; 
 }
 
 .detail-grid dt {

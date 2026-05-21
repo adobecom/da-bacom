@@ -66,7 +66,7 @@ export function extractMarketoBlocks(doc) {
   if (!doc?.querySelectorAll) return [];
   const blocks = [];
 
-  doc.querySelectorAll('div.marketo, div.da-marketo').forEach((el) => {
+  doc.querySelectorAll('div.marketo').forEach((el) => {
     const variantClass = [...el.classList].join(' ');
     const multiStepVariant = getMultiStepMethod(variantClass);
 
