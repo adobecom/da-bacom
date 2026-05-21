@@ -392,6 +392,15 @@ export async function loadPage() {
 }
 loadPage();
 
+(function detectSidekick() {
+  const listen = () => {
+    const sk = document.querySelector('aem-sidekick, helix-sidekick');
+    sk?.addEventListener('custom:quick-edit', (e) => import('./quick-edit.js').then(({ default: init }) => init(e)));
+  };
+  if (document.querySelector('aem-sidekick, helix-sidekick')) { listen(); return; }
+  document.addEventListener('sidekick-ready', listen, { once: true });
+}());
+
 // DA Live Preview
 (async function loadDa() {
   const { searchParams } = new URL(window.location.href);
