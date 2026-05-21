@@ -1,4 +1,4 @@
-const LOCALES = {
+export const LOCALES = {
   '': { ietf: 'en-US', tk: 'hah7vzn.css' },
   ae_ar: { ietf: 'ar', tk: 'qxw8hzm.css', dir: 'rtl' },
   ae_en: { ietf: 'en', tk: 'hah7vzn.css', base: '' },

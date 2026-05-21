@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Marketo Block Report</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:,">
+  <script type="importmap">
+    {
+      "imports": {
+        "da-sdk":   "https://da.live/nx/utils/sdk.js",
+        "da-fetch": "https://da.live/nx/utils/daFetch.js",
+        "da-lit":   "https://da.live/deps/lit/dist/index.js",
+        "styles":   "https://da.live/nx/utils/styles.js"
+      }
+    }
+  </script>
+  <link rel="modulepreload" href="https://da.live/nx/utils/sdk.js">
+  <script src="./mkto-scan.js" type="module"></script>
+</head>
+<body>
+  <mkto-scan></mkto-scan>
+</body>
+</html>
