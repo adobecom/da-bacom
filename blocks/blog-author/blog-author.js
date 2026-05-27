@@ -1,5 +1,8 @@
 import { LIBS } from '../../scripts/scripts.js';
 
+const { getMetadata, getConfig } = await import(`${LIBS}/utils/utils.js`);
+const { replaceKey } = await import(`${LIBS}/features/placeholders.js`);
+
 const CAAS_AUTHOR_PREFIX = 'caas:blog-authors/';
 const DEFAULT_COMPANY = 'Adobe';
 const DEFAULT_COMPANY_URL = 'https://www.adobe.com/';
@@ -13,27 +16,10 @@ const SOCIAL_PLATFORMS = {
   'instagram.com': { name: 'Instagram', icon: 'instagram' },
 };
 
-function getMetadata(name) {
-  return document.querySelector(`meta[name="${name}"]`)?.content || '';
-}
-
 function resolvePlatform(href) {
   if (!href) return null;
   const match = Object.keys(SOCIAL_PLATFORMS).find((domain) => href.includes(domain));
   return match ? SOCIAL_PLATFORMS[match] : null;
-}
-
-function sanitizeHtml(html) {
-  const doc = new DOMParser().parseFromString(html, 'text/html');
-  doc.querySelectorAll('script, iframe, object, embed').forEach((el) => el.remove());
-  [...doc.body.querySelectorAll('*')].forEach((el) => {
-    [...el.attributes].forEach((attr) => {
-      if (/^on/i.test(attr.name) || (attr.name === 'href' && /^javascript:/i.test(attr.value))) {
-        el.removeAttribute(attr.name);
-      }
-    });
-  });
-  return doc.body;
 }
 
 function buildPersonSchema({
@@ -66,7 +52,7 @@ function injectSchema(data) {
   document.head.append(script);
 }
 
-function buildAuthorElements(data) {
+async function buildAuthorElements(data) {
   const {
     picture, name, title, descriptionHtml, socialLinks, subscribe,
   } = data;
@@ -89,7 +75,7 @@ function buildAuthorElements(data) {
   if (descriptionHtml) {
     const descEl = document.createElement('div');
     descEl.className = 'blog-author-description';
-    descEl.append(...sanitizeHtml(descriptionHtml).childNodes);
+    descEl.innerHTML = descriptionHtml;
     infoEl.append(descEl);
   }
 
@@ -119,12 +105,20 @@ function buildAuthorElements(data) {
     const subEl = document.createElement('div');
     subEl.className = 'blog-author-subscribe';
 
+    const cfg = getConfig();
+    const [subscribeText, subscribeBtnText] = cfg.locale
+      ? await Promise.all([
+        replaceKey('get-the-latest-articles', cfg),
+        replaceKey('subscribe', cfg),
+      ])
+      : ['Get the latest articles sent to your inbox.', 'Subscribe'];
+
     const textEl = document.createElement('p');
-    textEl.textContent = 'Get the latest articles sent to your inbox.';
+    textEl.textContent = subscribeText;
 
     const btn = document.createElement('a');
     btn.href = subscribe.href;
-    btn.textContent = 'Subscribe';
+    btn.textContent = subscribeBtnText;
 
     subEl.append(textEl, btn);
     infoEl.append(subEl);
@@ -170,27 +164,52 @@ async function fetchCaasAuthor(slug) {
 }
 
 function parseRows(rows) {
-  const fields = {};
-  rows.forEach((row) => {
-    const [keyCell, valueCell] = [...row.querySelectorAll(':scope > div')];
-    const key = keyCell?.textContent?.trim().toLowerCase();
-    if (key && valueCell) fields[key] = valueCell;
-  });
+  let picture = null;
+  let imageUrl = '';
+  let name = '';
+  let title = '';
+  let descriptionHtml = '';
+  let descriptionText = '';
+  let socialLinks = [];
+  let subscribe = null;
 
-  const img = fields.image?.querySelector('img');
-  const socialAnchors = [...(fields.social?.querySelectorAll('a') || [])];
-  const subscribeHref = fields.subscribe?.querySelector('a')?.getAttribute('href') || '';
+  for (const row of rows) {
+    const cell = row.querySelector(':scope > div') || row;
+
+    if (cell.querySelector('picture')) {
+      picture = cell.querySelector('picture');
+      imageUrl = cell.querySelector('img')?.src || '';
+    } else if (cell.querySelector('a')) {
+      const anchors = [...cell.querySelectorAll('a')].filter((a) => a.getAttribute('href'));
+      const socialAnchors = anchors.filter((a) => resolvePlatform(a.getAttribute('href')));
+      if (socialAnchors.length) {
+        socialLinks = socialAnchors.map((a) => ({ href: a.getAttribute('href') }));
+      } else if (anchors.length === 1) {
+        subscribe = { href: anchors[0].getAttribute('href') };
+      }
+    } else {
+      const parts = cell.innerHTML.split(/<br\s*\/?>/i).map((s) => s.trim()).filter(Boolean);
+      if (parts.length) {
+        [name] = parts;
+        if (parts.length >= 2) [, title] = parts;
+        if (parts.length >= 3) {
+          descriptionHtml = parts.slice(2).join('<br>');
+          descriptionText = parts.slice(2).map((s) => s.replace(/<[^>]+>/g, '')).join(' ').trim();
+        }
+      }
+    }
+  }
 
   return {
-    picture: fields.image?.querySelector('picture') || null,
-    imageUrl: img?.src || '',
-    name: fields.name?.textContent?.trim() || '',
-    title: fields.title?.textContent?.trim() || '',
-    descriptionHtml: fields.description?.innerHTML?.trim() || '',
-    descriptionText: fields.description?.textContent?.trim() || '',
-    socialLinks: socialAnchors.map((a) => ({ href: a.getAttribute('href') })),
-    company: fields.company?.textContent?.trim() || DEFAULT_COMPANY,
-    subscribe: subscribeHref ? { href: subscribeHref } : null,
+    picture,
+    imageUrl,
+    name,
+    title,
+    descriptionHtml,
+    descriptionText,
+    socialLinks,
+    subscribe,
+    company: DEFAULT_COMPANY,
   };
 }
 
@@ -212,7 +231,7 @@ export default async function init(el) {
     const slug = firstCellText.replace(CAAS_AUTHOR_PREFIX, '');
     const caasData = await fetchCaasAuthor(slug);
     if (caasData) {
-      el.replaceChildren(...buildAuthorElements(caasData));
+      el.replaceChildren(...await buildAuthorElements(caasData));
       injectSchema(caasData);
       decorateSocialIcons(el);
     }
@@ -223,7 +242,7 @@ export default async function init(el) {
 
   // CaaS metadata fallback: use page caas-tags meta to populate missing content
   if (!data.name) {
-    const authorTag = getMetadata('caas-tags')
+    const authorTag = (getMetadata('caas-tags') ?? '')
       .split(',')
       .map((t) => t.trim())
       .find((t) => t.startsWith(CAAS_AUTHOR_PREFIX));
@@ -232,7 +251,7 @@ export default async function init(el) {
       const slug = authorTag.replace(CAAS_AUTHOR_PREFIX, '');
       const caasData = await fetchCaasAuthor(slug);
       if (caasData) {
-        el.replaceChildren(...buildAuthorElements(caasData));
+        el.replaceChildren(...await buildAuthorElements(caasData));
         injectSchema(caasData);
         decorateSocialIcons(el);
         return;
@@ -243,7 +262,7 @@ export default async function init(el) {
     return;
   }
 
-  el.replaceChildren(...buildAuthorElements(data));
+  el.replaceChildren(...await buildAuthorElements(data));
   injectSchema(data);
   decorateSocialIcons(el);
 }

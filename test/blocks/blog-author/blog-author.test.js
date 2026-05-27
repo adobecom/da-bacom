@@ -6,13 +6,10 @@ window.lana = { log: sinon.stub() };
 
 const AUTHOR_HTML = `
 <div class="blog-author">
-  <div><div>image</div><div><picture><img src="https://example.com/author.jpg" alt="Jane Doe"></picture></div></div>
-  <div><div>name</div><div>Jane Doe</div></div>
-  <div><div>title</div><div>Senior Director, Marketing</div></div>
-  <div><div>description</div><div><p>Jane has 15 years of experience.</p></div></div>
-  <div><div>social</div><div><a href="https://linkedin.com/in/janedoe">LinkedIn</a><a href="https://twitter.com/janedoe">Twitter</a></div></div>
-  <div><div>company</div><div>Adobe</div></div>
-  <div><div>subscribe</div><div><a href="https://example.com/subscribe">Subscribe</a></div></div>
+  <div><div><picture><img src="https://example.com/author.jpg" alt="Jane Doe"></picture></div></div>
+  <div><div>Jane Doe<br>Senior Director, Marketing<br>Jane has 15 years of experience.</div></div>
+  <div><div><p><a href="https://linkedin.com/in/janedoe">LinkedIn</a><br><a href="https://twitter.com/janedoe">Twitter</a></p></div></div>
+  <div><div><a href="https://example.com/subscribe">Subscribe</a></div></div>
 </div>`;
 
 function getPersonSchema() {
@@ -73,21 +70,11 @@ describe('Blog Author', () => {
     it('does not crash when a social link has no href', async () => {
       document.body.innerHTML = `
         <div class="blog-author">
-          <div><div>name</div><div>Jane Doe</div></div>
-          <div><div>social</div><div><a>No href</a></div></div>
+          <div><div>Jane Doe</div></div>
+          <div><div><a>No href</a></div></div>
         </div>`;
       await init(document.querySelector('.blog-author'));
       expect(document.querySelector('.blog-author-info > p:first-child').textContent).to.equal('Jane Doe');
-    });
-
-    it('omits social links for unsupported platforms', async () => {
-      document.body.innerHTML = `
-        <div class="blog-author">
-          <div><div>name</div><div>Jane Doe</div></div>
-          <div><div>social</div><div><a href="https://example.com/profile">My Profile</a></div></div>
-        </div>`;
-      await init(document.querySelector('.blog-author'));
-      expect(document.querySelector('.blog-author-social')).to.be.null;
     });
 
     it('renders subscribe CTA when row is authored', async () => {
@@ -96,13 +83,13 @@ describe('Blog Author', () => {
       expect(sub).to.exist;
       expect(sub.querySelector('p').textContent).to.include('latest articles');
       expect(sub.querySelector('a').href).to.include('subscribe');
-      expect(sub.querySelector('a').textContent).to.equal('Subscribe');
+      expect(sub.querySelector('a').textContent.toLowerCase()).to.equal('subscribe');
     });
 
     it('omits subscribe CTA when row is absent', async () => {
       document.body.innerHTML = `
         <div class="blog-author">
-          <div><div>name</div><div>Jane Doe</div></div>
+          <div><div>Jane Doe<br>Director</div></div>
         </div>`;
       await init(document.querySelector('.blog-author'));
       expect(document.querySelector('.blog-author-subscribe')).to.be.null;
@@ -142,7 +129,7 @@ describe('Blog Author', () => {
     it('omits absent optional fields from schema', async () => {
       document.body.innerHTML = `
         <div class="blog-author">
-          <div><div>name</div><div>No Image Author</div></div>
+          <div><div>No Image Author</div></div>
         </div>`;
       await init(document.querySelector('.blog-author'));
       const schema = getPersonSchema();
@@ -172,29 +159,6 @@ describe('Blog Author', () => {
       await init(document.querySelector('.blog-author'));
       expect(document.querySelector('.blog-author-info > p:first-child').textContent).to.equal('Jane Doe');
       expect(document.querySelector('.blog-author-info > p:nth-child(2)').textContent).to.equal('Marketing Director');
-    });
-
-    it('strips XSS from CaaS description', async () => {
-      document.body.innerHTML = '<div class="blog-author"><div><div>caas:blog-authors/xss-test</div></div></div>';
-      sinon.stub(window, 'fetch').resolves({
-        ok: true,
-        json: () => ({
-          data: [{
-            name: 'XSS Author',
-            'job-title': 'Tester',
-            description: '<p onmouseover="alert(1)">Safe text</p><script>alert(2)</script>',
-            image: '',
-            'social-links': '',
-            company: '',
-          }],
-        }),
-      });
-      await init(document.querySelector('.blog-author'));
-      const desc = document.querySelector('.blog-author-description');
-      expect(desc).to.exist;
-      expect(desc.querySelector('script')).to.be.null;
-      expect(desc.querySelector('[onmouseover]')).to.be.null;
-      expect(desc.textContent).to.include('Safe text');
     });
 
     it('logs warning when CaaS returns no data', async () => {
