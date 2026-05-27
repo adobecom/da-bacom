@@ -365,6 +365,22 @@ export async function loadPage() {
 
   await loadArea();
 
+  // Milo loads modal blocks before decorateButtons strips #_button-XX from data-modal-hash,
+  // so init() sees a mismatched hash and skips deep-link opening. Re-check after loadArea
+  // when button decoration is complete and the hash is normalized.
+  const { hash } = window.location;
+  if (hash && !document.querySelector(`div.dialog-modal${hash}`)) {
+    const modalEl = document.querySelector(`a[data-modal-hash="${hash}"]`);
+    if (modalEl) {
+      const { findDetails, getModal } = await import(`${LIBS}/blocks/modal/modal.js`);
+      const details = await findDetails(hash, modalEl);
+      if (details?.path) {
+        details.deepLink = true;
+        getModal(details);
+      }
+    }
+  }
+
   if (getMetadata('iswa-typography') === 'on') applyIswaTypography();
 
   if (eventMD && eventUtils?.eventsDelayedActions) {
