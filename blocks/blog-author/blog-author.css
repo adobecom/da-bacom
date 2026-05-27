@@ -2,11 +2,11 @@
     padding: 56px 0;
 }
 
-.blog-author-image {
+.blog-author > picture {
     margin: 0 30px;
 }
 
-.blog-author-image img {
+.blog-author > picture img {
     width: 100%;
     aspect-ratio: 1 / 1;
     object-fit: cover;
@@ -19,19 +19,6 @@
     margin-top: 48px;
 }
 
-.blog-author-name {
-    font-size: var(--type-heading-xl-size, 2.25rem);
-    font-weight: 700;
-    margin: 0 0 8px;
-    line-height: 1.2;
-}
-
-.blog-author-title {
-    font-size: var(--type-body-m-size, 1rem);
-    color: var(--spectrum-gray-600, #696969);
-    margin: 0 0 8px;
-}
-
 .blog-author-description {
     font-size: var(--type-body-m-size, 1rem);
     margin: 0 0 32px;
@@ -40,71 +27,6 @@
 .blog-author-description p {
     margin: 0 0 8px;
 }
-
-/* Social icon buttons */
-
-.blog-author-social {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-}
-
-.blog-author-social a {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
-    background-color: var(--spectrum-gray-700, #464646);
-    text-decoration: none;
-    flex-shrink: 0;
-}
-
-.blog-author-social a .icon {
-    display: block;
-    width: 18px;
-    height: 18px;
-    background-color: white;
-    mask-size: contain;
-    mask-repeat: no-repeat;
-    mask-position: center;
-}
-
-.blog-author-social a .icon-linkedin {
-    mask-image: url('/icons/linkedin.svg');
-}
-
-.blog-author-social a .icon-twitter,
-.blog-author-social a .icon-x {
-    mask-image: url('/icons/x.svg');
-}
-
-.blog-author-social a .icon-reddit {
-    mask-image: url('/icons/reddit.svg');
-}
-
-.blog-author-social a .icon-facebook {
-    mask-image: url('/icons/facebook.svg');
-}
-
-.blog-author-social a .icon-instagram {
-    mask-image: url('/icons/instagram.svg');
-}
-
-.blog-author-social a .icon-youtube {
-    mask-image: url('/icons/youtube.svg');
-}
-
-/* Platform brand colors */
-
-.blog-author-social a[href*="linkedin.com"] { background-color: #0a66c2; }
-.blog-author-social a[href*="twitter.com"] { background-color: #000; }
-.blog-author-social a[href*="x.com"] { background-color: #000; }
-.blog-author-social a[href*="reddit.com"] { background-color: #ff4500; }
-.blog-author-social a[href*="facebook.com"] { background-color: #1877f2; }
-.blog-author-social a[href*="instagram.com"] { background-color: #c13584; }
-.blog-author-social a[href*="youtube.com"] { background-color: #f00; }
 
 /* Subscribe CTA */
 
@@ -121,7 +43,20 @@
     font-size: var(--type-body-m-size, 1rem);
 }
 
-.blog-author-subscribe-btn {
+.blog-author-info > p:first-child {
+    font-size: var(--type-heading-xl-size, 2.25rem);
+    font-weight: 700;
+    margin: 0 0 8px;
+    line-height: 1.2;
+}
+
+.blog-author-info > p:nth-child(2) {
+    font-size: var(--type-body-m-size, 1rem);
+    color: var(--spectrum-gray-600, #696969);
+    margin: 0 0 8px;
+}
+
+.blog-author-subscribe a {
     display: inline-block;
     padding: 7px 24px;
     border: 2px solid var(--text-color, #000);
@@ -133,7 +68,7 @@
     transition: background-color 0.1s, color 0.1s;
 }
 
-.blog-author-subscribe-btn:hover {
+.blog-author-subscribe a:hover {
     background-color: var(--text-color, #000);
     color: #fff;
 }
@@ -143,15 +78,15 @@
 }
 
 @media (min-width: 600px) {
-    .blog-author-image {
+    .blog-author > picture {
         margin: 0 32px;
     }
 
-    .blog-author-image img {
+    .blog-author > picture img {
         width: 300px;
     }
 
-    .blog-author.full-width .blog-author-image img {
+    .blog-author.full-width > picture img {
         width: 100%;
     }
 
@@ -173,21 +108,20 @@
 }
 
 @media (min-width: 768px) {
-    .blog-author-image {
+    .blog-author > picture {
         margin: 0 48px;
     }
 
-    .blog-author-image img {
+    .blog-author > picture img {
         width: 328px;
     }
 
-    .blog-author.full-width .blog-author-image {
+    .blog-author.full-width > picture {
         margin: 0;
     }
 
-    .blog-author.full-width .blog-author-image img {
+    .blog-author.full-width > picture img {
         width: 100%;
-        height: 328px;
     }
 
     .blog-author-info {
@@ -202,23 +136,21 @@
         gap: 32px;
     }
 
-    .blog-author-image {
+    .blog-author > picture {
         margin: 0;
         flex-shrink: 0;
     }
 
-    .blog-author-image img {
+    .blog-author > picture img {
         width: 328px;
-        height: 328px;
     }
 
-    .blog-author.full-width .blog-author-image {
+    .blog-author.full-width > picture {
         margin: 0;
     }
 
-    .blog-author.full-width .blog-author-image img {
+    .blog-author.full-width > picture img {
         width: 328px;
-        height: 328px;
     }
 
     .blog-author-info {

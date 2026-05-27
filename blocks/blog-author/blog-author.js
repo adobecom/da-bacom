@@ -1,15 +1,16 @@
+import { LIBS } from '../../scripts/scripts.js';
+
 const CAAS_AUTHOR_PREFIX = 'caas:blog-authors/';
 const DEFAULT_COMPANY = 'Adobe';
 const DEFAULT_COMPANY_URL = 'https://www.adobe.com/';
 
+// Only platforms with icons available in the Milo/federal sprite.
 const SOCIAL_PLATFORMS = {
   'linkedin.com': { name: 'LinkedIn', icon: 'linkedin' },
-  'twitter.com': { name: 'Twitter', icon: 'twitter' },
-  'x.com': { name: 'X', icon: 'x' },
+  'twitter.com': { name: 'X', icon: 'twitter' },
+  'x.com': { name: 'X', icon: 'twitter' },
   'facebook.com': { name: 'Facebook', icon: 'facebook' },
   'instagram.com': { name: 'Instagram', icon: 'instagram' },
-  'youtube.com': { name: 'YouTube', icon: 'youtube' },
-  'reddit.com': { name: 'Reddit', icon: 'reddit' },
 };
 
 function getMetadata(name) {
@@ -20,11 +21,6 @@ function resolvePlatform(href) {
   if (!href) return null;
   const match = Object.keys(SOCIAL_PLATFORMS).find((domain) => href.includes(domain));
   return match ? SOCIAL_PLATFORMS[match] : null;
-}
-
-function resolveLinkText(href, text) {
-  if (text && text !== href) return text;
-  return resolvePlatform(href)?.name || href;
 }
 
 function sanitizeHtml(html) {
@@ -75,15 +71,9 @@ function buildAuthorElements(data) {
     picture, name, title, descriptionHtml, socialLinks, subscribe,
   } = data;
 
-  let imageEl = null;
-  if (picture) {
-    imageEl = document.createElement('div');
-    imageEl.className = 'blog-author-image';
-    imageEl.append(picture);
-  }
+  const imageEl = picture || null;
 
   const nameEl = document.createElement('p');
-  nameEl.className = 'blog-author-name';
   nameEl.textContent = name;
 
   const infoEl = document.createElement('div');
@@ -92,7 +82,6 @@ function buildAuthorElements(data) {
 
   if (title) {
     const titleEl = document.createElement('p');
-    titleEl.className = 'blog-author-title';
     titleEl.textContent = title;
     infoEl.append(titleEl);
   }
@@ -108,26 +97,22 @@ function buildAuthorElements(data) {
     const socialEl = document.createElement('div');
     socialEl.className = 'blog-author-social';
 
-    socialLinks.forEach(({ href, text }) => {
+    socialLinks.forEach(({ href }) => {
       const platform = resolvePlatform(href);
+      if (!platform) return;
+
       const a = document.createElement('a');
       a.href = href;
       a.target = '_blank';
       a.rel = 'noopener noreferrer';
-      a.setAttribute('aria-label', resolveLinkText(href, text));
-
-      if (platform) {
-        const icon = document.createElement('span');
-        icon.className = `icon icon-${platform.icon}`;
-        a.append(icon);
-      } else {
-        a.textContent = resolveLinkText(href, text);
-      }
-
+      a.setAttribute('aria-label', platform.name);
+      const icon = document.createElement('span');
+      icon.className = `icon icon-${platform.icon}`;
+      a.append(icon);
       socialEl.append(a);
     });
 
-    infoEl.append(socialEl);
+    if (socialEl.children.length) infoEl.append(socialEl);
   }
 
   if (subscribe?.href) {
@@ -139,7 +124,6 @@ function buildAuthorElements(data) {
 
     const btn = document.createElement('a');
     btn.href = subscribe.href;
-    btn.className = 'blog-author-subscribe-btn';
     btn.textContent = 'Subscribe';
 
     subEl.append(textEl, btn);
@@ -166,7 +150,7 @@ async function fetchCaasAuthor(slug) {
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean)
-      .map((href) => ({ href, text: href }));
+      .map((href) => ({ href }));
 
     return {
       picture: null,
@@ -204,10 +188,18 @@ function parseRows(rows) {
     title: fields.title?.textContent?.trim() || '',
     descriptionHtml: fields.description?.innerHTML?.trim() || '',
     descriptionText: fields.description?.textContent?.trim() || '',
-    socialLinks: socialAnchors.map((a) => ({ href: a.getAttribute('href'), text: a.textContent.trim() })),
+    socialLinks: socialAnchors.map((a) => ({ href: a.getAttribute('href') })),
     company: fields.company?.textContent?.trim() || DEFAULT_COMPANY,
     subscribe: subscribeHref ? { href: subscribeHref } : null,
   };
+}
+
+function decorateSocialIcons(el) {
+  const spans = el.querySelectorAll('span.icon');
+  if (!spans.length) return;
+  import(`${LIBS}/features/icons/icons.js`)
+    .then(({ default: loadIcons }) => loadIcons(spans))
+    .catch(() => {});
 }
 
 export default async function init(el) {
@@ -222,6 +214,7 @@ export default async function init(el) {
     if (caasData) {
       el.replaceChildren(...buildAuthorElements(caasData));
       injectSchema(caasData);
+      decorateSocialIcons(el);
     }
     return;
   }
@@ -241,6 +234,7 @@ export default async function init(el) {
       if (caasData) {
         el.replaceChildren(...buildAuthorElements(caasData));
         injectSchema(caasData);
+        decorateSocialIcons(el);
         return;
       }
     }
@@ -251,4 +245,5 @@ export default async function init(el) {
 
   el.replaceChildren(...buildAuthorElements(data));
   injectSchema(data);
+  decorateSocialIcons(el);
 }

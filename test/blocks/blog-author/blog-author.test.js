@@ -37,13 +37,13 @@ describe('Blog Author', () => {
 
     it('renders author name and title', async () => {
       await init(document.querySelector('.blog-author'));
-      expect(document.querySelector('.blog-author-name').textContent).to.equal('Jane Doe');
-      expect(document.querySelector('.blog-author-title').textContent).to.equal('Senior Director, Marketing');
+      expect(document.querySelector('.blog-author-info > p:first-child').textContent).to.equal('Jane Doe');
+      expect(document.querySelector('.blog-author-info > p:nth-child(2)').textContent).to.equal('Senior Director, Marketing');
     });
 
     it('renders author image', async () => {
       await init(document.querySelector('.blog-author'));
-      expect(document.querySelector('.blog-author-image picture')).to.exist;
+      expect(document.querySelector('.blog-author > picture')).to.exist;
     });
 
     it('renders description', async () => {
@@ -58,7 +58,7 @@ describe('Blog Author', () => {
       const links = document.querySelectorAll('.blog-author-social a');
       expect(links).to.have.length(2);
       expect(links[0].getAttribute('aria-label')).to.equal('LinkedIn');
-      expect(links[1].getAttribute('aria-label')).to.equal('Twitter');
+      expect(links[1].getAttribute('aria-label')).to.equal('X');
       expect(links[0].target).to.equal('_blank');
       expect(links[0].rel).to.equal('noopener noreferrer');
     });
@@ -77,19 +77,17 @@ describe('Blog Author', () => {
           <div><div>social</div><div><a>No href</a></div></div>
         </div>`;
       await init(document.querySelector('.blog-author'));
-      expect(document.querySelector('.blog-author-name').textContent).to.equal('Jane Doe');
+      expect(document.querySelector('.blog-author-info > p:first-child').textContent).to.equal('Jane Doe');
     });
 
-    it('falls back to text for unknown platforms', async () => {
+    it('omits social links for unsupported platforms', async () => {
       document.body.innerHTML = `
         <div class="blog-author">
           <div><div>name</div><div>Jane Doe</div></div>
           <div><div>social</div><div><a href="https://example.com/profile">My Profile</a></div></div>
         </div>`;
       await init(document.querySelector('.blog-author'));
-      const link = document.querySelector('.blog-author-social a');
-      expect(link.textContent).to.equal('My Profile');
-      expect(link.querySelector('.icon')).to.be.null;
+      expect(document.querySelector('.blog-author-social')).to.be.null;
     });
 
     it('renders subscribe CTA when row is authored', async () => {
@@ -97,8 +95,8 @@ describe('Blog Author', () => {
       const sub = document.querySelector('.blog-author-subscribe');
       expect(sub).to.exist;
       expect(sub.querySelector('p').textContent).to.include('latest articles');
-      expect(sub.querySelector('.blog-author-subscribe-btn').href).to.include('subscribe');
-      expect(sub.querySelector('.blog-author-subscribe-btn').textContent).to.equal('Subscribe');
+      expect(sub.querySelector('a').href).to.include('subscribe');
+      expect(sub.querySelector('a').textContent).to.equal('Subscribe');
     });
 
     it('omits subscribe CTA when row is absent', async () => {
@@ -172,8 +170,8 @@ describe('Blog Author', () => {
       });
 
       await init(document.querySelector('.blog-author'));
-      expect(document.querySelector('.blog-author-name').textContent).to.equal('Jane Doe');
-      expect(document.querySelector('.blog-author-title').textContent).to.equal('Marketing Director');
+      expect(document.querySelector('.blog-author-info > p:first-child').textContent).to.equal('Jane Doe');
+      expect(document.querySelector('.blog-author-info > p:nth-child(2)').textContent).to.equal('Marketing Director');
     });
 
     it('strips XSS from CaaS description', async () => {
@@ -205,7 +203,7 @@ describe('Blog Author', () => {
 
       await init(document.querySelector('.blog-author'));
       expect(window.lana.log.called).to.be.true;
-      expect(document.querySelector('.blog-author-name')).to.be.null;
+      expect(document.querySelector('.blog-author-info > p:first-child')).to.be.null;
     });
   });
 
@@ -220,7 +218,7 @@ describe('Blog Author', () => {
       document.body.innerHTML = '<div class="blog-author"><div><div></div></div></div>';
       sinon.stub(window, 'fetch').resolves({ ok: false });
       await init(document.querySelector('.blog-author'));
-      expect(document.querySelector('.blog-author-name')).to.be.null;
+      expect(document.querySelector('.blog-author-info > p:first-child')).to.be.null;
     });
   });
 });
