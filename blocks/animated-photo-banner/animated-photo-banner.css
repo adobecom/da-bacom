@@ -209,11 +209,11 @@ html {
   }
 
   .animated-photo-banner-title h1 {
-    font-size: 80px;
+    font-size: 64px;
   }
 
   .animated-photo-banner-title  h2 {
-    font-size: 64px;
+    font-size: 80px;
   }
 
   /* stylelint-disable-next-line no-descending-specificity */
