@@ -398,10 +398,13 @@ loadPage();
   if (!searchParams.get('dapreview')) return;
   // eslint-disable-next-line import/no-unresolved
   import('https://da.live/scripts/dapreview.js').then(({ default: daPreview }) => daPreview(loadPage));
-  const hasQE = searchParams.has('quick-edit');
-  // eslint-disable-next-line import/no-unresolved
-  if (hasQE) import('./quick-edit.js').then((mod) => mod.default());
 }());
+
+(() => {
+  const hasQE = new URL(window.location.href).searchParams.has('quick-edit');
+  // eslint-disable-next-line import/no-cycle
+  if (hasQE) import('./quick-edit.js').then((mod) => mod.default());
+})();
 
 if (eventsError) {
   window.lana?.log([eventsError[0], eventsError[1]], { severity: 'error', tags: 'events' });
