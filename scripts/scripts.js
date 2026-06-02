@@ -392,16 +392,28 @@ export async function loadPage() {
 }
 loadPage();
 
+(function detectSidekick() {
+  const listen = () => {
+    const sk = document.querySelector('aem-sidekick, helix-sidekick');
+    sk?.addEventListener('custom:quick-edit', (e) => import('./quick-edit.js').then(({ default: init }) => init(e)));
+  };
+  if (document.querySelector('aem-sidekick, helix-sidekick')) { listen(); return; }
+  document.addEventListener('sidekick-ready', listen, { once: true });
+}());
+
 // DA Live Preview
 (async function loadDa() {
   const { searchParams } = new URL(window.location.href);
   if (!searchParams.get('dapreview')) return;
   // eslint-disable-next-line import/no-unresolved
   import('https://da.live/scripts/dapreview.js').then(({ default: daPreview }) => daPreview(loadPage));
-  const hasQE = searchParams.has('quick-edit');
-  // eslint-disable-next-line import/no-unresolved
-  if (hasQE) import('./quick-edit.js').then((mod) => mod.default());
 }());
+
+(() => {
+  const hasQE = new URL(window.location.href).searchParams.has('quick-edit');
+  // eslint-disable-next-line import/no-cycle
+  if (hasQE) import('./quick-edit.js').then((mod) => mod.default());
+})();
 
 if (eventsError) {
   window.lana?.log([eventsError[0], eventsError[1]], { severity: 'error', tags: 'events' });
