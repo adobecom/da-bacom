@@ -420,10 +420,10 @@ function buildHeaderSection(el, container) {
       try {
         const titleEl = createTag('div', { class: 'animated-photo-banner-title' });
 
+        titleEl.appendChild(title.cloneNode(true));
         if (eyebrowTitle) {
           titleEl.appendChild(eyebrowTitle.cloneNode(true));
         }
-        titleEl.appendChild(title.cloneNode(true));
 
         textContent.appendChild(titleEl);
       } catch (err) {

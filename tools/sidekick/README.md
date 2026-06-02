@@ -1,12 +1,26 @@
-# Notes on the sidekick / DA library
+# Sidekick & DA Library Config
 
-The DA config controls the tools in the DA library for this site, not the sidekick/config.json .
+There are two separate configuration systems here — they control different things.
 
-## Editing the DA Library
-To edit the DA library tools, go to https://da.live/config#/adobecom/da-bacom/ and edit the "library" sheet. 
+## AEM Sidekick Plugins — Config Service
 
-### Ref
-You can test your changes by setting a ref. If there's no ref listed, the tool will be live in the library.
+Sidekick plugins (e.g. Preflight, Rollout, Quick Edit) are managed via the **AEM config service**.
+
+Edit via the admin editor:
+`https://tools.aem.live/tools/admin-edit/index.html`
+
+Admin URL:
+`https://admin.hlx.page/config/adobecom/sites/da-bacom.json`
+
+Event-based plugins fire `custom:<event>` on the sidekick element. The listener in `scripts/scripts.js` handles these at runtime.
+
+## DA Library — `https://da.live/config#/adobecom/da-bacom/`
+
+Controls the **DA library tools** — tools available inside the da.live editor (e.g. Tag Browser, Locale Nav). Edit the "library" sheet there.
+
+### Testing with a ref
+
+Set a `ref` in the DA config sheet to test against a specific branch before going live.
 
 Example:
 
@@ -18,4 +32,4 @@ ref: methomas-tag-browser
 https://da.live/edit?ref=methomas-tag-browser#/adobecom/da-bacom/drafts/methomas/brand-concierge
 ```
 
-This will pull code from `https://methomas-tag-browser--da-bacom--adobecom.aem.live` so make sure your ref is your branch name if you have corresponding code changes.
+The ref pulls code from `https://<ref>--da-bacom--adobecom.aem.live`, so it must match your branch name if you have corresponding code changes.
