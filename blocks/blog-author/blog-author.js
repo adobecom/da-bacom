@@ -3,11 +3,9 @@ import { LIBS } from '../../scripts/scripts.js';
 const { getMetadata, getConfig } = await import(`${LIBS}/utils/utils.js`);
 const { replaceKey } = await import(`${LIBS}/features/placeholders.js`);
 
-const CAAS_AUTHOR_PREFIX = 'caas:blog-authors/';
 const DEFAULT_COMPANY = 'Adobe';
 const DEFAULT_COMPANY_URL = 'https://www.adobe.com/';
 
-// Only platforms with icons available in the Milo/federal sprite.
 const SOCIAL_PLATFORMS = {
   'linkedin.com': { name: 'LinkedIn', icon: 'linkedin' },
   'twitter.com': { name: 'X', icon: 'twitter' },
@@ -29,6 +27,7 @@ function buildPersonSchema({
     '@context': 'https://schema.org',
     '@type': 'Person',
     name,
+    url: window.location.href,
     jobTitle: title,
     worksFor: {
       '@type': 'Organization',
@@ -52,18 +51,14 @@ function injectSchema(data) {
   document.head.append(script);
 }
 
-async function buildAuthorElements(data) {
-  const {
-    picture, name, title, descriptionHtml, socialLinks, subscribe,
-  } = data;
-
-  const imageEl = picture || null;
+async function buildAuthorElements({
+  picture, name, title, descriptionHtml, socialLinks, subscribe,
+}) {
+  const infoEl = document.createElement('div');
+  infoEl.className = 'blog-author-info';
 
   const nameEl = document.createElement('p');
   nameEl.textContent = name;
-
-  const infoEl = document.createElement('div');
-  infoEl.className = 'blog-author-info';
   infoEl.append(nameEl);
 
   if (title) {
@@ -124,93 +119,7 @@ async function buildAuthorElements(data) {
     infoEl.append(subEl);
   }
 
-  return [imageEl, infoEl].filter(Boolean);
-}
-
-async function fetchCaasAuthor(slug) {
-  try {
-    const res = await fetch(`/blog/authors/${slug}.json`);
-    if (!res.ok) {
-      window.lana?.log(`blog-author: CaaS fetch failed for ${slug} (${res.status})`, { tags: 'blog-author', severity: 'warning' });
-      return null;
-    }
-    const item = (await res.json())?.data?.[0];
-    if (!item) {
-      window.lana?.log(`blog-author: no CaaS data for ${slug}`, { tags: 'blog-author', severity: 'warning' });
-      return null;
-    }
-
-    const socialLinks = (item['social-links'] || '')
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .map((href) => ({ href }));
-
-    return {
-      picture: null,
-      imageUrl: item.image || '',
-      name: item.name || '',
-      title: item['job-title'] || '',
-      descriptionHtml: item.description || '',
-      descriptionText: (item.description || '').replace(/<[^>]+>/g, ''),
-      socialLinks,
-      subscribe: null,
-      company: item.company || DEFAULT_COMPANY,
-    };
-  } catch {
-    window.lana?.log(`blog-author: CaaS fetch failed for ${slug}`, { tags: 'blog-author', severity: 'warning' });
-    return null;
-  }
-}
-
-function parseRows(rows) {
-  let picture = null;
-  let imageUrl = '';
-  let name = '';
-  let title = '';
-  let descriptionHtml = '';
-  let descriptionText = '';
-  let socialLinks = [];
-  let subscribe = null;
-
-  for (const row of rows) {
-    const cell = row.querySelector(':scope > div') || row;
-
-    if (cell.querySelector('picture')) {
-      picture = cell.querySelector('picture');
-      imageUrl = cell.querySelector('img')?.src || '';
-    } else if (cell.querySelector('a')) {
-      const anchors = [...cell.querySelectorAll('a')].filter((a) => a.getAttribute('href'));
-      const socialAnchors = anchors.filter((a) => resolvePlatform(a.getAttribute('href')));
-      if (socialAnchors.length) {
-        socialLinks = socialAnchors.map((a) => ({ href: a.getAttribute('href') }));
-      } else if (anchors.length === 1) {
-        subscribe = { href: anchors[0].getAttribute('href') };
-      }
-    } else {
-      const parts = cell.innerHTML.split(/<br\s*\/?>/i).map((s) => s.trim()).filter(Boolean);
-      if (parts.length) {
-        [name] = parts;
-        if (parts.length >= 2) [, title] = parts;
-        if (parts.length >= 3) {
-          descriptionHtml = parts.slice(2).join('<br>');
-          descriptionText = parts.slice(2).map((s) => s.replace(/<[^>]+>/g, '')).join(' ').trim();
-        }
-      }
-    }
-  }
-
-  return {
-    picture,
-    imageUrl,
-    name,
-    title,
-    descriptionHtml,
-    descriptionText,
-    socialLinks,
-    subscribe,
-    company: DEFAULT_COMPANY,
-  };
+  return [picture, infoEl].filter(Boolean);
 }
 
 function decorateSocialIcons(el) {
@@ -222,45 +131,40 @@ function decorateSocialIcons(el) {
 }
 
 export default async function init(el) {
-  const rows = [...el.querySelectorAll(':scope > div')];
-  if (!rows.length) return;
-
-  // CaaS tag path: single row containing only a caas:blog-authors/ tag
-  const firstCellText = rows[0]?.querySelector(':scope > div')?.textContent?.trim() || '';
-  if (rows.length === 1 && firstCellText.startsWith(CAAS_AUTHOR_PREFIX)) {
-    const slug = firstCellText.replace(CAAS_AUTHOR_PREFIX, '');
-    const caasData = await fetchCaasAuthor(slug);
-    if (caasData) {
-      el.replaceChildren(...await buildAuthorElements(caasData));
-      injectSchema(caasData);
-      decorateSocialIcons(el);
-    }
+  const name = getMetadata('author');
+  if (!name) {
+    window.lana?.log('blog-author: missing author metadata', { tags: 'blog-author', severity: 'warning' });
     return;
   }
 
-  const data = parseRows(rows);
+  const imageUrl = getMetadata('author-image') || '';
+  const title = getMetadata('author-title') || '';
+  const descriptionHtml = getMetadata('author-description') || '';
+  const descriptionText = descriptionHtml.replace(/<[^>]+>/g, '');
+  const company = getMetadata('author-company') || DEFAULT_COMPANY;
+  const socialLinksRaw = getMetadata('author-social-links') || '';
+  const socialLinks = socialLinksRaw.split(',').map((s) => s.trim()).filter(Boolean).map((href) => ({ href }));
 
-  // CaaS metadata fallback: use page caas-tags meta to populate missing content
-  if (!data.name) {
-    const authorTag = (getMetadata('caas-tags') ?? '')
-      .split(',')
-      .map((t) => t.trim())
-      .find((t) => t.startsWith(CAAS_AUTHOR_PREFIX));
-
-    if (authorTag) {
-      const slug = authorTag.replace(CAAS_AUTHOR_PREFIX, '');
-      const caasData = await fetchCaasAuthor(slug);
-      if (caasData) {
-        el.replaceChildren(...await buildAuthorElements(caasData));
-        injectSchema(caasData);
-        decorateSocialIcons(el);
-        return;
-      }
-    }
-
-    window.lana?.log('blog-author: missing author name', { tags: 'blog-author', severity: 'warning' });
-    return;
+  let picture = null;
+  if (imageUrl) {
+    const img = document.createElement('img');
+    img.src = imageUrl;
+    img.alt = name;
+    picture = document.createElement('picture');
+    picture.append(img);
   }
+
+  const data = {
+    picture,
+    imageUrl,
+    name,
+    title,
+    descriptionHtml,
+    descriptionText,
+    socialLinks,
+    subscribe: null,
+    company,
+  };
 
   el.replaceChildren(...await buildAuthorElements(data));
   injectSchema(data);
