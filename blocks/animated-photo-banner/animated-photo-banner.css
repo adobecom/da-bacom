@@ -82,14 +82,14 @@ html {
 }
 
 .animated-photo-banner-title h2 {
-  font-weight: 800;
-  margin-bottom: 0;
-}
-
-.animated-photo-banner-title h1 {
   font-weight: 700;
   font-size: 32px;
   margin: 16px 0 32px;
+}
+
+.animated-photo-banner-title h1 {
+  font-weight: 800;
+  margin-bottom: 0;
 }
 
 .animated-photo-banner-header p {
@@ -209,11 +209,11 @@ html {
   }
 
   .animated-photo-banner-title h1 {
-    font-size: 64px;
+    font-size: 80px;
   }
 
   .animated-photo-banner-title  h2 {
-    font-size: 80px;
+    font-size: 64px;
   }
 
   /* stylelint-disable-next-line no-descending-specificity */
@@ -269,13 +269,13 @@ html {
   }
 
   .animated-photo-banner-title h1 {
-    font-size: 64px;
+    font-size: 80px;
     letter-spacing: -2px;
     font-weight: 700px;
   }
   
   .animated-photo-banner-title h2 {
-    font-size: 80px;
+    font-size: 64px;
     letter-spacing: -2px;
     font-weight: 700px;
     margin-bottom: 24px;

@@ -144,6 +144,10 @@ body.disable-scroll #adbMsgClientWrapper #adbmsgContainer .adbmsgCta {
   align-self: flex-start;
 }
 
+.carousel.iswa .carousel-slide:has(.editorial-card) {
+  align-self: stretch;
+}
+
 .carousel.iswa .icon-block h3 {
   font-size: 28px;
   letter-spacing: -2px;
