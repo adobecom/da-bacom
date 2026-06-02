@@ -380,12 +380,13 @@ class LandingPageForm extends LitElement {
     if (this.currentTemplateKey === templateKey) {
       return this.templateHTML;
     }
+    if (!templatePath) return null;
 
-    this.currentTemplateKey = templateKey;
     if (DEBUG) console.log('[LPB][Request] GET template:', templatePath);
     this.template = await getSource(templatePath);
     if (DEBUG) console.log('[LPB][Response] template:', this.template ? 'ok' : 'null', templatePath);
     this.templateHTML = this.template?.body?.innerHTML;
+    if (this.templateHTML) this.currentTemplateKey = templateKey;
     return this.templateHTML;
   }
 
@@ -733,15 +734,19 @@ class LandingPageForm extends LitElement {
   }
 
   async savePage() {
-    await this.getTemplateContent();
+    const templateHTML = await this.getTemplateContent();
+    if (!templateHTML) {
+      if (DEBUG) console.error('[Save] no template HTML - template fetch may have failed');
+      return { success: false };
+    }
     const placeholders = await this.templatePlaceholders(this.form);
     if (DEBUG) {
       console.log('[Save] savePage url:', this.form.url);
       console.table(placeholders);
     }
-    let generatedPage = applyTemplateData(this.templateHTML, placeholders);
+    let generatedPage = applyTemplateData(templateHTML, placeholders);
     generatedPage = injectAssetHeadlineIfMissing(
-      this.templateHTML,
+      templateHTML,
       generatedPage,
       placeholders.assetHeadline,
       placeholders.pdfAsset,
