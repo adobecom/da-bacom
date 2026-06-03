@@ -168,6 +168,11 @@
   font-size: 0.8125rem;
 }
 
+.cell-yellow {
+  background: #fff3cd;
+  color: #7a5c00;
+}
+
 .filter-row {
   margin-bottom: 12px;
 }
@@ -265,7 +270,7 @@
   border-bottom: none;
 }
 
-.item-row.row-multi td:first-child {
+.item-row.row-flagged td:first-child {
   border-left: 3px solid #ffc107;
 }
 

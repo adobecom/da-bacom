@@ -3,6 +3,7 @@ import {
   getMultiStepMethod,
   parseConfiguratorUrl,
   extractMarketoBlocks,
+  extractFragmentPaths,
 } from '../../../tools/mkto-scan/mkto-scanner.js';
 
 describe('getMultiStepMethod', () => {
@@ -119,6 +120,77 @@ describe('parseConfiguratorUrl', () => {
     const r = parseConfiguratorUrl(url);
     expect(r.formId).to.equal('1234');
     expect(r.poi).to.equal('日本語POI');
+  });
+});
+
+describe('extractFragmentPaths', () => {
+  function makeDoc(html) {
+    return new DOMParser().parseFromString(html, 'text/html');
+  }
+
+  it('returns empty array when no fragment blocks', () => {
+    expect(extractFragmentPaths(makeDoc('<p>Hello</p>'))).to.deep.equal([]);
+  });
+
+  it('returns empty array for null input', () => {
+    expect(extractFragmentPaths(null)).to.deep.equal([]);
+  });
+
+  it('extracts a root-relative fragment path', () => {
+    const doc = makeDoc(`
+      <div class="fragment">
+        <div><div><a href="/fragments/products/experience-platform/form">Fragment</a></div></div>
+      </div>
+    `);
+    expect(extractFragmentPaths(doc)).to.deep.equal(['/fragments/products/experience-platform/form']);
+  });
+
+  it('extracts path from absolute same-origin URL', () => {
+    const doc = makeDoc('<a href="https://business.adobe.com/fragments/shared/form">F</a>');
+    expect(extractFragmentPaths(doc)).to.deep.equal(['/fragments/shared/form']);
+  });
+
+  it('extracts path from aem.page absolute URL (mep-lingo pattern)', () => {
+    const doc = makeDoc(`
+      <div class="mep-lingo">
+        <div>
+          <div><p>mep-lingo</p></div>
+          <div><p><a href="https://main--da-bacom--adobecom.aem.page/fragments/products/experience-platform/form">https://main--da-bacom--adobecom.aem.page/fragments/products/experience-platform/form</a></p></div>
+        </div>
+      </div>
+    `);
+    expect(extractFragmentPaths(doc)).to.deep.equal(['/fragments/products/experience-platform/form']);
+  });
+
+  it('extracts path from aem.live absolute URL', () => {
+    const doc = makeDoc('<a href="https://main--da-bacom--adobecom.aem.live/fragments/shared/form">F</a>');
+    expect(extractFragmentPaths(doc)).to.deep.equal(['/fragments/shared/form']);
+  });
+
+  it('ignores links to /fragments/ on external domains', () => {
+    const doc = makeDoc('<a href="https://example.com/fragments/form">F</a>');
+    expect(extractFragmentPaths(doc)).to.deep.equal([]);
+  });
+
+  it('ignores internal links not under /fragments/', () => {
+    const doc = makeDoc('<a href="/products/some-page">F</a>');
+    expect(extractFragmentPaths(doc)).to.deep.equal([]);
+  });
+
+  it('deduplicates the same fragment path referenced multiple times', () => {
+    const doc = makeDoc(`
+      <a href="/fragments/shared/form">F</a>
+      <a href="/fragments/shared/form">F</a>
+    `);
+    expect(extractFragmentPaths(doc)).to.deep.equal(['/fragments/shared/form']);
+  });
+
+  it('extracts multiple distinct fragment paths', () => {
+    const doc = makeDoc(`
+      <a href="/fragments/a/form">F</a>
+      <a href="/fragments/b/form">F</a>
+    `);
+    expect(extractFragmentPaths(doc)).to.have.members(['/fragments/a/form', '/fragments/b/form']);
   });
 });
 

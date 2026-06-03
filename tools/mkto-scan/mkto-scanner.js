@@ -62,6 +62,30 @@ function getMultiStepMethodLabel(variantMatch, stepPref) {
   return null;
 }
 
+const FRAGMENT_ORIGINS = new Set([
+  'business.adobe.com',
+]);
+const AEM_ORIGIN_RE = /\.aem\.(page|live)$/;
+
+export function extractFragmentPaths(doc) {
+  if (!doc?.querySelectorAll) return [];
+  const paths = new Set();
+  doc.querySelectorAll('a[href]').forEach((el) => {
+    const href = el.getAttribute('href');
+    if (!href) return;
+    try {
+      const url = new URL(href, 'https://business.adobe.com');
+      const isKnownOrigin = FRAGMENT_ORIGINS.has(url.hostname)
+        || AEM_ORIGIN_RE.test(url.hostname)
+        || href.startsWith('/');
+      if (isKnownOrigin && url.pathname.startsWith('/fragments/')) {
+        paths.add(url.pathname);
+      }
+    } catch { /* ignore malformed hrefs */ }
+  });
+  return [...paths];
+}
+
 export function extractMarketoBlocks(doc) {
   if (!doc?.querySelectorAll) return [];
   const blocks = [];

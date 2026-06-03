@@ -4,7 +4,7 @@ import DA_SDK from 'da-sdk';
 import { daFetch } from 'da-fetch';
 import { LitElement, html, nothing } from 'da-lit';
 import getStyle from 'styles';
-import { extractMarketoBlocks } from './mkto-scanner.js';
+import { extractMarketoBlocks, extractFragmentPaths } from './mkto-scanner.js';
 import {
   LOCALES,
   ORG,
@@ -41,6 +41,7 @@ const CSV_COLUMNS = [
   { key: 'successType', label: 'Success Type' },
   { key: 'successContent', label: 'Success Content' },
   { key: 'stepPref', label: 'Step Pref' },
+  { key: 'fromFragment', label: 'Source' },
   { key: 'previewedAt', label: 'Previewed' },
   { key: 'previewedBy', label: 'Previewed By' },
   { key: 'publishedAt', label: 'Published' },
@@ -49,12 +50,19 @@ const CSV_COLUMNS = [
 
 const TABLE_COLS = [
   { key: 'path', label: 'Path' },
+  { key: 'fromFragment', label: 'Source' },
   { key: 'formId', label: 'Form ID' },
   { key: 'template', label: 'Template' },
   { key: 'multiStepMethod', label: 'Multi-step' },
   { key: 'poi', label: 'POI' },
   { key: 'successType', label: 'Success Type' },
 ];
+
+const TEMPLATE_LABELS = {
+  flex_content: 'Essential',
+  flex_event: 'Expanded',
+  flex_contact: 'Full',
+};
 
 const style = await getStyle(import.meta.url);
 
@@ -179,6 +187,7 @@ export default class MktoScan extends LitElement {
     this._controller = null;
     this._getDuration = null;
     this._loadingStatus = new Set();
+    this._fragmentCache = new Map();
   }
 
   async connectedCallback() {
@@ -225,13 +234,40 @@ export default class MktoScan extends LitElement {
 
     if (!res?.ok) return;
     const text = await res.text();
-    if (!text.includes('class="marketo')) return;
+    if (!text.includes('class="marketo') && !text.includes('/fragments/')) return;
     // Small delay before DOM parse to keep main thread responsive
     await new Promise((r) => { setTimeout(r, 50); });
     const doc = new DOMParser().parseFromString(text, 'text/html');
     const blocks = extractMarketoBlocks(doc);
+
+    const fragPaths = extractFragmentPaths(doc);
+    const fragBlockArrays = await Promise.all(
+      fragPaths.map((fp) => this._getFragmentBlocks(fp, signal)),
+    );
+    blocks.push(...fragBlockArrays.flat().map((b) => ({ ...b, fromFragment: true })));
+
     if (!blocks.length) return;
     this._rows = [...this._rows, ...blocks.map((block) => ({ path: repoPath, ...block }))];
+  }
+
+  async _getFragmentBlocks(fragPath, signal) {
+    if (this._fragmentCache.has(fragPath)) return this._fragmentCache.get(fragPath);
+    let blocks = [];
+    try {
+      const url = `${ADMIN_DA_ORIGIN}/source/${ORG}/${REPO}${fragPath}.html`;
+      const res = await daFetch(url, { signal });
+      if (res.ok) {
+        const text = await res.text();
+        if (text.includes('class="marketo')) {
+          const doc = new DOMParser().parseFromString(text, 'text/html');
+          blocks = extractMarketoBlocks(doc);
+        }
+      }
+    } catch (err) {
+      if (err.name === 'AbortError') throw err;
+    }
+    this._fragmentCache.set(fragPath, blocks);
+    return blocks;
   }
 
   async _runScan() {
@@ -244,6 +280,7 @@ export default class MktoScan extends LitElement {
     this._expandedRows = new Set();
     this._loadingStatus = new Set();
     this._failedPages = [];
+    this._fragmentCache = new Map();
 
     const controller = new AbortController();
     this._controller = controller;
@@ -329,6 +366,8 @@ export default class MktoScan extends LitElement {
     const lines = this._visibleRows.map((row) => CSV_COLUMNS.map((col) => {
       if (col.key === 'path') return escapeCsvCell(`${AEM_LIVE_ORIGIN}${row.path}`);
       if (col.key === 'author') return escapeCsvCell(getDAEditUrl(row.path) ?? '');
+      if (col.key === 'fromFragment') return escapeCsvCell(row.fromFragment ? 'fragment' : 'page');
+      if (col.key === 'template') return escapeCsvCell(row.template ? (TEMPLATE_LABELS[row.template] ?? row.template) : '');
       return escapeCsvCell(row[col.key] ?? '');
     }).join(','));
     const csv = [header, ...lines].join('\r\n');
@@ -364,15 +403,17 @@ export default class MktoScan extends LitElement {
   _renderRow(row, colSpan) {
     const expanded = this._expandedRows.has(row.path);
     const editUrl = getDAEditUrl(row.path);
-    const rowClass = `item-row${row.multiStepMethod ? ' row-multi' : ''}${expanded ? ' is-expanded' : ''}`;
+    const flagged = !!(row.multiStepMethod || row.fromFragment);
+    const rowClass = `item-row${flagged ? ' row-flagged' : ''}${expanded ? ' is-expanded' : ''}`;
     return html`
       <tr class="${rowClass}">
         <td class="col-path">
           <a href="${getDAEditUrl(row.path)}" target="_blank" rel="noopener">${row.path}</a>
         </td>
+        <td class="${row.fromFragment ? 'cell-yellow' : ''}">${row.fromFragment ? 'fragment' : 'page'}</td>
         <td>${row.formId ?? '—'}</td>
-        <td>${row.template ?? '—'}</td>
-        <td>${row.multiStepMethod ?? '—'}</td>
+        <td>${row.template ? (TEMPLATE_LABELS[row.template] ?? row.template) : '—'}</td>
+        <td class="${row.multiStepMethod ? 'cell-yellow' : ''}">${row.multiStepMethod ?? '—'}</td>
         <td>${row.poi ?? '—'}</td>
         <td>${row.successType ?? '—'}</td>
         <td class="col-expand">
