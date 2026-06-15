@@ -10,6 +10,7 @@ export default async function stepInit(data) {
   const cropCTA = createTag('a', { class: 'gray-button body-m crop-button', href: '#' });
   const svg = config.querySelector('img[src*=".svg"')?.closest('picture');
   const lastp = config.querySelector(':scope > div > p:last-child');
+  if (!lastp) return layer;
   const textContent = lastp.textContent.trim();
   if (svg) {
     svg.insertAdjacentElement('afterend', svg.cloneNode(true));

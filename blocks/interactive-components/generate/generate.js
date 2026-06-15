@@ -22,7 +22,7 @@ export default async function stepInit(data) {
   const labelBtn = createTag('div', { class: 'label-text' });
   if (flag) {
     const firstSvgElement = svgElements[0];
-    const labelText = firstSvgElement.closest('p').nextElementSibling.textContent.trim();
+    const labelText = firstSvgElement.closest('p')?.nextElementSibling?.textContent?.trim() ?? '';
     labelBtn.appendChild(document.createTextNode(labelText));
     const firstSvgPicture = firstSvgElement.closest('picture');
     if (firstSvgPicture) {
@@ -32,11 +32,11 @@ export default async function stepInit(data) {
   }
   const layer = createTag('div', { class: `layer layer-${stepIndex}` });
   const generateCfg = getGenerateConfig(data, flag);
-  const [searchText, btnText] = generateCfg.textContent.trim().split('|');
+  const [searchText = '', btnText = ''] = generateCfg.textContent.trim().split('|');
   const genfillDiv = createTag('div', { class: 'generate-prompt-button body-m' });
   const searchBar = createTag('div', { class: 'generate-text' }, searchText);
   const searchBarContainer = createTag('div', { class: 'generate-text-container' }, searchBar);
-  const generateBtn = createTag('a', { class: 'gray-button generate-button next-step', href: '#', role: 'button', 'aria-label': `${btnText}, ${searchText}` });
+  const generateBtn = createTag('a', { class: 'gray-button generate-button next-step', href: '#', role: 'button', 'aria-label': `${btnText ? `${btnText}, ` : ''}${searchText}` });
   const analyticsHolder = createTag('div', { class: 'interactive-link-analytics-text' }, `${searchText} - `);
   const lastSvgPicture = svgElements[svgElements.length - 1]?.closest('picture');
   if (lastSvgPicture) {

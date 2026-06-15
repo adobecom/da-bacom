@@ -5,6 +5,10 @@ import { LIBS } from '../../../scripts/scripts.js';
 let createTag;
 let getConfig;
 
+let tabbing = false;
+document.addEventListener('keydown', () => { tabbing = true; });
+document.addEventListener('keyup', () => { tabbing = false; });
+
 function defineDeviceByScreenSize() {
   const { innerWidth } = window;
   if (innerWidth <= 600) return 'MOBILE';
@@ -48,7 +52,7 @@ function handleInput(option, sliderTray, menu, layer) {
   const sliderType = inputType.split('-')[0];
   if (inputType.includes('slider')) inputType = 'slider';
   const sibling = option.nextSibling;
-  const text = sibling.nodeValue.trim();
+  const text = sibling?.nodeValue?.trim() ?? '';
   let picture = '';
   if (sibling.nextSibling && sibling.nextSibling.tagName === 'PICTURE') {
     picture = sibling.nextSibling;
@@ -76,6 +80,7 @@ function observeSliderTray(sliderTray, targets) {
       if (!entry.isIntersecting) return;
       const menu = sliderTray.querySelector('.menu');
       const outerCircle = menu.querySelector('.outer-circle');
+      if (!outerCircle) return;
       outerCircle.classList.add('show-outer-border');
       setTimeout(() => { animateSlider(menu, targets); }, 800);
       observer.unobserve(entry.target);
@@ -129,20 +134,11 @@ function createUploadButton(details, picture, sliderTray, menu) {
 }
 
 function applyAccessibility(inputEle, target) {
-  let tabbing = false;
-  document.addEventListener('keydown', () => {
-    tabbing = true;
-    inputEle.addEventListener('focus', () => {
-      if (tabbing) {
-        target.classList.add('upload-btn-focus');
-      }
-    });
-    inputEle.addEventListener('blur', () => {
-      target.classList.remove('upload-btn-focus');
-    });
+  inputEle.addEventListener('focus', () => {
+    if (tabbing) target.classList.add('upload-btn-focus');
   });
-  document.addEventListener('keyup', () => {
-    tabbing = false;
+  inputEle.addEventListener('blur', () => {
+    target.classList.remove('upload-btn-focus');
   });
 }
 
@@ -169,6 +165,7 @@ function sliderEvent(media, layer, imgObj) {
   let saturation = 100;
   ['hue', 'saturation'].forEach((sel) => {
     const sliderEl = layer.querySelector(`.${sel.toLowerCase()}-input`);
+    if (!sliderEl) return;
     sliderEl.addEventListener('input', () => {
       const image = media.querySelector('.interactive-holder picture > img');
       const { value } = sliderEl;
@@ -294,7 +291,7 @@ function cancelAnalytics(btn) {
 function animateSlider(menu, target) {
   const option = menu.querySelector('.options');
   const aobj = { interrupted: false };
-  const outerCircle = option.nextSibling;
+  const outerCircle = option.nextElementSibling;
   outerCircle.classList.add('animate');
   ['mousedown', 'touchstart', 'keyup'].forEach((e) => {
     option.closest('.tray-wrapper').addEventListener(e, () => {
@@ -328,7 +325,7 @@ function sliderScroll(slider, start, end, duration, outerCircle, target, aobj) {
       step = -step;
       setTimeout(stepAnimation, 10);
       direction = -1;
-    } else if (current === start && direction === -1) {
+    } else if (Math.abs(current - start) < Math.abs(step) && direction === -1) {
       slider.value = current;
       const image = target.querySelector('picture > img');
       image.style.filter = `hue-rotate(${0}deg)`;

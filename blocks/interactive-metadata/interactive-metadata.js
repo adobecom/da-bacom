@@ -52,6 +52,7 @@ async function addLayerAnimation(asset) {
 }
 
 async function loadJSandCSS(stepName) {
+  // Step components live in bacom (not milo), so we load from origin rather than LIBS.
   const stepJS = `${window.location.origin}/blocks/interactive-components/${stepName}/${stepName}.js`;
   const stepCSS = `${window.location.origin}/blocks/interactive-components/${stepName}/${stepName}.css`;
   loadStyle(stepCSS);
@@ -207,7 +208,7 @@ function checkRenderStatus(targetBlock, res, rej, etime, rtime) {
   else setTimeout(() => checkRenderStatus(targetBlock, res, rej, etime + rtime), rtime);
 }
 
-function intEnbReendered(targetBlock) {
+function intEnbRendered(targetBlock) {
   return new Promise((res, rej) => {
     try {
       checkRenderStatus(targetBlock, res, rej, 0, 100);
@@ -276,9 +277,10 @@ async function getTargetArea(el) {
   if (!intEnb) return null;
   try {
     intEnb.classList.add('interactive-enabled');
-    await intEnbReendered(intEnb);
+    await intEnbRendered(intEnb);
   } catch (err) { return null; }
   const assets = intEnb.querySelectorAll('.asset picture, .image picture, .asset a.video, .image a.video, .asset .video-holder, .asset:not(:has(.video-holder)) video, .image .video-holder, .image:not(:has(.video-holder)) video');
+  if (!assets.length) return null;
   const container = assets[assets.length - 1].closest('p');
   const iArea = await createInteractiveArea(el, assets[assets.length - 1]);
   const assetArea = intEnb.querySelector('.asset, .image');

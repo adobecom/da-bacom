@@ -88,12 +88,14 @@ function selectorTrayWithImgs(layer, data) {
   const selectorTray = createTag('div', { class: 'body-s selector-tray', role: 'radiogroup', 'aria-labelledby': 'tray-title' });
   const trayItems = createTag('div', { class: 'tray-items' });
   const configTray = getTrayConfig(data);
+  if (!configTray) return selectorTray;
   let pathIdx = getStartingPathIdx(data);
   const pics = [...configTray.querySelectorAll('li picture')];
   const thumbnails = pics.filter((p) => parseInt(p.querySelector('img').getAttribute('width'), 10) <= 500);
   const displayImgs = pics.filter((p) => parseInt(p.querySelector('img').getAttribute('width'), 10) > 500);
   [...thumbnails].forEach((thumbnailPic, idx) => {
     const displayPic = displayImgs[idx];
+    if (!displayPic) return;
     const displayImg = [getImgSrc(displayPic), displayPic.querySelector('img').alt];
     const a = createSelectorThumbnail(thumbnailPic, pathIdx, displayImg);
     trayItems.append(a);
@@ -112,7 +114,7 @@ export default async function stepInit(data) {
   const layer = createTag('div', { class: `layer layer-${data.stepIndex}` });
   const title = config.querySelector('p:first-child');
   let trayTitle = null;
-  if (title) trayTitle = createTag('div', { class: 'tray-title', id: 'tray-title' }, title.innerText.trim());
+  if (title) trayTitle = createTag('div', { class: 'tray-title', id: 'tray-title' }, title.textContent.trim());
   const selectorTray = selectorTrayWithImgs(layer, data);
   if (title) selectorTray.prepend(trayTitle);
   layer.append(selectorTray);

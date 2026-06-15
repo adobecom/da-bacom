@@ -58,23 +58,24 @@ export async function waitForGenerateButton(data, timeout = 5000) {
 
 function getClosestHeadingText(element) {
   const section = element.closest('.section');
-  const container = section.querySelector('.marquee, .aside, .media');
-  const textBlock = container.querySelector('.text');
-  const heading = textBlock.querySelector('h1, h2, h3, h4, h5, h6');
-  return heading.textContent.trim();
+  const container = section?.querySelector('.marquee, .aside, .media');
+  const textBlock = container?.querySelector('.text');
+  const heading = textBlock?.querySelector('h1, h2, h3, h4, h5, h6');
+  return heading?.textContent.trim() ?? '';
 }
 
 export default async function stepInit(data) {
   ({ createTag } = await import(`${LIBS}/utils/utils.js`));
   const config = data.stepConfigs[data.stepIndex];
+  const layer = createTag('div', { class: `layer layer-${data.stepIndex}` });
   const lastp = config.querySelector(':scope > div > p:last-child');
+  if (!lastp) return layer;
   const btnConfig = lastp.textContent.trim();
   const btnLink = lastp.querySelector('a');
   const [btnText, delay] = btnConfig.split('|');
   const ariaLabel = getClosestHeadingText(data.target);
   data.target.classList.add('step-start-over');
-  const layer = createTag('div', { class: `layer layer-${data.stepIndex}` });
-  const startOverCTA = createTag('a', { class: 'gray-button start-over-button body-m next-step', href: '#', role: 'button', ...(ariaLabel && { 'aria-label': `${btnText}generate image` }) });
+  const startOverCTA = createTag('a', { class: 'gray-button start-over-button body-m next-step', href: '#', role: 'button', ...(ariaLabel && { 'aria-label': `${btnText} - generate image` }) });
   const svg = config.querySelector('picture img[src*=".svg"]:not(.accessibility-control)');
   if (svg) {
     svg.insertAdjacentElement('afterend', svg.cloneNode(true));
