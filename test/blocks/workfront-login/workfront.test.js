@@ -101,6 +101,43 @@ describe('Workfront Login', () => {
       const error = await waitForElement('.error-wrapper.show');
       expect(error).to.exist;
     });
+
+    it('blocks open redirect attempts, logs to lana, and does not fetch', async () => {
+      fetch.resetHistory();
+      window.lana = { log: sinon.stub() };
+
+      const form = await createSubdomainForm(createTag, replaceKey, config);
+      document.querySelector('.workfront-login').append(form);
+
+      const maliciousInputs = [
+        'evil.com/',
+        'evil.com#',
+        'evil.com?',
+        'evil.com\\',
+        'evil.com@adobe',
+      ];
+
+      const button = document.querySelector('button');
+      const input = document.querySelector('input');
+
+      await maliciousInputs.reduce(async (prev, value) => {
+        await prev;
+        input.value = value;
+        input.removeAttribute('disabled');
+        button.click();
+        await delay(10);
+
+        const error = await waitForElement('.error-wrapper.show');
+        expect(error, `expected error for input "${value}"`).to.exist;
+        expect(error.querySelector('.error-text').textContent).to.equal('invalid subdomain');
+      }, Promise.resolve());
+
+      expect(fetch.called).is.false;
+      expect(window.lana.log.callCount).to.equal(maliciousInputs.length);
+      expect(window.lana.log.firstCall.args[1]).to.deep.equal({ severity: 'error', tags: 'workfront-login' });
+
+      delete window.lana;
+    });
   });
 
   describe('Proof Form', () => {
