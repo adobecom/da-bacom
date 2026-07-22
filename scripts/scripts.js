@@ -163,7 +163,11 @@ export const getLCPImages = (doc) => {
   if (lcpSection.nodeName === 'IMG') return [lcpSection];
   if (lcpSection.classList.contains('split')) return lcpSection.querySelectorAll('img');
   const marqueeDiv = lcpSection.firstElementChild;
-  const foregroundImg = lcpSection.querySelector(':scope > div:last-child img');
+  const fgHidden = lcpSection.classList.contains('hero-marquee') && (
+    (window.innerWidth < 600 && lcpSection.classList.contains('media-hidden-mobile'))
+    || (window.innerWidth >= 600 && window.innerWidth < 1200 && lcpSection.classList.contains('media-hidden-tablet'))
+  );
+  const foregroundImg = fgHidden ? null : lcpSection.querySelector(':scope > div:last-child img');
   if (marqueeDiv.childElementCount > 1) {
     if (window.innerWidth < 600) return [marqueeDiv.querySelector(':scope > div:first-child img') || foregroundImg];
     if (window.innerWidth >= 600 && window.innerWidth < 1200) return [marqueeDiv.querySelector(':scope > div:nth-child(2) img') || foregroundImg];
