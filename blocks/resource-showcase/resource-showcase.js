@@ -62,8 +62,20 @@ function buildFeatured(row) {
   });
   body.className = 'resource-showcase-featured-body';
 
-  const featured = document.createElement('div');
+  // The whole card links to the CTA's destination, so the CTA itself is
+  // demoted to a non-interactive span (a link can't contain a nested link).
+  const link = body.querySelector('a.resource-showcase-cta');
+  const href = link?.getAttribute('href');
+
+  const featured = document.createElement(href ? 'a' : 'div');
   featured.className = 'resource-showcase-featured';
+  if (href) {
+    featured.href = href;
+    const label = document.createElement('span');
+    label.className = link.className;
+    label.innerHTML = link.innerHTML;
+    link.replaceWith(label);
+  }
   featured.append(image, body);
   return featured;
 }
