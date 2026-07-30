@@ -1,7 +1,8 @@
 /*
  * Authoring model (rows are the block's direct child divs):
- *  1. Content row - one cell: [Heading] [subcopy paragraph(s)]
- *  2. Video row   - one cell containing either a link to an .mp4 file or an
+ *  1. Logo row    - one cell containing a logo image.
+ *  2. Content row - one cell: [Heading] [subcopy paragraph(s)]
+ *  3. Video row   - one cell containing either a link to an .mp4 file or an
  *                   authored <video> element.
  */
 
@@ -27,9 +28,37 @@ const MUTE_ICON = `<svg viewBox="0 0 32 32" width="20" height="20" aria-hidden="
   <path d="M27.6008 16.0282C27.6008 17.4141 27.1461 18.7266 26.3196 19.7235C25.8977 20.2344 25.9696 20.9907 26.4789 21.4141C26.7039 21.5985 26.9743 21.6891 27.2446 21.6891C27.5883 21.6891 27.9321 21.5407 28.1696 21.2547C29.3508 19.8266 30.0008 17.9704 30.0008 16.0282C30.0008 13.3313 28.7243 10.8032 26.668 9.42974C26.1117 9.06256 25.3696 9.21099 25.0024 9.76099C24.6352 10.3126 24.7836 11.0579 25.3336 11.4266C26.7321 12.3594 27.6008 14.1235 27.6008 16.0282Z" fill="currentColor"/>
 </svg>`;
 
-const ADOBE_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="127" height="30" viewBox="0 0 127 30" fill="none" role="img" aria-label="Adobe">
-  <path d="M19.6843 29.5706L17.2724 23.0131H11.2234L16.3092 10.499L24.0246 29.5706H33.1867L20.9558 0.856861H12.3196L0 29.5706H19.6843ZM53.7475 28.2843V0H46.1188V7.1149C45.1536 6.9002 44.2328 6.8155 43.314 6.8155C37.4403 6.8155 31.7843 10.8004 31.7843 18.6008C31.7843 26.4012 37.6156 30 44.4967 30C48.2668 30 51.9925 29.0565 53.7475 28.2863V28.2843ZM39.4109 18.4708C39.4109 14.6573 41.7342 12.8135 44.2771 12.8135C44.9783 12.8135 45.5929 12.9416 46.1188 13.1563V23.5706C45.5929 23.742 44.9783 23.8286 44.3214 23.8286C41.7785 23.8286 39.4109 22.1563 39.4109 18.4708ZM79.1302 18.3861C79.1302 11.0151 73.7381 6.8155 67.3365 6.8155C60.9349 6.8155 55.5872 11.0151 55.5872 18.3861C55.5872 25.7571 60.9349 29.9567 67.3365 29.9567C73.7381 29.9567 79.1302 25.7571 79.1302 18.3861ZM63.1716 18.3861C63.1716 14.7439 65.0999 13.0282 67.3365 13.0282C69.5731 13.0282 71.5458 14.742 71.5458 18.3861C71.5458 22.0302 69.5731 23.7439 67.3365 23.7439C65.0999 23.7439 63.1716 22.0302 63.1716 18.3861ZM102.977 18.0847C102.977 10.6271 97.4544 6.77019 91.4477 6.77019C90.5269 6.77019 89.5637 6.89823 88.5986 7.0696V0H80.9698V28.3276C83.3374 29.3992 87.1075 30 90.0876 30C97.0574 30 102.975 25.9718 102.975 18.0867L102.977 18.0847ZM90.4402 12.8569C92.9831 12.8569 95.3507 14.5706 95.3507 18.1714C95.3507 22.0282 92.8965 23.8286 90.3093 23.8286C89.6524 23.8286 89.0822 23.7439 88.5986 23.5706V13.1996C89.1688 12.9849 89.739 12.8569 90.4402 12.8569ZM117.665 29.9567C120.427 29.9567 123.101 29.4859 125.336 28.371V22.6704C122.924 23.6986 120.776 24.2561 118.452 24.2561C115.603 24.2561 113.322 23.0565 112.49 20.5272H126.825C126.956 19.5837 127 18.6422 127 17.6553C127 10.4123 121.739 6.81353 115.996 6.81353C109.859 6.81353 104.73 11.1845 104.73 18.3427C104.73 25.501 110.387 29.9567 117.663 29.9567H117.665ZM116.085 12.4274C117.796 12.4274 119.46 13.4143 119.855 15.8569H112.401C112.972 13.4576 114.463 12.4274 116.085 12.4274Z" fill="#EB1000"/>
-</svg>`;
+function buildScrubber(video) {
+  const scrubber = document.createElement('input');
+  scrubber.type = 'range';
+  scrubber.className = 'marquee-scrubber';
+  scrubber.min = '0';
+  scrubber.max = '100';
+  scrubber.value = '0';
+  scrubber.step = '0.1';
+  scrubber.setAttribute('aria-label', 'Video progress');
+
+  let isScrubbing = false;
+
+  video.addEventListener('loadedmetadata', () => {
+    if (video.duration) scrubber.max = String(video.duration);
+  });
+
+  video.addEventListener('timeupdate', () => {
+    if (!isScrubbing) scrubber.value = String(video.currentTime);
+  });
+
+  scrubber.addEventListener('input', () => {
+    isScrubbing = true;
+    video.currentTime = Number(scrubber.value);
+  });
+
+  scrubber.addEventListener('change', () => {
+    isScrubbing = false;
+  });
+
+  return scrubber;
+}
 
 function buildControls(video) {
   const controls = document.createElement('div');
@@ -73,7 +102,7 @@ function buildControls(video) {
   updatePlayPause();
   updateMute();
 
-  controls.append(playPauseBtn, muteBtn);
+  controls.append(playPauseBtn, muteBtn, buildScrubber(video));
   return controls;
 }
 
@@ -103,17 +132,23 @@ function decorateVideo(cell) {
 }
 
 export default function init(el) {
-  const [contentRow, videoRow] = [...el.querySelectorAll(':scope > div')];
+  const rows = [...el.querySelectorAll(':scope > div')];
+  const [logoRow, contentRow, videoRow] = rows.length >= 3 ? rows : [undefined, ...rows];
   if (!contentRow) return;
 
   const contentCell = contentRow.querySelector(':scope > div') || contentRow;
   contentCell.classList.add('marquee-content');
   contentRow.classList.add('marquee-content-row');
 
-  const eyebrow = document.createElement('div');
-  eyebrow.className = 'marquee-eyebrow';
-  eyebrow.innerHTML = ADOBE_LOGO_SVG;
-  contentCell.prepend(eyebrow);
+  const logoCell = logoRow?.querySelector(':scope > div') || logoRow;
+  const logo = logoCell?.querySelector('picture');
+  if (logo) {
+    const eyebrow = document.createElement('div');
+    eyebrow.className = 'marquee-eyebrow';
+    eyebrow.append(logo);
+    contentCell.prepend(eyebrow);
+  }
+  logoRow?.remove();
 
   const heading = contentCell.querySelector('h1, h2, h3, h4, h5, h6');
   heading?.classList.add('marquee-headline');
