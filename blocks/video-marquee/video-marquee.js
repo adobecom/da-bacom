@@ -3,7 +3,8 @@
  *  1. Logo row    - one cell containing a logo image.
  *  2. Content row - one cell: [Heading] [subcopy paragraph(s)]
  *  3. Video row   - one cell containing either a link to an .mp4 file or an
- *                   authored <video> element.
+ *                   authored <video> element, and optionally a link to a
+ *                   WebVTT (.vtt) captions file.
  */
 
 const PLAY_ICON = `<svg viewBox="0 0 32 32" width="20" height="20" aria-hidden="true" focusable="false">
@@ -106,11 +107,33 @@ function buildControls(video) {
   return controls;
 }
 
+function buildCaptionsToggle(track) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'marquee-video-control marquee-captions';
+  btn.textContent = 'CC';
+
+  const update = () => {
+    const isShowing = track.mode === 'showing';
+    btn.setAttribute('aria-pressed', String(isShowing));
+    btn.setAttribute('aria-label', isShowing ? 'Hide captions' : 'Show captions');
+  };
+
+  btn.addEventListener('click', () => {
+    track.mode = track.mode === 'showing' ? 'hidden' : 'showing';
+    update();
+  });
+
+  update();
+  return btn;
+}
+
 function decorateVideo(cell) {
   if (!cell) return;
 
   const existingVideo = cell.querySelector('video');
   const link = cell.querySelector('a[href*=".mp4" i]');
+  const captionsLink = cell.querySelector('a[href*=".vtt" i]');
   const src = existingVideo?.querySelector('source')?.src || existingVideo?.currentSrc || link?.href;
   if (!src) return;
 
@@ -127,8 +150,20 @@ function decorateVideo(cell) {
   source.type = 'video/mp4';
   video.append(source);
 
+  const controls = buildControls(video);
+
+  if (captionsLink?.href) {
+    const track = document.createElement('track');
+    track.kind = 'captions';
+    track.src = captionsLink.href;
+    track.srclang = 'en';
+    track.label = 'English';
+    video.append(track);
+    controls.append(buildCaptionsToggle(track.track));
+  }
+
   cell.classList.add('marquee-media');
-  cell.replaceChildren(video, buildControls(video));
+  cell.replaceChildren(video, controls);
 }
 
 export default function init(el) {

@@ -49,6 +49,7 @@
 .video-marquee .marquee-media {
   position: relative;
   height: 100%;
+  aspect-ratio: 4 / 5;
   border-radius: 16px;
   overflow: hidden;
 }
@@ -141,6 +142,14 @@
   cursor: pointer;
 }
 
+.video-marquee .marquee-captions {
+  border: 1.5px solid var(--color-white);
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
 .video-marquee .marquee-video-control:focus-visible {
   outline: 2px solid var(--color-accent-focus-ring);
   outline-offset: 2px;
@@ -157,6 +166,10 @@
     gap: var(--spacing-m);
     align-items: stretch;
     min-height: 560px;
+  }
+
+  .video-marquee .marquee-media {
+    aspect-ratio: auto;
   }
 
   .video-marquee .marquee-headline {
