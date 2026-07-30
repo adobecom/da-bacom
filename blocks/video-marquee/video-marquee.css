@@ -1,0 +1,125 @@
+.video-marquee {
+  background-color: #000;
+  padding: var(--spacing-xl) var(--spacing-xs);
+}
+
+.video-marquee .marquee-inner {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-l);
+}
+
+.video-marquee .marquee-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+}
+
+.video-marquee .marquee-eyebrow svg {
+  display: block;
+  width: 127px;
+  height: 30px;
+  margin-bottom: var(--spacing-xs);
+}
+
+.video-marquee .marquee-headline {
+  margin: 0;
+  color: var(--color-white);
+  font-size: 32px;
+  line-height: 32px;
+  letter-spacing: -0.96px;
+  font-weight: 900;
+}
+
+.video-marquee .marquee-subcopy {
+  margin: var(--spacing-xs) 0 0;
+  max-width: 32em;
+  color: var(--color-white);
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 28.6px;
+}
+
+.video-marquee .marquee-video-row {
+  min-width: 0;
+}
+
+.video-marquee .marquee-media {
+  position: relative;
+  height: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.video-marquee .marquee-media video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.video-marquee .marquee-video-controls {
+  position: absolute;
+  bottom: var(--spacing-xs);
+  left: var(--spacing-xs);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xxs);
+}
+
+.video-marquee .marquee-video-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-white);
+  filter: drop-shadow(0 1px 3px rgb(0 0 0 / 60%));
+  cursor: pointer;
+}
+
+.video-marquee .marquee-video-control:focus-visible {
+  outline: 2px solid var(--color-accent-focus-ring);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (min-width: 769px) {
+  .video-marquee {
+    padding-right: 0;
+  }
+
+  .video-marquee .marquee-inner {
+    grid-template-columns: minmax(0, 440px) 1fr;
+    gap: var(--spacing-m);
+    align-items: stretch;
+    min-height: 560px;
+  }
+
+  .video-marquee .marquee-headline {
+    font-size: 48px;
+    line-height: 48px;
+    letter-spacing: -1.44px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .video-marquee {
+    padding: 80px 0 80px 80px;
+  }
+
+  .video-marquee .marquee-inner {
+    gap: 35px;
+    min-height: 600px;
+  }
+
+  .video-marquee .marquee-headline {
+    font-size: 72px;
+    line-height: 72px;
+    letter-spacing: -2.88px;
+  }
+}
