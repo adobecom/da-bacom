@@ -1,0 +1,113 @@
+.marquee {
+  --marquee-max-width: 1200px;
+  --marquee-radius: 16px;
+
+  background-color: #000;
+}
+
+.marquee .marquee-inner {
+  display: grid;
+  max-width: var(--marquee-max-width);
+  margin: 0 auto;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-l);
+  padding: var(--spacing-xl) var(--spacing-xs);
+}
+
+.marquee .marquee-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  justify-content: center;
+}
+
+.marquee .marquee-eyebrow svg {
+  display: block;
+  height: 20px;
+  width: auto;
+}
+
+.marquee .marquee-headline {
+  margin: 0;
+  color: var(--color-white);
+  font-size: 32px;
+  line-height: 32px;
+  letter-spacing: -0.96px;
+  font-weight: 900;
+}
+
+.marquee .marquee-subcopy {
+  margin: 0;
+  max-width: 32em;
+  color: var(--color-gray-200);
+  font-size: 16px;
+  line-height: 20.8px;
+}
+
+.marquee .marquee-media {
+  position: relative;
+  border-radius: var(--marquee-radius);
+  overflow: hidden;
+  aspect-ratio: 7 / 6;
+}
+
+.marquee .marquee-media video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.marquee .marquee-video-controls {
+  position: absolute;
+  bottom: var(--spacing-xs);
+  left: var(--spacing-xs);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xxs);
+}
+
+.marquee .marquee-video-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-white);
+  filter: drop-shadow(0 1px 3px rgb(0 0 0 / 60%));
+  cursor: pointer;
+}
+
+.marquee .marquee-video-control:focus-visible {
+  outline: 2px solid var(--color-accent-focus-ring);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (min-width: 769px) {
+  .marquee .marquee-inner {
+    grid-template-columns: minmax(0, 440px) 1fr;
+    align-items: center;
+  }
+
+  .marquee .marquee-headline {
+    font-size: 48px;
+    line-height: 48px;
+    letter-spacing: -1.44px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .marquee .marquee-inner {
+    padding: var(--spacing-xxl) var(--spacing-m);
+  }
+
+  .marquee .marquee-headline {
+    font-size: 56px;
+    line-height: 56px;
+    letter-spacing: -1.68px;
+  }
+}
