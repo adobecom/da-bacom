@@ -1,0 +1,157 @@
+.resource-showcase {
+  --resource-showcase-radius: 16px;
+  --resource-showcase-max-width: 1200px;
+
+  position: relative;
+  padding: var(--spacing-xl) var(--spacing-xs);
+  background-image:
+    radial-gradient(circle at 0% 0%, rgb(216 130 80 / 45%), transparent 45%),
+    linear-gradient(135deg, #6b5a4e 0%, #4a4846 30%, #33343a 60%, #1c1d22 100%);
+  overflow: hidden;
+}
+
+.resource-showcase .resource-showcase-heading {
+  max-width: var(--resource-showcase-max-width);
+  margin: 0 auto var(--spacing-m);
+  color: var(--color-white);
+  font-size: var(--type-heading-l-size);
+  line-height: var(--type-heading-l-lh);
+  font-weight: var(--type-heading-all-weight);
+}
+
+.resource-showcase .resource-showcase-content {
+  display: grid;
+  max-width: var(--resource-showcase-max-width);
+  margin: 0 auto;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-l);
+}
+
+/* CTA link, shared by featured card and secondary items */
+.resource-showcase .resource-showcase-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xxs);
+  font-size: var(--type-body-s-size);
+  line-height: var(--type-body-s-lh);
+  font-weight: var(--type-heading-all-weight);
+  text-decoration: none;
+}
+
+.resource-showcase .resource-showcase-cta:hover {
+  text-decoration: underline;
+}
+
+.resource-showcase .resource-showcase-cta:focus-visible {
+  outline: 2px solid var(--color-accent-focus-ring);
+  outline-offset: 2px;
+}
+
+.resource-showcase .resource-showcase-chevron {
+  flex-shrink: 0;
+}
+
+/* Featured card */
+.resource-showcase .resource-showcase-featured {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--resource-showcase-radius);
+  overflow: hidden;
+  background-color: var(--color-white);
+}
+
+.resource-showcase .resource-showcase-featured-image {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background-color: var(--color-gray-300);
+}
+
+.resource-showcase .resource-showcase-featured-image picture,
+.resource-showcase .resource-showcase-featured-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.resource-showcase .resource-showcase-featured-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xxs);
+  padding: var(--spacing-s);
+}
+
+.resource-showcase .resource-showcase-featured-title {
+  margin: 0;
+  color: var(--color-black);
+  font-size: var(--type-heading-m-size);
+  line-height: var(--type-heading-m-lh);
+  font-weight: var(--type-heading-all-weight);
+}
+
+.resource-showcase .resource-showcase-featured-description {
+  margin: 0;
+  color: var(--color-gray-700);
+  font-size: var(--type-body-s-size);
+  line-height: var(--type-body-s-lh);
+}
+
+.resource-showcase .resource-showcase-featured .resource-showcase-cta {
+  color: var(--color-black);
+}
+
+/* Secondary list */
+.resource-showcase .resource-showcase-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-m);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.resource-showcase .resource-showcase-item-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.resource-showcase .resource-showcase-item-title {
+  margin: 0 0 var(--spacing-xxs);
+  color: var(--color-white);
+  font-size: var(--type-heading-m-size);
+  line-height: var(--type-heading-m-lh);
+  font-weight: var(--type-heading-all-weight);
+}
+
+.resource-showcase .resource-showcase-item-description {
+  margin: 0 0 var(--spacing-s);
+  color: var(--color-gray-200);
+  font-size: var(--type-body-s-size);
+  line-height: var(--type-body-s-lh);
+}
+
+.resource-showcase .resource-showcase-item .resource-showcase-cta {
+  color: var(--color-white);
+}
+
+@media (min-width: 769px) {
+  .resource-showcase .resource-showcase-content {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+}
+
+@media (min-width: 1280px) {
+  .resource-showcase {
+    padding: var(--spacing-xxl) var(--spacing-m);
+  }
+
+  .resource-showcase .resource-showcase-heading {
+    font-size: var(--type-heading-xl-size);
+    line-height: var(--type-heading-xl-lh);
+  }
+
+  .resource-showcase .resource-showcase-content {
+    grid-template-columns: 635px 1fr;
+  }
+}
