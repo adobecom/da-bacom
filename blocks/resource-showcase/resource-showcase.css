@@ -39,8 +39,6 @@
   letter-spacing: 0;
   text-align: center;
   text-decoration: none;
-  leading-trim: both;
-  text-edge: cap;
 }
 
 .resource-showcase .resource-showcase-cta:hover {
@@ -159,15 +157,12 @@
 
 .resource-showcase .resource-showcase-item-description {
   margin: 0 0 var(--spacing-s);
-  overflow: hidden;
   color: var(--color-white);
   font-family: var(--body-font-family);
   font-size: 16px;
   font-weight: 400;
   line-height: 20px;
   letter-spacing: 0;
-  white-space: nowrap;
-  text-overflow: ellipsis;
 }
 
 .resource-showcase .resource-showcase-item .resource-showcase-cta {

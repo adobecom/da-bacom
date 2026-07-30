@@ -1,17 +1,5 @@
 import { LIBS } from '../../scripts/scripts.js';
 
-/*
- * Authoring model (rows are the block's direct child divs):
- *  1. Heading row      - section heading text (or heading element)
- *  2. Featured row     - two cells: [picture + Heading 3 title + description paragraph(s)],
- *                        [CTA link]
- *  3+. Secondary rows  - two cells: [Heading 3 title + description paragraph(s)], [CTA link]
- *                        (one row per item, no picture)
- *
- * The CTA cell must contain an authored hyperlink (link text = CTA label,
- * link href = CTA destination), not plain text.
- */
-
 const LANA_OPTIONS = { tags: 'resource-showcase', errorType: 'i' };
 
 const CHEVRON_ICON = `<svg class="resource-showcase-chevron" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true" focusable="false">
@@ -62,8 +50,6 @@ function buildFeatured(row) {
   });
   body.className = 'resource-showcase-featured-body';
 
-  // The whole card links to the CTA's destination, so the CTA itself is
-  // demoted to a non-interactive span (a link can't contain a nested link).
   const link = body.querySelector('a.resource-showcase-cta');
   const href = link?.getAttribute('href');
 
@@ -75,6 +61,11 @@ function buildFeatured(row) {
     label.className = link.className;
     label.innerHTML = link.innerHTML;
     link.replaceWith(label);
+
+    const title = body.querySelector('.resource-showcase-featured-title');
+    featured.setAttribute('aria-label', title?.textContent.trim() ?? '');
+    image.setAttribute('aria-hidden', 'true');
+    body.setAttribute('aria-hidden', 'true');
   }
   featured.append(image, body);
   return featured;
