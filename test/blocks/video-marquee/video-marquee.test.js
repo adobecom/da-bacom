@@ -114,6 +114,8 @@ describe('Video Marquee', () => {
     expect(track).to.exist;
     expect(track.getAttribute('kind')).to.equal('captions');
     expect(track.src).to.equal('https://example.com/captions.vtt');
+    expect(track.getAttribute('srclang')).to.exist;
+    expect(track.getAttribute('label')).to.exist;
 
     const captionsBtn = document.querySelector('.marquee-captions');
     expect(captionsBtn).to.exist;

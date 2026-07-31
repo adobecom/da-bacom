@@ -33,6 +33,20 @@ async function loadLabels() {
   }
 }
 
+async function getLocaleInfo() {
+  const fallback = { srclang: 'en', label: 'English' };
+  try {
+    const { getConfig } = await import(`${LIBS}/utils/utils.js`);
+    const ietf = getConfig()?.locale?.ietf || 'en-US';
+    const srclang = ietf.split('-')[0];
+    // eslint-disable-next-line compat/compat -- guarded by try/catch, falls back to English
+    const label = new Intl.DisplayNames([ietf], { type: 'language' }).of(srclang);
+    return { srclang, label: label || fallback.label };
+  } catch {
+    return fallback;
+  }
+}
+
 function loadIcon(name) {
   if (!iconCache.has(name)) {
     iconCache.set(name, fetch(`${ICON_BASE}/${name}.svg`)
@@ -201,7 +215,7 @@ function watchReducedMotion(video) {
   });
 }
 
-function decorateVideo(cell, labels) {
+function decorateVideo(cell, labels, locale) {
   if (!cell) return;
 
   const existingVideo = cell.querySelector('video');
@@ -233,8 +247,8 @@ function decorateVideo(cell, labels) {
     const track = document.createElement('track');
     track.kind = 'captions';
     track.src = captionsLink.href;
-    track.srclang = 'en';
-    track.label = 'English';
+    track.srclang = locale.srclang;
+    track.label = locale.label;
     video.append(track);
     controls.append(buildCaptionsToggle(track.track, labels));
   }
@@ -278,8 +292,8 @@ export default async function init(el) {
 
   if (videoRow) {
     videoRow.classList.add('marquee-video-row');
-    const labels = await loadLabels();
-    decorateVideo(videoRow.querySelector(':scope > div') || videoRow, labels);
+    const [labels, locale] = await Promise.all([loadLabels(), getLocaleInfo()]);
+    decorateVideo(videoRow.querySelector(':scope > div') || videoRow, labels, locale);
   }
 
   const inner = document.createElement('div');
