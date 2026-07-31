@@ -262,17 +262,13 @@ export const EVENT_LIBS = (() => {
 
 let eventsError;
 
-/**
- * Registers hydrators for bacom-owned blocks that event-libs fills from event metadata.
- * Hydrators live beside their blocks here because bacom owns those blocks' DOM; event-libs
- * only provides the mechanism. Must run before decorateEvent, which is where hydration
- * happens — awaiting the import is safe here, at page startup, but would not be inside
- * decorateEvent. One registration covers the document, fragment, and personalization
- * hydration passes.
- * @param {object} eventUtils The imported event-libs libs.js
- */
-export async function registerEventHydrators(eventUtils) {
+// Registers hydrators for bacom blocks that event-libs fills from event metadata.
+// Must run before decorateEvent. See README.md#event-block-hydration.
+export async function registerEventHydrators(eventUtils, getMetadata) {
   if (!eventUtils?.registerHydrator || !eventUtils?.repeatTemplate) return;
+  // Gate on the data, not the DOM: blocks authored inside a fragment aren't in the
+  // document yet at this point, but page metadata always is.
+  if (!getMetadata('speakers')) return;
 
   const { default: createEventSpeakersHydrator } = await import('../blocks/event-speakers/event-speakers.hydrator.js');
   eventUtils.registerHydrator('event-speakers', createEventSpeakersHydrator(eventUtils.repeatTemplate));
@@ -293,10 +289,8 @@ export async function loadPage() {
       eventsError = [`Could not import event-libs. ${e}`, { tags: 'event-libs' }];
     }
 
-    // Separate catch: event-libs imported fine, so a failure here is ours and must not
-    // be reported against event-libs. Hydration is optional — the page still works.
     try {
-      await registerEventHydrators(eventUtils);
+      await registerEventHydrators(eventUtils, getMetadata);
     } catch (e) {
       eventsError = [`Could not register event hydrators. ${e}`, { tags: 'event-libs' }];
     }

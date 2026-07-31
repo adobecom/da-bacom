@@ -79,3 +79,51 @@ window.lana.log('message', { severity: 'warning', tags: 'block-name' });
 ```
 
 More info: https://wiki.corp.adobe.com/display/WCMSOps/Best+Practices
+
+## Event Block Hydration
+
+Blocks on event pages can be filled from event metadata instead of being authored
+speaker-by-speaker. `event-speakers` uses this today.
+
+The author writes **one** template row containing `[[speakers.field]]` placeholders plus
+any static text. event-libs clones that row per speaker and resolves the placeholders in
+its normal decoration pass, so no rendered content originates in code:
+
+| event-speakers (hydrate, speaker) | | | |
+| --- | --- | --- | --- |
+| *(image, alt =* `[[speakers.photo]]`*)* | `[[speakers.firstName]] [[speakers.lastName]]`<br>`[[speakers.title]]` | `[[speakers.bio]]` | Read more |
+
+Placeholders are written without an index — event-libs adds it per clone. Type variants
+are `speaker`, `judge`, `host`, `keynote`; omit one to render every speaker.
+
+### Adding a hydrator for another block
+
+A hydrator lives beside its block here, because bacom owns its blocks' DOM — event-libs
+provides only the mechanism. It decides *which* items render and in what order, nothing
+more:
+
+```js
+// blocks/my-block/my-block.hydrator.js
+export function selectItems(items, block) {
+  return items.filter((item) => block.classList.contains(item.kind));
+}
+
+export default function createMyBlockHydrator(repeatTemplate) {
+  return (block) => repeatTemplate(block, { selectItems });
+}
+```
+
+Register it in `registerEventHydrators` (`scripts/scripts.js`), which runs at page startup
+before `decorateEvent`. Two constraints, both load-bearing:
+
+- **The hydrator must be synchronous.** Milo does not await `decorateArea` for fragments
+  or personalization, so any asynchrony races the block's `init()`. event-libs'
+  `registerHydrator` rejects async functions.
+- **Gate on metadata, not the DOM.** Blocks authored inside a fragment are not in the
+  document yet at registration time.
+
+`repeatTemplate` is injected rather than imported because `scripts.js` owns the
+runtime-resolved event-libs URL. Return its result so a bail-out isn't marked hydrated and
+can be retried on a later pass.
+
+Full reference: [event-libs `docs/block-hydration.md`](https://github.com/adobecom/event-libs/blob/main/docs/block-hydration.md).

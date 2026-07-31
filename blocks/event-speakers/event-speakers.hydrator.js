@@ -1,15 +1,5 @@
-/**
- * Hydrator for the event-speakers block, driven by event-libs' `speakers` metadata.
- *
- * All content is authored: the author writes one template row of [[speakers.*]]
- * placeholders plus any static text (the "Read more" label included), and event-libs
- * clones that row per speaker and resolves the placeholders. This file only decides
- * which speakers appear and in what order.
- *
- * Registered from scripts.js before decorateEvent. The returned hydrator must stay
- * synchronous — registerHydrator rejects async functions, because Milo does not await
- * decorateArea for fragments or personalization.
- */
+// Selects which speakers the event-speakers block renders, and in what order.
+// Content comes from the authored template, never from here. See README.md.
 const TYPE_KEYWORDS = ['speaker', 'judge', 'host', 'keynote'];
 
 export function selectSpeakers(speakers, block) {
@@ -22,7 +12,7 @@ export function selectSpeakers(speakers, block) {
     })
     : [...speakers];
 
-  // Speakers without an ordinal sort last, preserving their authored order.
+  // Speakers without an ordinal sort last
   return filtered.sort((a, b) => {
     const aHas = a.ordinal != null;
     const bHas = b.ordinal != null;
@@ -33,15 +23,9 @@ export function selectSpeakers(speakers, block) {
   });
 }
 
-/**
- * Builds the hydrator. `repeatTemplate` is injected rather than imported so this module
- * stays free of a circular dependency on scripts.js, which owns the event-libs URL.
- * @param {Function} repeatTemplate event-libs' repeatTemplate, from its libs.js
- * @returns {(block: HTMLElement) => void} A synchronous hydrator
- */
+// repeatTemplate is injected, not imported: scripts.js owns the event-libs URL.
+// The hydrator must stay sync, and returns the result so a bail-out can be retried.
 export default function createEventSpeakersHydrator(repeatTemplate) {
-  // Returning the result lets event-libs skip marking the block hydrated when we bailed
-  // out, so a later fragment or personalization pass can retry.
   return function hydrateEventSpeakers(block) {
     return repeatTemplate(block, { selectItems: selectSpeakers });
   };

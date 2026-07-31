@@ -302,14 +302,16 @@ describe('Marketo Libs', () => {
 describe('registerEventHydrators', () => {
   // Wires bacom-owned block hydrators into event-libs. It reads registerHydrator and
   // repeatTemplate off event-libs' barrel by name, so this guards that coupling.
+  const hasSpeakers = (key) => (key === 'speakers' ? '[]' : null);
+  const noMetadata = () => null;
+
   it('registers a synchronous hydrator for event-speakers', async () => {
     const registered = [];
-    const repeatTemplate = () => true;
 
     await registerEventHydrators({
       registerHydrator: (name, hydrator) => registered.push([name, hydrator]),
-      repeatTemplate,
-    });
+      repeatTemplate: () => true,
+    }, hasSpeakers);
 
     expect(registered).to.have.lengthOf(1);
     const [name, hydrator] = registered[0];
@@ -325,7 +327,7 @@ describe('registerEventHydrators', () => {
     await registerEventHydrators({
       registerHydrator: (_name, fn) => { hydrator = fn; },
       repeatTemplate: (block, options) => { calledWith = { block, options }; return true; },
-    });
+    }, hasSpeakers);
 
     document.body.innerHTML = '<div class="event-speakers hydrate speaker"></div>';
     const block = document.querySelector('.event-speakers');
@@ -335,14 +337,25 @@ describe('registerEventHydrators', () => {
     expect(calledWith.options.selectItems).to.be.a('function');
   });
 
+  it('does not import the hydrator when the page has no speakers metadata', async () => {
+    let called = false;
+
+    await registerEventHydrators({
+      registerHydrator: () => { called = true; },
+      repeatTemplate: () => true,
+    }, noMetadata);
+
+    expect(called).to.be.false;
+  });
+
   it('does nothing when event-libs is too old to expose the hydration API', async () => {
     let called = false;
     const spy = () => { called = true; };
 
-    await registerEventHydrators(undefined);
-    await registerEventHydrators({});
-    await registerEventHydrators({ registerHydrator: spy });
-    await registerEventHydrators({ repeatTemplate: () => true });
+    await registerEventHydrators(undefined, hasSpeakers);
+    await registerEventHydrators({}, hasSpeakers);
+    await registerEventHydrators({ registerHydrator: spy }, hasSpeakers);
+    await registerEventHydrators({ repeatTemplate: () => true }, hasSpeakers);
 
     expect(called).to.be.false;
   });
