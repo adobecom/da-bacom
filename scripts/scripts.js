@@ -289,9 +289,16 @@ export async function loadPage() {
   if (eventMD) {
     try {
       eventUtils = await import(`${EVENT_LIBS}/libs.js`);
-      await registerEventHydrators(eventUtils);
     } catch (e) {
       eventsError = [`Could not import event-libs. ${e}`, { tags: 'event-libs' }];
+    }
+
+    // Separate catch: event-libs imported fine, so a failure here is ours and must not
+    // be reported against event-libs. Hydration is optional — the page still works.
+    try {
+      await registerEventHydrators(eventUtils);
+    } catch (e) {
+      eventsError = [`Could not register event hydrators. ${e}`, { tags: 'event-libs' }];
     }
   }
 
