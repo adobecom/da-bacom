@@ -8,6 +8,7 @@ import {
   applyIswaTypography,
   injectMarqueePlayIcon,
   getMarketoLibs,
+  registerEventHydrators,
 } from '../../scripts/scripts.js';
 
 describe('Libs', () => {
@@ -295,5 +296,54 @@ describe('Marketo Libs', () => {
 
       expect(libs).to.equal(expected);
     });
+  });
+});
+
+describe('registerEventHydrators', () => {
+  // Wires bacom-owned block hydrators into event-libs. It reads registerHydrator and
+  // repeatTemplate off event-libs' barrel by name, so this guards that coupling.
+  it('registers a synchronous hydrator for event-speakers', async () => {
+    const registered = [];
+    const repeatTemplate = () => true;
+
+    await registerEventHydrators({
+      registerHydrator: (name, hydrator) => registered.push([name, hydrator]),
+      repeatTemplate,
+    });
+
+    expect(registered).to.have.lengthOf(1);
+    const [name, hydrator] = registered[0];
+    expect(name).to.equal('event-speakers');
+    expect(hydrator).to.be.a('function');
+    expect(hydrator.constructor.name).to.equal('Function');
+  });
+
+  it('passes the injected repeatTemplate through to the hydrator', async () => {
+    let calledWith = null;
+    let hydrator;
+
+    await registerEventHydrators({
+      registerHydrator: (_name, fn) => { hydrator = fn; },
+      repeatTemplate: (block, options) => { calledWith = { block, options }; return true; },
+    });
+
+    document.body.innerHTML = '<div class="event-speakers hydrate speaker"></div>';
+    const block = document.querySelector('.event-speakers');
+    hydrator(block);
+
+    expect(calledWith.block).to.equal(block);
+    expect(calledWith.options.selectItems).to.be.a('function');
+  });
+
+  it('does nothing when event-libs is too old to expose the hydration API', async () => {
+    let called = false;
+    const spy = () => { called = true; };
+
+    await registerEventHydrators(undefined);
+    await registerEventHydrators({});
+    await registerEventHydrators({ registerHydrator: spy });
+    await registerEventHydrators({ repeatTemplate: () => true });
+
+    expect(called).to.be.false;
   });
 });

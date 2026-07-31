@@ -59,6 +59,32 @@ describe('Event Speakers hydrator', () => {
       expect(selectSpeakers(SPEAKERS, blockWith('keynote'))).to.have.lengthOf(0);
     });
 
+    it('uses the first matching keyword when a block carries two type variants', () => {
+      const data = [
+        { ordinal: 0, speakerType: 'Speaker', firstName: 'A', lastName: 'Speaker' },
+        { ordinal: 0, speakerType: 'Keynote', firstName: 'B', lastName: 'Keynote' },
+      ];
+
+      // Documented precedence: TYPE_KEYWORDS order wins, not authoring order
+      expect(names(selectSpeakers(data, blockWith('keynote speaker')))).to.deep.equal(['A Speaker']);
+    });
+
+    it('falls through to type when speakerType is an empty string', () => {
+      const data = [{ ordinal: 0, speakerType: '', type: 'Host', firstName: 'Alex', lastName: 'Chen' }];
+
+      expect(names(selectSpeakers(data, blockWith('host')))).to.deep.equal(['Alex Chen']);
+    });
+
+    it('treats an explicitly null ordinal as unordered', () => {
+      const data = [
+        { ordinal: null, speakerType: 'Speaker', firstName: 'Null', lastName: 'Ordinal' },
+        { ordinal: 3, speakerType: 'Speaker', firstName: 'Three', lastName: 'X' },
+      ];
+
+      expect(names(selectSpeakers(data, blockWith('speaker'))))
+        .to.deep.equal(['Three X', 'Null Ordinal']);
+    });
+
     it('skips speakers with no type when the block filters by one', () => {
       const data = [{ ordinal: 0, firstName: 'Untyped', lastName: 'Person' }];
 
@@ -99,8 +125,29 @@ describe('Event Speakers hydrator', () => {
     it('produces a synchronous hydrator, as registerHydrator requires', () => {
       const hydrate = createEventSpeakersHydrator(() => {});
 
+      // An async hydrator is rejected by registerHydrator, since Milo does not await
+      // decorateArea — see event-libs' hydrate.js
       expect(hydrate.constructor.name).to.equal('Function');
-      expect(hydrate(blockWith('speaker'))).to.equal(undefined);
+    });
+
+    it('passes through repeatTemplate\'s result so a bail-out is not marked hydrated', () => {
+      expect(createEventSpeakersHydrator(() => false)(blockWith('speaker'))).to.be.false;
+      expect(createEventSpeakersHydrator(() => true)(blockWith('speaker'))).to.be.true;
+    });
+
+    it('drives a stand-in repeatTemplate through the real selection rule', () => {
+      // Mirrors event-libs' contract: selectItems(items, block) -> items to render
+      const fakeRepeatTemplate = (block, { selectItems }) => {
+        const items = JSON.parse(block.dataset.items);
+        block.dataset.rendered = selectItems(items, block).map((i) => i.firstName).join(',');
+        return true;
+      };
+      const block = blockWith('judge');
+      block.dataset.items = JSON.stringify(SPEAKERS);
+
+      createEventSpeakersHydrator(fakeRepeatTemplate)(block);
+
+      expect(block.dataset.rendered).to.equal('Sam');
     });
   });
 });

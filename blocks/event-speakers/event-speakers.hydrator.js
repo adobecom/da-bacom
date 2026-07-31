@@ -40,7 +40,9 @@ export function selectSpeakers(speakers, block) {
  * @returns {(block: HTMLElement) => void} A synchronous hydrator
  */
 export default function createEventSpeakersHydrator(repeatTemplate) {
+  // Returning the result lets event-libs skip marking the block hydrated when we bailed
+  // out, so a later fragment or personalization pass can retry.
   return function hydrateEventSpeakers(block) {
-    repeatTemplate(block, { selectItems: selectSpeakers });
+    return repeatTemplate(block, { selectItems: selectSpeakers });
   };
 }
