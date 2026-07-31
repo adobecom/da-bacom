@@ -114,16 +114,21 @@ export default function createMyBlockHydrator(repeatTemplate) {
 ```
 
 Register it in `registerEventHydrators` (`scripts/scripts.js`), which runs at page startup
-before `decorateEvent`. Two constraints, both load-bearing:
+before `decorateEvent`. Source files here carry no comments — nothing is minified, so
+comments ship to the browser — which makes this section where these constraints are
+recorded. All are load-bearing:
 
 - **The hydrator must be synchronous.** Milo does not await `decorateArea` for fragments
   or personalization, so any asynchrony races the block's `init()`. event-libs'
-  `registerHydrator` rejects async functions.
-- **Gate on metadata, not the DOM.** Blocks authored inside a fragment are not in the
-  document yet at registration time.
-
-`repeatTemplate` is injected rather than imported because `scripts.js` owns the
-runtime-resolved event-libs URL. Return its result so a bail-out isn't marked hydrated and
-can be retried on a later pass.
+  `registerHydrator` rejects async functions outright.
+- **Gate the import on metadata, not the DOM.** A `querySelector` check looks like the
+  obvious guard but is wrong: Milo resolves fragments in `decorateSection` during
+  `loadArea`, so a block authored inside a fragment is not in the document yet when
+  `registerEventHydrators` runs. Page metadata always is.
+- **Return `repeatTemplate`'s result.** event-libs marks a block `data-hydrated` only when
+  the hydrator does not return `false`, so passing the value through is what lets a block
+  whose data was not ready be retried on a later pass.
+- **`repeatTemplate` is injected, not imported**, because `scripts.js` owns the
+  runtime-resolved event-libs URL — a static import of it is not possible.
 
 Full reference: [event-libs `docs/block-hydration.md`](https://github.com/adobecom/event-libs/blob/main/docs/block-hydration.md).

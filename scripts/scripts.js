@@ -262,12 +262,8 @@ export const EVENT_LIBS = (() => {
 
 let eventsError;
 
-// Registers hydrators for bacom blocks that event-libs fills from event metadata.
-// Must run before decorateEvent. See README.md#event-block-hydration.
 export async function registerEventHydrators(eventUtils, getMetadata) {
   if (!eventUtils?.registerHydrator || !eventUtils?.repeatTemplate) return;
-  // Gate on the data, not the DOM: blocks authored inside a fragment aren't in the
-  // document yet at this point, but page metadata always is.
   if (!getMetadata('speakers')) return;
 
   const { default: createEventSpeakersHydrator } = await import('../blocks/event-speakers/event-speakers.hydrator.js');

@@ -1,5 +1,3 @@
-// Selects which speakers the event-speakers block renders, and in what order.
-// Content comes from the authored template, never from here. See README.md.
 const TYPE_KEYWORDS = ['speaker', 'judge', 'host', 'keynote'];
 
 export function selectSpeakers(speakers, block) {
@@ -12,7 +10,6 @@ export function selectSpeakers(speakers, block) {
     })
     : [...speakers];
 
-  // Speakers without an ordinal sort last
   return filtered.sort((a, b) => {
     const aHas = a.ordinal != null;
     const bHas = b.ordinal != null;
@@ -23,8 +20,6 @@ export function selectSpeakers(speakers, block) {
   });
 }
 
-// repeatTemplate is injected, not imported: scripts.js owns the event-libs URL.
-// The hydrator must stay sync, and returns the result so a bail-out can be retried.
 export default function createEventSpeakersHydrator(repeatTemplate) {
   return function hydrateEventSpeakers(block) {
     return repeatTemplate(block, { selectItems: selectSpeakers });
