@@ -265,6 +265,9 @@ function decorateVideo(cell, labels, locale) {
 }
 
 export default async function init(el) {
+  const { decorateBlockAnalytics } = await import(`${LIBS}/martech/attributes.js`);
+  decorateBlockAnalytics(el);
+
   const rows = [...el.querySelectorAll(':scope > div')];
   const [logoRow, contentRow, videoRow] = rows.length >= 3 ? rows : [undefined, ...rows];
   if (!contentRow) return;
