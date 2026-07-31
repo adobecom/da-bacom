@@ -1,7 +1,6 @@
 import { LIBS, PLAY_SVG } from '../../scripts/scripts.js';
 
 const ICON_BASE = '/blocks/video-marquee/icons';
-const FEDERATED_ICON_NAMES = new Set(['play', 'pause']);
 const iconCache = new Map();
 
 const DEFAULT_LABELS = {
@@ -34,37 +33,11 @@ async function loadLabels() {
   }
 }
 
-async function fetchFederatedIcon(name) {
-  try {
-    const { getFederatedContentRoot } = await import(`${LIBS}/utils/utils.js`);
-    const fedRoot = getFederatedContentRoot();
-    const resp = await fetch(`${fedRoot}/federal/assets/svgs/accessibility-${name}.svg`);
-    return resp.ok ? await resp.text() : '';
-  } catch {
-    return '';
-  }
-}
-
-async function fetchLocalIcon(name) {
-  try {
-    const resp = await fetch(`${ICON_BASE}/${name}.svg`);
-    return resp.ok ? await resp.text() : '';
-  } catch {
-    return '';
-  }
-}
-
 function loadIcon(name) {
   if (!iconCache.has(name)) {
-    const promise = (async () => {
-      if (FEDERATED_ICON_NAMES.has(name)) {
-        const federated = await fetchFederatedIcon(name);
-        if (federated) return federated;
-      }
-      if (name === 'play') return PLAY_SVG;
-      return fetchLocalIcon(name);
-    })();
-    iconCache.set(name, promise);
+    iconCache.set(name, fetch(`${ICON_BASE}/${name}.svg`)
+      .then((resp) => (resp.ok ? resp.text() : ''))
+      .catch(() => ''));
   }
   return iconCache.get(name);
 }
@@ -117,7 +90,11 @@ function buildControls(video, labels, onUserToggle) {
     const isPaused = video.paused || video.ended;
     playPauseBtn.setAttribute('aria-label', isPaused ? labels.playVideo : labels.pauseVideo);
     playPauseBtn.setAttribute('aria-pressed', String(!isPaused));
-    loadIcon(isPaused ? 'play' : 'pause').then((svg) => { playPauseBtn.innerHTML = svg; });
+    if (isPaused) {
+      playPauseBtn.innerHTML = PLAY_SVG;
+    } else {
+      loadIcon('pause').then((svg) => { playPauseBtn.innerHTML = svg; });
+    }
   };
 
   const updateMute = () => {
