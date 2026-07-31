@@ -102,7 +102,7 @@
   outline-offset: 2px;
 }
 
-@media (hover: hover) and (pointer: fine) and (min-width: 769px) {
+@media (hover: hover) and (pointer: fine) and (min-width: 600px) {
   .video-marquee .marquee-scrubber {
     opacity: 0;
     transition: opacity 0.2s ease;
@@ -156,7 +156,7 @@
   border-radius: 4px;
 }
 
-@media (min-width: 769px) {
+@media (min-width: 600px) {
   .video-marquee {
     padding-right: 0;
   }
@@ -179,7 +179,7 @@
   }
 }
 
-@media (min-width: 1280px) {
+@media (min-width: 1200px) {
   .video-marquee {
     padding: 80px 0 80px 80px;
   }
