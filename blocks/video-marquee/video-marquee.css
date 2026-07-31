@@ -178,6 +178,7 @@
 
   .video-marquee .marquee-media {
     aspect-ratio: auto;
+    border-radius: 16px 0 0 16px;
   }
 }
 
