@@ -6,7 +6,7 @@
 
   position: relative;
   margin: auto;
-  background-color: #000;
+  background-color: #FFF;
 }
 
 .bacom-elastic-carousel .elastic-carousel-container {
@@ -73,8 +73,15 @@
   padding: var(--s2a-spacing-lg);
 }
 
+.bacom-elastic-carousel .elastic-carousel-item-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--s2a-spacing-2xs);
+}
+
 .bacom-elastic-carousel .elastic-carousel-item-title {
-  margin: 0 0 var(--s2a-spacing-2xs);
+  margin: 0;
   color: #000;
   font-family: "Adobe Clean", sans-serif;
   font-size: 14px;
@@ -82,13 +89,48 @@
   line-height: 16.8px;
 }
 
+.bacom-elastic-carousel .elastic-carousel-item-toggle {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: #000;
+  cursor: pointer;
+}
+
+.bacom-elastic-carousel .elastic-carousel-item-toggle-icon {
+  display: block;
+  width: 8px;
+  height: 13px;
+  background-color: currentcolor;
+  mask-image: url('../../assets/img/arrow-right.svg');
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  transition: transform .2s ease;
+}
+
+.bacom-elastic-carousel .elastic-carousel-item-footer.expanded .elastic-carousel-item-toggle-icon {
+  transform: rotate(90deg);
+}
+
 .bacom-elastic-carousel .elastic-carousel-item-description {
-  margin: 0;
+  display: none;
+  margin: var(--s2a-spacing-2xs) 0 0;
   color: var(--s2a-color-gray-1000);
   font-family: "Adobe Clean", sans-serif;
   font-size: 14px;
   line-height: 120%;
   opacity: .7;
+}
+
+.bacom-elastic-carousel .elastic-carousel-item-footer.expanded .elastic-carousel-item-description {
+  display: block;
 }
 
 .bacom-elastic-carousel .elastic-carousel-controls {

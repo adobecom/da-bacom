@@ -26,6 +26,18 @@ function attachHoverVideo(item) {
   item.addEventListener('blur', rewind);
 }
 
+function attachDescriptionToggle(item) {
+  const toggle = item.querySelector('.elastic-carousel-item-toggle');
+  const footer = item.querySelector('.elastic-carousel-item-footer');
+  if (!toggle || !footer) return;
+  toggle.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const expanded = footer.classList.toggle('expanded');
+    toggle.setAttribute('aria-expanded', String(expanded));
+  });
+}
+
 const buildSlide = ({ slide, index, slidesTotal }) => {
   const children = [...slide.children];
   const left = children[0];
@@ -65,7 +77,12 @@ const buildSlide = ({ slide, index, slidesTotal }) => {
         ${asset.outerHTML}
       </div>
       <div class='elastic-carousel-item-footer'>
-        ${linkName?.outerHTML}
+        <div class='elastic-carousel-item-title-row'>
+          ${linkName?.outerHTML}
+          <button type='button' class='elastic-carousel-item-toggle' aria-expanded='false' aria-label='Show more'>
+            <span class='elastic-carousel-item-toggle-icon'></span>
+          </button>
+        </div>
         ${description?.outerHTML}
       </div>
     </div>
@@ -89,6 +106,7 @@ const buildSlide = ({ slide, index, slidesTotal }) => {
   }, content);
 
   attachHoverVideo(item);
+  attachDescriptionToggle(item);
 
   return item;
 };
