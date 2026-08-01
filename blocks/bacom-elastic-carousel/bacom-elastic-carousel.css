@@ -200,6 +200,14 @@
 }
 
 @media (width >= 1200px) {
+  .bacom-elastic-carousel.bacom-elastic-carousel {
+    padding-left: 124px;
+  }
+
+  .bacom-elastic-carousel .elastic-carousel-controls {
+    padding-right: 118px;
+  }
+
   .bacom-elastic-carousel .elastic-carousel-item {
     display: flex;
     width: 394px;
