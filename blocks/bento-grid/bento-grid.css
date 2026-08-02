@@ -247,7 +247,8 @@
 }
 
 .bento-grid .grid-item-text {
-  padding-top: 0.75rem;
+  box-sizing: border-box;
+  padding: 32px;
 }
 
 .bento-grid .grid-item-text .bento-heading {
