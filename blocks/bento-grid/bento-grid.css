@@ -16,6 +16,31 @@
   display: flex;
 }
 
+.bento-grid .bento-section-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.bento-grid .bento-section-heading {
+  margin: 0 0 8px;
+  color: #000;
+  text-align: center;
+  font-family: "Adobe Clean Display", sans-serif;
+  font-size: 56px;
+  font-style: normal;
+  font-weight: 900;
+  line-height: 100%;
+  letter-spacing: -1.68px;
+}
+
+.bento-grid .bento-section-subtext {
+  margin: 0 auto;
+  max-width: 600px;
+  color: rgb(0 0 0 / 60%);
+  font-family: "Adobe Clean", sans-serif;
+  font-size: 16px;
+}
+
 .bento-grid .bento-featured {
   box-sizing: border-box;
   display: flex;

@@ -78,12 +78,22 @@ function parseConfigBlock(configContainer) {
   return configMap;
 }
 
+const isHeading = (node) => /^H[1-6]$/.test(node.tagName);
+
 function extractCells(container) {
   if (!container) return [];
   return Array.from(container.children).map((child) => {
     const pic = child.querySelector('picture');
-    const heading = child.querySelector('h1, h2, h3, h4, h5, h6');
-    const paragraphs = Array.from(child.querySelectorAll('p'));
+    const nodes = Array.from(child.children);
+    const picHolderIndex = nodes.findIndex((node) => pic && node.contains(pic));
+    const before = picHolderIndex === -1 ? [] : nodes.slice(0, picHolderIndex);
+    const after = picHolderIndex === -1 ? nodes : nodes.slice(picHolderIndex + 1);
+
+    const sectionHeading = before.find(isHeading);
+    const sectionSubtext = before.find((node) => node.tagName === 'P');
+
+    const heading = after.find(isHeading);
+    const paragraphs = after.filter((node) => node.tagName === 'P');
     const videoPara = paragraphs.find((p) => /https?:\/\/\S+\.mp4\b/i.test(p.textContent));
     const descPara = paragraphs.find((p) => p !== videoPara
       && !p.querySelector('picture')
@@ -95,6 +105,8 @@ function extractCells(container) {
       videoSrc: videoMatch?.[0] || null,
       heading: heading?.textContent.trim() || '',
       description: descPara?.textContent.trim() || '',
+      sectionHeading: sectionHeading?.textContent.trim() || '',
+      sectionSubtext: sectionSubtext?.textContent.trim() || '',
     };
   });
 }
@@ -204,6 +216,25 @@ function buildMedia(cell, loadMode, className) {
   media.className = className;
   media.appendChild(pic);
   return media;
+}
+
+function buildSectionHeader(cell) {
+  if (!cell?.sectionHeading) return null;
+
+  const header = createTag('div', { class: 'bento-section-header' });
+  const heading = document.createElement('h2');
+  heading.className = 'bento-section-heading';
+  heading.textContent = cell.sectionHeading;
+  header.appendChild(heading);
+
+  if (cell.sectionSubtext) {
+    const subtext = document.createElement('p');
+    subtext.className = 'bento-section-subtext';
+    subtext.textContent = cell.sectionSubtext;
+    header.appendChild(subtext);
+  }
+
+  return header;
 }
 
 function buildFeatured(cell) {
@@ -335,6 +366,9 @@ function resolveViewData(targetType, availableDataMap) {
 
 function createViewElement(type, config, featuredCells, carouselCells) {
   const wrapper = createTag('div', { class: `grid-view view-${type}` });
+
+  const sectionHeader = buildSectionHeader(featuredCells[0]);
+  if (sectionHeader) wrapper.appendChild(sectionHeader);
 
   const row1Config = config[1] || { left: 0 };
   const orderedFeatured = rotateByStartIndex(featuredCells, row1Config.startIndex);
