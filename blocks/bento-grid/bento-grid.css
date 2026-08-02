@@ -17,11 +17,14 @@
 }
 
 .bento-grid .bento-featured {
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: var(--s2a-spacing-xs);
-  padding: var(--s2a-spacing-lg);
+  padding: 24px;
+  border-radius: var(--s2a-border-radius-lg);
+  background: #F6F6F6;
   text-decoration: none;
   color: inherit;
 }
@@ -30,9 +33,6 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: var(--s2a-spacing-lg);
-  border-radius: var(--s2a-border-radius-lg);
-  background: #F6F6F6;
 }
 
 .bento-grid .bento-featured-media {
