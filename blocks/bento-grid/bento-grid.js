@@ -138,15 +138,19 @@ async function openVideoModal(videoSrc) {
   });
 }
 
-function attachVideoTrigger(item, mediaEl, videoSrc) {
-  item.href = videoSrc;
-  item.classList.add('has-video');
-
+function addPlayIcon(mediaEl) {
   const playIcon = document.createElement('span');
   playIcon.className = 'grid-item-play';
   playIcon.setAttribute('aria-hidden', 'true');
   playIcon.innerHTML = PLAY_SVG;
-  (mediaEl || item).appendChild(playIcon);
+  mediaEl.appendChild(playIcon);
+}
+
+function attachVideoTrigger(item, mediaEl, videoSrc) {
+  item.href = videoSrc;
+  item.classList.add('has-video');
+
+  addPlayIcon(mediaEl || item);
 
   item.addEventListener('click', (event) => {
     event.preventDefault();
@@ -220,7 +224,11 @@ function buildFeatured(cell) {
   item.className = 'bento-featured';
   item.append(text, media);
 
-  if (cell.videoSrc) attachVideoTrigger(item, media, cell.videoSrc);
+  if (cell.videoSrc) {
+    attachVideoTrigger(item, media, cell.videoSrc);
+  } else {
+    addPlayIcon(media);
+  }
 
   return item;
 }

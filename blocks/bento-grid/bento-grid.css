@@ -131,8 +131,7 @@
   transform: translateX(4px);
 }
 
-.bento-grid .grid-item-play,
-.bento-grid .bento-featured-media .grid-item-play {
+.bento-grid .grid-item-play {
   position: absolute;
   top: 0.75rem;
   right: 0.75rem;
@@ -150,6 +149,19 @@
 .bento-grid .grid-item-play svg {
   width: 1.125rem;
   height: 1.125rem;
+}
+
+.bento-grid .bento-featured-media .grid-item-play {
+  top: 1.5rem;
+  right: 1.5rem;
+  width: 64px;
+  height: 64px;
+  background: rgb(0 0 0 / 55%);
+}
+
+.bento-grid .bento-featured-media .grid-item-play svg {
+  width: 28px;
+  height: 28px;
 }
 
 .bento-grid .grid-carousel {
