@@ -220,7 +220,7 @@
 }
 
 .bento-grid .grid-item-text .bento-heading {
-  margin: 0;
+  margin: 0 0 8px;
   color: #000;
   white-space: normal;
   font-family: "Adobe Clean Display", sans-serif;
@@ -231,18 +231,25 @@
   letter-spacing: -0.72px;
 }
 
+/* stylelint-disable value-no-vendor-prefix */
 .bento-grid .grid-item-text .bento-description {
   overflow: hidden;
   margin: 0;
   color: rgb(0 0 0 / 60%);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
   font-family: "Adobe Clean", sans-serif;
   font-size: 16px;
   font-style: normal;
   font-weight: 400;
   line-height: 130%;
   letter-spacing: 0.16px;
+}
+/* stylelint-enable value-no-vendor-prefix */
+
+.bento-grid .grid-item-text .bento-watch-link {
+  margin-top: 24px;
 }
 
 .bento-grid .grid-carousel-controls {
@@ -375,7 +382,7 @@
   .bento-grid .grid-item-text {
     box-sizing: border-box;
     width: 347px;
-    height: 152px;
+    min-height: 152px;
     padding: 24px;
   }
 }
