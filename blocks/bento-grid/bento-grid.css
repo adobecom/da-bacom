@@ -368,6 +368,10 @@
     margin-left: calc((100% - 1200px) / 2);
   }
 
+  .bento-grid .grid-carousel-controls {
+    width: 1200px;
+  }
+
   .bento-grid .grid-item {
     width: calc((1200px - (2 * 1rem)) / 3);
   }
