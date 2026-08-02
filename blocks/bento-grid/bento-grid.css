@@ -217,12 +217,19 @@
   padding-top: 0.75rem;
 }
 
-.bento-grid .grid-item-text .bento-heading {
-  font-size: 0.9375rem;
-}
-
+.bento-grid .grid-item-text .bento-heading,
 .bento-grid .grid-item-text .bento-description {
-  font-size: 0.8125rem;
+  overflow: hidden;
+  margin: 0;
+  color: rgb(0 0 0 / 60%);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: "Adobe Clean", sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 130%;
+  letter-spacing: 0.16px;
 }
 
 .bento-grid .grid-carousel-controls {
@@ -350,5 +357,12 @@
     height: 295.749px;
     align-self: stretch;
     aspect-ratio: 195 / 146;
+  }
+
+  .bento-grid .grid-item-text {
+    box-sizing: border-box;
+    width: 347px;
+    height: 152px;
+    padding: 24px;
   }
 }

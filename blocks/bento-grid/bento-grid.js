@@ -243,14 +243,12 @@ function buildCarouselCard(cell, loadMode) {
   item.className = 'grid-item';
   item.appendChild(media);
 
-  if (cell.heading || cell.description) {
-    item.appendChild(buildTextBlock({
-      className: 'grid-item-text',
-      heading: cell.heading,
-      description: cell.description,
-      showWatchLink: !!cell.videoSrc,
-    }));
-  }
+  item.appendChild(buildTextBlock({
+    className: 'grid-item-text',
+    heading: cell.heading,
+    description: cell.description,
+    showWatchLink: true,
+  }));
 
   if (cell.videoSrc) {
     attachVideoTrigger(item, media, cell.videoSrc);
