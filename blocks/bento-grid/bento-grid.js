@@ -309,7 +309,7 @@ function rotateByStartIndex(cells, startIndex) {
   return [...cells.slice(rotation), ...cells.slice(0, rotation)];
 }
 
-function buildCarouselRow(cells) {
+function buildCarouselRow(cells, { showControls = true } = {}) {
   const container = createTag('div', { class: 'grid-carousel-container' });
 
   cells.forEach((cell, index) => {
@@ -320,7 +320,7 @@ function buildCarouselRow(cells) {
   const wrapper = createTag('div', { class: 'grid-carousel' });
   wrapper.appendChild(container);
 
-  if (container.children.length > MIN_CAROUSEL_FOR_CONTROLS) {
+  if (showControls && container.children.length > MIN_CAROUSEL_FOR_CONTROLS) {
     wrapper.appendChild(buildCarouselControls(container));
   }
 
@@ -339,6 +339,14 @@ function createViewElement(type, config, featuredCells, carouselCells) {
   const row1Config = config[1] || { left: 0 };
   const orderedFeatured = rotateByStartIndex(featuredCells, row1Config.startIndex);
   const [featuredCell, ...restRow1] = orderedFeatured;
+
+  if (type === 'mobile') {
+    const row2Config = config[2] || {};
+    const allCells = [featuredCell, ...restRow1, ...carouselCells];
+    const orderedCells = rotateByStartIndex(allCells, row2Config.startIndex);
+    wrapper.appendChild(buildCarouselRow(orderedCells, { showControls: false }));
+    return wrapper;
+  }
 
   const featured = buildFeatured(featuredCell);
   if (featured) wrapper.appendChild(featured);
