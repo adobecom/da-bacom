@@ -170,8 +170,10 @@
 
 .bento-grid .grid-carousel-container {
   display: flex;
+  align-items: flex-start;
   gap: 1rem;
   overflow-x: auto;
+  overflow-y: visible;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
   scroll-behavior: smooth;
@@ -217,7 +219,18 @@
   padding-top: 0.75rem;
 }
 
-.bento-grid .grid-item-text .bento-heading,
+.bento-grid .grid-item-text .bento-heading {
+  margin: 0;
+  color: #000;
+  white-space: normal;
+  font-family: "Adobe Clean Display", sans-serif;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 900;
+  line-height: 100%;
+  letter-spacing: -0.72px;
+}
+
 .bento-grid .grid-item-text .bento-description {
   overflow: hidden;
   margin: 0;
