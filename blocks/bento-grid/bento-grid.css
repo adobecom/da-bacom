@@ -18,33 +18,32 @@
 
 .bento-grid .bento-section-header {
   padding-top: 104px;
-  text-align: center;
+  text-align: left;
   margin-bottom: 24px;
 }
 
 .bento-grid .bento-section-heading {
   margin: 0 0 8px;
-  color: #000;
-  text-align: center;
-  font-family: "Adobe Clean Display", sans-serif;
-  font-size: 56px;
+  color: var(--s2a-color-content-title);
+  text-align: left;
+  font-family: var(--s2a-font-family-heading);
+  font-size: var(--s2a-typography-font-size-title-2);
   font-style: normal;
   font-weight: 900;
-  line-height: 100%;
-  letter-spacing: -1.68px;
+  line-height: var(--s2a-typography-line-height-title-2);
+  letter-spacing: var(--s2a-typography-letter-spacing-title-2);
 }
 
 .bento-grid .bento-section-subtext {
-  margin: 0 auto;
-  max-width: 600px;
-  color: #000;
-  text-align: center;
-  font-family: "Adobe Clean", sans-serif;
-  font-size: 18px;
+  margin: 0;
+  color: var(--s2a-color-content-body-strong);
+  text-align: left;
+  font-family: var(--s2a-font-family-body);
+  font-size: var(--s2a-typography-font-size-body-lg);
   font-style: normal;
   font-weight: 400;
-  line-height: 130%;
-  letter-spacing: 0.18px;
+  line-height: var(--s2a-typography-line-height-body-lg);
+  letter-spacing: var(--s2a-typography-letter-spacing-body-lg);
 }
 
 .bento-grid .bento-featured {
@@ -353,6 +352,30 @@
 
   .bento-grid .foreground .grid-view.view-tablet {
     display: flex;
+  }
+
+  .bento-grid .bento-section-header {
+    text-align: center;
+  }
+
+  .bento-grid .bento-section-heading {
+    text-align: center;
+    color: #000;
+    font-family: "Adobe Clean Display", sans-serif;
+    font-size: 56px;
+    line-height: 100%;
+    letter-spacing: -1.68px;
+  }
+
+  .bento-grid .bento-section-subtext {
+    margin: 0 auto;
+    max-width: 600px;
+    text-align: center;
+    color: #000;
+    font-family: "Adobe Clean", sans-serif;
+    font-size: 18px;
+    line-height: 130%;
+    letter-spacing: 0.18px;
   }
 
   .bento-grid .bento-featured {
