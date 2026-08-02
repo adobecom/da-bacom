@@ -252,7 +252,11 @@ function buildCarouselCard(cell, loadMode) {
     }));
   }
 
-  if (cell.videoSrc) attachVideoTrigger(item, media, cell.videoSrc);
+  if (cell.videoSrc) {
+    attachVideoTrigger(item, media, cell.videoSrc);
+  } else {
+    addPlayIcon(media);
+  }
 
   return item;
 }
