@@ -86,29 +86,63 @@ function extractCells(container) {
   });
 }
 
-let modalReady;
+const videoAvailability = new Map();
 
-function ensureModal() {
-  modalReady ||= (async () => {
-    const { loadStyle } = await import(`${LIBS}/utils/utils.js`);
-    loadStyle(`${LIBS}/c2/blocks/modal/modal.css`);
-    const { default: initModal } = await import(`${LIBS}/blocks/modal/modal.js`);
-    return initModal;
-  })();
-  return modalReady;
+function checkVideoAvailable(src) {
+  if (!videoAvailability.has(src)) {
+    videoAvailability.set(src, new Promise((resolve) => {
+      const probe = document.createElement('video');
+      probe.preload = 'metadata';
+      probe.muted = true;
+      probe.addEventListener('loadedmetadata', () => resolve(true), { once: true });
+      probe.addEventListener('error', () => resolve(false), { once: true });
+      probe.src = src;
+    }));
+  }
+  return videoAvailability.get(src);
+}
+
+async function openVideoModal(videoSrc) {
+  const { loadStyle } = await import(`${LIBS}/utils/utils.js`);
+  const { getModal } = await import(`${LIBS}/blocks/modal/modal.js`);
+  loadStyle(`${LIBS}/c2/blocks/modal/modal.css`);
+
+  const video = document.createElement('video');
+  video.className = 'grid-video-modal-player';
+  video.controls = true;
+  video.playsInline = true;
+  video.autoplay = true;
+  video.src = videoSrc;
+
+  await getModal(null, {
+    id: 'bento-grid-video-modal',
+    class: 'grid-video-modal',
+    content: video,
+    closeCallback: () => {
+      video.pause();
+      video.removeAttribute('src');
+    },
+  });
 }
 
 function attachVideoTrigger(item, videoSrc) {
-  item.href = videoSrc;
-  item.classList.add('has-video');
+  checkVideoAvailable(videoSrc).then((available) => {
+    if (!available) return;
 
-  const playIcon = document.createElement('span');
-  playIcon.className = 'grid-item-play';
-  playIcon.setAttribute('aria-hidden', 'true');
-  playIcon.innerHTML = PLAY_SVG;
-  item.appendChild(playIcon);
+    item.href = videoSrc;
+    item.classList.add('has-video');
 
-  ensureModal().then((initModal) => initModal(item));
+    const playIcon = document.createElement('span');
+    playIcon.className = 'grid-item-play';
+    playIcon.setAttribute('aria-hidden', 'true');
+    playIcon.innerHTML = PLAY_SVG;
+    item.appendChild(playIcon);
+
+    item.addEventListener('click', (event) => {
+      event.preventDefault();
+      openVideoModal(videoSrc);
+    });
+  });
 }
 
 function resolveViewData(targetType, availableDataMap) {
