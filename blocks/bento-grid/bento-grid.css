@@ -337,7 +337,12 @@
     aspect-ratio: auto;
   }
 
+  .bento-grid .grid-carousel {
+    width: 1200px;
+    margin: 0 auto;
+  }
+
   .bento-grid .grid-item {
-    width: 15.25rem;
+    width: calc((1200px - (2 * 1rem)) / 3);
   }
 }
