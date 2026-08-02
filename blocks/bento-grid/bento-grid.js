@@ -86,18 +86,25 @@ function extractCells(container) {
   });
 }
 
+function whenPageSettled() {
+  if (document.readyState === 'complete') return Promise.resolve();
+  return new Promise((resolve) => {
+    window.addEventListener('load', resolve, { once: true });
+  });
+}
+
 const videoAvailability = new Map();
 
 function checkVideoAvailable(src) {
   if (!videoAvailability.has(src)) {
-    videoAvailability.set(src, new Promise((resolve) => {
+    videoAvailability.set(src, whenPageSettled().then(() => new Promise((resolve) => {
       const probe = document.createElement('video');
       probe.preload = 'metadata';
       probe.muted = true;
       probe.addEventListener('loadedmetadata', () => resolve(true), { once: true });
       probe.addEventListener('error', () => resolve(false), { once: true });
       probe.src = src;
-    }));
+    })));
   }
   return videoAvailability.get(src);
 }
