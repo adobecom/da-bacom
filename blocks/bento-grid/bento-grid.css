@@ -26,8 +26,8 @@
   margin: 0 0 8px;
   color: var(--s2a-color-content-title);
   text-align: left;
-  font-family: var(--s2a-font-family-heading);
-  font-size: var(--s2a-typography-font-size-title-2);
+  font-family: "Adobe Clean", sans-serif;
+  font-size: 32px;
   font-style: normal;
   font-weight: 900;
   line-height: var(--s2a-typography-line-height-title-2);
@@ -38,7 +38,7 @@
   margin: 0;
   color: var(--s2a-color-content-body-strong);
   text-align: left;
-  font-family: var(--s2a-font-family-body);
+  font-family: "Adobe Clean", sans-serif;
   font-size: var(--s2a-typography-font-size-body-lg);
   font-style: normal;
   font-weight: 400;
@@ -203,6 +203,7 @@
   display: flex;
   align-items: flex-start;
   gap: 1rem;
+  padding-left: 24px;
   overflow-x: auto;
   overflow-y: visible;
   scroll-snap-type: x mandatory;
@@ -392,6 +393,10 @@
   .bento-grid .grid-carousel {
     width: 100%;
     margin-left: 0;
+  }
+
+  .bento-grid .grid-carousel-container {
+    padding-left: 0;
   }
 
   .bento-grid .grid-item {
