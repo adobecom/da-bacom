@@ -22,13 +22,17 @@ function createTag(tag, attributes, html, options = {}) {
   return el;
 }
 
-const LANA_OPTIONS = { tags: 'animated-slot-text', errorType: 'i' };
-
+const LANA_OPTIONS = { tags: 'bento-grid', errorType: 'i' };
 const VIEW_TYPES = ['mobile', 'tablet', 'desktop'];
-const MIN_ITEMS_TARGET = 15;
+const MIN_CAROUSEL_FOR_CONTROLS = 3;
+const ARROW_ICON = '<span class="grid-carousel-arrow-icon"></span>';
 
 function logError(message, error) {
-  window.lana?.log(`Photo gallery ${message}: ${error}`, LANA_OPTIONS);
+  window.lana?.log(`Bento grid ${message}: ${error}`, LANA_OPTIONS);
+}
+
+function isRtl() {
+  return document.documentElement.getAttribute('dir') === 'rtl';
 }
 
 function parseConfigBlock(configContainer) {
@@ -78,35 +82,19 @@ function extractCells(container) {
   if (!container) return [];
   return Array.from(container.children).map((child) => {
     const pic = child.querySelector('picture');
-    const videoMatch = child.textContent.match(/https?:\/\/\S+\.mp4\b/i);
+    const heading = child.querySelector('h1, h2, h3, h4, h5, h6');
+    const paragraphs = Array.from(child.querySelectorAll('p'));
+    const videoPara = paragraphs.find((p) => /https?:\/\/\S+\.mp4\b/i.test(p.textContent));
+    const descPara = paragraphs.find((p) => p !== videoPara);
+    const videoMatch = (videoPara || child).textContent.match(/https?:\/\/\S+\.mp4\b/i);
+
     return {
       pictureHTML: pic ? pic.outerHTML : '',
       videoSrc: videoMatch?.[0] || null,
+      heading: heading?.textContent.trim() || '',
+      description: descPara?.textContent.trim() || '',
     };
   });
-}
-
-function whenPageSettled() {
-  if (document.readyState === 'complete') return Promise.resolve();
-  return new Promise((resolve) => {
-    window.addEventListener('load', resolve, { once: true });
-  });
-}
-
-const videoAvailability = new Map();
-
-function checkVideoAvailable(src) {
-  if (!videoAvailability.has(src)) {
-    videoAvailability.set(src, whenPageSettled().then(() => new Promise((resolve) => {
-      const probe = document.createElement('video');
-      probe.preload = 'metadata';
-      probe.muted = true;
-      probe.addEventListener('loadedmetadata', () => resolve(true), { once: true });
-      probe.addEventListener('error', () => resolve(false), { once: true });
-      probe.src = src;
-    })));
-  }
-  return videoAvailability.get(src);
 }
 
 async function openVideoModal(videoSrc) {
@@ -114,42 +102,218 @@ async function openVideoModal(videoSrc) {
   const { getModal } = await import(`${LIBS}/blocks/modal/modal.js`);
   loadStyle(`${LIBS}/c2/blocks/modal/modal.css`);
 
+  const wrapper = document.createElement('div');
+  wrapper.className = 'grid-video-modal-inner';
+
   const video = document.createElement('video');
   video.className = 'grid-video-modal-player';
   video.controls = true;
   video.playsInline = true;
   video.autoplay = true;
-  video.src = videoSrc;
+
+  const source = document.createElement('source');
+  source.type = 'video/mp4';
+  source.src = videoSrc;
+  video.appendChild(source);
+
+  const errorMessage = document.createElement('p');
+  errorMessage.className = 'grid-video-modal-error';
+  errorMessage.textContent = 'This video is currently unavailable.';
+  errorMessage.hidden = true;
+
+  video.addEventListener('error', () => {
+    video.hidden = true;
+    errorMessage.hidden = false;
+  }, { once: true });
+
+  wrapper.append(video, errorMessage);
 
   await getModal(null, {
     id: 'bento-grid-video-modal',
     class: 'grid-video-modal',
-    content: video,
-    closeCallback: () => {
-      video.pause();
-      video.removeAttribute('src');
-    },
+    content: wrapper,
+    closeCallback: () => video.pause(),
   });
 }
 
-function attachVideoTrigger(item, videoSrc) {
-  checkVideoAvailable(videoSrc).then((available) => {
-    if (!available) return;
+function attachVideoTrigger(item, mediaEl, videoSrc) {
+  item.href = videoSrc;
+  item.classList.add('has-video');
 
-    item.href = videoSrc;
-    item.classList.add('has-video');
+  const playIcon = document.createElement('span');
+  playIcon.className = 'grid-item-play';
+  playIcon.setAttribute('aria-hidden', 'true');
+  playIcon.innerHTML = PLAY_SVG;
+  (mediaEl || item).appendChild(playIcon);
 
-    const playIcon = document.createElement('span');
-    playIcon.className = 'grid-item-play';
-    playIcon.setAttribute('aria-hidden', 'true');
-    playIcon.innerHTML = PLAY_SVG;
-    item.appendChild(playIcon);
-
-    item.addEventListener('click', (event) => {
-      event.preventDefault();
-      openVideoModal(videoSrc);
-    });
+  item.addEventListener('click', (event) => {
+    event.preventDefault();
+    openVideoModal(videoSrc);
   });
+}
+
+function buildTextBlock({ className, eyebrow, heading, description, showWatchLink }) {
+  const wrap = document.createElement('div');
+  wrap.className = className;
+
+  if (eyebrow) {
+    const eyebrowEl = createTag('p', { class: 'bento-eyebrow' }, eyebrow);
+    wrap.appendChild(eyebrowEl);
+  }
+  if (heading) {
+    const headingEl = document.createElement('h3');
+    headingEl.className = 'bento-heading';
+    headingEl.textContent = heading;
+    wrap.appendChild(headingEl);
+  }
+  if (description) {
+    const descEl = document.createElement('p');
+    descEl.className = 'bento-description';
+    descEl.textContent = description;
+    wrap.appendChild(descEl);
+  }
+  if (showWatchLink) {
+    const watchEl = document.createElement('span');
+    watchEl.className = 'bento-watch-link';
+    watchEl.textContent = 'Watch video';
+    wrap.appendChild(watchEl);
+  }
+
+  return wrap;
+}
+
+function buildMedia(cell, loadMode, className) {
+  const temp = document.createElement('div');
+  temp.innerHTML = cell.pictureHTML;
+  const pic = temp.querySelector('picture');
+  if (!pic) return null;
+
+  const img = pic.querySelector('img');
+  if (img) {
+    img.setAttribute('loading', loadMode);
+    img.loading = loadMode;
+  }
+
+  const media = document.createElement('div');
+  media.className = className;
+  media.appendChild(pic);
+  return media;
+}
+
+function buildFeatured(cell) {
+  if (!cell?.pictureHTML) return null;
+
+  const media = buildMedia(cell, 'eager', 'bento-featured-media');
+  if (!media) return null;
+
+  const text = buildTextBlock({
+    className: 'bento-featured-text',
+    eyebrow: 'Featured video',
+    heading: cell.heading,
+    description: cell.description,
+    showWatchLink: !!cell.videoSrc,
+  });
+
+  const item = document.createElement(cell.videoSrc ? 'a' : 'div');
+  item.className = 'bento-featured';
+  item.append(text, media);
+
+  if (cell.videoSrc) attachVideoTrigger(item, media, cell.videoSrc);
+
+  return item;
+}
+
+function buildCarouselCard(cell, loadMode) {
+  if (!cell?.pictureHTML) return null;
+
+  const media = buildMedia(cell, loadMode, 'grid-item-media');
+  if (!media) return null;
+
+  const item = document.createElement(cell.videoSrc ? 'a' : 'div');
+  item.className = 'grid-item';
+  item.appendChild(media);
+
+  if (cell.heading || cell.description) {
+    item.appendChild(buildTextBlock({
+      className: 'grid-item-text',
+      heading: cell.heading,
+      description: cell.description,
+      showWatchLink: !!cell.videoSrc,
+    }));
+  }
+
+  if (cell.videoSrc) attachVideoTrigger(item, media, cell.videoSrc);
+
+  return item;
+}
+
+function updateArrowState(container, prevBtn, nextBtn) {
+  const maxScroll = container.scrollWidth - container.clientWidth;
+  const { scrollLeft } = container;
+  if (isRtl()) {
+    prevBtn.disabled = scrollLeft >= -1;
+    nextBtn.disabled = scrollLeft <= -maxScroll + 1;
+  } else {
+    prevBtn.disabled = scrollLeft <= 1;
+    nextBtn.disabled = scrollLeft >= maxScroll - 1;
+  }
+}
+
+function scrollByCard(container, direction) {
+  const card = container.querySelector('.grid-item');
+  if (!card) return;
+  const gap = parseFloat(getComputedStyle(container).columnGap) || 0;
+  const amount = (card.offsetWidth + gap) * direction * (isRtl() ? -1 : 1);
+  container.scrollBy({ left: amount, behavior: 'smooth' });
+}
+
+function buildCarouselControls(container) {
+  const controls = createTag('div', { class: 'grid-carousel-controls' });
+  const prevBtn = createTag('button', {
+    type: 'button',
+    class: 'grid-carousel-arrow grid-carousel-arrow-prev',
+    'aria-label': 'Previous',
+  }, ARROW_ICON);
+  const nextBtn = createTag('button', {
+    type: 'button',
+    class: 'grid-carousel-arrow grid-carousel-arrow-next',
+    'aria-label': 'Next',
+  }, ARROW_ICON);
+
+  prevBtn.addEventListener('click', () => scrollByCard(container, -1));
+  nextBtn.addEventListener('click', () => scrollByCard(container, 1));
+
+  container.addEventListener('scroll', () => updateArrowState(container, prevBtn, nextBtn));
+  window.addEventListener('resize', () => updateArrowState(container, prevBtn, nextBtn));
+  updateArrowState(container, prevBtn, nextBtn);
+
+  controls.append(prevBtn, nextBtn);
+  return controls;
+}
+
+function rotateByStartIndex(cells, startIndex) {
+  if (!startIndex || startIndex <= 0 || cells.length === 0) return cells;
+  const rotation = (startIndex - 1) % cells.length;
+  return [...cells.slice(rotation), ...cells.slice(0, rotation)];
+}
+
+function buildCarouselRow(cells, rowConfig) {
+  const container = createTag('div', { class: 'grid-carousel-container' });
+  if (rowConfig.left) container.style.marginLeft = `${rowConfig.left}px`;
+
+  cells.forEach((cell, index) => {
+    const card = buildCarouselCard(cell, index === 0 ? 'eager' : 'lazy');
+    if (card) container.appendChild(card);
+  });
+
+  const wrapper = createTag('div', { class: 'grid-carousel' });
+  wrapper.appendChild(container);
+
+  if (container.children.length > MIN_CAROUSEL_FOR_CONTROLS) {
+    wrapper.appendChild(buildCarouselControls(container));
+  }
+
+  return wrapper;
 }
 
 function resolveViewData(targetType, availableDataMap) {
@@ -158,68 +322,22 @@ function resolveViewData(targetType, availableDataMap) {
   return availableDataMap[foundKey] || {};
 }
 
-const createViewElement = (type, config, allRowsContent) => {
-  const wrapper = document.createElement('div');
-  wrapper.className = `grid-view view-${type}`;
-  const rowsFragment = document.createDocumentFragment();
+function createViewElement(type, config, featuredCells, carouselCells) {
+  const wrapper = createTag('div', { class: `grid-view view-${type}` });
 
-  allRowsContent.forEach((originalRowContent, index) => {
-    const rowNum = index + 1;
-    const rowConfig = config[rowNum] || { left: 0 };
+  const row1Config = config[1] || { left: 0 };
+  const orderedFeatured = rotateByStartIndex(featuredCells, row1Config.startIndex);
+  const [featuredCell, ...restRow1] = orderedFeatured;
 
-    let rowContent = originalRowContent;
-    if (rowConfig.startIndex && rowConfig.startIndex > 0 && originalRowContent.length > 0) {
-      const zeroBasedIndex = rowConfig.startIndex - 1;
-      const rotation = zeroBasedIndex % originalRowContent.length;
-      rowContent = [
-        ...originalRowContent.slice(rotation),
-        ...originalRowContent.slice(0, rotation),
-      ];
-    }
+  const featured = buildFeatured(featuredCell);
+  if (featured) wrapper.appendChild(featured);
 
-    const multiplier = Math.ceil(MIN_ITEMS_TARGET / (rowContent.length || 1));
-    const rowDiv = document.createElement('div');
-    rowDiv.className = 'grid-row';
+  const row2Config = config[2] || { left: 0 };
+  const carousel = buildCarouselRow([...restRow1, ...carouselCells], row2Config);
+  wrapper.appendChild(carousel);
 
-    if (rowConfig.left) {
-      rowDiv.style.marginLeft = `${rowConfig.left}px`;
-    }
-
-    const itemsFragment = document.createDocumentFragment();
-    for (let i = 0; i < multiplier; i += 1) {
-      const loadMode = i === 0 ? 'eager' : 'lazy';
-
-      rowContent.forEach((cell) => {
-        if (!cell.pictureHTML) return;
-        const temp = document.createElement('div');
-        temp.innerHTML = cell.pictureHTML;
-        const pic = temp.querySelector('picture');
-
-        if (pic) {
-          const item = document.createElement(cell.videoSrc ? 'a' : 'div');
-          item.className = 'grid-item';
-
-          const finalPic = pic.cloneNode(true);
-          const img = finalPic.querySelector('img');
-          if (img) {
-            img.setAttribute('loading', loadMode);
-            img.loading = loadMode;
-          }
-
-          item.appendChild(finalPic);
-          if (cell.videoSrc) attachVideoTrigger(item, cell.videoSrc);
-          itemsFragment.appendChild(item);
-        }
-      });
-    }
-
-    rowDiv.appendChild(itemsFragment);
-    rowsFragment.appendChild(rowDiv);
-  });
-
-  wrapper.appendChild(rowsFragment);
   return wrapper;
-};
+}
 
 function decorateContent(el) {
   try {
@@ -230,31 +348,29 @@ function decorateContent(el) {
     const rowContainers = children.slice(1);
 
     if (!configContainer || rowContainers.length === 0) {
-      logError('Photo Gallery: Missing required structure (Config, Row content).');
+      logError('Missing required structure (Config, Row content)');
       return;
     }
 
     const configMap = parseConfigBlock(configContainer);
+    const featuredCells = extractCells(rowContainers[0]);
+    const carouselCells = rowContainers.slice(1).flatMap((container) => extractCells(container));
 
-    const allRowsContent = rowContainers.map((container) => extractCells(container));
     el.innerHTML = '';
     const foreground = createTag('div', { class: 'foreground' });
     el.setAttribute('role', 'region');
-    el.setAttribute('aria-label', 'Image Gallery');
+    el.setAttribute('aria-label', 'Featured video gallery');
 
     const fragment = document.createDocumentFragment();
-
     VIEW_TYPES.forEach((type) => {
       const config = resolveViewData(type, configMap);
-      if (allRowsContent.length > 0) {
-        const viewEl = createViewElement(type, config, allRowsContent);
-        fragment.appendChild(viewEl);
-      }
+      const viewEl = createViewElement(type, config, featuredCells, carouselCells);
+      fragment.appendChild(viewEl);
     });
     foreground.appendChild(fragment);
     el.appendChild(foreground);
   } catch (err) {
-    logError('Failed to decorate Content', err);
+    logError('Failed to decorate content', err);
   }
 }
 
@@ -263,6 +379,6 @@ export default function init(el) {
     el.classList.add('con-block');
     decorateContent(el);
   } catch (err) {
-    window.lana?.log(`Photo banner Init Error: ${err}`, LANA_OPTIONS);
+    window.lana?.log(`Bento grid Init Error: ${err}`, LANA_OPTIONS);
   }
 }
