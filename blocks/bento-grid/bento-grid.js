@@ -85,7 +85,9 @@ function extractCells(container) {
     const heading = child.querySelector('h1, h2, h3, h4, h5, h6');
     const paragraphs = Array.from(child.querySelectorAll('p'));
     const videoPara = paragraphs.find((p) => /https?:\/\/\S+\.mp4\b/i.test(p.textContent));
-    const descPara = paragraphs.find((p) => p !== videoPara);
+    const descPara = paragraphs.find((p) => p !== videoPara
+      && !p.querySelector('picture')
+      && p.textContent.trim());
     const videoMatch = (videoPara || child).textContent.match(/https?:\/\/\S+\.mp4\b/i);
 
     return {
@@ -211,7 +213,7 @@ function buildFeatured(cell) {
     eyebrow: 'Featured video',
     heading: cell.heading,
     description: cell.description,
-    showWatchLink: !!cell.videoSrc,
+    showWatchLink: true,
   });
 
   const item = document.createElement(cell.videoSrc ? 'a' : 'div');
