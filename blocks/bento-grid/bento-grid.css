@@ -221,7 +221,7 @@
   flex: 0 0 auto;
   flex-direction: column;
   width: 82vw;
-  scroll-snap-align: start;
+  scroll-snap-align: center;
   text-decoration: none;
   color: inherit;
   cursor: pointer;
@@ -401,6 +401,7 @@
 
   .bento-grid .grid-item {
     width: calc((100% - (2 * 1rem)) / 3);
+    scroll-snap-align: start;
   }
 }
 
