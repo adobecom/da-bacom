@@ -333,8 +333,13 @@
     flex: 1 1 50%;
   }
 
+  .bento-grid .grid-carousel {
+    width: 100%;
+    margin-left: 0;
+  }
+
   .bento-grid .grid-item {
-    width: 11.56rem;
+    width: calc((100% - (2 * 1rem)) / 3);
   }
 }
 
