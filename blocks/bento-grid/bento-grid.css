@@ -127,7 +127,8 @@
   transition: transform 0.2s ease;
 }
 
-.bento-grid a.has-video:hover .bento-watch-link::after {
+.bento-grid .bento-featured:hover .bento-watch-link::after,
+.bento-grid .grid-item:hover .bento-watch-link::after {
   transform: translateX(4px);
 }
 
@@ -211,7 +212,7 @@
   transition: transform 0.3s ease;
 }
 
-.bento-grid .grid-item.has-video:hover .grid-item-media img {
+.bento-grid .grid-item:hover .grid-item-media img {
   transform: scale(1.03);
 }
 
