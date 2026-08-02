@@ -381,7 +381,7 @@
 
   .bento-grid .grid-item-text {
     box-sizing: border-box;
-    width: 347px;
+    width: 100%;
     min-height: 152px;
     padding: 24px 24px 40px;
   }
