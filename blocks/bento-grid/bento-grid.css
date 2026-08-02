@@ -345,4 +345,10 @@
   .bento-grid .grid-item {
     width: calc((1200px - (2 * 1rem)) / 3);
   }
+
+  .bento-grid .grid-item-media {
+    height: 295.749px;
+    align-self: stretch;
+    aspect-ratio: 195 / 146;
+  }
 }
