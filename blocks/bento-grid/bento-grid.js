@@ -307,9 +307,8 @@ function rotateByStartIndex(cells, startIndex) {
   return [...cells.slice(rotation), ...cells.slice(0, rotation)];
 }
 
-function buildCarouselRow(cells, rowConfig) {
+function buildCarouselRow(cells) {
   const container = createTag('div', { class: 'grid-carousel-container' });
-  if (rowConfig.left) container.style.marginLeft = `${rowConfig.left}px`;
 
   cells.forEach((cell, index) => {
     const card = buildCarouselCard(cell, index === 0 ? 'eager' : 'lazy');
@@ -342,8 +341,10 @@ function createViewElement(type, config, featuredCells, carouselCells) {
   const featured = buildFeatured(featuredCell);
   if (featured) wrapper.appendChild(featured);
 
-  const row2Config = config[2] || { left: 0 };
-  const carousel = buildCarouselRow([...restRow1, ...carouselCells], row2Config);
+  const row2Config = config[2] || {};
+  const remainingCells = [...restRow1, ...carouselCells];
+  const orderedCarousel = rotateByStartIndex(remainingCells, row2Config.startIndex);
+  const carousel = buildCarouselRow(orderedCarousel);
   wrapper.appendChild(carousel);
 
   return wrapper;
