@@ -365,8 +365,7 @@
   }
 
   .bento-grid .grid-carousel {
-    width: 1200px;
-    margin: 0 auto;
+    margin-left: calc((100% - 1200px) / 2);
   }
 
   .bento-grid .grid-item {
