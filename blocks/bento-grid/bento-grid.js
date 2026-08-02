@@ -1,3 +1,5 @@
+import { LIBS, PLAY_SVG } from '../../scripts/scripts.js';
+
 function createTag(tag, attributes, html, options = {}) {
   const el = document.createElement(tag);
   if (html) {
@@ -72,9 +74,41 @@ function parseConfigBlock(configContainer) {
   return configMap;
 }
 
-function extractPictures(container) {
+function extractCells(container) {
   if (!container) return [];
-  return Array.from(container.children).map((child) => child.innerHTML);
+  return Array.from(container.children).map((child) => {
+    const pic = child.querySelector('picture');
+    const videoMatch = child.textContent.match(/https?:\/\/\S+\.mp4\b/i);
+    return {
+      pictureHTML: pic ? pic.outerHTML : '',
+      videoSrc: videoMatch?.[0] || null,
+    };
+  });
+}
+
+let modalReady;
+
+function ensureModal() {
+  modalReady ||= (async () => {
+    const { loadStyle } = await import(`${LIBS}/utils/utils.js`);
+    loadStyle(`${LIBS}/c2/blocks/modal/modal.css`);
+    const { default: initModal } = await import(`${LIBS}/blocks/modal/modal.js`);
+    return initModal;
+  })();
+  return modalReady;
+}
+
+function attachVideoTrigger(item, videoSrc) {
+  item.href = videoSrc;
+  item.classList.add('has-video');
+
+  const playIcon = document.createElement('span');
+  playIcon.className = 'grid-item-play';
+  playIcon.setAttribute('aria-hidden', 'true');
+  playIcon.innerHTML = PLAY_SVG;
+  item.appendChild(playIcon);
+
+  ensureModal().then((initModal) => initModal(item));
 }
 
 function resolveViewData(targetType, availableDataMap) {
@@ -114,13 +148,14 @@ const createViewElement = (type, config, allRowsContent) => {
     for (let i = 0; i < multiplier; i += 1) {
       const loadMode = i === 0 ? 'eager' : 'lazy';
 
-      rowContent.forEach((html) => {
+      rowContent.forEach((cell) => {
+        if (!cell.pictureHTML) return;
         const temp = document.createElement('div');
-        temp.innerHTML = html;
+        temp.innerHTML = cell.pictureHTML;
         const pic = temp.querySelector('picture');
 
         if (pic) {
-          const item = document.createElement('div');
+          const item = document.createElement(cell.videoSrc ? 'a' : 'div');
           item.className = 'grid-item';
 
           const finalPic = pic.cloneNode(true);
@@ -131,6 +166,7 @@ const createViewElement = (type, config, allRowsContent) => {
           }
 
           item.appendChild(finalPic);
+          if (cell.videoSrc) attachVideoTrigger(item, cell.videoSrc);
           itemsFragment.appendChild(item);
         }
       });
@@ -159,7 +195,7 @@ function decorateContent(el) {
 
     const configMap = parseConfigBlock(configContainer);
 
-    const allRowsContent = rowContainers.map((container) => extractPictures(container));
+    const allRowsContent = rowContainers.map((container) => extractCells(container));
     el.innerHTML = '';
     const foreground = createTag('div', { class: 'foreground' });
     el.setAttribute('role', 'region');
