@@ -17,7 +17,6 @@ notifications:
       fields:
         assignee:
           name: slavin
-        customfield_11800: MWPW-164516 # Jira epic security tickets will be assigned to.
         customfield_12900:  # Jira Team security tickets will be assigned to.
           value: Magma
         watchers: # Everyone who is an admin on your repository should be a watcher.

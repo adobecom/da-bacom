@@ -1,0 +1,592 @@
+/* Migrated verbatim from source repo (c2-block-migration branch); style violations left as-is pending reconciliation with this repo's conventions. */
+/* stylelint-disable */
+
+/* Base */
+.bacom-global-footer {
+  padding-top: var(--s2a-spacing-2xl);
+  justify-content: center;
+  background: var(--s2a-color-gray-1000);
+  -webkit-text-size-adjust: none;
+  position: relative;
+}
+
+.bacom-global-footer ul {
+  list-style-type: none;
+}
+
+.bacom-global-footer a {
+  text-decoration: unset;
+}
+
+.bacom-global-footer a:hover {
+  text-decoration: none;
+}
+
+.bacom-global-footer button {
+  background: none;
+  cursor: pointer;
+}
+
+.feds-footer-wrapper {
+  display: flex;
+  flex-direction: column;
+  color: var(--s2a-color-gray-25);
+  max-width: var(--grid-max-width-default);
+  position: relative;
+  z-index: 1;
+  background-color: var(--s2a-color-gray-1000);
+  padding-bottom: var(--s2a-spacing-xl);
+}
+
+.feds-footer-wrapper ul {
+  margin: 0;
+  padding: 0;
+}
+
+.feds-footer-wrapper .feds-navLink:hover {
+  color: var(--s2a-color-gray-25);
+}
+
+.feds-footer-icons {
+  display: none;
+}
+
+/* Menu */
+.feds-footer-wrapper .feds-menu-headline {
+  color: var(--s2a-color-gray-25);
+  border-color: var(--s2a-color-transparent-white-12);
+}
+
+.feds-footer-wrapper .feds-menu-headline-caret {
+  border-color: var(--s2a-color-gray-25);
+}
+
+.bacom-global-footer:not(.mobile) .feds-footer-wrapper .feds-menu-headline[aria-expanded = "true"] {
+  border: 0;
+}
+
+.feds-footer-wrapper .feds-menu-column {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Additional nesting is needed for specificity */
+.feds-footer-wrapper .feds-menu-content .feds-navLink,
+.feds-footer-wrapper .feds-featuredProducts  .feds-navLink {
+  padding: 0;
+  margin: 0 var(--s2a-spacing-xs) var(--s2a-spacing-xs);
+  opacity: 0.6;
+  color: var(--s2a-color-gray-25);
+  font-size: var(--s2a-typography-font-size-body-md);
+  line-height: var(--s2a-typography-line-height-body-md);
+  letter-spacing: var(--s2a-typography-letter-spacing-body-md);
+  display: inline-flex;
+}
+
+/* Options (region selector, social, privacy) */
+.feds-footer-options,
+.feds-footer-miscLinks,
+.feds-regionPicker {
+  display: flex;
+  align-items: center;
+}
+
+.feds-featuredProducts .feds-navLink:hover,
+.feds-footer-wrapper .feds-menu-content .feds-navLink:hover {
+  color: var(--s2a-color-gray-25);
+  opacity: 1;
+}
+
+.feds-footer-options {
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  row-gap: 12px;
+  column-gap: 40px;
+  margin-top: var(--s2a-spacing-xl);
+}
+
+.feds-footer-miscLinks {
+  column-gap: 30px;
+  flex-shrink: 0;
+}
+
+/* Region picker */
+.feds-regionPicker {
+  column-gap: 6px;
+  color: var(--s2a-color-gray-25);
+  border-color: var(--s2a-color-gray-25);
+  fill: var(--s2a-color-gray-25);
+  opacity: 0.6;
+  display: inline-flex;
+}
+
+.feds-regionPicker:hover {
+  color: var(--s2a-color-gray-25);
+  border-color: var(--s2a-color-gray-25);
+  fill: var(--s2a-color-gray-25);
+}
+
+.feds-regionPicker:after {
+  width: 8px;
+  height: 4px;
+  background: currentColor;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  transform: rotate(0deg);
+  transition: transform 0.1s ease;
+  content: "";
+}
+
+.feds-regionPicker[aria-expanded = "true"]:after {
+  transform: rotate(180deg);
+}
+
+.feds-regionPicker-globe {
+  width: 20px;
+  height: 20px;
+  fill: inherit;
+}
+
+.feds-regionPicker-wrapper {
+  position: relative;
+}
+
+.feds-regionPicker-wrapper > .fragment {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  display: none;
+  padding: 20px;
+  min-width: 130px;
+  max-height: 300px;
+  overflow-y: auto;
+  background: var(--feds-background-nav);
+  border: 1px solid var(--feds-borderColor);
+  border-radius: var(--s2a-border-radius-xs);
+}
+
+[dir = "rtl"] .feds-regionPicker-wrapper > .fragment {
+  left: auto;
+  right: 0;
+}
+
+.feds-regionPicker[aria-expanded = "true"] + .fragment {
+  display: block;
+}
+
+/* Styling inline region selector dropdown to maintain backwards compatibility */
+.feds-regionPicker-wrapper .fragment.link-block {
+  display: none; /* Hide fragment placeholder until it is loaded */
+}
+
+.feds-regionPicker-wrapper > .fragment .region-selector {
+  padding: 0;
+}
+
+.feds-regionPicker-wrapper > .fragment .content {
+  display: flex;
+  flex-direction: column;
+}
+
+.feds-regionPicker-wrapper > .fragment p { /* Usually the title */
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.feds-regionPicker-wrapper > .fragment ul { /* Usually regions wrapper */
+  margin: 0 -20px;
+}
+
+.feds-regionPicker-wrapper > .fragment a { /* Usually a region */
+  padding: 0 20px;
+  display: block;
+  line-height: 2;
+  color: var(--s2a-color-gray-25);
+}
+
+.feds-regionPicker-wrapper > .fragment a:hover {
+  background: var(--feds-background-link--hover);
+}
+
+/* Social */
+.feds-social {
+  display: flex;
+  column-gap: var(--s2a-spacing-lg);
+}
+
+.feds-social-link {
+  display: block;
+}
+
+.feds-social-icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+  color: #808080;
+}
+
+.feds-social-link:hover .feds-social-icon {
+  color: var(--s2a-color-gray-25);
+}
+
+.footer-logo-image svg {
+  height: 13px;
+  display: block;
+}
+
+.bacom-global-footer .feds-footer-logo {
+  line-height: 0;
+  max-width: var(--grid-max-width-default);
+  margin: 0 auto;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  position: sticky;
+  bottom: 0;
+  z-index: 0;
+}
+
+.bacom-global-footer .feds-footer-logo img {
+  display: block;
+  width: calc(100% + 56px);
+  max-width: none;
+  height: auto;
+  flex-shrink: 0;
+  transform: translateY(
+    calc((1 - (var(--footer-logo-entry-progress, 0) / 100)) * 50%)
+  );
+}
+
+@media (min-width: 1920px) {
+  .bacom-global-footer .feds-footer-logo img {
+    width: 100%;
+  }
+}
+
+/* Privacy */
+.feds-footer-legalWrapper {
+  display: flex;
+  flex-direction: column;
+  row-gap: 12px;
+}
+
+.feds-footer-privacySection {
+  display: flex;
+  flex-wrap: nowrap;
+  margin: 0;
+  gap:var(--s2a-spacing-xs);
+  flex-direction: column;
+}
+
+.feds-footer-privacyLink {
+  display: inline-flex;
+  column-gap: 5px;
+  align-items: center;
+  color: var(--s2a-color-gray-25);
+  fill: var(--s2a-color-gray-25);
+  vertical-align: bottom;
+}
+
+span.feds-footer-privacyLink-divider {
+    display: inline-block;
+    margin: 0 5px;
+}
+
+.feds-footer-privacyLink:hover {
+  color: var(--s2a-color-gray-25);
+  fill: var(--s2a-color-gray-25);
+}
+
+.feds-adChoices-icon {
+  width: 12px;
+  height: 12px;
+}
+
+.bacom-global-footer:not(.mobile) .feds-footer-wrapper .feds-menu-headline {
+  font-weight: var(--s2a-font-weight-adobe-clean-bold);
+  font-size: var(--s2a-typography-font-size-eyebrow);
+  line-height: var(--s2a-typography-line-height-eyebrow);
+  letter-spacing: var(--s2a-typography-letter-spacing-eyebrow);
+  padding: var(--s2a-spacing-lg) var(--s2a-spacing-xs);
+}
+
+.bacom-global-footer:not(.mobile) .feds-footer-wrapper .feds-menu-items {
+  padding: 0 0 var(--s2a-spacing-lg) 0;
+}
+
+@media (min-width: 600px) {
+  dialog.feds-dialog {
+    max-width: 80vw;
+    width: fit-content;
+  }
+}
+
+@media (min-width: 1200px) {
+  dialog.feds-dialog {
+    width: 1200px;
+    max-width: calc((100% - 6px) - 2em);
+  }
+}
+
+/* Mobile layout is controlled by the JS `.mobile` class toggle */
+.bacom-global-footer .feds-footer-options {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "region social"
+    "legal legal";
+  column-gap: 12px;
+  row-gap: 26px;
+  align-items: center;
+}
+
+.bacom-global-footer .feds-footer-options > .feds-regionPicker-wrapper {
+  grid-area: region;
+  width: auto;
+  min-width: 0;
+}
+
+.bacom-global-footer .feds-footer-options > .feds-social {
+  grid-area: social;
+  justify-self: end;
+  width: auto;
+}
+
+.bacom-global-footer .feds-footer-options > .feds-footer-miscLinks-legal {
+  grid-area: legal;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.bacom-global-footer .feds-footer-miscLinks-legal > .footer-logo {
+  order: 1;
+  padding-bottom: var(--s2a-spacing-sm);
+}
+
+.bacom-global-footer .feds-footer-miscLinks-legal > .feds-footer-legalWrapper {
+  order: 2;
+  position: relative;
+}
+
+[dir="rtl"] .bacom-global-footer .feds-footer-miscLinks-legal .footer-logo {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.bacom-global-footer:not(.mobile) .feds-navLink-image {
+  height: 16px;
+  width: 16px;
+}
+
+.bacom-global-footer .feds-featuredProducts .feds-navLink:focus .feds-navLink-title {
+  color: var(--s2a-color-white);
+}
+
+.bacom-global-footer .feds-navLink:focus, .bacom-global-footer a:focus {
+  outline: 2px solid var(--s2a-color-focus-ring-default);
+  outline-offset: 2px;
+}
+
+.bacom-global-footer:not(.mobile) .feds-footer-legalWrapper {
+  color: var(--s2a-color-gray-25);
+  opacity: 0.6;
+}
+
+@media (min-width: 380px) {
+  .bacom-global-footer .feds-footer-legalWrapper .feds-footer-privacy-listitem:last-child {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+  }
+
+  [dir = "rtl"] .bacom-global-footer .feds-footer-legalWrapper .feds-footer-privacy-listitem:last-child {
+    left: 0;
+    right: auto;
+  }
+}
+
+@media (min-width: 1024px) {
+
+  .bacom-global-footer {
+    padding-top: var(--s2a-layout-lg);
+  }
+
+  .bacom-global-footer:not(.mobile) .feds-footer-wrapper {
+    row-gap: var(--s2a-spacing-md);
+    padding-bottom: var(--s2a-spacing-2xl);
+  }
+
+  /* Default desktop layout: keep all menu columns on one row */
+  .bacom-global-footer:not(.mobile) .feds-footer-wrapper .feds-menu-content {
+    display: flex;
+    align-items: start;
+    flex-wrap: nowrap;
+    width: 100%;
+    column-gap: var(--s2a-spacing-xs);
+    row-gap: 0;
+  }
+
+  .bacom-global-footer:not(.mobile) .feds-footer-wrapper .feds-menu-content:not(.feds-menu-content--stacked) > .feds-menu-column {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  /* When one-row layout overflows, switch to balanced rows: 3 + 3, 3 + 2, etc. */
+  .bacom-global-footer:not(.mobile) .feds-footer-wrapper .feds-menu-content.feds-menu-content--stacked {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    row-gap: var(--s2a-spacing-xl);
+  }
+
+  .bacom-global-footer:not(.mobile) .feds-footer-wrapper .feds-menu-headline {
+    border: none;
+    padding: 0;
+    padding-bottom: var(--s2a-spacing-lg);
+    margin: 0;
+    max-width: 120px;
+    min-height: calc(var(--s2a-typography-line-height-eyebrow) * 2rem);
+    display: flex;
+    align-items: flex-end;
+    height: 40px;
+  }
+
+  .bacom-global-footer:not(.mobile) .feds-footer-wrapper .feds-menu-column:nth-child(-n+3):last-child {
+    flex-grow: 1;
+  }
+
+  .bacom-global-footer:not(.mobile) .feds-footer-wrapper .feds-menu-column:nth-last-child(-n+3):first-child .feds-menu-section,
+  .bacom-global-footer:not(.mobile) .feds-footer-wrapper .feds-menu-column:nth-child(-n+3):last-child .feds-menu-section,
+  .bacom-global-footer:not(.mobile) .feds-footer-wrapper .feds-menu-column:nth-child(2):nth-last-child(2) .feds-menu-section {
+    width: fit-content;
+  }
+
+  .bacom-global-footer:not(.mobile) .feds-footer-wrapper .feds-menu-column:nth-last-child(-n+3):first-child,
+  .bacom-global-footer:not(.mobile) .feds-footer-wrapper .feds-menu-column:nth-child(2):nth-last-child(2) {
+    min-width: 20%;
+  }
+
+  .bacom-global-footer:not(.mobile) .feds-featuredProducts .feds-menu-headline {
+    flex-shrink: 0;
+    margin: 0;
+    max-width: none;
+  }
+
+  .bacom-global-footer:not(.mobile) .feds-featuredProducts .feds-navLink {
+    gap: var(--s2a-spacing-xs);
+  }
+
+  .bacom-global-footer:not(.mobile) .feds-featuredProducts .feds-menu-items ul {
+    display: flex;
+    column-gap: var(--s2a-spacing-lg);
+  }
+
+  .bacom-global-footer:not(.mobile) .feds-featuredProducts .feds-navLink:first-child {
+    margin-left: 0;
+  }
+
+  /* Options (region selector, social, privacy) */
+  .bacom-global-footer:not(.mobile) .feds-footer-options {
+    display: flex;
+    align-items: center;
+    margin-top: 0;
+    column-gap: var(--s2a-spacing-lg);
+    row-gap: var(--s2a-spacing-xl);
+    align-items: start;
+  }
+
+  .bacom-global-footer:not(.mobile) .feds-footer-options > .feds-regionPicker-wrapper {
+    grid-area: region;
+  }
+
+  .bacom-global-footer:not(.mobile) .feds-footer-options > .feds-footer-miscLinks-legal {
+    grid-area: legal;
+    align-items: start;
+    gap: var(--s2a-spacing-sm);
+  }
+
+  .bacom-global-footer:not(.mobile) .feds-footer-options > .feds-social {
+    grid-area: social;
+    justify-self: end;
+  }
+
+  /* Privacy */
+  .bacom-global-footer:not(.mobile) .feds-footer-legalWrapper {
+    align-items: flex-end;
+    text-align: right;
+  }
+
+  .bacom-global-footer:not(.mobile) .feds-footer-privacySection {
+    justify-content: flex-start;
+  }
+
+  .bacom-global-footer .feds-footer-options {
+    grid-template-areas:
+      "region legal social";
+  }
+
+  .bacom-global-footer .feds-footer-miscLinks-legal > .footer-logo {
+    order: 2;
+    padding-bottom: 0;
+  }
+
+  .bacom-global-footer .feds-footer-miscLinks-legal > .feds-footer-legalWrapper {
+    order: 1;
+    position: inherit;
+  }
+  .bacom-global-footer .feds-footer-options > .feds-footer-miscLinks-legal {
+    flex-direction: row;
+  }
+
+  .bacom-global-footer .feds-footer-legalWrapper .feds-footer-privacy-listitem:last-child {
+    position: inherit;
+    padding-left: var(--s2a-spacing-xl);
+  }
+
+  .feds-footer-privacySection {
+    flex-wrap: wrap;
+    flex-direction: row;
+  }
+
+  .bacom-global-footer .feds-footer-options > .feds-social {
+    justify-self: normal;
+  }
+
+  .feds-footer-wrapper .feds-menu-content .feds-navLink {
+    margin-left: 0;
+    white-space: break-spaces;
+  }
+
+  .bacom-global-footer:not(.mobile) .feds-navLink-image,
+  .bacom-global-footer:not(.mobile) .feds-navLink-image picture,
+  .bacom-global-footer:not(.mobile) .feds-navLink-image img {
+    display: block;
+  }
+}
+
+@media (min-width: 1440px) {
+  .bacom-global-footer {
+    padding-top: var(--s2a-layout-xl);
+  }
+
+  .bacom-global-footer:not(.mobile) .feds-footer-options {
+    display: grid;
+    grid-template-areas: "region legal social";
+    align-items: center;
+    column-gap: var(--s2a-spacing-lg);
+    grid-template-columns: auto auto 1fr;
+    row-gap: var(--s2a-spacing-xl);
+  }
+
+  .bacom-global-footer:not(.mobile) .feds-footer-options > .feds-footer-miscLinks-legal {
+    align-items: center;
+  }
+
+  .bacom-global-footer:not(.mobile) .feds-footer-options > .feds-footer-miscLinks-legal {
+    gap: var(--s2a-spacing-xl);
+  }
+
+  .bacom-global-footer:not(.mobile) .feds-footer-wrapper {
+    row-gap: var(--s2a-spacing-2xl);
+  }
+}
