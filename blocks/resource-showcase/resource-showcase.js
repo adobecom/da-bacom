@@ -8,6 +8,7 @@ const CHEVRON_ICON = `<svg class="resource-showcase-chevron" xmlns="http://www.w
 
 function decorateCTA(link) {
   if (!link) return null;
+
   link.classList.add('resource-showcase-cta');
   link.insertAdjacentHTML('beforeend', CHEVRON_ICON);
   return link;
