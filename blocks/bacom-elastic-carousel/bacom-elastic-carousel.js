@@ -150,7 +150,7 @@ function buildControls(container) {
 
   container.addEventListener('scroll', () => updateArrowState(container, prevBtn, nextBtn));
   window.addEventListener('resize', () => updateArrowState(container, prevBtn, nextBtn));
-  updateArrowState(container, prevBtn, nextBtn);
+  requestAnimationFrame(() => updateArrowState(container, prevBtn, nextBtn));
 
   controls.append(prevBtn, nextBtn);
   return controls;

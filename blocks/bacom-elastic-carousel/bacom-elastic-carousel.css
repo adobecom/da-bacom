@@ -154,14 +154,10 @@
   cursor: pointer;
 }
 
-.bacom-elastic-carousel .elastic-carousel-arrow-prev {
+.bacom-elastic-carousel .elastic-carousel-arrow-prev,
+.bacom-elastic-carousel .elastic-carousel-arrow-next {
   background-color: var(--s2a-color-gray-1000);
   color: var(--s2a-color-gray-25);
-}
-
-.bacom-elastic-carousel .elastic-carousel-arrow-next {
-  background-color: var(--s2a-color-gray-25);
-  color: var(--s2a-color-gray-1000);
 }
 
 .bacom-elastic-carousel .elastic-carousel-arrow:disabled {
