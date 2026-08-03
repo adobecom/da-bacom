@@ -1,0 +1,198 @@
+.video-marquee {
+  --marquee-headline-size: 32px;
+  --marquee-headline-lh: 32px;
+  --marquee-headline-ls: -0.96px;
+
+  background-color: #000;
+  padding: var(--spacing-xl) var(--spacing-xs);
+}
+
+.video-marquee .marquee-inner {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-l);
+}
+
+.video-marquee .marquee-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+}
+
+.video-marquee .marquee-eyebrow picture,
+.video-marquee .marquee-eyebrow img {
+  display: block;
+  height: 30px;
+  width: auto;
+  margin-bottom: var(--spacing-xs);
+}
+
+.video-marquee .marquee-headline {
+  margin: 0;
+  color: var(--color-white);
+  font-size: var(--marquee-headline-size);
+  line-height: var(--marquee-headline-lh);
+  letter-spacing: var(--marquee-headline-ls);
+  font-weight: 900;
+}
+
+.video-marquee .marquee-subcopy {
+  margin: var(--spacing-xs) 0 0;
+  max-width: 32em;
+  color: var(--color-white);
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 28.6px;
+}
+
+.video-marquee .marquee-video-row {
+  min-width: 0;
+}
+
+.video-marquee .marquee-media {
+  position: relative;
+  height: 100%;
+  aspect-ratio: 4 / 5;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.video-marquee .marquee-media video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.video-marquee .marquee-scrubber {
+  flex: 1 1 auto;
+  height: 12px;
+  margin: 0;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.video-marquee .marquee-scrubber::-webkit-slider-runnable-track {
+  height: 4px;
+  background: rgb(255 255 255 / 30%);
+}
+
+.video-marquee .marquee-scrubber::-moz-range-track {
+  height: 4px;
+  background: rgb(255 255 255 / 30%);
+}
+
+.video-marquee .marquee-scrubber::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -4px;
+  border-radius: 50%;
+  background: var(--color-white);
+}
+
+.video-marquee .marquee-scrubber::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-white);
+}
+
+.video-marquee .marquee-scrubber:focus-visible {
+  outline: 2px solid var(--color-accent-focus-ring);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) and (pointer: fine) and (min-width: 600px) {
+  .video-marquee .marquee-scrubber {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .video-marquee .marquee-scrubber:focus-visible {
+    opacity: 1;
+  }
+
+  .video-marquee .marquee-media:hover .marquee-scrubber {
+    opacity: 1;
+  }
+}
+
+.video-marquee .marquee-video-controls {
+  position: absolute;
+  bottom: var(--spacing-xs);
+  left: var(--spacing-xs);
+  right: var(--spacing-xs);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-s);
+}
+
+.video-marquee .marquee-video-control {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-white);
+  filter: drop-shadow(0 1px 3px rgb(0 0 0 / 60%));
+  cursor: pointer;
+}
+
+.video-marquee .marquee-captions {
+  border: 1.5px solid var(--color-white);
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.video-marquee .marquee-video-control:focus-visible {
+  outline: 2px solid var(--color-accent-focus-ring);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (min-width: 600px) {
+  .video-marquee {
+    --marquee-headline-size: 48px;
+    --marquee-headline-lh: 48px;
+    --marquee-headline-ls: -1.44px;
+
+    padding-right: 0;
+  }
+
+  .video-marquee .marquee-inner {
+    grid-template-columns: minmax(0, 440px) 1fr;
+    gap: var(--spacing-m);
+    align-items: stretch;
+    min-height: 560px;
+  }
+
+  .video-marquee .marquee-media {
+    aspect-ratio: auto;
+    border-radius: 16px 0 0 16px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .video-marquee {
+    --marquee-headline-size: 72px;
+    --marquee-headline-lh: 72px;
+    --marquee-headline-ls: -2.88px;
+
+    padding: 80px 0 80px 80px;
+  }
+
+  .video-marquee .marquee-inner {
+    gap: 35px;
+    min-height: 600px;
+  }
+}
