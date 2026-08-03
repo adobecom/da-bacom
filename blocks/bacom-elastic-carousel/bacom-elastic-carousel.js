@@ -27,10 +27,11 @@ function attachHoverVideo(item) {
 }
 
 function attachDescriptionToggle(item) {
+  const titleRow = item.querySelector('.elastic-carousel-item-title-row');
   const toggle = item.querySelector('.elastic-carousel-item-toggle');
   const footer = item.querySelector('.elastic-carousel-item-footer');
-  if (!toggle || !footer) return;
-  toggle.addEventListener('click', (event) => {
+  if (!titleRow || !toggle || !footer) return;
+  titleRow.addEventListener('click', (event) => {
     event.preventDefault();
     event.stopPropagation();
     const expanded = footer.classList.toggle('expanded');

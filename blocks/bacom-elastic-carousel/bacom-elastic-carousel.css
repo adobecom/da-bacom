@@ -78,6 +78,7 @@
   align-items: center;
   justify-content: flex-start;
   gap: var(--s2a-spacing-2xs);
+  cursor: pointer;
 }
 
 .bacom-elastic-carousel .elastic-carousel-item-title {
