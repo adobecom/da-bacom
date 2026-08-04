@@ -27,8 +27,7 @@ describe('loadArp', () => {
 
   beforeEach(() => {
     window.sessionStorage.removeItem('arp-sessionid');
-    delete window.arpSessionId;
-    delete window.arpToken;
+    delete window.adobeArp;
     delete window.WatsonSdk;
 
     initAsync = sinon.stub().resolves();
@@ -60,23 +59,23 @@ describe('loadArp', () => {
     const config = initAsync.firstCall.args[0];
     expect(config.clientId).to.equal('client-1');
     expect(config.prodEnv).to.be.true;
-    expect(config.sessionId).to.equal(window.arpSessionId);
+    expect(config.sessionId).to.equal(window.adobeArp.sessionId);
     expect(config.sessionId).to.equal(getArpSessionId());
   });
 
   it('stores the token and dispatches an event when tokenCallback fires', async () => {
     const tokenSpy = sinon.stub();
-    window.addEventListener('arp:token', tokenSpy);
+    window.addEventListener('adobeArp:token', tokenSpy);
 
     await loadArp({ clientId: 'client-1', prodEnv: true, loadScript });
     const config = initAsync.firstCall.args[0];
     config.tokenCallback('base64-token');
 
-    expect(window.arpToken).to.equal('base64-token');
+    expect(window.adobeArp.sessionToken).to.equal('base64-token');
     expect(tokenSpy.calledOnce).to.be.true;
-    expect(tokenSpy.firstCall.args[0].detail.token).to.equal('base64-token');
+    expect(tokenSpy.firstCall.args[0].detail.sessionToken).to.equal('base64-token');
 
-    window.removeEventListener('arp:token', tokenSpy);
+    window.removeEventListener('adobeArp:token', tokenSpy);
   });
 
   it('logs and exits early when the script fails to load', async () => {

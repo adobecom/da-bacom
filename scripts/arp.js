@@ -13,7 +13,7 @@ export function getArpSessionId() {
 
 export default async function loadArp({ clientId, prodEnv, loadScript }) {
   const sessionId = getArpSessionId();
-  window.arpSessionId = sessionId;
+  window.adobeArp = { ...window.adobeArp, sessionId };
 
   try {
     await loadScript(prodEnv ? PROD_SDK_URL : STAGE_SDK_URL);
@@ -37,9 +37,9 @@ export default async function loadArp({ clientId, prodEnv, loadScript }) {
     errorCallback: (message) => {
       window.lana?.log(`ArpJS vendor error: ${message}`, { tags: 'arp', severity: 'warning' });
     },
-    tokenCallback: (token) => {
-      window.arpToken = token;
-      window.dispatchEvent(new CustomEvent('arp:token', { detail: { token, sessionId } }));
+    tokenCallback: (sessionToken) => {
+      window.adobeArp = { ...window.adobeArp, sessionId, sessionToken };
+      window.dispatchEvent(new CustomEvent('adobeArp:token', { detail: { sessionId, sessionToken } }));
     },
     metadata: { source: 'da-bacom' },
   });
