@@ -123,10 +123,7 @@ const CONFIG = {
     version: '1.0',
     onDemand: false,
   },
-  arp: {
-    // TODO: replace with the real clientId once ARP-1280 (client config) is complete
-    clientId: 'REPLACE_WITH_ARP_1280_CLIENT_ID',
-  },
+  arp: { clientId: 'bacom' },
   atvCaptionsKey: 'bacom',
   uniqueSiteId: 'da-bacom',
   mepLingoCountryToRegion: {
