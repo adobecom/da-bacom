@@ -4,7 +4,7 @@
   --marquee-headline-ls: -0.96px;
 
   background-color: #000;
-  padding: var(--spacing-xl) var(--spacing-xs);
+  padding: var(--spacing-xl) 24px;
 }
 
 .video-marquee .marquee-inner {
@@ -23,27 +23,30 @@
 .video-marquee .marquee-eyebrow picture,
 .video-marquee .marquee-eyebrow img {
   display: block;
-  height: 30px;
-  width: auto;
+  width: 80px;
+  height: 19px;
   margin-bottom: var(--spacing-xs);
 }
 
 .video-marquee .marquee-headline {
   margin: 0;
   color: var(--color-white);
-  font-size: var(--marquee-headline-size);
-  line-height: var(--marquee-headline-lh);
-  letter-spacing: var(--marquee-headline-ls);
+  font-family: var(--font-family-adobe-clean-display, "Adobe Clean Display"), adobe-clean-display, sans-serif;
+  font-size: var(--s2a-typography-font-size-title-1, var(--marquee-headline-size));
   font-weight: 900;
+  line-height: var(--s2a-typography-line-height-title-1, var(--marquee-headline-lh));
+  letter-spacing: var(--s2a-typography-letter-spacing-title-1, var(--marquee-headline-ls));
 }
 
 .video-marquee .marquee-subcopy {
   margin: var(--spacing-xs) 0 0;
   max-width: 32em;
-  color: var(--color-white);
-  font-size: 22px;
+  color: var(--s2a-color-content-body-strong, #F8F8F8);
+  font-family: var(--font-family-adobe-clean, "Adobe Clean"), adobe-clean, sans-serif;
+  font-size: var(--s2a-typography-font-size-body-lg, 16px);
   font-weight: 400;
-  line-height: 28.6px;
+  line-height: var(--s2a-typography-line-height-body-lg, 20px);
+  letter-spacing: var(--s2a-typography-letter-spacing-body-lg, 0);
 }
 
 .video-marquee .marquee-video-row {
@@ -180,6 +183,12 @@
     aspect-ratio: auto;
     border-radius: 16px 0 0 16px;
   }
+
+  .video-marquee .marquee-eyebrow picture,
+  .video-marquee .marquee-eyebrow img {
+    width: auto;
+    height: 30px;
+  }
 }
 
 @media (min-width: 769px) {
@@ -189,10 +198,6 @@
     --marquee-headline-ls: -2.88px;
 
     padding: 80px 0 80px 80px;
-  }
-
-  .video-marquee .marquee-headline {
-    font-family: "Adobe Clean Display", adobe-clean, sans-serif;
   }
 }
 
