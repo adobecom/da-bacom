@@ -30,13 +30,14 @@ function attachDescriptionToggle(item) {
   const container = item.querySelector('.elastic-carousel-item-container');
   const toggle = item.querySelector('.elastic-carousel-item-toggle');
   if (!container || !toggle) return;
-  requestAnimationFrame(() => {
-    container.style.height = `${container.offsetHeight}px`;
-  });
   toggle.addEventListener('click', (event) => {
     event.preventDefault();
     event.stopPropagation();
+    if (!container.classList.contains('expanded')) {
+      container.style.height = `${container.getBoundingClientRect().height}px`;
+    }
     const expanded = container.classList.toggle('expanded');
+    if (!expanded) container.style.height = '';
     toggle.setAttribute('aria-expanded', String(expanded));
     toggle.setAttribute('aria-label', expanded ? 'Show less' : 'Show more');
   });
