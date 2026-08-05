@@ -27,15 +27,18 @@ function attachHoverVideo(item) {
 }
 
 function attachDescriptionToggle(item) {
-  const titleRow = item.querySelector('.elastic-carousel-item-title-row');
+  const container = item.querySelector('.elastic-carousel-item-container');
   const toggle = item.querySelector('.elastic-carousel-item-toggle');
-  const footer = item.querySelector('.elastic-carousel-item-footer');
-  if (!titleRow || !toggle || !footer) return;
-  titleRow.addEventListener('click', (event) => {
+  if (!container || !toggle) return;
+  requestAnimationFrame(() => {
+    container.style.height = `${container.offsetHeight}px`;
+  });
+  toggle.addEventListener('click', (event) => {
     event.preventDefault();
     event.stopPropagation();
-    const expanded = footer.classList.toggle('expanded');
+    const expanded = container.classList.toggle('expanded');
     toggle.setAttribute('aria-expanded', String(expanded));
+    toggle.setAttribute('aria-label', expanded ? 'Show less' : 'Show more');
   });
 }
 
@@ -68,23 +71,27 @@ const buildSlide = ({ slide, index, slidesTotal }) => {
 
   decorateBlockText(left);
 
+  const headingClass = linkName && [...linkName.classList].find((c) => c.startsWith('heading-'));
+  if (headingClass) linkName.classList.remove(headingClass);
+
   const content = `
     <div class='elastic-carousel-item-container' id='elastic-carousel-slide-${index + 1}'>
       <div class='elastic-carousel-item-header'>
-        ${icon.outerHTML}
-        ${heading?.outerHTML}
-      </div>
-      <div class='elastic-carousel-item-media'>
-        ${asset.outerHTML}
-      </div>
-      <div class='elastic-carousel-item-footer'>
-        <div class='elastic-carousel-item-title-row'>
-          ${linkName?.outerHTML}
+        <div class='elastic-carousel-item-header-row'>
+          ${icon.outerHTML}
+          ${heading?.outerHTML}
           <button type='button' class='elastic-carousel-item-toggle' aria-expanded='false' aria-label='Show more'>
             <span class='elastic-carousel-item-toggle-icon'></span>
           </button>
         </div>
         ${description?.outerHTML}
+      </div>
+      <div class='elastic-carousel-item-media'>
+        ${asset.outerHTML}
+      </div>
+      <div class='elastic-carousel-item-footer'>
+        ${linkName?.outerHTML}
+        <span class='elastic-carousel-item-chevron'></span>
       </div>
     </div>
   `;

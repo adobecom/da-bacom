@@ -36,12 +36,25 @@
   cursor: pointer;
 }
 
+.bacom-elastic-carousel .elastic-carousel-item-container {
+  display: flex;
+  flex-direction: column;
+  height: auto;
+}
+
 .bacom-elastic-carousel .elastic-carousel-item-header {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: var(--s2a-spacing-xs);
+  padding: var(--s2a-spacing-lg);
+}
+
+.bacom-elastic-carousel .elastic-carousel-item-header-row {
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: var(--s2a-spacing-md);
-  padding: var(--s2a-spacing-lg);
 }
 
 .bacom-elastic-carousel .elastic-carousel-item-header img {
@@ -49,7 +62,7 @@
   height: 24px;
 }
 
-.bacom-elastic-carousel .elastic-carousel-item-header p {
+.bacom-elastic-carousel .elastic-carousel-item-header-row p {
   margin: 0;
   color: var(--s2a-color-gray-1000);
   font-size: var(--s2a-font-size-sm);
@@ -58,27 +71,30 @@
 }
 
 .bacom-elastic-carousel .elastic-carousel-item-media {
+  flex: 1 1 auto;
+  min-height: 0;
   text-align: center;
 }
 
 .bacom-elastic-carousel .elastic-carousel-item-media video {
   width: 100%;
-  height: 394px;
+  height: 100%;
   object-fit: cover;
   border-radius: var(--s2a-border-radius-md);
 }
 
-.bacom-elastic-carousel .elastic-carousel-item-footer {
-  max-width: 270px;
-  padding: var(--s2a-spacing-lg);
+/* Hides the badge some browser extensions (e.g. Video Speed Controller) inject onto <video> elements */
+.bacom-elastic-carousel .elastic-carousel-item-media .vsc-controller {
+  display: none;
 }
 
-.bacom-elastic-carousel .elastic-carousel-item-title-row {
+.bacom-elastic-carousel .elastic-carousel-item-footer {
   display: flex;
+  flex: 0 0 auto;
   align-items: center;
-  justify-content: flex-start;
   gap: var(--s2a-spacing-2xs);
-  cursor: pointer;
+  max-width: 270px;
+  padding: var(--s2a-spacing-lg);
 }
 
 .bacom-elastic-carousel .elastic-carousel-item-title {
@@ -90,22 +106,9 @@
   line-height: 16.8px;
 }
 
-.bacom-elastic-carousel .elastic-carousel-item-toggle {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  background: none;
-  border: none;
-  color: #000;
-  cursor: pointer;
-}
-
-.bacom-elastic-carousel .elastic-carousel-item-toggle-icon {
+.bacom-elastic-carousel .elastic-carousel-item-chevron {
   display: block;
+  flex: 0 0 auto;
   width: 8px;
   height: 13px;
   background-color: currentcolor;
@@ -113,24 +116,61 @@
   mask-repeat: no-repeat;
   mask-position: center;
   mask-size: contain;
-  transition: transform .2s ease;
 }
 
-.bacom-elastic-carousel .elastic-carousel-item-footer.expanded .elastic-carousel-item-toggle-icon {
-  transform: rotate(90deg);
+.bacom-elastic-carousel .elastic-carousel-item-toggle {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  box-sizing: border-box;
+  width: 48px;
+  height: 48px;
+  padding: 16px;
+  border-radius: var(--s2a-border-radius-4, 4px);
+  border: var(--s2a-border-width-sm, 1px) solid var(--s2a-color-transparent-black-08, rgb(0 0 0 / 8%));
+  background: var(--s2a-color-transparent-black-04, rgb(0 0 0 / 4%));
+  color: #000;
+  cursor: pointer;
+}
+
+.bacom-elastic-carousel .elastic-carousel-item-toggle-icon {
+  display: block;
+  width: 16px;
+  height: 16px;
+  background-color: currentcolor;
+  mask-image: url('../../assets/img/plus.svg');
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+}
+
+.bacom-elastic-carousel .elastic-carousel-item-container.expanded .elastic-carousel-item-toggle {
+  border: none;
+  border-radius: var(--s2a-border-radius-round, 50%);
+  background: var(--s2a-color-gray-1000);
+  color: var(--s2a-color-gray-25);
+}
+
+.bacom-elastic-carousel .elastic-carousel-item-container.expanded .elastic-carousel-item-toggle-icon {
+  mask-image: url('../../assets/img/minus.svg');
 }
 
 .bacom-elastic-carousel .elastic-carousel-item-description {
   display: none;
   margin: var(--s2a-spacing-2xs) 0 0;
-  color: var(--s2a-color-gray-1000);
-  font-family: "Adobe Clean", sans-serif;
-  font-size: 14px;
-  line-height: 120%;
-  opacity: .7;
+  overflow: hidden;
+  color: var(--s2a-color-content-body-subtle, rgb(0 0 0 / 64%));
+  font-family: var(--font-family-adobe-clean, "Adobe Clean"), adobe-clean, sans-serif;
+  font-size: var(--s2a-typography-font-size-body-md, 16px);
+  font-weight: 400;
+  line-height: var(--s2a-typography-line-height-body-md, 20px);
+  letter-spacing: var(--s2a-typography-letter-spacing-body-md, 0);
+  text-overflow: ellipsis;
 }
 
-.bacom-elastic-carousel .elastic-carousel-item-footer.expanded .elastic-carousel-item-description {
+.bacom-elastic-carousel .elastic-carousel-item-container.expanded .elastic-carousel-item-description {
   display: block;
 }
 
