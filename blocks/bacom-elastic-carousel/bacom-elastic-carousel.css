@@ -150,13 +150,12 @@
 
 .bacom-elastic-carousel .elastic-carousel-item-container.expanded .elastic-carousel-item-toggle {
   border: none;
-  border-radius: var(--s2a-border-radius-round, 50%);
   background: var(--s2a-color-gray-1000);
   color: var(--s2a-color-gray-25);
 }
 
 .bacom-elastic-carousel .elastic-carousel-item-container.expanded .elastic-carousel-item-toggle-icon {
-  mask-image: url('../../assets/img/minus.svg');
+  mask-image: url('../../assets/img/minus-circle.svg');
 }
 
 .bacom-elastic-carousel .elastic-carousel-item-description {
