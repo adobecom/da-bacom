@@ -68,6 +68,9 @@ const buildSlide = ({ slide, index, slidesTotal }) => {
 
   decorateBlockText(left);
 
+  const headingClass = linkName && [...linkName.classList].find((c) => c.startsWith('heading-'));
+  if (headingClass) linkName.classList.remove(headingClass);
+
   const content = `
     <div class='elastic-carousel-item-container' id='elastic-carousel-slide-${index + 1}'>
       <div class='elastic-carousel-item-header'>
