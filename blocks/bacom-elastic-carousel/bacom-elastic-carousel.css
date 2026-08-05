@@ -104,6 +104,7 @@
   font-size: 14px;
   font-weight: 700;
   line-height: 16.8px;
+  font-synthesis: none;
 }
 
 .bacom-elastic-carousel .elastic-carousel-item-chevron {
