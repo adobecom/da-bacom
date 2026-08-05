@@ -78,6 +78,21 @@ function decorateJumpLinks(content, foreground) {
   foreground.append(nav);
 }
 
+function decorateStatEyebrow(content, hasStatVariant) {
+  if (!hasStatVariant) return;
+  const target = [...content?.querySelectorAll(':scope > p') ?? []].find((p) => {
+    const strong = p.firstElementChild;
+    return strong?.tagName === 'STRONG' && p.textContent.slice(strong.textContent.length).trim();
+  });
+  if (!target) return;
+  const strong = target.firstElementChild;
+  const description = createTag('span', { class: 'stat-description' }, target.textContent.slice(strong.textContent.length).trim());
+  target.replaceChildren(strong, description);
+  const bodyClass = [...target.classList].find((c) => c.startsWith('body-'));
+  if (bodyClass) target.classList.remove(bodyClass);
+  target.classList.add('eyebrow', 'stat');
+}
+
 function decorateMediaVariant(container) {
   const row = container.children[0];
   if (!row) return;
@@ -122,13 +137,17 @@ function decorate(block, root = block) {
 
   const isJumpLink = root.classList.contains('jump-link');
   promoteParagraphHeading(content, '2', isJumpLink);
+  decorateStatEyebrow(content, root.classList.contains('stat'));
   const firstP = content?.querySelector('p:has(picture, img)');
   const iconImg = firstP?.querySelector('img[src]');
 
   if (iconImg) iconImg.src = getFederatedUrl(iconImg.getAttribute('src'));
 
-  const bodyClass = firstP && [...firstP.classList].find((c) => c.startsWith('body-'));
-  if (bodyClass) firstP.classList.replace(bodyClass, 'eyebrow');
+  if (firstP) {
+    const bodyClass = [...firstP.classList].find((c) => c.startsWith('body-'));
+    if (bodyClass) firstP.classList.replace(bodyClass, 'eyebrow');
+    else firstP.classList.add('eyebrow');
+  }
   if (!isJumpLink) return;
   decorateJumpLinks(content, foreground);
 }
