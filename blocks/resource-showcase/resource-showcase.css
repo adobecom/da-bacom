@@ -74,6 +74,7 @@
   width: 100%;
   aspect-ratio: 16 / 9;
   background-color: var(--color-gray-300);
+  border-radius: 16px;
   overflow: hidden;
 }
 
