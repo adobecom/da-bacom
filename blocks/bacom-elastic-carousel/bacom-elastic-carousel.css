@@ -109,9 +109,10 @@
 .bacom-elastic-carousel .elastic-carousel-item-chevron {
   display: block;
   flex: 0 0 auto;
-  width: 8px;
-  height: 13px;
+  width: 6px;
+  height: 12px;
   background-color: currentcolor;
+  color: #000;
   mask-image: url('../../assets/img/arrow-right.svg');
   mask-repeat: no-repeat;
   mask-position: center;
