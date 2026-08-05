@@ -182,15 +182,21 @@
   }
 }
 
-@media (min-width: 1200px) {
+@media (min-width: 769px) {
   .video-marquee {
     --marquee-headline-size: 72px;
-    --marquee-headline-lh: 72px;
+    --marquee-headline-lh: 100%;
     --marquee-headline-ls: -2.88px;
 
     padding: 80px 0 80px 80px;
   }
 
+  .video-marquee .marquee-headline {
+    font-family: "Adobe Clean Display", adobe-clean, sans-serif;
+  }
+}
+
+@media (min-width: 1200px) {
   .video-marquee .marquee-inner {
     gap: 35px;
     min-height: 600px;
