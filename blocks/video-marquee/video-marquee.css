@@ -11,6 +11,7 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--spacing-l);
+  padding-top: 40px;
 }
 
 .video-marquee .marquee-content {
@@ -177,6 +178,7 @@
     gap: var(--spacing-m);
     align-items: stretch;
     min-height: 560px;
+    padding-top: 0;
   }
 
   .video-marquee .marquee-media {
