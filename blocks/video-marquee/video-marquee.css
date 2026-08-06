@@ -201,8 +201,9 @@
   }
 }
 
-@media (min-width: 1200px) {
+@media (min-width: 1280px) {
   .video-marquee .marquee-inner {
+    grid-template-columns: 557fr 768fr;
     gap: 35px;
     min-height: 600px;
   }
