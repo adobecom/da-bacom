@@ -6,7 +6,7 @@
 
   position: relative;
   margin: auto;
-  background-color: #FFF;
+  background-color: #000;
 }
 
 .bacom-elastic-carousel .elastic-carousel-container {
@@ -16,6 +16,7 @@
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
   scroll-behavior: smooth;
+  padding-top: 56px;
 }
 
 .bacom-elastic-carousel .elastic-carousel-container::-webkit-scrollbar {
@@ -27,11 +28,13 @@
   flex: 0 0 auto;
   flex-direction: column;
   width: var(--elastic-carousel-item-width);
-  max-width: var(--elastic-carousel-item-width);
+  max-width: 346px;
+  max-height: 485px;
+  overflow: hidden;
   scroll-snap-align: start;
   text-decoration: none;
   color: inherit;
-  background-color: var(--s2a-color-gray-75);
+  background-color: #FFF;
   border-radius: var(--s2a-border-radius-md);
   cursor: pointer;
 }
@@ -40,6 +43,7 @@
   display: flex;
   flex-direction: column;
   height: auto;
+  max-width: 346px;
   overflow: hidden;
 }
 
@@ -80,7 +84,8 @@
 .bacom-elastic-carousel .elastic-carousel-item-media video {
   display: block;
   width: 100%;
-  height: 394px;
+  height: 316px;
+  max-height: 316px;
   object-fit: cover;
   border-radius: var(--s2a-border-radius-md);
 }
@@ -180,6 +185,7 @@
 
 .bacom-elastic-carousel .elastic-carousel-item-container.expanded .elastic-carousel-item-media video {
   height: 100%;
+  max-height: 316px;
 }
 
 .bacom-elastic-carousel .elastic-carousel-controls {
@@ -204,12 +210,14 @@
 
 .bacom-elastic-carousel .elastic-carousel-arrow-prev,
 .bacom-elastic-carousel .elastic-carousel-arrow-next {
-  background-color: var(--s2a-color-gray-1000);
-  color: var(--s2a-color-gray-25);
+  background-color: #FFF;
+  color: #000;
 }
 
 .bacom-elastic-carousel .elastic-carousel-arrow:disabled {
-  opacity: .4;
+  background-color: transparent;
+  border: 1px solid rgb(255 255 255 / 24%);
+  color: rgb(255 255 255 / 40%);
   cursor: default;
 }
 
@@ -234,17 +242,71 @@
 }
 
 @media (width < 768px) {
+  .bacom-elastic-carousel.bacom-elastic-carousel {
+    padding-left: 24px;
+    padding-top: 24px;
+    padding-bottom: 56px;
+  }
+
   .bacom-elastic-carousel {
-    --elastic-carousel-item-width: 82vw;
+    --elastic-carousel-item-width: clamp(294px, 82vw, 394px);
   }
 
   .bacom-elastic-carousel .elastic-carousel-item-media video {
     height: auto;
+    max-height: 316px;
     aspect-ratio: 4 / 5;
+  }
+
+  .bacom-elastic-carousel::before,
+  .bacom-elastic-carousel::after {
+    content: '';
+    position: absolute;
+    background-color: #E0E0E0;
+    border-radius: var(--s2a-border-radius-md) var(--s2a-border-radius-md) 0 0;
+  }
+
+  .bacom-elastic-carousel::before {
+    top: -16px;
+    left: 24px;
+    width: var(--elastic-carousel-item-width);
+    height: 20px;
+    background: linear-gradient(to bottom, #FFF 0%, #FFF 60%, rgb(0 0 0 / 12%) 100%);
+    z-index: 0;
+  }
+
+  .bacom-elastic-carousel::after {
+    top: -24px;
+    left: 24px;
+    width: var(--elastic-carousel-item-width);
+    height: 12px;
+    background: linear-gradient(to bottom, #E0E0E0 0%, #E0E0E0 40%, rgb(0 0 0 / 12%) 100%);
+    z-index: -1;
+  }
+
+  .bacom-elastic-carousel .elastic-carousel-container {
+    position: relative;
+    z-index: 1;
+  }
+
+  .bacom-elastic-carousel .elastic-carousel-controls {
+    display: none;
   }
 }
 
-@media (width >= 1200px) {
+@media (width >= 768px) {
+  .bacom-elastic-carousel {
+    --elastic-carousel-item-width: 394px;
+  }
+}
+
+@media (width >= 769px) and (width < 1280px) {
+  .bacom-elastic-carousel.bacom-elastic-carousel {
+    padding-left: 80px;
+  }
+}
+
+@media (width >= 1280px) {
   .bacom-elastic-carousel.bacom-elastic-carousel {
     padding-left: 124px;
   }
@@ -256,7 +318,7 @@
   .bacom-elastic-carousel .elastic-carousel-item {
     display: flex;
     width: 394px;
-    max-width: 394px;
+    max-width: 346px;
     flex-direction: column;
     align-items: flex-start;
     border-radius: 16px;
