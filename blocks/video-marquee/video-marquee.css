@@ -53,7 +53,7 @@
 }
 
 .video-marquee .marquee-video-row {
-  min-width: 0;
+  min-width: 327px;
 }
 
 .video-marquee .marquee-media {
