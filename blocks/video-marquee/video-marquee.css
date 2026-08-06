@@ -201,6 +201,13 @@
   }
 }
 
+@media (min-width: 769px) and (max-width: 1279px) {
+  .video-marquee .marquee-inner {
+    grid-template-columns: 420fr 488fr;
+    gap: 36px;
+  }
+}
+
 @media (min-width: 1280px) {
   .video-marquee .marquee-inner {
     grid-template-columns: 557fr 768fr;
