@@ -16,6 +16,7 @@
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
   scroll-behavior: smooth;
+  padding-top: 56px;
 }
 
 .bacom-elastic-carousel .elastic-carousel-container::-webkit-scrollbar {
@@ -27,7 +28,7 @@
   flex: 0 0 auto;
   flex-direction: column;
   width: var(--elastic-carousel-item-width);
-  max-width: var(--elastic-carousel-item-width);
+  max-width: 346px;
   max-height: 485px;
   overflow: hidden;
   scroll-snap-align: start;
@@ -42,6 +43,7 @@
   display: flex;
   flex-direction: column;
   height: auto;
+  max-width: 346px;
   overflow: hidden;
 }
 
@@ -208,12 +210,14 @@
 
 .bacom-elastic-carousel .elastic-carousel-arrow-prev,
 .bacom-elastic-carousel .elastic-carousel-arrow-next {
-  background-color: var(--s2a-color-gray-1000);
-  color: var(--s2a-color-gray-25);
+  background-color: #FFF;
+  color: #000;
 }
 
 .bacom-elastic-carousel .elastic-carousel-arrow:disabled {
-  opacity: .4;
+  background-color: transparent;
+  border: 1px solid rgb(255 255 255 / 24%);
+  color: rgb(255 255 255 / 40%);
   cursor: default;
 }
 
@@ -306,9 +310,7 @@
   .bacom-elastic-carousel.bacom-elastic-carousel {
     padding-left: 124px;
   }
-}
 
-@media (width >= 1200px) {
   .bacom-elastic-carousel .elastic-carousel-controls {
     padding-right: 118px;
   }
@@ -316,7 +318,7 @@
   .bacom-elastic-carousel .elastic-carousel-item {
     display: flex;
     width: 394px;
-    max-width: 394px;
+    max-width: 346px;
     flex-direction: column;
     align-items: flex-start;
     border-radius: 16px;
