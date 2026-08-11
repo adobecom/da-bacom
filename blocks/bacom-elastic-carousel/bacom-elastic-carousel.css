@@ -2,7 +2,6 @@
 /* stylelint-disable */
 
 /** main classes */
-
 html[dir="rtl"] {
   .bacom-elastic-carousel {
     & .elastic-carousel-container {
@@ -523,6 +522,16 @@ html[dir="rtl"] {
 .bacom-elastic-carousel.expand-content {
   --elastic-expand-panel-bg: var(--s2a-color-gray-75);
   --elastic-expand-panel-color: var(--s2a-color-gray-700);
+  --elastic-media-height: 316px;
+
+  .elastic-carousel-container {
+    max-width: 90%;
+    justify-self: center;
+  }
+
+  .elastic-carousel-container .elastic-carousel-item {
+    max-height: 485px;
+  }
 
   .elastic-carousel-expand-toggle {
     flex: 0 0 auto;
@@ -573,7 +582,9 @@ html[dir="rtl"] {
     flex-direction: column;
     overflow: hidden;
     border-radius: var(--s2a-border-radius-md);
-    height: 394px;
+    /* Definite height gives the panel + image a shared box to divide, so the image shrinks
+       (via the asset's flex: 1 / min-height: 0 below) rather than pushing the card taller. */
+    height: var(--elastic-media-height);
   }
 
   .elastic-carousel-item-media-asset {
@@ -621,13 +632,32 @@ html[dir="rtl"] {
   }
 }
 
-/** expand-content: hover zooms the media, card stays static (tablet up) */
+.elastic-carousel-footer-chevron {
+  width: .5em;
+  margin-inline-start: .4em;
+  vertical-align: middle;
+}
+
+html[dir="rtl"] .elastic-carousel-footer-chevron {
+  transform: scaleX(-1);
+}
+
 @media (width >= 768px) {
   .bacom-elastic-carousel.expand-content {
     .elastic-carousel-container .elastic-carousel-item {
       .elastic-carousel-item-media-asset img,
       .elastic-carousel-item-media-asset video {
         transition: transform .5s var(--paralax-easing);
+        max-height: 316px;
+        height: 100%;
+      }
+
+      .elastic-carousel-item-footer {
+        padding: 32px 24px;
+      }
+
+      .elastic-carousel-item-footer h3 {
+        margin-bottom: 0;
       }
 
       &.hovered,
@@ -658,11 +688,12 @@ html[dir="rtl"] {
     }
   }
 
-  .bacom-elastic-carousel.expand-content.limited {
+  .bacom-elastic-carousel.limited {
     .elastic-carousel-container .elastic-carousel-item {
       &.hovered,
       &:focus-visible {
-        max-width: none;
+        flex: 0 0 calc(100% / var(--limited-visible-slides, 3.25));
+        max-width: var(--limited-card-max-width);
       }
     }
   }
@@ -700,6 +731,7 @@ html[dir="rtl"] {
 
 .bacom-elastic-carousel.limited {
   --limited-visible-slides: 3.25;
+  --limited-card-max-width: 394px;
 
   .elastic-carousel-limited-controls {
     display: none;
@@ -731,7 +763,7 @@ html[dir="rtl"] {
 
       .elastic-carousel-item {
         flex: 0 0 calc(100% / var(--limited-visible-slides, 3.25));
-        max-width: none;
+        max-width: var(--limited-card-max-width);
         margin-inline: 0;
         animation: none;
       }

@@ -33,6 +33,7 @@ describe('bacom-elastic-carousel', () => {
       expect(el.querySelector('.elastic-carousel-viewport')).to.be.null;
       expect(el.querySelector('.elastic-carousel-limited-controls')).to.be.null;
       expect(el.querySelector('.elastic-carousel-expand-toggle')).to.be.null;
+      expect(el.querySelector('.elastic-carousel-footer-chevron')).to.be.null;
     });
   });
 
@@ -76,6 +77,18 @@ describe('bacom-elastic-carousel', () => {
       const panel = el.querySelector('.elastic-carousel-expand-content .elastic-carousel-expand-content-inner');
       expect(panel).to.exist;
       expect(panel.textContent).to.contain('Description text for card 0');
+    });
+
+    it('appends the CTA chevron inside each footer heading', async () => {
+      const el = buildBlock(3, 'expand-content');
+      await init(el);
+      const headings = [...el.querySelectorAll('.elastic-carousel-item-footer h3')];
+      expect(headings.length).to.equal(3);
+      headings.forEach((h) => {
+        const chevron = h.querySelector('svg.elastic-carousel-footer-chevron');
+        expect(chevron).to.exist;
+        expect(chevron).to.equal(h.lastElementChild); // trails the text
+      });
     });
   });
 

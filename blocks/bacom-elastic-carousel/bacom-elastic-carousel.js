@@ -31,6 +31,13 @@ const CAROUSEL_ARROW_ICON = `
     <path d="M4 10h12M11 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
   </svg>`;
 
+// Trailing chevron for the footer heading CTA (path/geometry from the Figma design). Uses
+// currentColor so it always matches the heading text.
+const FOOTER_CHEVRON_ICON = `
+  <svg class="elastic-carousel-footer-chevron" viewBox="0 0 4.5 7.5" aria-hidden="true" focusable="false">
+    <path d="M0.75 6.75L3.75 3.75L0.75 0.75" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+  </svg>`;
+
 const getCarouselName = (link) => link?.innerText?.split('|')?.[1]?.trim() || 'Adobe slides';
 
 const stopRewind = (video) => {
@@ -298,6 +305,11 @@ const decorateExpandContent = (carousel) => {
   carousel.querySelectorAll('.elastic-carousel-item').forEach(decorateExpandSlide);
 };
 
+const decorateFooterChevron = (carousel) => {
+  carousel.querySelectorAll('.elastic-carousel-item-footer :is(h1, h2, h3, h4, h5, h6)')
+    .forEach((heading) => heading.insertAdjacentHTML('beforeend', FOOTER_CHEVRON_ICON));
+};
+
 // Fewest cards. Guessed 2 for tablet.
 const LIMITED_MIN_VISIBLE = 2;
 
@@ -413,7 +425,10 @@ export default async function init(el) {
 
   const decoratedCarousel = decorateCarousel(el);
   decorateExpandContent(decoratedCarousel);
-  if (isVariant(decoratedCarousel)) decorateMobileStack(decoratedCarousel);
+  if (isVariant(decoratedCarousel)) {
+    decorateMobileStack(decoratedCarousel);
+    decorateFooterChevron(decoratedCarousel);
+  }
   const limitedController = decorateLimitedCarousel(decoratedCarousel);
   upgradeVideoPreload(decoratedCarousel);
   const scrollController = disableHoverOnScroll(decoratedCarousel);
