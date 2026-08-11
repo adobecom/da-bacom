@@ -59,7 +59,7 @@
 .video-marquee .marquee-media {
   position: relative;
   height: 100%;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 9 / 16;
   border-radius: 16px;
   overflow: hidden;
 }
@@ -184,7 +184,7 @@
 
   .video-marquee .marquee-media {
     height: auto;
-    aspect-ratio: 3 / 2;
+    aspect-ratio: 16 / 9;
     border-radius: 16px 0 0 16px;
   }
 
