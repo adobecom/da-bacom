@@ -205,6 +205,8 @@ export const LIBS = setLibs(window.location);
 
 (function loadStyles() {
   const paths = [`${LIBS}/styles/styles.css`];
+  const c2 = document.querySelector('meta[name="foundation"');
+  if (c2) STYLES.push('/styles/styles-c2.css');
   if (STYLES) {
     paths.push(...(Array.isArray(STYLES) ? STYLES : [STYLES]));
   }
