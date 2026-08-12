@@ -164,12 +164,6 @@ function buildCaptionsToggle(track, labels) {
   return btn;
 }
 
-/*
- * Mirrors the playback flags supported by Milo's decorateAnchorVideo:
- *  #hoverplay    - plays only while hovered, no autoplay
- *  #viewportplay - autoplays only once scrolled into view (>=80% visible)
- *  (default)     - autoplays immediately, still pauses/resumes with viewport
- */
 function watchViewportPlayback(video, cell, { viewportPlay, isUserPaused }) {
   let hasPlayedOnce = false;
 
@@ -185,8 +179,6 @@ function watchViewportPlayback(video, cell, { viewportPlay, isUserPaused }) {
       const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (reducedMotion || isUserPaused()) return;
 
-      // The first time the default (non-viewportplay) video enters view, its own
-      // autoplay attribute already starts it, so skip triggering play() here.
       if (!viewportPlay && !hasPlayedOnce) {
         hasPlayedOnce = true;
         return;
