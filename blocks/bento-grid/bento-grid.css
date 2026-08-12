@@ -147,8 +147,8 @@
 .bento-grid .bento-watch-link::after {
   content: '';
   display: block;
-  width: 3px;
-  height: 6px;
+  width: 6px;
+  height: 12px;
   background-color: currentcolor;
   mask-image: url('../../assets/img/arrow-right.svg');
   mask-repeat: no-repeat;
@@ -225,6 +225,8 @@
   text-decoration: none;
   color: inherit;
   cursor: pointer;
+  background: #F6F6F6;
+  border-radius: 16px;
 }
 
 .bento-grid .grid-item-media {
@@ -233,6 +235,7 @@
   overflow: hidden;
   background: #F6F6F6;
   aspect-ratio: 1;
+  max-height: 327px;
 }
 
 .bento-grid .grid-item-media img {
@@ -402,6 +405,7 @@
   .bento-grid .grid-item {
     width: calc((100% - (2 * 1rem)) / 3);
     scroll-snap-align: start;
+     background: transparent;
   }
 }
 
