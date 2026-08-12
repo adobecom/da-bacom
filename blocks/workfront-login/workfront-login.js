@@ -75,6 +75,12 @@ export async function createSubdomainForm(createTag, replaceKey, config) {
       return;
     }
 
+    if (!/^[a-zA-Z0-9-]{1,63}$/.test(input.value)) {
+      window.lana?.log(`Invalid workfront subdomain submission: ${input.value}`, { severity: 'error', tags: 'workfront-login' });
+      showError(await replaceKey('invalid-subdomain', config));
+      return;
+    }
+
     const controller = new AbortController();
     setTimeout(() => controller.abort(), 4500);
 
