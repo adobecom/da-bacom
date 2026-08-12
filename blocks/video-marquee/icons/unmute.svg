@@ -1,0 +1,5 @@
+<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+  <path d="M4 9V15H8L13 20V4L8 9H4Z" fill="currentColor"/>
+  <path d="M16.5 12C16.5 10.23 15.73 8.71 14.5 7.68V16.32C15.73 15.29 16.5 13.77 16.5 12Z" fill="currentColor"/>
+  <path d="M18.5 5.36L17.23 6.63C19.07 8.1 20 9.95 20 12C20 14.05 19.07 15.9 17.23 17.37L18.5 18.64C20.72 16.9 22 14.6 22 12C22 9.4 20.72 7.1 18.5 5.36Z" fill="currentColor"/>
+</svg>
