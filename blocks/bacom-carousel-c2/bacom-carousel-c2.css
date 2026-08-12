@@ -81,7 +81,7 @@
               animation-range: var(--carousel-text-animation-range);
 
               :is([class*="heading-"]) {
-                margin-bottom: 8px;
+                margin-bottom: 16px;
               }
 
               .opening-quote {
@@ -151,10 +151,11 @@
 
   .bacom-rich-content .foreground .content .eyebrow:has(picture, img) {
     justify-content: flex-start;
+    margin-bottom: 16px;
 
     picture, img {
-      width: auto;
-      height: 40px;
+      width: 100px;
+      max-height: 40px;
     }
   }
 
@@ -205,10 +206,11 @@
         &:has(.bacom-rich-content) {
           align-items: center;
           padding-bottom: 0;
+
           .bacom-rich-content .foreground {
             padding-inline: var(--s2a-spacing-64);
             .content {
-              max-width: calc(var(--actual-slide-width) / 2 - 2 * var(--s2a-spacing-64));
+              max-width: calc(var(--actual-slide-width) / 2 - var(--s2a-spacing-64));
               min-width: 360px;
             }
           }
@@ -326,6 +328,14 @@
       --btn-inset: 20px;
     }
   }
+
+  .bacom-carousel-c2 .bacom-rich-content .foreground .content .eyebrow:has(picture, img) {
+    picture, img {
+      width: 150px;
+      max-height: 100%;
+      height: auto;
+    }
+  }
 }
 
 @media (width >= 1280px) {
@@ -345,11 +355,15 @@
             .content {
               width: 532px;
               aspect-ratio: 532 / 306;
-              max-width: calc(var(--actual-slide-width) / 2 - 2 * var(--s2a-spacing-80));
+              max-width: calc(var(--actual-slide-width) / 2 - var(--s2a-spacing-80));
               display: flex;
               flex-direction: column;
               align-items: flex-start;
               gap: 16px;
+
+              :is([class*="heading-"]) {
+                line-height: 56px;
+              }
             }
           }
         }
