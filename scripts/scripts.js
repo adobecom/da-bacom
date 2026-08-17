@@ -123,6 +123,7 @@ const CONFIG = {
     version: '1.0',
     onDemand: false,
   },
+  arp: { clientId: 'bacom' },
   atvCaptionsKey: 'bacom',
   uniqueSiteId: 'da-bacom',
   mepLingoCountryToRegion: {
@@ -267,6 +268,7 @@ let eventsError;
 export async function loadPage() {
   const {
     loadArea, loadLana, setConfig, getConfig, createTag, getMetadata, getLocale, MILO_EVENTS,
+    loadScript,
   } = await import(`${LIBS}/utils/utils.js`);
 
   let eventUtils;
@@ -342,6 +344,16 @@ export async function loadPage() {
     } catch (e) {
       window.lana?.log(`Could not load marketo-libs. ${e}`, { tags: 'marketo-libs', severity: 'error' });
     }
+  }
+
+  if (CONFIG.arp?.clientId) {
+    import('./arp.js').then(({ default: loadArp }) => loadArp({
+      clientId: CONFIG.arp.clientId,
+      prodEnv: getConfig().env?.name === 'prod',
+      loadScript,
+    })).catch((e) => {
+      window.lana?.log(`Could not load arp.js. ${e}`, { tags: 'arp', severity: 'error' });
+    });
   }
 
   await loadArea();
