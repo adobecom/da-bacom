@@ -199,10 +199,6 @@ const buildSlide = ({ slide, index, slidesTotal }) => {
   const children = [...slide.children];
   const left = children[0];
   const right = children[1];
-
-  // The icon is optional; when authors remove it, its wrapping element is removed too
-  // (rather than left as an empty placeholder), so detect it by content instead of by a
-  // fixed position to avoid misaligning the remaining heading/linkName/description.
   const leftChildren = [...left.children];
   const hasIcon = !!leftChildren[0]?.querySelector('img');
   const iconContainer = hasIcon ? leftChildren.shift() : null;
