@@ -155,4 +155,35 @@ describe('bacom-elastic-carousel', () => {
       expect(items[5].style.getPropertyValue('--stack-contrast')).to.not.equal('');
     });
   });
+
+  describe('missing icon', () => {
+    // Authors can remove the icon entirely, which removes its wrapping element rather than
+    // leaving an empty placeholder — the left column shifts up by one child.
+    it('decorates the card correctly when the icon element is absent', async () => {
+      document.body.innerHTML = `<div class="bacom-elastic-carousel">
+        <div>
+          <div>
+            <p>Eyebrow label</p>
+            <h3 id="heading-noicon">No Icon Heading</h3>
+            <p>Description text for the no-icon card.</p>
+            <p><a href="https://example.com/no-icon">No Icon | Adobe slides</a></p>
+          </div>
+          <div>
+            <picture><img alt="media"></picture>
+            <a href="https://example.com/media.mp4">media</a>
+          </div>
+        </div>
+      </div>`;
+      const el = document.querySelector('.bacom-elastic-carousel');
+      await init(el);
+
+      const item = el.querySelector('.elastic-carousel-item');
+      const header = item.querySelector('.elastic-carousel-item-header');
+      expect(header.querySelector('img')).to.be.null;
+      expect(header.textContent).to.not.contain('undefined');
+      expect(header.textContent.trim()).to.equal('Eyebrow label');
+      expect(item.querySelector('.elastic-carousel-item-footer h3')?.textContent).to.equal('No Icon Heading');
+      expect(item.href).to.equal('https://example.com/no-icon');
+    });
+  });
 });

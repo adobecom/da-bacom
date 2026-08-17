@@ -200,7 +200,13 @@ const buildSlide = ({ slide, index, slidesTotal }) => {
   const left = children[0];
   const right = children[1];
 
-  const [iconContainer, heading, linkName, description] = left.children;
+  // The icon is optional; when authors remove it, its wrapping element is removed too
+  // (rather than left as an empty placeholder), so detect it by content instead of by a
+  // fixed position to avoid misaligning the remaining heading/linkName/description.
+  const leftChildren = [...left.children];
+  const hasIcon = !!leftChildren[0]?.querySelector('img');
+  const iconContainer = hasIcon ? leftChildren.shift() : null;
+  const [heading, linkName, description] = leftChildren;
   const icon = iconContainer?.querySelector('img');
   const asset = right.children[0];
   const link = left.lastElementChild?.querySelector('a');
@@ -223,7 +229,7 @@ const buildSlide = ({ slide, index, slidesTotal }) => {
   const content = `
     <div class='elastic-carousel-item-container' id='elastic-carousel-slide-${index + 1}'>
       <div class='elastic-carousel-item-header'>
-        ${icon.outerHTML}
+        ${icon?.outerHTML || ''}
         ${heading?.outerHTML}
       </div>
       <div class='elastic-carousel-item-media'>
