@@ -1,0 +1,407 @@
+/* stylelint-disable no-descending-specificity */
+
+.featured-stories .foreground {
+  width: 100%;
+  position: relative;
+  padding-top: 24px;
+  padding-bottom: 24px;
+}
+
+.featured-stories .foreground .fs-view {
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.featured-stories .foreground .fs-view.view-mobile {
+  display: flex;
+}
+
+.featured-stories .fs-featured {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s2a-spacing-xs);
+  padding: 24px;
+  border-radius: var(--s2a-border-radius-lg);
+  background: #F6F6F6;
+  text-decoration: none;
+  color: inherit;
+}
+
+.featured-stories .fs-featured-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.featured-stories .fs-featured-media {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.featured-stories .fs-featured-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.featured-stories .fs-featured:hover .fs-featured-media img {
+  transform: scale(1.03);
+}
+
+.featured-stories .fs-eyebrow {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+  color: #6E6E6E;
+}
+
+.featured-stories .fs-heading {
+  margin: 0 0 0.5rem;
+  font-weight: 700;
+}
+
+.featured-stories .fs-description {
+  margin: 0 0 1rem;
+  color: #6E6E6E;
+}
+
+.featured-stories .fs-featured-text .fs-eyebrow {
+  color: #000;
+  font-family: var(--s2a-font-family-eyebrow);
+  font-size: var(--s2a-typography-font-size-eyebrow);
+  font-style: normal;
+  font-weight: 700;
+  line-height: var(--s2a-typography-line-height-eyebrow);
+  letter-spacing: var(--s2a-typography-letter-spacing-eyebrow);
+}
+
+.featured-stories .fs-featured-text .fs-heading {
+  color: #000;
+  font-family: "Adobe Clean Display", sans-serif;
+  font-size: 36px;
+  font-style: normal;
+  font-weight: 900;
+  line-height: 100%;
+  letter-spacing: -1.08px;
+}
+
+.featured-stories .fs-featured-text .fs-description {
+  color: rgb(0 0 0 / 60%);
+  white-space: normal;
+  font-family: "Adobe Clean", sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 130%;
+  letter-spacing: 0.16px;
+}
+
+.featured-stories .fs-watch-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: #000;
+  text-align: center;
+  font-family: "Adobe Clean", sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 120%;
+}
+
+.featured-stories .fs-watch-link::after {
+  content: '';
+  display: block;
+  width: 6px;
+  height: 12px;
+  background-color: currentcolor;
+  mask-image: url('../../assets/img/arrow-right.svg');
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  transition: transform 0.2s ease;
+}
+
+.featured-stories .fs-featured:hover .fs-watch-link::after,
+.featured-stories .fs-item:hover .fs-watch-link::after {
+  transform: translateX(4px);
+}
+
+.featured-stories .fs-item-play {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 40%);
+  color: #FFF;
+  pointer-events: none;
+}
+
+.featured-stories .fs-item-play svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.featured-stories .fs-featured-media .fs-item-play {
+  top: 1.5rem;
+  right: 1.5rem;
+  width: 64px;
+  height: 64px;
+  background: rgb(0 0 0 / 55%);
+}
+
+.featured-stories .fs-featured-media .fs-item-play svg {
+  width: 28px;
+  height: 28px;
+}
+
+.featured-stories .fs-carousel {
+  position: relative;
+}
+
+.featured-stories .fs-carousel-container {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding-left: 24px;
+  overflow-x: auto;
+  overflow-y: visible;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  scroll-behavior: smooth;
+  transition: margin 0.3s ease;
+}
+
+.featured-stories .fs-item {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  width: 82vw;
+  scroll-snap-align: center;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  background: #F6F6F6;
+  border-radius: 16px;
+}
+
+.featured-stories .fs-item-media {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #F6F6F6;
+  aspect-ratio: 1;
+  max-height: 327px;
+}
+
+.featured-stories .fs-item-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.featured-stories .fs-item:hover .fs-item-media img {
+  transform: scale(1.03);
+}
+
+.featured-stories .fs-item-text {
+  box-sizing: border-box;
+  padding: 32px;
+}
+
+.featured-stories .fs-item-text .fs-heading {
+  margin: 0 0 8px;
+  color: #000;
+  white-space: normal;
+  font-family: "Adobe Clean Display", sans-serif;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 900;
+  line-height: 100%;
+  letter-spacing: -0.72px;
+}
+
+.featured-stories .fs-item-text .fs-description {
+  overflow: hidden;
+  margin: 0;
+  color: rgb(0 0 0 / 60%);
+  line-clamp: 3;
+  font-family: "Adobe Clean", sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 130%;
+  letter-spacing: 0.16px;
+}
+
+.featured-stories .fs-item-text .fs-watch-link {
+  margin-top: 24px;
+}
+
+.featured-stories .fs-carousel-controls {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-right: 24px;
+}
+
+.featured-stories .fs-carousel-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: #EEE;
+  color: #000;
+  cursor: pointer;
+}
+
+.featured-stories .fs-carousel-arrow:disabled {
+  opacity: .4;
+  cursor: default;
+}
+
+.featured-stories .fs-carousel-arrow:focus-visible {
+  outline: 2px solid var(--color-accent-focus-ring);
+  outline-offset: 2px;
+}
+
+.featured-stories .fs-carousel-arrow-svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+
+.featured-stories .fs-carousel-arrow-prev .fs-carousel-arrow-svg {
+  transform: scaleX(-1);
+}
+
+.fs-video-modal .fs-video-modal-inner {
+  position: relative;
+  width: min(90vw, 1024px);
+}
+
+.fs-video-modal .fs-video-modal-player {
+  display: block;
+  width: 100%;
+  max-height: 80vh;
+}
+
+.fs-video-modal .fs-video-modal-error {
+  text-align: center;
+  color: #FFF;
+}
+
+@media screen and (min-width: 600px) {
+  .featured-stories .foreground .fs-view.view-mobile {
+    display: none;
+  }
+
+  .featured-stories .foreground .fs-view.view-tablet {
+    display: flex;
+  }
+
+  .featured-stories .fs-featured {
+    flex-direction: row;
+  }
+
+  .featured-stories .fs-featured-text,
+  .featured-stories .fs-featured-media {
+    flex: 1 1 50%;
+  }
+
+  .featured-stories .fs-carousel {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .featured-stories .fs-carousel-container {
+    padding-left: 0;
+  }
+
+  .featured-stories .fs-carousel-controls {
+    padding-right: 0;
+  }
+
+  .featured-stories .fs-item {
+    width: calc((100% - (2 * 1rem)) / 3);
+    scroll-snap-align: start;
+    background: transparent;
+  }
+}
+
+@media screen and (min-width: 1200px) {
+  .featured-stories .foreground .fs-view.view-tablet {
+    display: none;
+  }
+
+  .featured-stories .foreground .fs-view.view-desktop {
+    display: flex;
+  }
+
+  .featured-stories .fs-featured {
+    width: 1200px;
+    height: 599px;
+    margin: 0 auto;
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .featured-stories .fs-featured-text,
+  .featured-stories .fs-featured-media {
+    width: 50%;
+    flex: 1 1 50%;
+  }
+
+  .featured-stories .fs-featured-media {
+    aspect-ratio: auto;
+  }
+
+  .featured-stories .fs-carousel {
+    width: calc(100% - ((100% - 1200px) / 2));
+    margin-left: calc((100% - 1200px) / 2);
+  }
+
+  .featured-stories .fs-carousel-container {
+    padding-right: calc(100% - 1200px);
+  }
+
+  .featured-stories .fs-carousel-controls {
+    width: 1200px;
+  }
+
+  .featured-stories .fs-item {
+    width: calc((1200px - (2 * 1rem)) / 3);
+  }
+
+  .featured-stories .fs-item-media {
+    height: 295.749px;
+    align-self: stretch;
+    aspect-ratio: 195 / 146;
+  }
+
+  .featured-stories .fs-item-text {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 152px;
+    padding: 24px 24px 40px;
+  }
+}

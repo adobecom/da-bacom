@@ -1,5 +1,3 @@
-import { LIBS, PLAY_SVG } from '../../scripts/scripts.js';
-
 function createTag(tag, attributes, html, options = {}) {
   const el = document.createElement(tag);
   if (html) {
@@ -22,17 +20,13 @@ function createTag(tag, attributes, html, options = {}) {
   return el;
 }
 
-const LANA_OPTIONS = { tags: 'bento-grid', errorType: 'i' };
+const LANA_OPTIONS = { tags: 'animated-slot-text', errorType: 'i' };
+
 const VIEW_TYPES = ['mobile', 'tablet', 'desktop'];
-const MIN_CAROUSEL_FOR_CONTROLS = 3;
-const ARROW_ICON = '<span class="grid-carousel-arrow-icon"></span>';
+const MIN_ITEMS_TARGET = 15;
 
 function logError(message, error) {
-  window.lana?.log(`Bento grid ${message}: ${error}`, LANA_OPTIONS);
-}
-
-function isRtl() {
-  return document.documentElement.getAttribute('dir') === 'rtl';
+  window.lana?.log(`Photo gallery ${message}: ${error}`, LANA_OPTIONS);
 }
 
 function parseConfigBlock(configContainer) {
@@ -78,284 +72,9 @@ function parseConfigBlock(configContainer) {
   return configMap;
 }
 
-const isHeading = (node) => /^H[1-6]$/.test(node.tagName);
-
-function extractCells(container) {
+function extractPictures(container) {
   if (!container) return [];
-  return Array.from(container.children).map((child) => {
-    const pic = child.querySelector('picture');
-    const nodes = Array.from(child.children);
-    const picHolderIndex = nodes.findIndex((node) => pic && node.contains(pic));
-    const before = picHolderIndex === -1 ? [] : nodes.slice(0, picHolderIndex);
-    const after = picHolderIndex === -1 ? nodes : nodes.slice(picHolderIndex + 1);
-
-    const sectionHeading = before.find(isHeading);
-    const sectionSubtext = before.find((node) => node.tagName === 'P');
-
-    const heading = after.find(isHeading);
-    const paragraphs = after.filter((node) => node.tagName === 'P');
-    const videoPara = paragraphs.find((p) => /https?:\/\/\S+\.mp4\b/i.test(p.textContent));
-    const descPara = paragraphs.find((p) => p !== videoPara
-      && !p.querySelector('picture')
-      && p.textContent.trim());
-    const videoMatch = (videoPara || child).textContent.match(/https?:\/\/\S+\.mp4\b/i);
-
-    return {
-      pictureHTML: pic ? pic.outerHTML : '',
-      videoSrc: videoMatch?.[0] || null,
-      heading: heading?.textContent.trim() || '',
-      description: descPara?.textContent.trim() || '',
-      sectionHeading: sectionHeading?.textContent.trim() || '',
-      sectionSubtext: sectionSubtext?.textContent.trim() || '',
-    };
-  });
-}
-
-async function openVideoModal(videoSrc) {
-  const { loadStyle } = await import(`${LIBS}/utils/utils.js`);
-  const { getModal } = await import(`${LIBS}/blocks/modal/modal.js`);
-  loadStyle(`${LIBS}/c2/blocks/modal/modal.css`);
-
-  const wrapper = document.createElement('div');
-  wrapper.className = 'grid-video-modal-inner';
-
-  const video = document.createElement('video');
-  video.className = 'grid-video-modal-player';
-  video.controls = true;
-  video.playsInline = true;
-  video.autoplay = true;
-
-  const source = document.createElement('source');
-  source.type = 'video/mp4';
-  source.src = videoSrc;
-  video.appendChild(source);
-
-  const errorMessage = document.createElement('p');
-  errorMessage.className = 'grid-video-modal-error';
-  errorMessage.textContent = 'This video is currently unavailable.';
-  errorMessage.hidden = true;
-
-  video.addEventListener('error', () => {
-    video.hidden = true;
-    errorMessage.hidden = false;
-  }, { once: true });
-
-  wrapper.append(video, errorMessage);
-
-  await getModal(null, {
-    id: 'bento-grid-video-modal',
-    class: 'grid-video-modal',
-    content: wrapper,
-    closeCallback: () => video.pause(),
-  });
-}
-
-function addPlayIcon(mediaEl) {
-  const playIcon = document.createElement('span');
-  playIcon.className = 'grid-item-play';
-  playIcon.setAttribute('aria-hidden', 'true');
-  playIcon.innerHTML = PLAY_SVG;
-  mediaEl.appendChild(playIcon);
-}
-
-function attachVideoTrigger(item, mediaEl, videoSrc) {
-  item.href = videoSrc;
-  item.classList.add('has-video');
-
-  addPlayIcon(mediaEl || item);
-
-  item.addEventListener('click', (event) => {
-    event.preventDefault();
-    openVideoModal(videoSrc);
-  });
-}
-
-function buildTextBlock({ className, eyebrow, heading, description, showWatchLink }) {
-  const wrap = document.createElement('div');
-  wrap.className = className;
-
-  if (eyebrow) {
-    const eyebrowEl = createTag('p', { class: 'bento-eyebrow' }, eyebrow);
-    wrap.appendChild(eyebrowEl);
-  }
-  if (heading) {
-    const headingEl = document.createElement('h3');
-    headingEl.className = 'bento-heading';
-    headingEl.textContent = heading;
-    wrap.appendChild(headingEl);
-  }
-  if (description) {
-    const descEl = document.createElement('p');
-    descEl.className = 'bento-description';
-    descEl.textContent = description;
-    wrap.appendChild(descEl);
-  }
-  if (showWatchLink) {
-    const watchEl = document.createElement('span');
-    watchEl.className = 'bento-watch-link';
-    watchEl.textContent = 'Watch video';
-    wrap.appendChild(watchEl);
-  }
-
-  return wrap;
-}
-
-function buildMedia(cell, loadMode, className) {
-  const temp = document.createElement('div');
-  temp.innerHTML = cell.pictureHTML;
-  const pic = temp.querySelector('picture');
-  if (!pic) return null;
-
-  const img = pic.querySelector('img');
-  if (img) {
-    img.setAttribute('loading', loadMode);
-    img.loading = loadMode;
-  }
-
-  const media = document.createElement('div');
-  media.className = className;
-  media.appendChild(pic);
-  return media;
-}
-
-function buildSectionHeader(cell) {
-  if (!cell?.sectionHeading) return null;
-
-  const header = createTag('div', { class: 'bento-section-header' });
-  const heading = document.createElement('h2');
-  heading.className = 'bento-section-heading';
-  heading.textContent = cell.sectionHeading;
-  header.appendChild(heading);
-
-  if (cell.sectionSubtext) {
-    const subtext = document.createElement('p');
-    subtext.className = 'bento-section-subtext';
-    subtext.textContent = cell.sectionSubtext;
-    header.appendChild(subtext);
-  }
-
-  return header;
-}
-
-function buildFeatured(cell) {
-  if (!cell?.pictureHTML) return null;
-
-  const media = buildMedia(cell, 'eager', 'bento-featured-media');
-  if (!media) return null;
-
-  const text = buildTextBlock({
-    className: 'bento-featured-text',
-    eyebrow: 'Featured video',
-    heading: cell.heading,
-    description: cell.description,
-    showWatchLink: true,
-  });
-
-  const item = document.createElement(cell.videoSrc ? 'a' : 'div');
-  item.className = 'bento-featured';
-  item.append(text, media);
-
-  if (cell.videoSrc) {
-    attachVideoTrigger(item, media, cell.videoSrc);
-  } else {
-    addPlayIcon(media);
-  }
-
-  return item;
-}
-
-function buildCarouselCard(cell, loadMode) {
-  if (!cell?.pictureHTML) return null;
-
-  const media = buildMedia(cell, loadMode, 'grid-item-media');
-  if (!media) return null;
-
-  const item = document.createElement(cell.videoSrc ? 'a' : 'div');
-  item.className = 'grid-item';
-  item.appendChild(media);
-
-  item.appendChild(buildTextBlock({
-    className: 'grid-item-text',
-    heading: cell.heading,
-    description: cell.description,
-    showWatchLink: true,
-  }));
-
-  if (cell.videoSrc) {
-    attachVideoTrigger(item, media, cell.videoSrc);
-  } else {
-    addPlayIcon(media);
-  }
-
-  return item;
-}
-
-function updateArrowState(container, prevBtn, nextBtn) {
-  const maxScroll = container.scrollWidth - container.clientWidth;
-  const { scrollLeft } = container;
-  if (isRtl()) {
-    prevBtn.disabled = scrollLeft >= -1;
-    nextBtn.disabled = scrollLeft <= -maxScroll + 1;
-  } else {
-    prevBtn.disabled = scrollLeft <= 1;
-    nextBtn.disabled = scrollLeft >= maxScroll - 1;
-  }
-}
-
-function scrollByCard(container, direction) {
-  const card = container.querySelector('.grid-item');
-  if (!card) return;
-  const gap = parseFloat(getComputedStyle(container).columnGap) || 0;
-  const amount = (card.offsetWidth + gap) * direction * (isRtl() ? -1 : 1);
-  container.scrollBy({ left: amount, behavior: 'smooth' });
-}
-
-function buildCarouselControls(container) {
-  const controls = createTag('div', { class: 'grid-carousel-controls' });
-  const prevBtn = createTag('button', {
-    type: 'button',
-    class: 'grid-carousel-arrow grid-carousel-arrow-prev',
-    'aria-label': 'Previous',
-  }, ARROW_ICON);
-  const nextBtn = createTag('button', {
-    type: 'button',
-    class: 'grid-carousel-arrow grid-carousel-arrow-next',
-    'aria-label': 'Next',
-  }, ARROW_ICON);
-
-  prevBtn.addEventListener('click', () => scrollByCard(container, -1));
-  nextBtn.addEventListener('click', () => scrollByCard(container, 1));
-
-  container.addEventListener('scroll', () => updateArrowState(container, prevBtn, nextBtn));
-  window.addEventListener('resize', () => updateArrowState(container, prevBtn, nextBtn));
-  requestAnimationFrame(() => updateArrowState(container, prevBtn, nextBtn));
-
-  controls.append(prevBtn, nextBtn);
-  return controls;
-}
-
-function rotateByStartIndex(cells, startIndex) {
-  if (!startIndex || startIndex <= 0 || cells.length === 0) return cells;
-  const rotation = (startIndex - 1) % cells.length;
-  return [...cells.slice(rotation), ...cells.slice(0, rotation)];
-}
-
-function buildCarouselRow(cells, { showControls = true } = {}) {
-  const container = createTag('div', { class: 'grid-carousel-container' });
-
-  cells.forEach((cell, index) => {
-    const card = buildCarouselCard(cell, index === 0 ? 'eager' : 'lazy');
-    if (card) container.appendChild(card);
-  });
-
-  const wrapper = createTag('div', { class: 'grid-carousel' });
-  wrapper.appendChild(container);
-
-  if (showControls && container.children.length > MIN_CAROUSEL_FOR_CONTROLS) {
-    wrapper.appendChild(buildCarouselControls(container));
-  }
-
-  return wrapper;
+  return Array.from(container.children).map((child) => child.innerHTML);
 }
 
 function resolveViewData(targetType, availableDataMap) {
@@ -364,35 +83,66 @@ function resolveViewData(targetType, availableDataMap) {
   return availableDataMap[foundKey] || {};
 }
 
-function createViewElement(type, config, featuredCells, carouselCells) {
-  const wrapper = createTag('div', { class: `grid-view view-${type}` });
+const createViewElement = (type, config, allRowsContent) => {
+  const wrapper = document.createElement('div');
+  wrapper.className = `grid-view view-${type}`;
+  const rowsFragment = document.createDocumentFragment();
 
-  const sectionHeader = buildSectionHeader(featuredCells[0]);
-  if (sectionHeader) wrapper.appendChild(sectionHeader);
+  allRowsContent.forEach((originalRowContent, index) => {
+    const rowNum = index + 1;
+    const rowConfig = config[rowNum] || { left: 0 };
 
-  const row1Config = config[1] || { left: 0 };
-  const orderedFeatured = rotateByStartIndex(featuredCells, row1Config.startIndex);
-  const [featuredCell, ...restRow1] = orderedFeatured;
+    let rowContent = originalRowContent;
+    if (rowConfig.startIndex && rowConfig.startIndex > 0 && originalRowContent.length > 0) {
+      const zeroBasedIndex = rowConfig.startIndex - 1;
+      const rotation = zeroBasedIndex % originalRowContent.length;
+      rowContent = [
+        ...originalRowContent.slice(rotation),
+        ...originalRowContent.slice(0, rotation),
+      ];
+    }
 
-  if (type === 'mobile') {
-    const row2Config = config[2] || {};
-    const allCells = [featuredCell, ...restRow1, ...carouselCells];
-    const orderedCells = rotateByStartIndex(allCells, row2Config.startIndex);
-    wrapper.appendChild(buildCarouselRow(orderedCells, { showControls: false }));
-    return wrapper;
-  }
+    const multiplier = Math.ceil(MIN_ITEMS_TARGET / (rowContent.length || 1));
+    const rowDiv = document.createElement('div');
+    rowDiv.className = 'grid-row';
 
-  const featured = buildFeatured(featuredCell);
-  if (featured) wrapper.appendChild(featured);
+    if (rowConfig.left) {
+      rowDiv.style.marginLeft = `${rowConfig.left}px`;
+    }
 
-  const row2Config = config[2] || {};
-  const remainingCells = [...restRow1, ...carouselCells];
-  const orderedCarousel = rotateByStartIndex(remainingCells, row2Config.startIndex);
-  const carousel = buildCarouselRow(orderedCarousel);
-  wrapper.appendChild(carousel);
+    const itemsFragment = document.createDocumentFragment();
+    for (let i = 0; i < multiplier; i += 1) {
+      const loadMode = i === 0 ? 'eager' : 'lazy';
 
+      rowContent.forEach((html) => {
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
+        const pic = temp.querySelector('picture');
+
+        if (pic) {
+          const item = document.createElement('div');
+          item.className = 'grid-item';
+
+          const finalPic = pic.cloneNode(true);
+          const img = finalPic.querySelector('img');
+          if (img) {
+            img.setAttribute('loading', loadMode);
+            img.loading = loadMode;
+          }
+
+          item.appendChild(finalPic);
+          itemsFragment.appendChild(item);
+        }
+      });
+    }
+
+    rowDiv.appendChild(itemsFragment);
+    rowsFragment.appendChild(rowDiv);
+  });
+
+  wrapper.appendChild(rowsFragment);
   return wrapper;
-}
+};
 
 function decorateContent(el) {
   try {
@@ -403,29 +153,31 @@ function decorateContent(el) {
     const rowContainers = children.slice(1);
 
     if (!configContainer || rowContainers.length === 0) {
-      logError('Missing required structure (Config, Row content)');
+      logError('Photo Gallery: Missing required structure (Config, Row content).');
       return;
     }
 
     const configMap = parseConfigBlock(configContainer);
-    const featuredCells = extractCells(rowContainers[0]);
-    const carouselCells = rowContainers.slice(1).flatMap((container) => extractCells(container));
 
+    const allRowsContent = rowContainers.map((container) => extractPictures(container));
     el.innerHTML = '';
     const foreground = createTag('div', { class: 'foreground' });
     el.setAttribute('role', 'region');
-    el.setAttribute('aria-label', 'Featured video gallery');
+    el.setAttribute('aria-label', 'Image Gallery');
 
     const fragment = document.createDocumentFragment();
+
     VIEW_TYPES.forEach((type) => {
       const config = resolveViewData(type, configMap);
-      const viewEl = createViewElement(type, config, featuredCells, carouselCells);
-      fragment.appendChild(viewEl);
+      if (allRowsContent.length > 0) {
+        const viewEl = createViewElement(type, config, allRowsContent);
+        fragment.appendChild(viewEl);
+      }
     });
     foreground.appendChild(fragment);
     el.appendChild(foreground);
   } catch (err) {
-    logError('Failed to decorate content', err);
+    logError('Failed to decorate Content', err);
   }
 }
 
@@ -434,6 +186,6 @@ export default function init(el) {
     el.classList.add('con-block');
     decorateContent(el);
   } catch (err) {
-    window.lana?.log(`Bento grid Init Error: ${err}`, LANA_OPTIONS);
+    window.lana?.log(`Photo banner Init Error: ${err}`, LANA_OPTIONS);
   }
 }
