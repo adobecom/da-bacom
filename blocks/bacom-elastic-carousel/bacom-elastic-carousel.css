@@ -109,7 +109,7 @@ html[dir="rtl"] {
         display: flex;
         flex-direction: column;
         padding: var(--s2a-spacing-lg);
-        max-width: 270px;
+        max-width: 100%;
         font-size: var(--s2a-font-size-md);
         line-height: var(--s2a-font-line-height-16);
 
