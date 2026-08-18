@@ -290,16 +290,23 @@ function buildCarouselCard(cell, loadMode) {
   return item;
 }
 
-function updateArrowState(container, prevBtn, nextBtn) {
-  const maxScroll = container.scrollWidth - container.clientWidth;
+// Rect-based (not scrollLeft-based) so it works the same in LTR and RTL,
+// and so "next" disables as soon as the last card is fully within the
+// constrained card column — not just anywhere in the container, which on
+// desktop bleeds wider than that column so it can peek the next card.
+function isCardFullyVisible(card, frame) {
+  const cardRect = card.getBoundingClientRect();
+  const frameRect = frame.getBoundingClientRect();
+  return cardRect.left >= frameRect.left - 1 && cardRect.right <= frameRect.right + 1;
+}
+
+function updateArrowState(container, prevBtn, nextBtn, frame) {
   const { scrollLeft } = container;
-  if (isRtl()) {
-    prevBtn.disabled = scrollLeft >= -1;
-    nextBtn.disabled = scrollLeft <= -maxScroll + 1;
-  } else {
-    prevBtn.disabled = scrollLeft <= 1;
-    nextBtn.disabled = scrollLeft >= maxScroll - 1;
-  }
+  const cards = container.querySelectorAll('.grid-item');
+  const lastCard = cards[cards.length - 1];
+
+  prevBtn.disabled = isRtl() ? scrollLeft >= -1 : scrollLeft <= 1;
+  nextBtn.disabled = !lastCard || isCardFullyVisible(lastCard, frame);
 }
 
 function scrollByCard(container, direction) {
@@ -310,7 +317,28 @@ function scrollByCard(container, direction) {
   container.scrollBy({ left: amount, behavior: 'smooth' });
 }
 
+// Pads the end of the carousel so the browser's native max scroll lands
+// exactly where the last card fills the constrained card column (frame),
+// flush with no gap. Without this, the container's own width (which bleeds
+// wider than that column) lets native scroll/swipe go further, past the
+// point where the last card is flush, into a dead zone that shows fewer
+// than a full set of cards with blank space trailing them.
+function updateEndSpacer(container, spacer, frame) {
+  const cards = container.querySelectorAll('.grid-item');
+  if (!cards.length) return;
+  const gap = parseFloat(getComputedStyle(container).columnGap) || 0;
+  const width = container.clientWidth - frame.getBoundingClientRect().width - gap;
+  // When no padding is needed (e.g. tablet, where the container doesn't
+  // bleed past the card column), remove the spacer from the flex flow
+  // entirely — leaving it at width 0 would still add one flex `gap` after
+  // the last card, throwing off the exact-multiple-of-a-card math.
+  spacer.style.display = width > 0 ? '' : 'none';
+  spacer.style.width = `${width}px`;
+}
+
 function buildCarouselControls(container) {
+  const spacer = createTag('div', { class: 'grid-carousel-end-spacer', 'aria-hidden': 'true' }, null, { parent: container });
+
   const controls = createTag('div', { class: 'grid-carousel-controls' });
   const prevBtn = createTag('button', {
     type: 'button',
@@ -326,11 +354,17 @@ function buildCarouselControls(container) {
   prevBtn.addEventListener('click', () => scrollByCard(container, -1));
   nextBtn.addEventListener('click', () => scrollByCard(container, 1));
 
-  container.addEventListener('scroll', () => updateArrowState(container, prevBtn, nextBtn));
-  window.addEventListener('resize', () => updateArrowState(container, prevBtn, nextBtn));
-  requestAnimationFrame(() => updateArrowState(container, prevBtn, nextBtn));
-
   controls.append(prevBtn, nextBtn);
+
+  const refresh = () => {
+    updateArrowState(container, prevBtn, nextBtn, controls);
+    updateEndSpacer(container, spacer, controls);
+  };
+
+  container.addEventListener('scroll', () => updateArrowState(container, prevBtn, nextBtn, controls));
+  window.addEventListener('resize', refresh);
+  requestAnimationFrame(refresh);
+
   return controls;
 }
 

@@ -734,11 +734,7 @@ html[dir="rtl"] .elastic-carousel-footer-chevron {
   --limited-visible-slides: 3;
   --limited-card-max-width: 394px;
   --limited-group-max-width: calc((var(--limited-card-max-width) * var(--limited-visible-slides)) + (var(--s2a-spacing-md) * (var(--limited-visible-slides) - 1)));
-  --limited-block-left-offset: calc(max(0px, (100vw - var(--grid-max-width-default)) / 2) + var(--grid-margin-width));
-  --limited-block-content-width: calc(min(100vw, var(--grid-max-width-default)) - (2 * var(--grid-margin-width)));
-  --limited-left-gutter: max(0px, calc((var(--limited-block-content-width) - var(--limited-group-max-width)) / 2));
-  --limited-peek-width: calc((var(--limited-card-max-width) * 0.4) + var(--s2a-spacing-md));
-  --limited-bleed-space: max(0px, calc(100vw - var(--limited-block-left-offset) - var(--limited-left-gutter) - var(--limited-group-max-width)));
+  --limited-bleed-space: max(0px, calc(100vw - var(--grid-margin-width) - var(--limited-group-max-width)));
 
   .elastic-carousel-limited-controls {
     display: none;
@@ -752,15 +748,12 @@ html[dir="rtl"] .elastic-carousel-footer-chevron {
 @media (width >= 768px) {
   .bacom-elastic-carousel.limited {
     height: auto;
-    max-width: var(--grid-max-width-default);
-    margin-inline: auto;
-    padding-inline: var(--grid-margin-width);
+    padding-inline-start: var(--grid-margin-width);
     overflow: visible;
 
     .elastic-carousel-viewport {
       position: relative;
-      margin-left: var(--limited-left-gutter);
-      width: 100%;
+      width: auto;
     }
 
     .elastic-carousel-container {
@@ -807,11 +800,10 @@ html[dir="rtl"] .elastic-carousel-footer-chevron {
       justify-content: flex-end;
       gap: var(--s2a-spacing-12);
       margin-block-start: var(--s2a-spacing-lg);
-      /* Reuses the viewport's own left-gutter offset (rather than auto-centering
-         independently) so this row's right edge lines up exactly with the third card's
-         right edge instead of drifting a few px off from a separately-computed center. */
+      /* Block's own padding-inline-start already insets this row to match the card row, so
+         no extra left offset is needed here - just size it to the third card's right edge. */
       width: var(--limited-group-max-width);
-      margin-left: var(--limited-left-gutter);
+      max-width: 100%;
     }
 
     &.limited-static .elastic-carousel-limited-controls {

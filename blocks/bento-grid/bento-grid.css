@@ -216,6 +216,11 @@
   display: none;
 }
 
+.bento-grid .grid-carousel-end-spacer {
+  flex: 0 0 auto;
+  scroll-snap-align: none;
+}
+
 .bento-grid .grid-item {
   display: flex;
   flex: 0 0 auto;
@@ -437,6 +442,7 @@
   }
 
   .bento-grid .grid-carousel {
+    width: auto;
     margin-left: calc((100% - 1200px) / 2);
   }
 
