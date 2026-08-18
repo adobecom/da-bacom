@@ -634,8 +634,9 @@ html[dir="rtl"] {
 }
 
 .elastic-carousel-footer-chevron {
-  width: .5em;
-  margin-inline-start: .4em;
+  width: 5px;
+  height: 8px;
+  margin-inline-start: var(--s2a-spacing-8);
   vertical-align: middle;
 }
 

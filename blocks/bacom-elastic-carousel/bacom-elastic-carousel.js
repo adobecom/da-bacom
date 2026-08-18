@@ -34,7 +34,7 @@ const CAROUSEL_ARROW_ICON = `
 // Trailing chevron for the footer heading CTA (path/geometry from the Figma design). Uses
 // currentColor so it always matches the heading text.
 const FOOTER_CHEVRON_ICON = `
-  <svg class="elastic-carousel-footer-chevron" viewBox="0 0 4.5 7.5" aria-hidden="true" focusable="false">
+  <svg class="elastic-carousel-footer-chevron" viewBox="0 0 5 8" aria-hidden="true" focusable="false">
     <path d="M0.75 6.75L3.75 3.75L0.75 0.75" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
   </svg>`;
 

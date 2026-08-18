@@ -10,6 +10,60 @@ function isLinkOnlyContent(linkContainer, aTag) {
 
 const isSvgUrl = (url) => /\.svg(\?.*)?$/i.test(url || '');
 
+// Above this many items the N-up grid gives way to a horizontal carousel.
+const MAX_GRID_ITEMS = 3;
+
+const isRtl = () => document.documentElement.getAttribute('dir') === 'rtl';
+
+// Full arrow (shaft + head) matching bento-grid and bacom-elastic-carousel nav controls.
+const ARROW_ICON = `
+  <svg class="news-carousel-arrow-icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+    <path d="M4 10h12M11 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+  </svg>`;
+
+function scrollByCard(container, direction) {
+  const card = container.querySelector('.news-item');
+  if (!card) return;
+  const gap = parseFloat(getComputedStyle(container).columnGap) || 0;
+  const amount = (card.offsetWidth + gap) * direction * (isRtl() ? -1 : 1);
+  container.scrollBy({ left: amount, behavior: 'smooth' });
+}
+
+// Rect-based (LTR/RTL agnostic): the "next" arrow disables once the last card
+// sits fully within the scroll frame. There's no right bleed here, so the
+// container itself is the frame.
+function isLastCardVisible(container) {
+  const cards = container.querySelectorAll('.news-item');
+  const lastCard = cards[cards.length - 1];
+  if (!lastCard) return true;
+  const cardRect = lastCard.getBoundingClientRect();
+  const frameRect = container.getBoundingClientRect();
+  return cardRect.left >= frameRect.left - 1 && cardRect.right <= frameRect.right + 1;
+}
+
+function updateArrowState(container, prevBtn, nextBtn) {
+  const { scrollLeft } = container;
+  prevBtn.disabled = isRtl() ? scrollLeft >= -1 : scrollLeft <= 1;
+  nextBtn.disabled = isLastCardVisible(container);
+}
+
+function buildCarouselControls(container) {
+  const controls = createTag('div', { class: 'news-carousel-controls' });
+  const prevBtn = createTag('button', { type: 'button', class: 'news-carousel-arrow news-carousel-arrow-prev', 'aria-label': 'Previous' }, ARROW_ICON);
+  const nextBtn = createTag('button', { type: 'button', class: 'news-carousel-arrow news-carousel-arrow-next', 'aria-label': 'Next' }, ARROW_ICON);
+
+  prevBtn.addEventListener('click', () => scrollByCard(container, -1));
+  nextBtn.addEventListener('click', () => scrollByCard(container, 1));
+  controls.append(prevBtn, nextBtn);
+
+  const refresh = () => updateArrowState(container, prevBtn, nextBtn);
+  container.addEventListener('scroll', refresh);
+  window.addEventListener('resize', refresh);
+  requestAnimationFrame(refresh);
+
+  return controls;
+}
+
 function formatHeader(row) {
   row.classList.add('news-headline');
   const headlineText = row.querySelector('h1, h2, h3, h4, h5, h6, p:not(:has(picture))');
@@ -37,9 +91,14 @@ export default async function init(el) {
   const [head, ...tail] = rows;
   formatHeader(head);
   rows = tail;
+  const isCarousel = rows.length > MAX_GRID_ITEMS;
   const upsMap = { 2: 'two-up', 3: 'three-up', 4: 'four-up', 6: 'six-up' };
   // TODO: Infer parallax class from authoring
-  el.appendChild(createTag('div', { class: `news-items parallax-stagger-ltr ${upsMap[rows.length || 3]}` }, rows));
+  const itemsClass = isCarousel
+    ? 'news-items news-carousel'
+    : `news-items parallax-stagger-ltr ${upsMap[rows.length || 3]}`;
+  const newsItems = createTag('div', { class: itemsClass }, rows);
+  el.appendChild(newsItems);
   rows.forEach((row) => {
     row.classList.add('news-item');
     row.querySelector(':scope > div:not([class])').classList.add('foreground');
@@ -54,4 +113,6 @@ export default async function init(el) {
       } else content.classList.add('news-item-body');
     });
   });
+
+  if (isCarousel) el.appendChild(buildCarouselControls(newsItems));
 }

@@ -63,6 +63,83 @@
   }
 }
 
+/* Carousel mode (> 3 items): horizontal scroll-snap row with arrow controls.
+   No right bleed — cards stay flush within the content column on both edges. */
+.bacom-news .news-items.news-carousel {
+  display: flex;
+  gap: var(--grid-gutter);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+}
+
+.bacom-news .news-items.news-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.bacom-news .news-items.news-carousel .news-item {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+}
+
+.bacom-news .news-carousel-controls {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--s2a-spacing-8);
+  margin-top: var(--s2a-spacing-lg);
+  padding: 0 var(--s2a-spacing-lg);
+}
+
+.bacom-news .news-carousel-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--s2a-color-gray-100);
+  color: var(--s2a-color-gray-1000);
+  cursor: pointer;
+}
+
+.bacom-news .news-carousel-arrow:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.bacom-news .news-carousel-arrow:focus-visible {
+  outline: 2px solid var(--color-accent-focus-ring);
+  outline-offset: 2px;
+}
+
+.bacom-news .news-carousel-arrow-icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
+.bacom-news .news-carousel-arrow-prev .news-carousel-arrow-icon {
+  transform: scaleX(-1);
+}
+
+html[dir="rtl"] .bacom-news .news-carousel-arrow-prev .news-carousel-arrow-icon {
+  transform: scaleX(1);
+}
+
+html[dir="rtl"] .bacom-news .news-carousel-arrow-next .news-carousel-arrow-icon {
+  transform: scaleX(-1);
+}
+
+@media screen and (width >= 768px) {
+  /* Three cards per view, flush to the content column. */
+  .bacom-news .news-items.news-carousel .news-item {
+    flex-basis: calc((100% - 2 * var(--grid-gutter)) / 3);
+  }
+}
+
 @media screen and (width < 768px) {
   .bacom-news {
     display: flex;
@@ -81,6 +158,16 @@
       .news-item {
         padding: var(--s2a-spacing-0);
       }
+    }
+
+    /* Carousel row keeps a tighter, snap-friendly gap and the block's own
+       inline padding aligns the controls — no extra control padding needed. */
+    .news-items.news-carousel {
+      gap: var(--grid-gutter);
+    }
+
+    .news-carousel-controls {
+      padding: var(--s2a-spacing-0);
     }
   }
 }
