@@ -223,4 +223,45 @@ describe('bacom-elastic-carousel', () => {
       expect(item.href).to.equal('https://example.com/no-icon');
     });
   });
+
+  describe('headline tag-agnostic header', () => {
+    // Authors changed their pattern and mark the card headline up as an <h3> instead of a <p>.
+    // The header must keep its compact style regardless of the authored tag, so the block
+    // normalizes the headline to a <p> rather than letting decorateBlockText size a heading large.
+    const buildSimpleBlock = (count = 3, variantClasses = '') => {
+      const slides = Array.from({ length: count }, (_, i) => `
+        <div>
+          <div>
+            <h3 id="headline-${i}">Headline ${i}</h3>
+            <p>Description text for card ${i}.</p>
+            <p><a href="https://example.com/card-${i}">Explore ${i}</a></p>
+          </div>
+          <div>
+            <picture><img alt="media ${i}"></picture>
+          </div>
+        </div>`).join('');
+      document.body.innerHTML = `<div class="bacom-elastic-carousel ${variantClasses}">${slides}</div>`;
+      return document.querySelector('.bacom-elastic-carousel');
+    };
+
+    it('renders the headline as a paragraph even when authored as a heading', async () => {
+      const el = buildSimpleBlock(3);
+      await init(el);
+      const header = el.querySelector('.elastic-carousel-item-header');
+      expect(header.querySelector('h1, h2, h3, h4, h5, h6')).to.be.null;
+      const p = header.querySelector('p');
+      expect(p).to.exist;
+      expect(p.textContent).to.contain('Headline 0');
+    });
+
+    it('appends the CTA chevron to a footer link authored as an anchor', async () => {
+      const el = buildSimpleBlock(3, 'expand-content');
+      await init(el);
+      const footerLinks = [...el.querySelectorAll('.elastic-carousel-item-footer a')];
+      expect(footerLinks.length).to.equal(3);
+      footerLinks.forEach((link) => {
+        expect(link.querySelector('svg.elastic-carousel-footer-chevron')).to.exist;
+      });
+    });
+  });
 });

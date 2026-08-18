@@ -155,6 +155,22 @@ html[dir="rtl"] {
           -webkit-line-clamp: 2;
           overflow: hidden;
         }
+
+        /* CTA authored as a link (new pattern): match the heading CTA (old pattern) —
+           plain, un-faded text with no underline; the trailing chevron is added in JS. */
+        a {
+          color: var(--s2a-color-gray-1000);
+          text-decoration: none;
+        }
+
+        p:has(a) {
+          opacity: 1;
+          font-family: var(--body-font-family);
+          font-size: var(--s2a-typography-font-size-eyebrow);
+          font-weight: var(--s2a-font-weight-adobe-clean-bold);
+          line-height: var(--s2a-typography-line-height-eyebrow);
+          letter-spacing: var(--s2a-typography-letter-spacing-eyebrow);
+        }
       }
     }
   }

@@ -222,11 +222,17 @@ const buildSlide = ({ slide, index, slidesTotal }) => {
   // TODO: see if eyebrow class can be applied directly to footer headline
   decorateBlockText(left);
 
+  // Authors may mark the card headline up as a paragraph or a heading (h1–h6).
+  // Render it as a <p> so the header keeps its compact style regardless of the
+  // authored tag — decorateBlockText would otherwise size a heading tag as a
+  // large heading and it wouldn't match the `.elastic-carousel-item-header p` style.
+  const headingHTML = heading ? `<p>${heading.innerHTML}</p>` : '';
+
   const content = `
     <div class='elastic-carousel-item-container' id='elastic-carousel-slide-${index + 1}'>
       <div class='elastic-carousel-item-header'>
         ${icon?.outerHTML || ''}
-        ${heading?.outerHTML}
+        ${headingHTML}
       </div>
       <div class='elastic-carousel-item-media'>
         <div class='elastic-carousel-item-media-asset'>${asset.outerHTML}</div>
@@ -308,8 +314,12 @@ const decorateExpandContent = (carousel) => {
 };
 
 const decorateFooterChevron = (carousel) => {
-  carousel.querySelectorAll('.elastic-carousel-item-footer :is(h1, h2, h3, h4, h5, h6)')
-    .forEach((heading) => heading.insertAdjacentHTML('beforeend', FOOTER_CHEVRON_ICON));
+  // The footer CTA may be authored as a heading (old pattern) or a link (new pattern) —
+  // append the trailing chevron to whichever is present, so both render the same.
+  carousel.querySelectorAll('.elastic-carousel-item-footer').forEach((footer) => {
+    const cta = footer.querySelector(':is(h1, h2, h3, h4, h5, h6), a');
+    cta?.insertAdjacentHTML('beforeend', FOOTER_CHEVRON_ICON);
+  });
 };
 
 // Fewest cards. Guessed 2 for tablet.
