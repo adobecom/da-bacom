@@ -567,9 +567,9 @@ header.global-navigation {
   min-height: var(--global-height-nav);
 }
 
-body:has(.global-navigation) main {
+/* body:has(.global-navigation) main {
   margin-top: calc(-1 * var(--global-height-nav));
-}
+} */
 
 main > div,
 main .section:is([data-status='decorated'], [data-status='pending']) {
