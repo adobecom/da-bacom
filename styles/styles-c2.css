@@ -1585,3 +1585,8 @@ span.hang-opening-quote {
 .global-footer div.feds-footer-logo {
   display: none;
 }
+
+header.global-navigation {
+  height: 64px;
+  min-height: 64px;
+}
