@@ -107,6 +107,68 @@ describe('Bento Grid', () => {
     });
   });
 
+  describe('video-fragment links (new authoring)', () => {
+    before(async () => {
+      document.body.innerHTML = await readFile({ path: './mocks/fragment.html' });
+      await init(document.querySelector('.bento-grid'));
+    });
+
+    it('detects an mp4 from the link href even when the text is a friendly label', () => {
+      const featured = document.querySelector('.grid-view.view-desktop .bento-featured');
+      expect(featured.tagName).to.equal('A');
+      expect(featured.getAttribute('href')).to.contain('.mp4');
+      expect(featured.classList.contains('has-video')).to.be.true;
+    });
+
+    it('makes a raw /fragments/ "Watch video" link a modal trigger', () => {
+      const cards = [...document.querySelectorAll('.grid-view.view-desktop .grid-carousel .grid-item')];
+      const satya = cards.find((c) => c.dataset.modalPath === '/fragments/resources/videos/news-satya');
+      expect(satya).to.exist;
+      expect(satya.tagName).to.equal('A');
+      expect(satya.getAttribute('href')).to.equal('#satya');
+      expect(satya.dataset.modalHash).to.equal('#satya');
+      expect(satya.querySelector('.grid-item-play')).to.exist;
+    });
+
+    it('makes a Milo-decorated modal link a modal trigger', () => {
+      const cards = [...document.querySelectorAll('.grid-view.view-desktop .grid-carousel .grid-item')];
+      const rachel = cards.find((c) => c.dataset.modalPath === '/fragments/resources/videos/news-rachel');
+      expect(rachel).to.exist;
+      expect(rachel.tagName).to.equal('A');
+      expect(rachel.getAttribute('href')).to.equal('#rachel');
+    });
+  });
+
+  describe('mp4 replaced by Milo video autoblock', () => {
+    // Milo's video autoblock turns a raw .mp4 link into <video data-video-source="…"> (and a
+    // lazy <source>), removing the <a>. Bento must still find the mp4 and open the modal.
+    before(async () => {
+      document.body.innerHTML = await readFile({ path: './mocks/mp4-decorated.html' });
+      await init(document.querySelector('.bento-grid'));
+    });
+
+    it('opens the modal for the featured card from a <video data-video-source>', () => {
+      const featured = document.querySelector('.grid-view.view-desktop .bento-featured');
+      expect(featured.tagName).to.equal('A');
+      expect(featured.getAttribute('href')).to.equal('https://example.com/media_feat.mp4');
+      expect(featured.classList.contains('has-video')).to.be.true;
+      expect(featured.querySelector('.grid-item-play')).to.exist;
+    });
+
+    it('does not leak the video url into the description', () => {
+      const featured = document.querySelector('.grid-view.view-desktop .bento-featured');
+      expect(featured.querySelector('.bento-description').textContent).to.equal('Featured description.');
+    });
+
+    it('opens the modal for a carousel card from a nested <source>', () => {
+      const cards = [...document.querySelectorAll('.grid-view.view-desktop .grid-carousel .grid-item')];
+      const card = cards.find((c) => c.getAttribute('href') === 'https://example.com/media_two.mp4');
+      expect(card).to.exist;
+      expect(card.tagName).to.equal('A');
+      expect(card.classList.contains('has-video')).to.be.true;
+    });
+  });
+
   describe('missing structure', () => {
     it('logs an error and does not throw when rows are missing', async () => {
       document.body.innerHTML = await readFile({ path: './mocks/missing.html' });

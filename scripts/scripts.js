@@ -203,10 +203,10 @@ export function getMarketoLibs(location = window.location, getMetadata = null) {
 }
 
 export const LIBS = setLibs(window.location);
+const c2 = document.querySelector('meta[name="foundation"') || document.querySelector('meta[name="load-c2-styles"');
 
 (function loadStyles() {
   const paths = [`${LIBS}/styles/styles.css`];
-  const c2 = document.querySelector('meta[name="foundation"');
   if (c2) STYLES.push('/styles/styles-c2.css');
   if (STYLES) {
     paths.push(...(Array.isArray(STYLES) ? STYLES : [STYLES]));

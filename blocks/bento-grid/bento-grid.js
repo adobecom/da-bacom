@@ -85,6 +85,54 @@ function parseConfigBlock(configContainer) {
 
 const isHeading = (node) => /^H[1-6]$/.test(node.tagName);
 
+const MP4_RE = /https?:\/\/\S+\.mp4\S*/i;
+
+const isMp4 = (url) => /\.mp4(\?|#|$)/i.test(url || '');
+
+// The card's play target may take several forms:
+//   1. a direct .mp4 link (old: the url is the link text; new: the url is the href)
+//   2. Milo's video autoblock replaces that .mp4 <a> with <video data-video-source="…mp4">
+//      (plus a lazily-added <source>) and removes the <a> — so the mp4 lives on the media el
+//   3. a raw Milo video-fragment link: <a href="/fragments/…#hash">Watch video</a>
+//   4. a Milo-decorated modal link: <a href="#hash" data-modal-path="/fragments/…">
+// Return the mp4 src (played in the custom <video> modal) or the fragment path + hash (opened
+// as a Milo modal), plus the source node so its paragraph is kept out of the description.
+function resolveCellVideo(after) {
+  const anchors = after.flatMap((node) => [...node.querySelectorAll('a')]);
+
+  // 1) direct mp4 link
+  const mp4Anchor = anchors.find((a) => isMp4(a.getAttribute('href')) || MP4_RE.test(a.textContent));
+  if (mp4Anchor) {
+    const href = mp4Anchor.getAttribute('href') || '';
+    const videoSrc = (isMp4(href) && href)
+      || href.match(MP4_RE)?.[0]
+      || mp4Anchor.textContent.match(MP4_RE)?.[0];
+    return { videoSrc, fragmentPath: null, fragmentHash: null, node: mp4Anchor };
+  }
+
+  // 2) mp4 link already turned into a <video data-video-source>/<source> by Milo's autoblock
+  const mediaEl = after
+    .flatMap((node) => [...node.querySelectorAll('video, source')])
+    .find((m) => isMp4(m.getAttribute('data-video-source')) || isMp4(m.getAttribute('src')));
+  if (mediaEl) {
+    const videoSrc = mediaEl.getAttribute('data-video-source') || mediaEl.getAttribute('src');
+    return { videoSrc, fragmentPath: null, fragmentHash: null, node: mediaEl };
+  }
+
+  // 3 & 4) Milo video-fragment / modal link
+  const modalAnchor = anchors.find((a) => a.dataset.modalPath
+    || /\/fragments\//i.test(a.getAttribute('href') || ''));
+  if (modalAnchor) {
+    const href = modalAnchor.getAttribute('href') || '';
+    const fragmentPath = modalAnchor.dataset.modalPath || href.split('#')[0];
+    const fragmentHash = modalAnchor.dataset.modalHash
+      || (href.includes('#') ? `#${href.split('#').pop()}` : '');
+    return { videoSrc: null, fragmentPath, fragmentHash, node: modalAnchor };
+  }
+
+  return { videoSrc: null, fragmentPath: null, fragmentHash: null, node: null };
+}
+
 function extractCells(container) {
   if (!container) return [];
   return Array.from(container.children).map((child) => {
@@ -99,15 +147,17 @@ function extractCells(container) {
 
     const heading = after.find(isHeading);
     const paragraphs = after.filter((node) => node.tagName === 'P');
-    const videoPara = paragraphs.find((p) => /https?:\/\/\S+\.mp4\b/i.test(p.textContent));
-    const descPara = paragraphs.find((p) => p !== videoPara
+    const { videoSrc, fragmentPath, fragmentHash, node } = resolveCellVideo(after);
+    const ctaPara = node ? paragraphs.find((p) => p.contains(node)) : null;
+    const descPara = paragraphs.find((p) => p !== ctaPara
       && !p.querySelector('picture')
       && p.textContent.trim());
-    const videoMatch = (videoPara || child).textContent.match(/https?:\/\/\S+\.mp4\b/i);
 
     return {
       pictureHTML: pic ? pic.outerHTML : '',
-      videoSrc: videoMatch?.[0] || null,
+      videoSrc: videoSrc || null,
+      fragmentPath,
+      fragmentHash,
       heading: heading?.textContent.trim() || '',
       description: descPara?.textContent.trim() || '',
       sectionHeading: sectionHeading?.textContent.trim() || '',
@@ -172,6 +222,30 @@ function attachVideoTrigger(item, mediaEl, videoSrc) {
   item.addEventListener('click', (event) => {
     event.preventDefault();
     openVideoModal(videoSrc);
+  });
+}
+
+// Milo video-fragment links point at a fragment (not a raw mp4), so play them by
+// loading that fragment into a Milo modal rather than the custom <video> modal.
+async function openFragmentModal(path, hash) {
+  const { loadStyle } = await import(`${LIBS}/utils/utils.js`);
+  const { getModal } = await import(`${LIBS}/blocks/modal/modal.js`);
+  loadStyle(`${LIBS}/blocks/modal/modal.css`);
+  const id = (hash || '').replace('#', '') || 'bento-grid-video-modal';
+  await getModal({ path, id });
+}
+
+function attachFragmentTrigger(item, mediaEl, path, hash) {
+  item.href = hash || path;
+  item.classList.add('has-video');
+  item.dataset.modalPath = path;
+  if (hash) item.dataset.modalHash = hash;
+
+  addPlayIcon(mediaEl || item);
+
+  item.addEventListener('click', (event) => {
+    event.preventDefault();
+    openFragmentModal(path, hash);
   });
 }
 
@@ -256,12 +330,14 @@ function buildFeatured(cell) {
     showWatchLink: true,
   });
 
-  const item = document.createElement(cell.videoSrc ? 'a' : 'div');
+  const item = document.createElement(cell.videoSrc || cell.fragmentPath ? 'a' : 'div');
   item.className = 'bento-featured';
   item.append(text, media);
 
   if (cell.videoSrc) {
     attachVideoTrigger(item, media, cell.videoSrc);
+  } else if (cell.fragmentPath) {
+    attachFragmentTrigger(item, media, cell.fragmentPath, cell.fragmentHash);
   } else {
     addPlayIcon(media);
   }
@@ -275,7 +351,7 @@ function buildCarouselCard(cell, loadMode) {
   const media = buildMedia(cell, loadMode, 'grid-item-media');
   if (!media) return null;
 
-  const item = document.createElement(cell.videoSrc ? 'a' : 'div');
+  const item = document.createElement(cell.videoSrc || cell.fragmentPath ? 'a' : 'div');
   item.className = 'grid-item';
   item.appendChild(media);
 
@@ -288,6 +364,8 @@ function buildCarouselCard(cell, loadMode) {
 
   if (cell.videoSrc) {
     attachVideoTrigger(item, media, cell.videoSrc);
+  } else if (cell.fragmentPath) {
+    attachFragmentTrigger(item, media, cell.fragmentPath, cell.fragmentHash);
   } else {
     addPlayIcon(media);
   }
