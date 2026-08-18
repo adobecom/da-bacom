@@ -1580,3 +1580,8 @@ span.hang-opening-quote {
     animation-range: entry 0% entry 70%, exit 50% exit 90%;
   }
 }
+
+/* BACOM specific */
+.global-footer div.feds-footer-logo {
+  display: none;
+}
