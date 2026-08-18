@@ -109,29 +109,47 @@ describe('bacom-elastic-carousel', () => {
       controller?.abort?.();
     });
 
-    // Layout-independent state machine. Without the block CSS the visible count falls back to 3,
-    // so 8 slides -> last index 5. (The per-breakpoint pixel paging is covered by e2e.)
+    // Paging now rides native scroll (scrollLeft/scrollWidth), so this needs real dimensions
+    // that the external block CSS would normally supply but isn't loaded here.
     it('advances and clamps the prev/next disabled state at the ends', async () => {
       const el = buildBlock(8, 'limited');
+      const style = document.createElement('style');
+      style.textContent = `
+        .elastic-carousel-viewport { width: 300px; }
+        .elastic-carousel-container { display: flex; overflow-x: auto; column-gap: 10px; }
+        .elastic-carousel-item { flex: 0 0 100px; width: 100px; }
+      `;
+      document.head.appendChild(style);
+
       const controller = await init(el);
+      const container = el.querySelector('.elastic-carousel-container');
       const prev = el.querySelector('.elastic-carousel-limited-control.prev');
       const next = el.querySelector('.elastic-carousel-limited-control.next');
 
-      expect(prev.disabled).to.be.true; // start
-      expect(next.disabled).to.be.false;
+      await new Promise((resolve) => { requestAnimationFrame(resolve); });
+      expect(prev.disabled).to.be.true; // start: nothing to scroll back to
+      expect(next.disabled).to.be.false; // 8 cards overflow the 300px viewport
 
-      next.click();
+      await new Promise((resolve) => {
+        container.addEventListener('scrollend', resolve, { once: true });
+        next.click();
+      });
+      expect(container.scrollLeft).to.be.greaterThan(0); // a real click actually scrolled
       expect(prev.disabled).to.be.false; // advanced off the start
 
-      for (let i = 0; i < 8; i += 1) next.click(); // page past the end; clamps
+      // Jump to the extremes directly (native clamp) rather than waiting out animated clicks.
+      container.scrollLeft = container.scrollWidth;
+      container.dispatchEvent(new Event('scroll'));
       expect(next.disabled).to.be.true; // reached the last page
       expect(prev.disabled).to.be.false;
 
-      for (let i = 0; i < 8; i += 1) prev.click(); // back to the start; clamps
+      container.scrollLeft = -1;
+      container.dispatchEvent(new Event('scroll'));
       expect(prev.disabled).to.be.true;
       expect(next.disabled).to.be.false;
 
       controller?.abort?.();
+      document.head.removeChild(style);
     });
 
     it('hides controls when there is nothing to page (<= 2 slides)', async () => {
@@ -140,6 +158,25 @@ describe('bacom-elastic-carousel', () => {
       // viewport still wraps, but no controls since 2 cards never overflow at any breakpoint
       expect(el.querySelector('.elastic-carousel-viewport')).to.exist;
       expect(el.querySelector('.elastic-carousel-limited-controls')).to.be.null;
+    });
+
+    // --limited-visible-slides is the same CSS var bacom-elastic-carousel.css sets to 3 on
+    // desktop and 2 on tablet; setting it inline here stands in for each breakpoint since the
+    // real stylesheet (and its media queries) isn't loaded in this test environment.
+    it('hides the whole controls row once the breakpoint already shows every card (3 desktop, 2 tablet)', async () => {
+      const el = buildBlock(3, 'limited');
+      el.style.setProperty('--limited-visible-slides', '3');
+      const controller = await init(el);
+      // decorateLimitedCarousel's initial check runs on the next animation frame.
+      await new Promise((resolve) => { requestAnimationFrame(resolve); });
+
+      expect(el.classList.contains('limited-static')).to.be.true; // 3 slides <= 3 visible (desktop)
+
+      el.style.setProperty('--limited-visible-slides', '2');
+      window.dispatchEvent(new Event('resize'));
+      expect(el.classList.contains('limited-static')).to.be.false; // 3 slides > 2 visible (tablet)
+
+      controller?.abort?.();
     });
   });
 

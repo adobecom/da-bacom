@@ -622,6 +622,7 @@ html[dir="rtl"] {
       font-size: var(--s2a-font-size-sm);
       line-height: var(--s2a-font-line-height-18);
       color: var(--elastic-expand-panel-color);
+      text-align: left;
     }
   }
 
@@ -692,7 +693,7 @@ html[dir="rtl"] .elastic-carousel-footer-chevron {
     .elastic-carousel-container .elastic-carousel-item {
       &.hovered,
       &:focus-visible {
-        flex: 0 0 calc(100% / var(--limited-visible-slides, 3.25));
+        flex: 0 0 var(--limited-card-max-width);
         max-width: var(--limited-card-max-width);
       }
     }
@@ -730,10 +731,20 @@ html[dir="rtl"] .elastic-carousel-footer-chevron {
 }
 
 .bacom-elastic-carousel.limited {
-  --limited-visible-slides: 3.25;
+  --limited-visible-slides: 3;
   --limited-card-max-width: 394px;
+  --limited-group-max-width: calc((var(--limited-card-max-width) * var(--limited-visible-slides)) + (var(--s2a-spacing-md) * (var(--limited-visible-slides) - 1)));
+  --limited-block-left-offset: calc(max(0px, (100vw - var(--grid-max-width-default)) / 2) + var(--grid-margin-width));
+  --limited-block-content-width: calc(min(100vw, var(--grid-max-width-default)) - (2 * var(--grid-margin-width)));
+  --limited-left-gutter: max(0px, calc((var(--limited-block-content-width) - var(--limited-group-max-width)) / 2));
+  --limited-peek-width: calc((var(--limited-card-max-width) * 0.4) + var(--s2a-spacing-md));
+  --limited-bleed-space: max(0px, calc(100vw - var(--limited-block-left-offset) - var(--limited-left-gutter) - var(--limited-group-max-width)));
 
   .elastic-carousel-limited-controls {
+    display: none;
+  }
+
+  .elastic-carousel-limited-spacer {
     display: none;
   }
 }
@@ -748,24 +759,46 @@ html[dir="rtl"] .elastic-carousel-footer-chevron {
 
     .elastic-carousel-viewport {
       position: relative;
-      overflow: hidden;
+      margin-left: var(--limited-left-gutter);
+      width: 100%;
     }
 
     .elastic-carousel-container {
       position: relative;
       left: 0;
-      width: 100%;
+      display: flex;
       max-width: none;
+      /* Neutralises expand-content's justify-self: center (bacom-elastic-carousel.expand-content
+         .elastic-carousel-container) when both variants are combined - otherwise the browser
+         shrinks this row to fit-content and centers it, bleeding cards on both sides instead of
+         just the right. */
+      justify-self: auto;
       column-gap: var(--s2a-spacing-md);
-      transform: translateX(var(--limited-offset, 0px));
-      transition: transform .5s var(--paralax-easing);
+      overflow-x: auto;
+      overflow-y: visible;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+      scroll-behavior: smooth;
+      transform: none;
+      transition: none;
       animation: none;
 
+      &::-webkit-scrollbar {
+        display: none;
+      }
+
       .elastic-carousel-item {
-        flex: 0 0 calc(100% / var(--limited-visible-slides, 3.25));
+        scroll-snap-align: start;
+        flex: 0 0 var(--limited-card-max-width);
         max-width: var(--limited-card-max-width);
         margin-inline: 0;
         animation: none;
+      }
+
+      .elastic-carousel-limited-spacer {
+        display: block;
+        flex: 0 0 var(--limited-bleed-space);
+        width: var(--limited-bleed-space);
       }
     }
 
@@ -774,6 +807,11 @@ html[dir="rtl"] .elastic-carousel-footer-chevron {
       justify-content: flex-end;
       gap: var(--s2a-spacing-12);
       margin-block-start: var(--s2a-spacing-lg);
+      /* Reuses the viewport's own left-gutter offset (rather than auto-centering
+         independently) so this row's right edge lines up exactly with the third card's
+         right edge instead of drifting a few px off from a separately-computed center. */
+      width: var(--limited-group-max-width);
+      margin-left: var(--limited-left-gutter);
     }
 
     &.limited-static .elastic-carousel-limited-controls {
@@ -784,7 +822,7 @@ html[dir="rtl"] .elastic-carousel-footer-chevron {
 
 @media (768px <= width < 1280px) {
   .bacom-elastic-carousel.limited {
-    --limited-visible-slides: 2.25;
+    --limited-visible-slides: 2;
   }
 }
 

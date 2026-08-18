@@ -315,17 +315,6 @@ const decorateFooterChevron = (carousel) => {
 // Fewest cards. Guessed 2 for tablet.
 const LIMITED_MIN_VISIBLE = 2;
 
-const getVisibleWhole = (carousel) => {
-  const raw = parseFloat(getComputedStyle(carousel).getPropertyValue('--limited-visible-slides'));
-  return Math.max(1, Math.floor(Number.isFinite(raw) ? raw : 3));
-};
-
-const getLimitedStep = (slides) => {
-  if (slides.length < 2) return 0;
-  const [first, second] = slides;
-  return second.getBoundingClientRect().left - first.getBoundingClientRect().left;
-};
-
 // Step between adjacent cards' horizontal shrink in the mobile stack (matches the base
 // design's 3/2.25/1.5/.75/0rem ramp: a 0.75rem step).
 const STACK_SHRINK_STEP = '0.75rem';
@@ -347,6 +336,41 @@ const decorateMobileStack = (carousel) => {
   });
 };
 
+// How many cards the current breakpoint shows whole (3 desktop, 2 tablet) is read straight off
+// the CSS var the layout itself is built on, so this stays in lockstep with
+// bacom-elastic-carousel.css instead of duplicating the breakpoint thresholds here.
+const getVisibleSlides = (carousel) => {
+  const raw = parseFloat(getComputedStyle(carousel).getPropertyValue('--limited-visible-slides'));
+  return Number.isFinite(raw) ? raw : 3;
+};
+
+// Native scroll (rather than a transform offset) guarantees the row can never reveal a
+// previous card on the left: there's nothing to render before scrollLeft 0. Only the right
+// side can bleed past the visible cards, matching the peek/bleed the design calls for.
+const updateLimitedControls = (carousel, container, prevBtn, nextBtn, totalSlides) => {
+  const maxScroll = container.scrollWidth - container.clientWidth;
+  const { scrollLeft } = container;
+  if (isRtl()) {
+    prevBtn.disabled = scrollLeft >= -1;
+    nextBtn.disabled = scrollLeft <= -maxScroll + 1;
+  } else {
+    prevBtn.disabled = scrollLeft <= 1;
+    nextBtn.disabled = scrollLeft >= maxScroll - 1;
+  }
+  // Hides the whole controls row once the current breakpoint already shows every card at
+  // once (<=3 desktop, <=2 tablet). scrollWidth alone isn't a reliable signal for this: the
+  // trailing bleed-space spacer inflates it even when there's no real card left to page to.
+  carousel.classList.toggle('limited-static', totalSlides <= getVisibleSlides(carousel));
+};
+
+const scrollLimitedByCard = (container, direction) => {
+  const card = container.querySelector('.elastic-carousel-item');
+  if (!card) return;
+  const gap = parseFloat(getComputedStyle(container).columnGap) || 0;
+  const amount = (card.getBoundingClientRect().width + gap) * direction * (isRtl() ? -1 : 1);
+  container.scrollBy({ left: amount, behavior: 'smooth' });
+};
+
 const decorateLimitedCarousel = (carousel) => {
   if (!carousel.classList.contains('limited')) return null;
   const container = carousel.querySelector('.elastic-carousel-container');
@@ -359,33 +383,26 @@ const decorateLimitedCarousel = (carousel) => {
 
   if (slides.length <= LIMITED_MIN_VISIBLE) return null;
 
-  let index = 0;
+  // Cancels out the "peek room" built into the row's width (so a partial next card can bleed
+  // into view at rest) once scrolled to the end, so the final native scroll position always
+  // lands flush on a whole card instead of stopping mid-card.
+  container.append(createTag('div', { class: 'elastic-carousel-limited-spacer', 'aria-hidden': 'true' }));
 
   const prevBtn = createTag('button', { class: 'elastic-carousel-limited-control prev', type: 'button', 'aria-label': 'Previous cards' }, CAROUSEL_ARROW_ICON);
   const nextBtn = createTag('button', { class: 'elastic-carousel-limited-control next', type: 'button', 'aria-label': 'Next cards' }, CAROUSEL_ARROW_ICON);
-
-  const goTo = (nextIndex) => {
-    const maxIndex = Math.max(0, slides.length - getVisibleWhole(carousel));
-    index = Math.min(maxIndex, Math.max(0, nextIndex));
-
-    const step = getLimitedStep(slides);
-    container.style.setProperty('--limited-offset', `${-1 * index * step}px`);
-    prevBtn.disabled = index <= 0;
-    nextBtn.disabled = index >= maxIndex;
-
-    carousel.classList.toggle('limited-static', maxIndex === 0);
-  };
-
-  prevBtn.addEventListener('click', () => goTo(index - 1));
-  nextBtn.addEventListener('click', () => goTo(index + 1));
-  goTo(0);
+  prevBtn.addEventListener('click', () => scrollLimitedByCard(container, -1));
+  nextBtn.addEventListener('click', () => scrollLimitedByCard(container, 1));
 
   const controls = createTag('div', { class: 'elastic-carousel-limited-controls' });
   controls.append(prevBtn, nextBtn);
   carousel.append(controls);
 
   const controller = new AbortController();
-  window.addEventListener('resize', () => goTo(index), { signal: controller.signal });
+  const update = () => updateLimitedControls(carousel, container, prevBtn, nextBtn, slides.length);
+  container.addEventListener('scroll', update, { signal: controller.signal });
+  window.addEventListener('resize', update, { signal: controller.signal });
+  requestAnimationFrame(update);
+
   return controller;
 };
 
