@@ -102,7 +102,7 @@
 
 .bento-grid .bento-featured-text .bento-eyebrow {
   color: #000;
-  font-family: var(--s2a-font-family-eyebrow);
+  font-family: var(--heading-font-family);
   font-size: var(--s2a-typography-font-size-eyebrow);
   font-style: normal;
   font-weight: 700;
@@ -112,7 +112,7 @@
 
 .bento-grid .bento-featured-text .bento-heading {
   color: #000;
-  font-family: "Adobe Clean Display", sans-serif;
+  font-family: var(--heading-font-family);
   font-size: 36px;
   font-style: normal;
   font-weight: 900;
@@ -264,7 +264,7 @@
   margin: 0 0 8px;
   color: #000;
   white-space: normal;
-  font-family: "Adobe Clean Display", sans-serif;
+  font-family: var(--heading-font-family);
   font-size: 24px;
   font-style: normal;
   font-weight: 900;
