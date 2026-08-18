@@ -326,13 +326,8 @@
 
 .bento-grid .grid-carousel-arrow-icon {
   display: block;
-  width: 8px;
-  height: 13px;
-  background-color: currentcolor;
-  mask-image: url('../../assets/img/arrow-right.svg');
-  mask-repeat: no-repeat;
-  mask-position: center;
-  mask-size: contain;
+  width: 20px;
+  height: 20px;
 }
 
 .bento-grid .grid-carousel-arrow-prev .grid-carousel-arrow-icon {

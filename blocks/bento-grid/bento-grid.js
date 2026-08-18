@@ -25,7 +25,12 @@ function createTag(tag, attributes, html, options = {}) {
 const LANA_OPTIONS = { tags: 'bento-grid', errorType: 'i' };
 const VIEW_TYPES = ['mobile', 'tablet', 'desktop'];
 const MIN_CAROUSEL_FOR_CONTROLS = 3;
-const ARROW_ICON = '<span class="grid-carousel-arrow-icon"></span>';
+// Full arrow (shaft + head) matching bacom-elastic-carousel's nav controls, rather than
+// a bare chevron/caret. Uses currentColor so it inherits the button's color.
+const ARROW_ICON = `
+  <svg class="grid-carousel-arrow-icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+    <path d="M4 10h12M11 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+  </svg>`;
 
 function logError(message, error) {
   window.lana?.log(`Bento grid ${message}: ${error}`, LANA_OPTIONS);
