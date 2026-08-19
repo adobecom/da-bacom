@@ -168,4 +168,47 @@ describe('Video Marquee', () => {
     const video = document.querySelector('.marquee-media video');
     expect(video.autoplay).to.be.false;
   });
+
+  it('splits two video rows into mobile and desktop, constructing each source', async () => {
+    document.body.innerHTML = `<div class="video-marquee">
+      <div><div><picture><img alt="" src="/logo.svg"></picture></div></div>
+      <div><div><h1>From idea to impact.</h1><p>Subcopy.</p></div></div>
+      <div><div><a href="https://video.tv.adobe.com/v/3497295">https://video.tv.adobe.com/v/3497295</a></div></div>
+      <div><div><picture><img alt="https://example.com/media_x.mp4#_autoplay1 | Play overview video" src="/poster.png"></picture></div></div>
+    </div>`;
+
+    await init(document.querySelector('.video-marquee'));
+
+    const mobile = document.querySelector('.marquee-video-mobile');
+    const desktop = document.querySelector('.marquee-video-desktop');
+    expect(mobile).to.exist;
+    expect(desktop).to.exist;
+
+    // mobile tv.adobe.com link -> MPC iframe (no native video)
+    const iframe = mobile.querySelector('iframe.marquee-atv');
+    expect(iframe).to.exist;
+    expect(iframe.getAttribute('src')).to.equal('https://video.tv.adobe.com/v/3497295');
+    expect(mobile.querySelector('video')).to.not.exist;
+
+    // desktop mp4-in-alt poster -> native video with source + poster
+    const video = desktop.querySelector('video');
+    expect(video).to.exist;
+    expect(video.querySelector('source').getAttribute('src')).to.equal('https://example.com/media_x.mp4');
+    expect(video.getAttribute('poster')).to.contain('poster.png');
+  });
+
+  it('does not add mobile/desktop classes for a single video (back-compat)', async () => {
+    document.body.innerHTML = `<div class="video-marquee">
+      <div><div><h1>Heading</h1></div></div>
+      <div><div>
+        <p><a href="https://example.com/video.mp4">Video</a></p>
+      </div></div>
+    </div>`;
+
+    await init(document.querySelector('.video-marquee'));
+
+    expect(document.querySelector('.marquee-media video')).to.exist;
+    expect(document.querySelector('.marquee-video-mobile')).to.not.exist;
+    expect(document.querySelector('.marquee-video-desktop')).to.not.exist;
+  });
 });
