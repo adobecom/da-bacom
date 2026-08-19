@@ -1,3 +1,14 @@
+export function setLibs(location) {
+  const { hostname, search } = location;
+  if (!['.aem.', '.hlx.', '.stage.', 'local', '.da.'].some((i) => hostname.includes(i))) return '/libs';
+  const branch = new URLSearchParams(search).get('milolibs') || 'main';
+  if (!/^[a-zA-Z0-9_-]+$/.test(branch)) throw new Error('Invalid branch name.');
+  if (branch === 'local') return 'http://localhost:6456/libs';
+  if (branch === 'main' && hostname.includes('.stage.')) return '/libs';
+  return branch.includes('--') ? `https://${branch}.aem.live/libs` : `https://${branch}--milo--adobecom.aem.live/libs`;
+}
+export const LIBS = setLibs(window.location);
+
 const STYLES = ['/styles/styles.css'];
 const CONFIG = {
   imsClientId: 'bacom',
@@ -143,6 +154,12 @@ const CONFIG = {
       window.location.reload();
     },
   },
+  mep: {
+    blocks: {
+      'global-navigation': `${LIBS}/blocks/global-navigation`,
+      'global-footer': `${LIBS}/blocks/global-footer`,
+    },
+  },
 };
 
 export const PLAY_SVG = '<svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 0 18 18" width="18" class="icon-milo icon-milo-play"><path fill="currentColor" fill-rule="evenodd" d="M4.73,2H3.5a.5.5,0,0,0-.5.5v13a.5.5,0,0,0,.5.5H4.73a1,1,0,0,0,.5035-.136l11.032-6.433a.5.5,0,0,0,0-.862L5.2335,2.136A1,1,0,0,0,4.73,2Z"/></svg>';
@@ -179,16 +196,6 @@ export const getLCPImages = (doc) => {
   lcpImages?.forEach(eagerLoad);
 }());
 
-export function setLibs(location) {
-  const { hostname, search } = location;
-  if (!['.aem.', '.hlx.', '.stage.', 'local', '.da.'].some((i) => hostname.includes(i))) return '/libs';
-  const branch = new URLSearchParams(search).get('milolibs') || 'main';
-  if (!/^[a-zA-Z0-9_-]+$/.test(branch)) throw new Error('Invalid branch name.');
-  if (branch === 'local') return 'http://localhost:6456/libs';
-  if (branch === 'main' && hostname.includes('.stage.')) return '/libs';
-  return branch.includes('--') ? `https://${branch}.aem.live/libs` : `https://${branch}--milo--adobecom.aem.live/libs`;
-}
-
 export function getMarketoLibs(location = window.location, getMetadata = null) {
   const { search, hostname } = location;
   const branch = new URLSearchParams(search).get('marketolibs') || getMetadata?.('marketo-libs');
@@ -203,11 +210,10 @@ export function getMarketoLibs(location = window.location, getMetadata = null) {
   return branch.includes('--') ? `https://${branch}.aem.live/mkto` : `https://${branch}--da-marketo--adobecom.aem.live/mkto`;
 }
 
-export const LIBS = setLibs(window.location);
+const c2 = document.querySelector('meta[name="foundation"') || document.querySelector('meta[name="load-c2-styles"');
 
 (function loadStyles() {
   const paths = [`${LIBS}/styles/styles.css`];
-  const c2 = document.querySelector('meta[name="foundation"');
   if (c2) STYLES.push('/styles/styles-c2.css');
   if (STYLES) {
     paths.push(...(Array.isArray(STYLES) ? STYLES : [STYLES]));

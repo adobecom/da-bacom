@@ -109,29 +109,47 @@ describe('bacom-elastic-carousel', () => {
       controller?.abort?.();
     });
 
-    // Layout-independent state machine. Without the block CSS the visible count falls back to 3,
-    // so 8 slides -> last index 5. (The per-breakpoint pixel paging is covered by e2e.)
+    // Paging now rides native scroll (scrollLeft/scrollWidth), so this needs real dimensions
+    // that the external block CSS would normally supply but isn't loaded here.
     it('advances and clamps the prev/next disabled state at the ends', async () => {
       const el = buildBlock(8, 'limited');
+      const style = document.createElement('style');
+      style.textContent = `
+        .elastic-carousel-viewport { width: 300px; }
+        .elastic-carousel-container { display: flex; overflow-x: auto; column-gap: 10px; }
+        .elastic-carousel-item { flex: 0 0 100px; width: 100px; }
+      `;
+      document.head.appendChild(style);
+
       const controller = await init(el);
+      const container = el.querySelector('.elastic-carousel-container');
       const prev = el.querySelector('.elastic-carousel-limited-control.prev');
       const next = el.querySelector('.elastic-carousel-limited-control.next');
 
-      expect(prev.disabled).to.be.true; // start
-      expect(next.disabled).to.be.false;
+      await new Promise((resolve) => { requestAnimationFrame(resolve); });
+      expect(prev.disabled).to.be.true; // start: nothing to scroll back to
+      expect(next.disabled).to.be.false; // 8 cards overflow the 300px viewport
 
-      next.click();
+      await new Promise((resolve) => {
+        container.addEventListener('scrollend', resolve, { once: true });
+        next.click();
+      });
+      expect(container.scrollLeft).to.be.greaterThan(0); // a real click actually scrolled
       expect(prev.disabled).to.be.false; // advanced off the start
 
-      for (let i = 0; i < 8; i += 1) next.click(); // page past the end; clamps
+      // Jump to the extremes directly (native clamp) rather than waiting out animated clicks.
+      container.scrollLeft = container.scrollWidth;
+      container.dispatchEvent(new Event('scroll'));
       expect(next.disabled).to.be.true; // reached the last page
       expect(prev.disabled).to.be.false;
 
-      for (let i = 0; i < 8; i += 1) prev.click(); // back to the start; clamps
+      container.scrollLeft = -1;
+      container.dispatchEvent(new Event('scroll'));
       expect(prev.disabled).to.be.true;
       expect(next.disabled).to.be.false;
 
       controller?.abort?.();
+      document.head.removeChild(style);
     });
 
     it('hides controls when there is nothing to page (<= 2 slides)', async () => {
@@ -140,6 +158,25 @@ describe('bacom-elastic-carousel', () => {
       // viewport still wraps, but no controls since 2 cards never overflow at any breakpoint
       expect(el.querySelector('.elastic-carousel-viewport')).to.exist;
       expect(el.querySelector('.elastic-carousel-limited-controls')).to.be.null;
+    });
+
+    // --limited-visible-slides is the same CSS var bacom-elastic-carousel.css sets to 3 on
+    // desktop and 2 on tablet; setting it inline here stands in for each breakpoint since the
+    // real stylesheet (and its media queries) isn't loaded in this test environment.
+    it('hides the whole controls row once the breakpoint already shows every card (3 desktop, 2 tablet)', async () => {
+      const el = buildBlock(3, 'limited');
+      el.style.setProperty('--limited-visible-slides', '3');
+      const controller = await init(el);
+      // decorateLimitedCarousel's initial check runs on the next animation frame.
+      await new Promise((resolve) => { requestAnimationFrame(resolve); });
+
+      expect(el.classList.contains('limited-static')).to.be.true; // 3 slides <= 3 visible (desktop)
+
+      el.style.setProperty('--limited-visible-slides', '2');
+      window.dispatchEvent(new Event('resize'));
+      expect(el.classList.contains('limited-static')).to.be.false; // 3 slides > 2 visible (tablet)
+
+      controller?.abort?.();
     });
   });
 
@@ -153,6 +190,78 @@ describe('bacom-elastic-carousel', () => {
       expect(items[7].style.zIndex).to.equal('8');
       expect(items[5].style.getPropertyValue('--stack-offset')).to.not.equal('');
       expect(items[5].style.getPropertyValue('--stack-contrast')).to.not.equal('');
+    });
+  });
+
+  describe('missing icon', () => {
+    // Authors can remove the icon entirely, which removes its wrapping element rather than
+    // leaving an empty placeholder — the left column shifts up by one child.
+    it('decorates the card correctly when the icon element is absent', async () => {
+      document.body.innerHTML = `<div class="bacom-elastic-carousel">
+        <div>
+          <div>
+            <p>Eyebrow label</p>
+            <h3 id="heading-noicon">No Icon Heading</h3>
+            <p>Description text for the no-icon card.</p>
+            <p><a href="https://example.com/no-icon">No Icon | Adobe slides</a></p>
+          </div>
+          <div>
+            <picture><img alt="media"></picture>
+            <a href="https://example.com/media.mp4">media</a>
+          </div>
+        </div>
+      </div>`;
+      const el = document.querySelector('.bacom-elastic-carousel');
+      await init(el);
+
+      const item = el.querySelector('.elastic-carousel-item');
+      const header = item.querySelector('.elastic-carousel-item-header');
+      expect(header.querySelector('img')).to.be.null;
+      expect(header.textContent).to.not.contain('undefined');
+      expect(header.textContent.trim()).to.equal('Eyebrow label');
+      expect(item.querySelector('.elastic-carousel-item-footer h3')?.textContent).to.equal('No Icon Heading');
+      expect(item.href).to.equal('https://example.com/no-icon');
+    });
+  });
+
+  describe('headline tag-agnostic header', () => {
+    // Authors changed their pattern and mark the card headline up as an <h3> instead of a <p>.
+    // The header must keep its compact style regardless of the authored tag, so the block
+    // normalizes the headline to a <p> rather than letting decorateBlockText size a heading large.
+    const buildSimpleBlock = (count = 3, variantClasses = '') => {
+      const slides = Array.from({ length: count }, (_, i) => `
+        <div>
+          <div>
+            <h3 id="headline-${i}">Headline ${i}</h3>
+            <p>Description text for card ${i}.</p>
+            <p><a href="https://example.com/card-${i}">Explore ${i}</a></p>
+          </div>
+          <div>
+            <picture><img alt="media ${i}"></picture>
+          </div>
+        </div>`).join('');
+      document.body.innerHTML = `<div class="bacom-elastic-carousel ${variantClasses}">${slides}</div>`;
+      return document.querySelector('.bacom-elastic-carousel');
+    };
+
+    it('renders the headline as a paragraph even when authored as a heading', async () => {
+      const el = buildSimpleBlock(3);
+      await init(el);
+      const header = el.querySelector('.elastic-carousel-item-header');
+      expect(header.querySelector('h1, h2, h3, h4, h5, h6')).to.be.null;
+      const p = header.querySelector('p');
+      expect(p).to.exist;
+      expect(p.textContent).to.contain('Headline 0');
+    });
+
+    it('appends the CTA chevron to a footer link authored as an anchor', async () => {
+      const el = buildSimpleBlock(3, 'expand-content');
+      await init(el);
+      const footerLinks = [...el.querySelectorAll('.elastic-carousel-item-footer a')];
+      expect(footerLinks.length).to.equal(3);
+      footerLinks.forEach((link) => {
+        expect(link.querySelector('svg.elastic-carousel-footer-chevron')).to.exist;
+      });
     });
   });
 });

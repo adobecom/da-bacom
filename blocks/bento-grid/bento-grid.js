@@ -25,7 +25,10 @@ function createTag(tag, attributes, html, options = {}) {
 const LANA_OPTIONS = { tags: 'bento-grid', errorType: 'i' };
 const VIEW_TYPES = ['mobile', 'tablet', 'desktop'];
 const MIN_CAROUSEL_FOR_CONTROLS = 3;
-const ARROW_ICON = '<span class="grid-carousel-arrow-icon"></span>';
+const ARROW_ICON = `
+  <svg class="grid-carousel-arrow-icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+    <path d="M4 10h12M11 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+  </svg>`;
 
 function logError(message, error) {
   window.lana?.log(`Bento grid ${message}: ${error}`, LANA_OPTIONS);
@@ -80,6 +83,43 @@ function parseConfigBlock(configContainer) {
 
 const isHeading = (node) => /^H[1-6]$/.test(node.tagName);
 
+const MP4_RE = /https?:\/\/\S+\.mp4\S*/i;
+
+const isMp4 = (url) => /\.mp4(\?|#|$)/i.test(url || '');
+
+function resolveCellVideo(after) {
+  const anchors = after.flatMap((node) => [...node.querySelectorAll('a')]);
+
+  const mp4Anchor = anchors.find((a) => isMp4(a.getAttribute('href')) || MP4_RE.test(a.textContent));
+  if (mp4Anchor) {
+    const href = mp4Anchor.getAttribute('href') || '';
+    const videoSrc = (isMp4(href) && href)
+      || href.match(MP4_RE)?.[0]
+      || mp4Anchor.textContent.match(MP4_RE)?.[0];
+    return { videoSrc, fragmentPath: null, fragmentHash: null, node: mp4Anchor };
+  }
+
+  const mediaEl = after
+    .flatMap((node) => [...node.querySelectorAll('video, source')])
+    .find((m) => isMp4(m.getAttribute('data-video-source')) || isMp4(m.getAttribute('src')));
+  if (mediaEl) {
+    const videoSrc = mediaEl.getAttribute('data-video-source') || mediaEl.getAttribute('src');
+    return { videoSrc, fragmentPath: null, fragmentHash: null, node: mediaEl };
+  }
+
+  const modalAnchor = anchors.find((a) => a.dataset.modalPath
+    || /\/fragments\//i.test(a.getAttribute('href') || ''));
+  if (modalAnchor) {
+    const href = modalAnchor.getAttribute('href') || '';
+    const fragmentPath = modalAnchor.dataset.modalPath || href.split('#')[0];
+    const fragmentHash = modalAnchor.dataset.modalHash
+      || (href.includes('#') ? `#${href.split('#').pop()}` : '');
+    return { videoSrc: null, fragmentPath, fragmentHash, node: modalAnchor };
+  }
+
+  return { videoSrc: null, fragmentPath: null, fragmentHash: null, node: null };
+}
+
 function extractCells(container) {
   if (!container) return [];
   return Array.from(container.children).map((child) => {
@@ -94,15 +134,17 @@ function extractCells(container) {
 
     const heading = after.find(isHeading);
     const paragraphs = after.filter((node) => node.tagName === 'P');
-    const videoPara = paragraphs.find((p) => /https?:\/\/\S+\.mp4\b/i.test(p.textContent));
-    const descPara = paragraphs.find((p) => p !== videoPara
+    const { videoSrc, fragmentPath, fragmentHash, node } = resolveCellVideo(after);
+    const ctaPara = node ? paragraphs.find((p) => p.contains(node)) : null;
+    const descPara = paragraphs.find((p) => p !== ctaPara
       && !p.querySelector('picture')
       && p.textContent.trim());
-    const videoMatch = (videoPara || child).textContent.match(/https?:\/\/\S+\.mp4\b/i);
 
     return {
       pictureHTML: pic ? pic.outerHTML : '',
-      videoSrc: videoMatch?.[0] || null,
+      videoSrc: videoSrc || null,
+      fragmentPath,
+      fragmentHash,
       heading: heading?.textContent.trim() || '',
       description: descPara?.textContent.trim() || '',
       sectionHeading: sectionHeading?.textContent.trim() || '',
@@ -167,6 +209,28 @@ function attachVideoTrigger(item, mediaEl, videoSrc) {
   item.addEventListener('click', (event) => {
     event.preventDefault();
     openVideoModal(videoSrc);
+  });
+}
+
+async function openFragmentModal(path, hash) {
+  const { loadStyle } = await import(`${LIBS}/utils/utils.js`);
+  const { getModal } = await import(`${LIBS}/blocks/modal/modal.js`);
+  loadStyle(`${LIBS}/blocks/modal/modal.css`);
+  const id = (hash || '').replace('#', '') || 'bento-grid-video-modal';
+  await getModal({ path, id });
+}
+
+function attachFragmentTrigger(item, mediaEl, path, hash) {
+  item.href = hash || path;
+  item.classList.add('has-video');
+  item.dataset.modalPath = path;
+  if (hash) item.dataset.modalHash = hash;
+
+  addPlayIcon(mediaEl || item);
+
+  item.addEventListener('click', (event) => {
+    event.preventDefault();
+    openFragmentModal(path, hash);
   });
 }
 
@@ -251,12 +315,14 @@ function buildFeatured(cell) {
     showWatchLink: true,
   });
 
-  const item = document.createElement(cell.videoSrc ? 'a' : 'div');
+  const item = document.createElement(cell.videoSrc || cell.fragmentPath ? 'a' : 'div');
   item.className = 'bento-featured';
   item.append(text, media);
 
   if (cell.videoSrc) {
     attachVideoTrigger(item, media, cell.videoSrc);
+  } else if (cell.fragmentPath) {
+    attachFragmentTrigger(item, media, cell.fragmentPath, cell.fragmentHash);
   } else {
     addPlayIcon(media);
   }
@@ -270,7 +336,7 @@ function buildCarouselCard(cell, loadMode) {
   const media = buildMedia(cell, loadMode, 'grid-item-media');
   if (!media) return null;
 
-  const item = document.createElement(cell.videoSrc ? 'a' : 'div');
+  const item = document.createElement(cell.videoSrc || cell.fragmentPath ? 'a' : 'div');
   item.className = 'grid-item';
   item.appendChild(media);
 
@@ -283,6 +349,8 @@ function buildCarouselCard(cell, loadMode) {
 
   if (cell.videoSrc) {
     attachVideoTrigger(item, media, cell.videoSrc);
+  } else if (cell.fragmentPath) {
+    attachFragmentTrigger(item, media, cell.fragmentPath, cell.fragmentHash);
   } else {
     addPlayIcon(media);
   }
@@ -290,16 +358,19 @@ function buildCarouselCard(cell, loadMode) {
   return item;
 }
 
-function updateArrowState(container, prevBtn, nextBtn) {
-  const maxScroll = container.scrollWidth - container.clientWidth;
+function isCardFullyVisible(card, frame) {
+  const cardRect = card.getBoundingClientRect();
+  const frameRect = frame.getBoundingClientRect();
+  return cardRect.left >= frameRect.left - 1 && cardRect.right <= frameRect.right + 1;
+}
+
+function updateArrowState(container, prevBtn, nextBtn, frame) {
   const { scrollLeft } = container;
-  if (isRtl()) {
-    prevBtn.disabled = scrollLeft >= -1;
-    nextBtn.disabled = scrollLeft <= -maxScroll + 1;
-  } else {
-    prevBtn.disabled = scrollLeft <= 1;
-    nextBtn.disabled = scrollLeft >= maxScroll - 1;
-  }
+  const cards = container.querySelectorAll('.grid-item');
+  const lastCard = cards[cards.length - 1];
+
+  prevBtn.disabled = isRtl() ? scrollLeft >= -1 : scrollLeft <= 1;
+  nextBtn.disabled = !lastCard || isCardFullyVisible(lastCard, frame);
 }
 
 function scrollByCard(container, direction) {
@@ -310,7 +381,18 @@ function scrollByCard(container, direction) {
   container.scrollBy({ left: amount, behavior: 'smooth' });
 }
 
+function updateEndSpacer(container, spacer, frame) {
+  const cards = container.querySelectorAll('.grid-item');
+  if (!cards.length) return;
+  const gap = parseFloat(getComputedStyle(container).columnGap) || 0;
+  const width = container.clientWidth - frame.getBoundingClientRect().width - gap;
+  spacer.style.display = width > 0 ? '' : 'none';
+  spacer.style.width = `${width}px`;
+}
+
 function buildCarouselControls(container) {
+  const spacer = createTag('div', { class: 'grid-carousel-end-spacer', 'aria-hidden': 'true' }, null, { parent: container });
+
   const controls = createTag('div', { class: 'grid-carousel-controls' });
   const prevBtn = createTag('button', {
     type: 'button',
@@ -326,11 +408,17 @@ function buildCarouselControls(container) {
   prevBtn.addEventListener('click', () => scrollByCard(container, -1));
   nextBtn.addEventListener('click', () => scrollByCard(container, 1));
 
-  container.addEventListener('scroll', () => updateArrowState(container, prevBtn, nextBtn));
-  window.addEventListener('resize', () => updateArrowState(container, prevBtn, nextBtn));
-  requestAnimationFrame(() => updateArrowState(container, prevBtn, nextBtn));
-
   controls.append(prevBtn, nextBtn);
+
+  const refresh = () => {
+    updateArrowState(container, prevBtn, nextBtn, controls);
+    updateEndSpacer(container, spacer, controls);
+  };
+
+  container.addEventListener('scroll', () => updateArrowState(container, prevBtn, nextBtn, controls));
+  window.addEventListener('resize', refresh);
+  requestAnimationFrame(refresh);
+
   return controls;
 }
 
