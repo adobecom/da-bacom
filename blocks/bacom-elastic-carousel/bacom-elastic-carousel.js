@@ -15,7 +15,6 @@ const isSvgUrl = (url) => /\.svg(\?.*)?$/i.test(url || '');
 const isRtl = () => document.documentElement.getAttribute('dir') === 'rtl';
 const isMobile = () => window.innerWidth <= 768;
 
-// Inline icons for the expand-content variant (kept in JS to avoid extra network requests).
 const EXPAND_PLUS_ICON = `
   <svg class="elastic-carousel-expand-icon elastic-carousel-expand-icon-plus" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
     <path d="M10 4.5v11M4.5 10h11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
@@ -31,8 +30,6 @@ const CAROUSEL_ARROW_ICON = `
     <path d="M4 10h12M11 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
   </svg>`;
 
-// Trailing chevron for the footer heading CTA (path/geometry from the Figma design). Uses
-// currentColor so it always matches the heading text.
 const FOOTER_CHEVRON_ICON = `
   <svg class="elastic-carousel-footer-chevron" viewBox="0 0 5 8" aria-hidden="true" focusable="false">
     <path d="M0.75 6.75L3.75 3.75L0.75 0.75" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
@@ -72,7 +69,6 @@ const handleMobileAutoplay = (carousel) => {
 
     const nextSlide = slides[index + 1];
 
-    // Play when this slide enters view — but not if the next slide is already covering it
     const slideObserver = new IntersectionObserver(
       ([entry]) => {
         if (!isMobile()) return;
@@ -89,8 +85,6 @@ const handleMobileAutoplay = (carousel) => {
 
     if (!nextSlide) return;
 
-    // Rewind when the next slide starts covering this one;
-    // play again when it uncovers (user scrolls back up)
     const nextSlideObserver = new IntersectionObserver(
       ([entry]) => {
         if (!isMobile()) return;
@@ -218,14 +212,8 @@ const buildSlide = ({ slide, index, slidesTotal }) => {
   if (isSvgUrl(asset?.src)) asset.src = getFederatedUrl(asset.src);
   if (isSvgUrl(icon?.src)) icon.src = getFederatedUrl(icon.src);
 
-  // TODO: update to ensure classes are mapped to C2 variables
-  // TODO: see if eyebrow class can be applied directly to footer headline
   decorateBlockText(left);
 
-  // Authors may mark the card headline up as a paragraph or a heading (h1–h6).
-  // Render it as a <p> so the header keeps its compact style regardless of the
-  // authored tag — decorateBlockText would otherwise size a heading tag as a
-  // large heading and it wouldn't match the `.elastic-carousel-item-header p` style.
   const headingHTML = heading ? `<p>${heading.innerHTML}</p>` : '';
 
   const content = `
@@ -245,7 +233,6 @@ const buildSlide = ({ slide, index, slidesTotal }) => {
   `;
 
   let ariaLabel = `${index + 1} of ${slidesTotal}`;
-  // assign unique aria-label to the first slide
   if (index === 0) ariaLabel = `${getCarouselName(link)}, carousel. ${ariaLabel}`;
 
   const slideEl = createTag('a', {
@@ -269,7 +256,6 @@ const buildSlide = ({ slide, index, slidesTotal }) => {
 };
 
 const toggleExpandContent = (event) => {
-  // The card itself is an anchor; keep the toggle from navigating the card.
   event.preventDefault();
   event.stopPropagation();
   const toggle = event.currentTarget;
@@ -314,19 +300,14 @@ const decorateExpandContent = (carousel) => {
 };
 
 const decorateFooterChevron = (carousel) => {
-  // The footer CTA may be authored as a heading (old pattern) or a link (new pattern) —
-  // append the trailing chevron to whichever is present, so both render the same.
   carousel.querySelectorAll('.elastic-carousel-item-footer').forEach((footer) => {
     const cta = footer.querySelector(':is(h1, h2, h3, h4, h5, h6), a');
     cta?.insertAdjacentHTML('beforeend', FOOTER_CHEVRON_ICON);
   });
 };
 
-// Fewest cards. Guessed 2 for tablet.
 const LIMITED_MIN_VISIBLE = 2;
 
-// Step between adjacent cards' horizontal shrink in the mobile stack (matches the base
-// design's 3/2.25/1.5/.75/0rem ramp: a 0.75rem step).
 const STACK_SHRINK_STEP = '0.75rem';
 
 const decorateMobileStack = (carousel) => {
@@ -346,17 +327,11 @@ const decorateMobileStack = (carousel) => {
   });
 };
 
-// How many cards the current breakpoint shows whole (3 desktop, 2 tablet) is read straight off
-// the CSS var the layout itself is built on, so this stays in lockstep with
-// bacom-elastic-carousel.css instead of duplicating the breakpoint thresholds here.
 const getVisibleSlides = (carousel) => {
   const raw = parseFloat(getComputedStyle(carousel).getPropertyValue('--limited-visible-slides'));
   return Number.isFinite(raw) ? raw : 3;
 };
 
-// Native scroll (rather than a transform offset) guarantees the row can never reveal a
-// previous card on the left: there's nothing to render before scrollLeft 0. Only the right
-// side can bleed past the visible cards, matching the peek/bleed the design calls for.
 const updateLimitedControls = (carousel, container, prevBtn, nextBtn, totalSlides) => {
   const maxScroll = container.scrollWidth - container.clientWidth;
   const { scrollLeft } = container;
@@ -367,9 +342,6 @@ const updateLimitedControls = (carousel, container, prevBtn, nextBtn, totalSlide
     prevBtn.disabled = scrollLeft <= 1;
     nextBtn.disabled = scrollLeft >= maxScroll - 1;
   }
-  // Hides the whole controls row once the current breakpoint already shows every card at
-  // once (<=3 desktop, <=2 tablet). scrollWidth alone isn't a reliable signal for this: the
-  // trailing bleed-space spacer inflates it even when there's no real card left to page to.
   carousel.classList.toggle('limited-static', totalSlides <= getVisibleSlides(carousel));
 };
 
@@ -393,9 +365,6 @@ const decorateLimitedCarousel = (carousel) => {
 
   if (slides.length <= LIMITED_MIN_VISIBLE) return null;
 
-  // Cancels out the "peek room" built into the row's width (so a partial next card can bleed
-  // into view at rest) once scrolled to the end, so the final native scroll position always
-  // lands flush on a whole card instead of stopping mid-card.
   container.append(createTag('div', { class: 'elastic-carousel-limited-spacer', 'aria-hidden': 'true' }));
 
   const prevBtn = createTag('button', { class: 'elastic-carousel-limited-control prev', type: 'button', 'aria-label': 'Previous cards' }, CAROUSEL_ARROW_ICON);

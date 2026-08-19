@@ -10,12 +10,10 @@ function isLinkOnlyContent(linkContainer, aTag) {
 
 const isSvgUrl = (url) => /\.svg(\?.*)?$/i.test(url || '');
 
-// Above this many items the N-up grid gives way to a horizontal carousel.
 const MAX_GRID_ITEMS = 3;
 
 const isRtl = () => document.documentElement.getAttribute('dir') === 'rtl';
 
-// Full arrow (shaft + head) matching bento-grid and bacom-elastic-carousel nav controls.
 const ARROW_ICON = `
   <svg class="news-carousel-arrow-icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
     <path d="M4 10h12M11 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
@@ -29,9 +27,6 @@ function scrollByCard(container, direction) {
   container.scrollBy({ left: amount, behavior: 'smooth' });
 }
 
-// Rect-based (LTR/RTL agnostic): the "next" arrow disables once the last card
-// sits fully within the scroll frame. There's no right bleed here, so the
-// container itself is the frame.
 function isLastCardVisible(container) {
   const cards = container.querySelectorAll('.news-item');
   const lastCard = cards[cards.length - 1];
@@ -93,7 +88,6 @@ export default async function init(el) {
   rows = tail;
   const isCarousel = rows.length > MAX_GRID_ITEMS;
   const upsMap = { 2: 'two-up', 3: 'three-up', 4: 'four-up', 6: 'six-up' };
-  // TODO: Infer parallax class from authoring
   const itemsClass = isCarousel
     ? 'news-items news-carousel'
     : `news-items parallax-stagger-ltr ${upsMap[rows.length || 3]}`;

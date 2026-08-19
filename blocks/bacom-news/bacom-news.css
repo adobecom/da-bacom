@@ -63,8 +63,6 @@
   }
 }
 
-/* Carousel mode (> 3 items): horizontal scroll-snap row with arrow controls.
-   No right bleed — cards stay flush within the content column on both edges. */
 .bacom-news .news-items.news-carousel {
   display: flex;
   gap: var(--grid-gutter);
@@ -134,7 +132,6 @@ html[dir="rtl"] .bacom-news .news-carousel-arrow-next .news-carousel-arrow-icon 
 }
 
 @media screen and (width >= 768px) {
-  /* Three cards per view, flush to the content column. */
   .bacom-news .news-items.news-carousel .news-item {
     flex-basis: calc((100% - 2 * var(--grid-gutter)) / 3);
   }
@@ -160,8 +157,6 @@ html[dir="rtl"] .bacom-news .news-carousel-arrow-next .news-carousel-arrow-icon 
       }
     }
 
-    /* Carousel row keeps a tighter, snap-friendly gap and the block's own
-       inline padding aligns the controls — no extra control padding needed. */
     .news-items.news-carousel {
       gap: var(--grid-gutter);
     }

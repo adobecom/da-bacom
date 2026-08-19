@@ -25,8 +25,6 @@ function createTag(tag, attributes, html, options = {}) {
 const LANA_OPTIONS = { tags: 'bento-grid', errorType: 'i' };
 const VIEW_TYPES = ['mobile', 'tablet', 'desktop'];
 const MIN_CAROUSEL_FOR_CONTROLS = 3;
-// Full arrow (shaft + head) matching bacom-elastic-carousel's nav controls, rather than
-// a bare chevron/caret. Uses currentColor so it inherits the button's color.
 const ARROW_ICON = `
   <svg class="grid-carousel-arrow-icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
     <path d="M4 10h12M11 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
@@ -89,18 +87,9 @@ const MP4_RE = /https?:\/\/\S+\.mp4\S*/i;
 
 const isMp4 = (url) => /\.mp4(\?|#|$)/i.test(url || '');
 
-// The card's play target may take several forms:
-//   1. a direct .mp4 link (old: the url is the link text; new: the url is the href)
-//   2. Milo's video autoblock replaces that .mp4 <a> with <video data-video-source="…mp4">
-//      (plus a lazily-added <source>) and removes the <a> — so the mp4 lives on the media el
-//   3. a raw Milo video-fragment link: <a href="/fragments/…#hash">Watch video</a>
-//   4. a Milo-decorated modal link: <a href="#hash" data-modal-path="/fragments/…">
-// Return the mp4 src (played in the custom <video> modal) or the fragment path + hash (opened
-// as a Milo modal), plus the source node so its paragraph is kept out of the description.
 function resolveCellVideo(after) {
   const anchors = after.flatMap((node) => [...node.querySelectorAll('a')]);
 
-  // 1) direct mp4 link
   const mp4Anchor = anchors.find((a) => isMp4(a.getAttribute('href')) || MP4_RE.test(a.textContent));
   if (mp4Anchor) {
     const href = mp4Anchor.getAttribute('href') || '';
@@ -110,7 +99,6 @@ function resolveCellVideo(after) {
     return { videoSrc, fragmentPath: null, fragmentHash: null, node: mp4Anchor };
   }
 
-  // 2) mp4 link already turned into a <video data-video-source>/<source> by Milo's autoblock
   const mediaEl = after
     .flatMap((node) => [...node.querySelectorAll('video, source')])
     .find((m) => isMp4(m.getAttribute('data-video-source')) || isMp4(m.getAttribute('src')));
@@ -119,7 +107,6 @@ function resolveCellVideo(after) {
     return { videoSrc, fragmentPath: null, fragmentHash: null, node: mediaEl };
   }
 
-  // 3 & 4) Milo video-fragment / modal link
   const modalAnchor = anchors.find((a) => a.dataset.modalPath
     || /\/fragments\//i.test(a.getAttribute('href') || ''));
   if (modalAnchor) {
@@ -225,8 +212,6 @@ function attachVideoTrigger(item, mediaEl, videoSrc) {
   });
 }
 
-// Milo video-fragment links point at a fragment (not a raw mp4), so play them by
-// loading that fragment into a Milo modal rather than the custom <video> modal.
 async function openFragmentModal(path, hash) {
   const { loadStyle } = await import(`${LIBS}/utils/utils.js`);
   const { getModal } = await import(`${LIBS}/blocks/modal/modal.js`);
@@ -373,10 +358,6 @@ function buildCarouselCard(cell, loadMode) {
   return item;
 }
 
-// Rect-based (not scrollLeft-based) so it works the same in LTR and RTL,
-// and so "next" disables as soon as the last card is fully within the
-// constrained card column — not just anywhere in the container, which on
-// desktop bleeds wider than that column so it can peek the next card.
 function isCardFullyVisible(card, frame) {
   const cardRect = card.getBoundingClientRect();
   const frameRect = frame.getBoundingClientRect();
@@ -400,21 +381,11 @@ function scrollByCard(container, direction) {
   container.scrollBy({ left: amount, behavior: 'smooth' });
 }
 
-// Pads the end of the carousel so the browser's native max scroll lands
-// exactly where the last card fills the constrained card column (frame),
-// flush with no gap. Without this, the container's own width (which bleeds
-// wider than that column) lets native scroll/swipe go further, past the
-// point where the last card is flush, into a dead zone that shows fewer
-// than a full set of cards with blank space trailing them.
 function updateEndSpacer(container, spacer, frame) {
   const cards = container.querySelectorAll('.grid-item');
   if (!cards.length) return;
   const gap = parseFloat(getComputedStyle(container).columnGap) || 0;
   const width = container.clientWidth - frame.getBoundingClientRect().width - gap;
-  // When no padding is needed (e.g. tablet, where the container doesn't
-  // bleed past the card column), remove the spacer from the flex flow
-  // entirely — leaving it at width 0 would still add one flex `gap` after
-  // the last card, throwing off the exact-multiple-of-a-card math.
   spacer.style.display = width > 0 ? '' : 'none';
   spacer.style.width = `${width}px`;
 }

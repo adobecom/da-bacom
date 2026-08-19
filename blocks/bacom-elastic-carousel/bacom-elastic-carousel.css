@@ -128,7 +128,6 @@ html[dir="rtl"] {
         }
 
         :is(h1, h2, h3, h4, h5, h6) {
-          /* TODO: remove eyebrow styles if eyebrow class is applied directly to footer headline */
           font-family: var(--body-font-family);
           font-size: var(--s2a-typography-font-size-eyebrow);
           font-weight: var(--s2a-font-weight-adobe-clean-bold);
@@ -156,8 +155,6 @@ html[dir="rtl"] {
           overflow: hidden;
         }
 
-        /* CTA authored as a link (new pattern): match the heading CTA (old pattern) —
-           plain, un-faded text with no underline; the trailing chevron is added in JS. */
         a {
           color: var(--s2a-color-gray-1000);
           text-decoration: none;
@@ -527,14 +524,6 @@ html[dir="rtl"] {
 }
 
 
-/** ==========================================================================
-    Variant: expand-content
-    Additive — only applies when the block also carries the `expand-content`
-    class. A per-card toggle reveals the description in a collapsible region
-    between the header and media; hover zooms the image instead of growing
-    the card. Reuses existing tokens, easing (--paralax-easing) and timing.
-    ========================================================================== */
-
 .bacom-elastic-carousel.expand-content {
   --elastic-expand-panel-bg: var(--s2a-color-gray-75);
   --elastic-expand-panel-color: var(--s2a-color-gray-700);
@@ -598,8 +587,6 @@ html[dir="rtl"] {
     flex-direction: column;
     overflow: hidden;
     border-radius: var(--s2a-border-radius-md);
-    /* Definite height gives the panel + image a shared box to divide, so the image shrinks
-       (via the asset's flex: 1 / min-height: 0 below) rather than pushing the card taller. */
     height: var(--elastic-media-height);
   }
 
@@ -680,7 +667,6 @@ html[dir="rtl"] .elastic-carousel-footer-chevron {
 
       &.hovered,
       &:focus-visible {
-        /* neutralise the base grow/darken so the card footprint is static */
         max-width: var(--elastic-carousel-item-max-width);
         width: var(--elastic-carousel-item-max-width);
         background-color: var(--s2a-color-gray-75);
@@ -778,10 +764,6 @@ html[dir="rtl"] .elastic-carousel-footer-chevron {
       left: 0;
       display: flex;
       max-width: none;
-      /* Neutralises expand-content's justify-self: center (bacom-elastic-carousel.expand-content
-         .elastic-carousel-container) when both variants are combined - otherwise the browser
-         shrinks this row to fit-content and centers it, bleeding cards on both sides instead of
-         just the right. */
       justify-self: auto;
       column-gap: var(--s2a-spacing-md);
       overflow-x: auto;
@@ -817,8 +799,6 @@ html[dir="rtl"] .elastic-carousel-footer-chevron {
       justify-content: flex-end;
       gap: var(--s2a-spacing-12);
       margin-block-start: var(--s2a-spacing-lg);
-      /* Block's own padding-inline-start already insets this row to match the card row, so
-         no extra left offset is needed here - just size it to the third card's right edge. */
       width: var(--limited-group-max-width);
       max-width: 100%;
     }
