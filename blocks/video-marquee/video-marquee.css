@@ -4,7 +4,7 @@
   --marquee-headline-ls: -0.96px;
 
   background-color: #000;
-  padding-block: var(--spacing-xl);
+  padding-bottom: 56px;
   padding-inline: var(--grid-margin-width);
   margin: 0 auto;
 }
