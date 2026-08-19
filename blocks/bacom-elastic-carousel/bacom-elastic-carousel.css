@@ -2,7 +2,6 @@
 /* stylelint-disable */
 
 /** main classes */
-
 html[dir="rtl"] {
   .bacom-elastic-carousel {
     & .elastic-carousel-container {
@@ -508,5 +507,327 @@ html[dir="rtl"] {
 
   100% {
     margin: 0 var(--stack-shrink);
+  }
+}
+
+
+/** ==========================================================================
+    Variant: expand-content
+    Additive — only applies when the block also carries the `expand-content`
+    class. A per-card toggle reveals the description in a collapsible region
+    between the header and media; hover zooms the image instead of growing
+    the card. Reuses existing tokens, easing (--paralax-easing) and timing.
+    ========================================================================== */
+
+.bacom-elastic-carousel.expand-content {
+  --elastic-expand-panel-bg: var(--s2a-color-gray-75);
+  --elastic-expand-panel-color: var(--s2a-color-gray-700);
+  --elastic-media-height: 316px;
+
+  .elastic-carousel-container {
+    max-width: 90%;
+    justify-self: center;
+  }
+
+  .elastic-carousel-container .elastic-carousel-item {
+    max-height: 485px;
+  }
+
+  .elastic-carousel-expand-toggle {
+    flex: 0 0 auto;
+    margin-inline-start: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--s2a-spacing-32);
+    height: var(--s2a-spacing-32);
+    border-radius: var(--s2a-border-radius-8);
+    background-color: var(--s2a-color-gray-100);
+    color: var(--s2a-color-gray-1000);
+    cursor: pointer;
+    transition: background-color .2s ease, color .2s ease;
+
+    &:focus-visible {
+      outline: var(--s2a-border-width-2) solid var(--s2a-color-focus-ring-default);
+      outline-offset: var(--s2a-border-width-2);
+    }
+
+    .elastic-carousel-expand-icon {
+      width: var(--s2a-spacing-20);
+      height: var(--s2a-spacing-20);
+      display: block;
+    }
+
+    .elastic-carousel-expand-icon-minus {
+      display: none;
+    }
+
+    &[aria-expanded="true"] {
+      background-color: var(--s2a-color-gray-1000);
+      color: var(--s2a-color-gray-25);
+
+      .elastic-carousel-expand-icon-plus {
+        display: none;
+      }
+
+      .elastic-carousel-expand-icon-minus {
+        display: block;
+      }
+    }
+  }
+
+  .elastic-carousel-item-media {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: var(--s2a-border-radius-md);
+    /* Definite height gives the panel + image a shared box to divide, so the image shrinks
+       (via the asset's flex: 1 / min-height: 0 below) rather than pushing the card taller. */
+    height: var(--elastic-media-height);
+  }
+
+  .elastic-carousel-item-media-asset {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    border-top-right-radius: 16px;
+    border-top-left-radius: 16px;
+  }
+
+  .elastic-carousel-item-media-asset img,
+  .elastic-carousel-item-media-asset video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 0;
+  }
+
+  .elastic-carousel-expand-content {
+    flex-shrink: 0;
+    display: grid;
+    grid-template-rows: 0fr;
+    background-color: var(--elastic-expand-panel-bg);
+    transition: grid-template-rows .5s var(--paralax-easing);
+
+    .elastic-carousel-expand-content-inner {
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    p {
+      margin: 0;
+      padding: var(--s2a-spacing-md) var(--s2a-spacing-lg);
+      font-size: var(--s2a-font-size-sm);
+      line-height: var(--s2a-font-line-height-18);
+      color: var(--elastic-expand-panel-color);
+    }
+  }
+
+  .elastic-carousel-item.expanded {
+    .elastic-carousel-expand-content {
+      grid-template-rows: 1fr;
+    }
+  }
+}
+
+.elastic-carousel-footer-chevron {
+  width: .5em;
+  margin-inline-start: .4em;
+  vertical-align: middle;
+}
+
+html[dir="rtl"] .elastic-carousel-footer-chevron {
+  transform: scaleX(-1);
+}
+
+@media (width >= 768px) {
+  .bacom-elastic-carousel.expand-content {
+    .elastic-carousel-container .elastic-carousel-item {
+      .elastic-carousel-item-media-asset img,
+      .elastic-carousel-item-media-asset video {
+        transition: transform .5s var(--paralax-easing);
+        max-height: 316px;
+        height: 100%;
+      }
+
+      .elastic-carousel-item-footer {
+        padding: 32px 24px;
+      }
+
+      .elastic-carousel-item-footer h3 {
+        margin-bottom: 0;
+      }
+
+      &.hovered,
+      &:focus-visible {
+        /* neutralise the base grow/darken so the card footprint is static */
+        max-width: var(--elastic-carousel-item-max-width);
+        width: var(--elastic-carousel-item-max-width);
+        background-color: var(--s2a-color-gray-75);
+
+        .elastic-carousel-item-header p,
+        .elastic-carousel-item-footer p {
+          color: var(--s2a-color-gray-1000);
+        }
+
+        .elastic-carousel-item-footer :is(h1, h2, h3, h4, h5, h6) {
+          color: inherit;
+        }
+
+        .elastic-carousel-item-footer:after {
+          opacity: 0;
+        }
+
+        .elastic-carousel-item-media-asset img,
+        .elastic-carousel-item-media-asset video {
+          transform: scale(1.2);
+        }
+      }
+    }
+  }
+
+  .bacom-elastic-carousel.limited {
+    .elastic-carousel-container .elastic-carousel-item {
+      &.hovered,
+      &:focus-visible {
+        flex: 0 0 calc(100% / var(--limited-visible-slides, 3.25));
+        max-width: var(--limited-card-max-width);
+      }
+    }
+  }
+}
+
+@media (width < 768px) {
+  .bacom-elastic-carousel:is(.expand-content, .limited) {
+    .elastic-carousel-container .elastic-carousel-item {
+      color: var(--s2a-color-gray-1000);
+
+      .elastic-carousel-item-container {
+        background-color: var(--s2a-color-gray-75);
+
+        .elastic-carousel-item-header {
+          p {
+            color: var(--s2a-color-gray-1000);
+          }
+
+          &:after {
+            background-color: var(--s2a-color-gray-1000);
+          }
+        }
+      }
+    }
+  }
+
+  .bacom-elastic-carousel.expand-content
+    .elastic-carousel-container
+    .elastic-carousel-item
+    .elastic-carousel-item-container
+    .elastic-carousel-item-header:after {
+    display: none;
+  }
+}
+
+.bacom-elastic-carousel.limited {
+  --limited-visible-slides: 3.25;
+  --limited-card-max-width: 394px;
+
+  .elastic-carousel-limited-controls {
+    display: none;
+  }
+}
+
+@media (width >= 768px) {
+  .bacom-elastic-carousel.limited {
+    height: auto;
+    max-width: var(--grid-max-width-default);
+    margin-inline: auto;
+    padding-inline: var(--grid-margin-width);
+    overflow: visible;
+
+    .elastic-carousel-viewport {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .elastic-carousel-container {
+      position: relative;
+      left: 0;
+      width: 100%;
+      max-width: none;
+      column-gap: var(--s2a-spacing-md);
+      transform: translateX(var(--limited-offset, 0px));
+      transition: transform .5s var(--paralax-easing);
+      animation: none;
+
+      .elastic-carousel-item {
+        flex: 0 0 calc(100% / var(--limited-visible-slides, 3.25));
+        max-width: var(--limited-card-max-width);
+        margin-inline: 0;
+        animation: none;
+      }
+    }
+
+    .elastic-carousel-limited-controls {
+      display: flex;
+      justify-content: flex-end;
+      gap: var(--s2a-spacing-12);
+      margin-block-start: var(--s2a-spacing-lg);
+    }
+
+    &.limited-static .elastic-carousel-limited-controls {
+      display: none;
+    }
+  }
+}
+
+@media (768px <= width < 1280px) {
+  .bacom-elastic-carousel.limited {
+    --limited-visible-slides: 2.25;
+  }
+}
+
+.elastic-carousel-limited-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--s2a-spacing-2xl);
+  height: var(--s2a-spacing-2xl);
+  border: none;
+  border-radius: var(--s2a-border-radius-round);
+  background-color: var(--s2a-color-gray-25);
+  color: var(--s2a-color-gray-1000);
+  cursor: pointer;
+  transition: background-color .2s ease, color .2s ease;
+
+  .elastic-carousel-limited-icon {
+    width: var(--s2a-spacing-20);
+    height: var(--s2a-spacing-20);
+  }
+
+  &.prev .elastic-carousel-limited-icon {
+    transform: scaleX(-1);
+  }
+
+  &:disabled {
+    background-color: var(--s2a-color-gray-1000);
+    color: var(--s2a-color-gray-600);
+    cursor: default;
+  }
+
+  &:focus-visible {
+    outline: var(--s2a-border-width-2) solid var(--s2a-color-focus-ring-default);
+    outline-offset: var(--s2a-border-width-2);
+  }
+}
+
+html[dir="rtl"] .elastic-carousel-limited-control {
+  &.prev .elastic-carousel-limited-icon {
+    transform: scaleX(1);
+  }
+
+  &.next .elastic-carousel-limited-icon {
+    transform: scaleX(-1);
   }
 }

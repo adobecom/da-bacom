@@ -27,6 +27,7 @@ const CONFIG = {
   locales: {
     '': { ietf: 'en-US', tk: 'hah7vzn.css' },
     africa: { ietf: 'en', tk: 'hah7vzn.css', base: '' },
+    ara: { ietf: 'ara', tk: 'qxw8hzm.css', dir: 'rtl' },
     at: { ietf: 'de-AT', tk: 'hah7vzn.css', exl: 'de', base: 'de' },
     au: { ietf: 'en-AU', tk: 'hah7vzn.css' },
     be_en: { ietf: 'en-BE', tk: 'hah7vzn.css', base: '' },
@@ -123,6 +124,7 @@ const CONFIG = {
     version: '1.0',
     onDemand: false,
   },
+  arp: { clientId: 'bacom' },
   atvCaptionsKey: 'bacom',
   uniqueSiteId: 'da-bacom',
   mepLingoCountryToRegion: {
@@ -205,6 +207,8 @@ export const LIBS = setLibs(window.location);
 
 (function loadStyles() {
   const paths = [`${LIBS}/styles/styles.css`];
+  const c2 = document.querySelector('meta[name="foundation"');
+  if (c2) STYLES.push('/styles/styles-c2.css');
   if (STYLES) {
     paths.push(...(Array.isArray(STYLES) ? STYLES : [STYLES]));
   }
@@ -265,6 +269,7 @@ let eventsError;
 export async function loadPage() {
   const {
     loadArea, loadLana, setConfig, getConfig, createTag, getMetadata, getLocale, MILO_EVENTS,
+    loadScript,
   } = await import(`${LIBS}/utils/utils.js`);
 
   let eventUtils;
@@ -340,6 +345,16 @@ export async function loadPage() {
     } catch (e) {
       window.lana?.log(`Could not load marketo-libs. ${e}`, { tags: 'marketo-libs', severity: 'error' });
     }
+  }
+
+  if (CONFIG.arp?.clientId) {
+    import('./arp.js').then(({ default: loadArp }) => loadArp({
+      clientId: CONFIG.arp.clientId,
+      prodEnv: getConfig().env?.name === 'prod',
+      loadScript,
+    })).catch((e) => {
+      window.lana?.log(`Could not load arp.js. ${e}`, { tags: 'arp', severity: 'error' });
+    });
   }
 
   await loadArea();

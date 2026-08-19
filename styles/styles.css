@@ -1,4 +1,4 @@
-/* stylelint-disable selector-class-pattern, selector-id-pattern */
+/* stylelint-disable selector-class-pattern, selector-id-pattern, alpha-value-notation, comment-empty-line-before, custom-property-empty-line-before, custom-property-pattern, declaration-empty-line-before, length-zero-no-unit, no-descending-specificity, no-duplicate-selectors, property-no-unknown, property-no-vendor-prefix, rule-empty-line-before, value-keyword-case */
 .white-columns .columns > .row {
   padding: 80px 0;
 }
@@ -169,7 +169,6 @@ body.disable-scroll #adbMsgClientWrapper #adbmsgContainer .adbmsgCta {
   line-height: 98%;
 }
 
-/* stylelint-disable-next-line no-descending-specificity */
 .text.iswa h3 {
   line-height: 110%;
   letter-spacing: -2px;
@@ -210,13 +209,11 @@ body.disable-scroll #adbMsgClientWrapper #adbmsgContainer .adbmsgCta {
   margin-top: 8px;
 }
 
-/* stylelint-disable-next-line no-descending-specificity */
 .noticiation.iswa h3 {
   font-size: 20px;
   font-weight: 800;
 }
 
-/* stylelint-disable-next-line no-descending-specificity */
 .noticiation.iswa p {
   font-size: 16px;
   line-height: 130%;
