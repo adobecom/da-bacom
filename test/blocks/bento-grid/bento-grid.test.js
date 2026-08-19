@@ -42,6 +42,12 @@ describe('Bento Grid', () => {
       expect(featured.querySelector('.grid-item-play')).to.exist;
     });
 
+    it('does not render an eyebrow when none is authored', () => {
+      const desktopView = document.querySelector('.grid-view.view-desktop');
+      const featured = desktopView.querySelector('.bento-featured');
+      expect(featured.querySelector('.bento-eyebrow')).to.not.exist;
+    });
+
     it('resolves the featured card video source from the mp4 link and makes it a link', () => {
       const desktopView = document.querySelector('.grid-view.view-desktop');
       const featured = desktopView.querySelector('.bento-featured');
@@ -78,6 +84,26 @@ describe('Bento Grid', () => {
       const cards = mobileView.querySelectorAll('.grid-carousel .grid-item');
       // all 6 cells (2 in row 1 + 4 in row 2) become carousel cards on mobile
       expect(cards.length).to.equal(6);
+    });
+  });
+
+  describe('authored eyebrow', () => {
+    before(async () => {
+      document.body.innerHTML = await readFile({ path: './mocks/eyebrow.html' });
+      await init(document.querySelector('.bento-grid'));
+    });
+
+    it('renders the authored eyebrow on the featured card', () => {
+      const featured = document.querySelector('.grid-view.view-desktop .bento-featured');
+      const eyebrow = featured.querySelector('.bento-eyebrow');
+      expect(eyebrow).to.exist;
+      expect(eyebrow.textContent).to.equal('Watch the keynote');
+    });
+
+    it('does not treat the authored eyebrow as the description', () => {
+      const featured = document.querySelector('.grid-view.view-desktop .bento-featured');
+      expect(featured.querySelector('.bento-heading').textContent).to.equal('Featured heading');
+      expect(featured.querySelector('.bento-description').textContent).to.equal('Featured description text.');
     });
   });
 
