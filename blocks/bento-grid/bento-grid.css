@@ -283,6 +283,7 @@
   font-weight: 400;
   line-height: 130%;
   letter-spacing: 0.16px;
+  min-height: 100px;
 }
 
 .bento-grid .grid-item-text .bento-watch-link {

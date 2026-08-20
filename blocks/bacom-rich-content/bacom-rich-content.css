@@ -302,6 +302,10 @@
     min-width: initial;
   }
 
+  .bacom-rich-content.narrow.classic-grid-spacing .content [class*="body-"]:not(.action-area) {
+    max-width: 630px;
+  }
+
   .section:has(.bacom-rich-content.jump-link.hero) {
     height: auto;
   }

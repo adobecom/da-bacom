@@ -54,6 +54,7 @@
         margin-bottom: var(--s2a-spacing-lg);
         color: var(--s2a-color-content-body-subtle);
         letter-spacing: 0.16px;
+        min-height: 48px;
       }
 
       .news-item-link {
