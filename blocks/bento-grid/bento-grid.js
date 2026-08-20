@@ -132,19 +132,29 @@ function extractCells(container) {
     const sectionHeading = before.find(isHeading);
     const sectionSubtext = before.find((node) => node.tagName === 'P');
 
-    const heading = after.find(isHeading);
-    const paragraphs = after.filter((node) => node.tagName === 'P');
+    const headingIndex = after.findIndex(isHeading);
+    const heading = headingIndex === -1 ? undefined : after[headingIndex];
     const { videoSrc, fragmentPath, fragmentHash, node } = resolveCellVideo(after);
-    const ctaPara = node ? paragraphs.find((p) => p.contains(node)) : null;
-    const descPara = paragraphs.find((p) => p !== ctaPara
+    const ctaPara = node ? after.find((p) => p.tagName === 'P' && p.contains(node)) : null;
+    const isTextPara = (p) => p.tagName === 'P'
+      && p !== ctaPara
       && !p.querySelector('picture')
-      && p.textContent.trim());
+      && p.textContent.trim();
+
+    // Optional eyebrow: the first text paragraph authored before the heading.
+    const eyebrowPara = headingIndex > 0
+      ? after.slice(0, headingIndex).find(isTextPara)
+      : null;
+    // Description: the first text paragraph after the heading (any, if no heading).
+    const descScope = headingIndex === -1 ? after : after.slice(headingIndex + 1);
+    const descPara = descScope.find((p) => p !== eyebrowPara && isTextPara(p));
 
     return {
       pictureHTML: pic ? pic.outerHTML : '',
       videoSrc: videoSrc || null,
       fragmentPath,
       fragmentHash,
+      eyebrow: eyebrowPara?.textContent.trim() || '',
       heading: heading?.textContent.trim() || '',
       description: descPara?.textContent.trim() || '',
       sectionHeading: sectionHeading?.textContent.trim() || '',
@@ -309,7 +319,7 @@ function buildFeatured(cell) {
 
   const text = buildTextBlock({
     className: 'bento-featured-text',
-    eyebrow: 'Featured video',
+    eyebrow: cell.eyebrow,
     heading: cell.heading,
     description: cell.description,
     showWatchLink: true,
