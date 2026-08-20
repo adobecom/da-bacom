@@ -28,7 +28,7 @@
   margin: 0 0 8px;
   color: var(--s2a-color-content-title);
   text-align: left;
-  font-family: "Adobe Clean", sans-serif;
+  font-family: var(--body-font-family);
   font-size: 32px;
   font-style: normal;
   font-weight: 900;
@@ -40,7 +40,7 @@
   margin: 0;
   color: var(--s2a-color-content-body-strong);
   text-align: left;
-  font-family: "Adobe Clean", sans-serif;
+  font-family: var(--body-font-family);
   font-size: var(--s2a-typography-font-size-body-lg);
   font-style: normal;
   font-weight: 400;
@@ -125,7 +125,7 @@
 .bento-grid .bento-featured-text .bento-description {
   color: rgb(0 0 0 / 60%);
   white-space: normal;
-  font-family: "Adobe Clean", sans-serif;
+  font-family: var(--body-font-family);
   font-size: 16px;
   font-style: normal;
   font-weight: 400;
@@ -139,7 +139,7 @@
   gap: 0.375rem;
   color: #000;
   text-align: center;
-  font-family: "Adobe Clean", sans-serif;
+  font-family: var(--body-font-family);
   font-size: 14px;
   font-style: normal;
   font-weight: 700;
@@ -277,7 +277,7 @@
 .bento-grid .grid-item-text .bento-description {
   margin: 0;
   color: rgb(0 0 0 / 60%);
-  font-family: "Adobe Clean", sans-serif;
+  font-family: var(--body-font-family);
   font-size: 16px;
   font-style: normal;
   font-weight: 400;
@@ -363,7 +363,7 @@
   .bento-grid .bento-section-heading {
     text-align: center;
     color: #000;
-    font-family: "Adobe Clean Display", sans-serif;
+    font-family: var(--body-font-family);
     font-size: 56px;
     line-height: 100%;
     letter-spacing: -1.68px;
@@ -374,7 +374,7 @@
     max-width: 600px;
     text-align: center;
     color: #000;
-    font-family: "Adobe Clean", sans-serif;
+    font-family: var(--body-font-family);
     font-size: 18px;
     line-height: 130%;
     letter-spacing: 0.18px;

@@ -273,17 +273,22 @@
     --rc-sweep-offset: 230px;
   }
 
+  .bacom-rich-content .foreground .content p {
+    font-size: 18px;
+  }
+
   .bacom-rich-content.narrow .content [class*="heading-"]:not(.action-area) {
-    max-width: 680px;
+    max-width: 1200px;
   }
 
   .bacom-rich-content.narrow-xs .content [class*="heading-"]:not(.action-area) {
     max-width: 560px;
   }
 
-  .bacom-rich-content .content [class*="body-"]:not(.action-area) {
+  .bacom-rich-content .foreground .content [class*="body-"]:not(.action-area) {
     min-width: 560px;
     width: calc((100% / var(--grid-columns)) * 8);
+    max-width: 1200px;
 
     .section[class*='-up'] & {
       min-width: unset;
