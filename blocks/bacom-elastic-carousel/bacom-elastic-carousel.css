@@ -79,18 +79,12 @@ html[dir="rtl"] {
         }
 
         p {
-          font-size: var(--s2a-font-size-sm);
-          font-weight: var(--s2a-font-weight-adobe-clean-bold);
+          font-size: 18px;
+          font-weight: 800;
           color: var(--s2a-color-gray-1000);
           margin: 0;
           transition: color .1s ease;
-          line-height: var(--s2a-font-line-height-18);
-          display: -webkit-box;
-          line-clamp: 1;
-          box-orient: vertical;
-          -webkit-box-orient: vertical;
-          -webkit-line-clamp: 1;
-          overflow: hidden;
+          line-height: 22px;
         }
       }
 
@@ -620,8 +614,8 @@ html[dir="rtl"] {
 
     p {
       margin: 0;
-      padding: var(--s2a-spacing-md) var(--s2a-spacing-lg);
-      font-size: var(--s2a-font-size-sm);
+      padding: 0 24px 24px;
+      font-size: 16px;
       line-height: var(--s2a-font-line-height-18);
       color: var(--elastic-expand-panel-color);
       text-align: left;
