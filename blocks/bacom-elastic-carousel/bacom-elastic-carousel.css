@@ -530,7 +530,6 @@ html[dir="rtl"] {
   --elastic-media-height: 316px;
 
   .elastic-carousel-container {
-    max-width: 90%;
     justify-self: center;
   }
 
@@ -705,6 +704,8 @@ html[dir="rtl"] .elastic-carousel-footer-chevron {
 
 @media (width < 768px) {
   .bacom-elastic-carousel:is(.expand-content, .limited) {
+    margin-inline: 0;
+
     .elastic-carousel-container .elastic-carousel-item {
       color: var(--s2a-color-gray-1000);
 
@@ -736,8 +737,11 @@ html[dir="rtl"] .elastic-carousel-footer-chevron {
 .bacom-elastic-carousel.limited {
   --limited-visible-slides: 3;
   --limited-card-max-width: 394px;
-  --limited-group-max-width: calc((var(--limited-card-max-width) * var(--limited-visible-slides)) + (var(--s2a-spacing-md) * (var(--limited-visible-slides) - 1)));
-  --limited-bleed-space: max(0px, calc(100vw - var(--grid-margin-width) - var(--limited-group-max-width)));
+  --limited-gap: var(--s2a-spacing-8);
+  --limited-content-max-width: 1200px;
+  --limited-group-max-width: calc((var(--limited-card-max-width) * var(--limited-visible-slides)) + (var(--limited-gap) * (var(--limited-visible-slides) - 1)));
+  --limited-inset: max(var(--grid-margin-width), calc((100vw - var(--limited-content-max-width)) / 2));
+  --limited-bleed-space: max(0px, calc(100vw - var(--limited-inset) - var(--limited-group-max-width)));
 
   .elastic-carousel-limited-controls {
     display: none;
@@ -751,7 +755,7 @@ html[dir="rtl"] .elastic-carousel-footer-chevron {
 @media (width >= 768px) {
   .bacom-elastic-carousel.limited {
     height: auto;
-    padding-inline-start: var(--grid-margin-width);
+    padding-inline-start: var(--limited-inset);
     overflow: visible;
 
     .elastic-carousel-viewport {
@@ -765,7 +769,7 @@ html[dir="rtl"] .elastic-carousel-footer-chevron {
       display: flex;
       max-width: none;
       justify-self: auto;
-      column-gap: var(--s2a-spacing-md);
+      column-gap: var(--limited-gap);
       overflow-x: auto;
       overflow-y: visible;
       scroll-snap-type: x mandatory;
