@@ -220,7 +220,6 @@
   .video-marquee .marquee-eyebrow picture,
   .video-marquee .marquee-eyebrow img {
     height: 30px;
-    width: 100%;
     max-width: 300px;
   }
 
