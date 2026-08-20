@@ -72,6 +72,7 @@ html[dir="rtl"] {
         padding: var(--s2a-spacing-lg);
         gap: var(--s2a-spacing-md);
         align-items: center;
+        min-height: 48px;
 
         img {
           width: 24px;
