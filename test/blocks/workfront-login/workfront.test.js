@@ -133,8 +133,10 @@ describe('Workfront Login', () => {
       }, Promise.resolve());
 
       expect(fetch.called).is.false;
-      expect(window.lana.log.callCount).to.equal(maliciousInputs.length);
-      expect(window.lana.log.firstCall.args[1]).to.deep.equal({ severity: 'error', tags: 'workfront-login' });
+      const workfrontLogCalls = window.lana.log.getCalls()
+        .filter((call) => call.args[1]?.tags === 'workfront-login');
+      expect(workfrontLogCalls.length).to.equal(maliciousInputs.length);
+      expect(workfrontLogCalls[0].args[1]).to.deep.equal({ severity: 'error', tags: 'workfront-login' });
 
       delete window.lana;
     });

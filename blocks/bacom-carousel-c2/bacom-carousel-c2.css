@@ -362,7 +362,8 @@
               gap: 16px;
 
               :is([class*="heading-"]) {
-                line-height: 56px;
+                line-height: 48px;
+                font-size: 48px;
               }
             }
           }

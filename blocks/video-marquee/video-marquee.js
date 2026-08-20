@@ -207,16 +207,80 @@ function watchReducedMotion(video) {
   });
 }
 
+const ATV_RE = /tv\.adobe\.com\/v\//i;
+const MP4_RE = /\.mp4(\?|#|$)/i;
+
+// A video cell can be authored as an inline video ("video in doc") or a link,
+// and either an mp4 (native <video>) or a video.tv.adobe.com link (MPC iframe).
+// Resolve the cell to one of: an already-decorated MPC embed, a tv.adobe.com
+// link, or an mp4 source (from an existing <video>, an mp4 link, or a poster
+// <picture> whose img alt encodes the mp4 as `url#flags | label`).
+function resolveSource(cell) {
+  if (!cell) return null;
+
+  const embed = cell.querySelector('.milo-video, iframe.adobetv, iframe[src*="tv.adobe.com" i]');
+  if (embed) return { type: 'embed' };
+
+  const atvLink = [...cell.querySelectorAll('a')]
+    .find((a) => ATV_RE.test(a.getAttribute('href') || ''));
+  if (atvLink) return { type: 'atv', url: atvLink.getAttribute('href') };
+
+  const existingVideo = cell.querySelector('video');
+  if (existingVideo) {
+    const src = existingVideo.querySelector('source')?.src
+      || existingVideo.currentSrc
+      || existingVideo.getAttribute('data-video-source');
+    if (src) return { type: 'mp4', src, hash: '' };
+  }
+
+  const mp4Link = [...cell.querySelectorAll('a')]
+    .find((a) => MP4_RE.test(a.getAttribute('href') || ''));
+  if (mp4Link) return { type: 'mp4', src: mp4Link.href, hash: (mp4Link.hash || '').toLowerCase() };
+
+  const posterImg = [...cell.querySelectorAll('picture img')]
+    .find((img) => MP4_RE.test(img.getAttribute('alt') || ''));
+  if (posterImg) {
+    const [urlPart] = (posterImg.getAttribute('alt') || '').split('|');
+    const [src, hashPart] = urlPart.trim().split('#');
+    return {
+      type: 'mp4',
+      src,
+      hash: hashPart ? `#${hashPart}`.toLowerCase() : '',
+      poster: posterImg.currentSrc || posterImg.getAttribute('src') || '',
+    };
+  }
+
+  return null;
+}
+
+function buildAtvIframe(url) {
+  const iframe = document.createElement('iframe');
+  iframe.src = url;
+  iframe.className = 'marquee-atv';
+  iframe.title = 'Adobe Video Publishing Cloud Player';
+  iframe.setAttribute('scrolling', 'no');
+  iframe.setAttribute('allow', 'encrypted-media; fullscreen');
+  iframe.setAttribute('loading', 'lazy');
+  return iframe;
+}
+
 function decorateVideo(cell, labels, locale) {
   if (!cell) return;
 
-  const existingVideo = cell.querySelector('video');
-  const link = cell.querySelector('a[href*=".mp4" i]');
-  const captionsLink = cell.querySelector('a[href*=".vtt" i]');
-  const src = existingVideo?.querySelector('source')?.src || existingVideo?.currentSrc || link?.href;
-  if (!src) return;
+  const info = resolveSource(cell);
+  if (!info) return;
 
-  const hash = (link?.hash || '').toLowerCase();
+  cell.classList.add('marquee-media');
+
+  if (info.type === 'embed') return;
+
+  if (info.type === 'atv') {
+    cell.replaceChildren(buildAtvIframe(info.url));
+    return;
+  }
+
+  const captionsLink = cell.querySelector('a[href*=".vtt" i]');
+  const hash = info.hash || '';
   const hoverPlay = hash.includes('hoverplay');
   const viewportPlay = hash.includes('viewportplay');
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -225,10 +289,11 @@ function decorateVideo(cell, labels, locale) {
   video.muted = true;
   video.loop = true;
   video.playsInline = true;
+  if (info.poster) video.poster = info.poster;
   if (!prefersReducedMotion && !hoverPlay && !viewportPlay) video.autoplay = true;
 
   const source = document.createElement('source');
-  source.src = src;
+  source.src = info.src;
   source.type = 'video/mp4';
   video.append(source);
 
@@ -245,7 +310,6 @@ function decorateVideo(cell, labels, locale) {
     controls.append(buildCaptionsToggle(track.track, labels));
   }
 
-  cell.classList.add('marquee-media');
   cell.replaceChildren(video, controls);
 
   watchReducedMotion(video);
@@ -262,14 +326,22 @@ export default async function init(el) {
   el.classList.add('dark');
 
   const rows = [...el.querySelectorAll(':scope > div')];
-  const [logoRow, contentRow, videoRow] = rows.length >= 3 ? rows : [undefined, ...rows];
-  if (!contentRow) return;
+  const cellOf = (row) => row.querySelector(':scope > div') || row;
 
-  const contentCell = contentRow.querySelector(':scope > div') || contentRow;
+  // Classify rows by content, so a logo is optional and one or two video rows
+  // are both supported (first video = mobile, second = desktop).
+  const videoRows = rows.filter((row) => resolveSource(cellOf(row)));
+  const nonVideoRows = rows.filter((row) => !videoRows.includes(row));
+  const contentRow = nonVideoRows.find((row) => row.querySelector('h1, h2, h3, h4, h5, h6'))
+    || nonVideoRows.find((row) => [...row.querySelectorAll('p')].some((p) => p.textContent.trim()));
+  if (!contentRow) return;
+  const logoRow = nonVideoRows.find((row) => row !== contentRow && row.querySelector('picture'));
+
+  const contentCell = cellOf(contentRow);
   contentCell.classList.add('marquee-content');
   contentRow.classList.add('marquee-content-row');
 
-  const logoCell = logoRow?.querySelector(':scope > div') || logoRow;
+  const logoCell = logoRow ? cellOf(logoRow) : null;
   const logo = logoCell?.querySelector('picture');
   if (logo) {
     const eyebrow = document.createElement('div');
@@ -286,15 +358,20 @@ export default async function init(el) {
     if (p.textContent?.trim()) p.classList.add('marquee-subcopy');
   });
 
-  if (videoRow) {
-    videoRow.classList.add('marquee-video-row');
+  if (videoRows.length) {
     const [labels, locale] = await Promise.all([loadLabels(), getLocaleInfo()]);
-    decorateVideo(videoRow.querySelector(':scope > div') || videoRow, labels, locale);
+    videoRows.forEach((videoRow, i) => {
+      videoRow.classList.add('marquee-video-row');
+      if (videoRows.length > 1) {
+        videoRow.classList.add(i === 0 ? 'marquee-video-mobile' : 'marquee-video-desktop');
+      }
+      decorateVideo(cellOf(videoRow), labels, locale);
+    });
   }
 
   const inner = document.createElement('div');
   inner.className = 'marquee-inner';
   inner.append(contentRow);
-  if (videoRow) inner.append(videoRow);
+  videoRows.forEach((videoRow) => inner.append(videoRow));
   el.append(inner);
 }

@@ -4,8 +4,8 @@
   --marquee-headline-ls: -0.96px;
 
   background-color: #000;
-  padding: var(--spacing-xl) 24px;
-  max-width: 1920px;
+  padding-bottom: 56px;
+  padding-inline: var(--grid-margin-width);
   margin: 0 auto;
 }
 
@@ -21,28 +21,29 @@
   flex-direction: column;
   justify-content: center;
   height: 100%;
+  max-width: 512px;
 }
 
 .video-marquee .marquee-eyebrow picture,
 .video-marquee .marquee-eyebrow img {
   display: block;
-  width: 80px;
-  height: 19px;
+  max-width: 168px;
+  height: 20px;
   margin-bottom: var(--spacing-xs);
 }
 
 .video-marquee .marquee-headline {
   margin: 0;
   color: var(--color-white);
-  font-family: adobe-clean-display, var(--font-family-adobe-clean-display, "Adobe Clean Display"), sans-serif;
-  font-size: var(--s2a-typography-font-size-title-1, var(--marquee-headline-size));
+  font-family: var(--heading-font-family);
+  font-size: 40px;
   font-weight: 900;
-  line-height: var(--s2a-typography-line-height-title-1, var(--marquee-headline-lh));
+  line-height: 40px;
   letter-spacing: var(--s2a-typography-letter-spacing-title-1, var(--marquee-headline-ls));
 }
 
 .video-marquee .marquee-subcopy {
-  margin: var(--spacing-xs) 0 0;
+  margin: 8px 0 0;
   max-width: 32em;
   color: #F8F8F8;
   font-family: var(--font-family-adobe-clean, "Adobe Clean"), adobe-clean, sans-serif;
@@ -52,8 +53,9 @@
   letter-spacing: var(--s2a-typography-letter-spacing-body-lg, 0);
 }
 
-.video-marquee .marquee-video-row {
-  min-width: 327px;
+/* Mobile video shows below 600px, desktop video at/above 600px (see media query). */
+.video-marquee .marquee-video-desktop {
+  display: none;
 }
 
 .video-marquee .marquee-media {
@@ -172,7 +174,18 @@
     --marquee-headline-lh: 48px;
     --marquee-headline-ls: -1.44px;
 
-    padding-right: 0;
+    /* Center content within a 1200px max-width; keep the right edge flush so the
+       video can bleed out into the margin. */
+    padding-inline-start: max(var(--grid-margin-width), calc((100% - 1200px) / 2));
+    padding-inline-end: 0;
+  }
+
+  .video-marquee .marquee-video-mobile {
+    display: none;
+  }
+
+  .video-marquee .marquee-video-desktop {
+    display: block;
   }
 
   .video-marquee .marquee-inner {
@@ -201,7 +214,24 @@
     --marquee-headline-lh: 100%;
     --marquee-headline-ls: -2.88px;
 
-    padding: 80px 0 80px 80px;
+    padding-block: 80px;
+  }
+
+  .video-marquee .marquee-eyebrow picture,
+  .video-marquee .marquee-eyebrow img {
+    height: 30px;
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .video-marquee .marquee-headline { 
+    font-size: 72px;
+    letter-spacing: -2.88px;
+    line-height: 100%;
+  }
+
+  .video-marquee .marquee-subcopy {
+    padding-right: 40px;
   }
 }
 
@@ -219,7 +249,9 @@
 
 @media (min-width: 1280px) {
   .video-marquee .marquee-inner {
-    grid-template-columns: 557fr 768fr;
+    /* Text capped to its share of the 1200px content box; video = 1fr fills the
+       rest and bleeds out to the right edge. */
+    grid-template-columns: minmax(0, 557px) 1fr;
     gap: 35px;
   }
 }

@@ -567,9 +567,9 @@ header.global-navigation {
   min-height: var(--global-height-nav);
 }
 
-body:has(.global-navigation) main {
+/* body:has(.global-navigation) main {
   margin-top: calc(-1 * var(--global-height-nav));
-}
+} */
 
 main > div,
 main .section:is([data-status='decorated'], [data-status='pending']) {
@@ -1579,4 +1579,14 @@ span.hang-opening-quote {
   .section:is(.parallax-double-garage-door, :has(.parallax-double-garage-door)) {
     animation-range: entry 0% entry 70%, exit 50% exit 90%;
   }
+}
+
+/* BACOM specific */
+.global-footer div.feds-footer-logo {
+  display: none;
+}
+
+header.global-navigation {
+  height: 64px;
+  min-height: 64px;
 }

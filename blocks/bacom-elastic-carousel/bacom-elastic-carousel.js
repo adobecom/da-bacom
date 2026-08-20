@@ -15,7 +15,6 @@ const isSvgUrl = (url) => /\.svg(\?.*)?$/i.test(url || '');
 const isRtl = () => document.documentElement.getAttribute('dir') === 'rtl';
 const isMobile = () => window.innerWidth <= 768;
 
-// Inline icons for the expand-content variant (kept in JS to avoid extra network requests).
 const EXPAND_PLUS_ICON = `
   <svg class="elastic-carousel-expand-icon elastic-carousel-expand-icon-plus" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
     <path d="M10 4.5v11M4.5 10h11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
@@ -31,10 +30,8 @@ const CAROUSEL_ARROW_ICON = `
     <path d="M4 10h12M11 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
   </svg>`;
 
-// Trailing chevron for the footer heading CTA (path/geometry from the Figma design). Uses
-// currentColor so it always matches the heading text.
 const FOOTER_CHEVRON_ICON = `
-  <svg class="elastic-carousel-footer-chevron" viewBox="0 0 4.5 7.5" aria-hidden="true" focusable="false">
+  <svg class="elastic-carousel-footer-chevron" viewBox="0 0 5 8" aria-hidden="true" focusable="false">
     <path d="M0.75 6.75L3.75 3.75L0.75 0.75" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
   </svg>`;
 
@@ -72,7 +69,6 @@ const handleMobileAutoplay = (carousel) => {
 
     const nextSlide = slides[index + 1];
 
-    // Play when this slide enters view — but not if the next slide is already covering it
     const slideObserver = new IntersectionObserver(
       ([entry]) => {
         if (!isMobile()) return;
@@ -89,8 +85,6 @@ const handleMobileAutoplay = (carousel) => {
 
     if (!nextSlide) return;
 
-    // Rewind when the next slide starts covering this one;
-    // play again when it uncovers (user scrolls back up)
     const nextSlideObserver = new IntersectionObserver(
       ([entry]) => {
         if (!isMobile()) return;
@@ -199,8 +193,10 @@ const buildSlide = ({ slide, index, slidesTotal }) => {
   const children = [...slide.children];
   const left = children[0];
   const right = children[1];
-
-  const [iconContainer, heading, linkName, description] = left.children;
+  const leftChildren = [...left.children];
+  const hasIcon = !!leftChildren[0]?.querySelector('img');
+  const iconContainer = hasIcon ? leftChildren.shift() : null;
+  const [heading, linkName, description] = leftChildren;
   const icon = iconContainer?.querySelector('img');
   const asset = right.children[0];
   const link = left.lastElementChild?.querySelector('a');
@@ -216,15 +212,15 @@ const buildSlide = ({ slide, index, slidesTotal }) => {
   if (isSvgUrl(asset?.src)) asset.src = getFederatedUrl(asset.src);
   if (isSvgUrl(icon?.src)) icon.src = getFederatedUrl(icon.src);
 
-  // TODO: update to ensure classes are mapped to C2 variables
-  // TODO: see if eyebrow class can be applied directly to footer headline
   decorateBlockText(left);
+
+  const headingHTML = heading ? `<p>${heading.innerHTML}</p>` : '';
 
   const content = `
     <div class='elastic-carousel-item-container' id='elastic-carousel-slide-${index + 1}'>
       <div class='elastic-carousel-item-header'>
-        ${icon.outerHTML}
-        ${heading?.outerHTML}
+        ${icon?.outerHTML || ''}
+        ${headingHTML}
       </div>
       <div class='elastic-carousel-item-media'>
         <div class='elastic-carousel-item-media-asset'>${asset.outerHTML}</div>
@@ -237,7 +233,6 @@ const buildSlide = ({ slide, index, slidesTotal }) => {
   `;
 
   let ariaLabel = `${index + 1} of ${slidesTotal}`;
-  // assign unique aria-label to the first slide
   if (index === 0) ariaLabel = `${getCarouselName(link)}, carousel. ${ariaLabel}`;
 
   const slideEl = createTag('a', {
@@ -261,7 +256,6 @@ const buildSlide = ({ slide, index, slidesTotal }) => {
 };
 
 const toggleExpandContent = (event) => {
-  // The card itself is an anchor; keep the toggle from navigating the card.
   event.preventDefault();
   event.stopPropagation();
   const toggle = event.currentTarget;
@@ -306,26 +300,14 @@ const decorateExpandContent = (carousel) => {
 };
 
 const decorateFooterChevron = (carousel) => {
-  carousel.querySelectorAll('.elastic-carousel-item-footer :is(h1, h2, h3, h4, h5, h6)')
-    .forEach((heading) => heading.insertAdjacentHTML('beforeend', FOOTER_CHEVRON_ICON));
+  carousel.querySelectorAll('.elastic-carousel-item-footer').forEach((footer) => {
+    const cta = footer.querySelector(':is(h1, h2, h3, h4, h5, h6), a');
+    cta?.insertAdjacentHTML('beforeend', FOOTER_CHEVRON_ICON);
+  });
 };
 
-// Fewest cards. Guessed 2 for tablet.
 const LIMITED_MIN_VISIBLE = 2;
 
-const getVisibleWhole = (carousel) => {
-  const raw = parseFloat(getComputedStyle(carousel).getPropertyValue('--limited-visible-slides'));
-  return Math.max(1, Math.floor(Number.isFinite(raw) ? raw : 3));
-};
-
-const getLimitedStep = (slides) => {
-  if (slides.length < 2) return 0;
-  const [first, second] = slides;
-  return second.getBoundingClientRect().left - first.getBoundingClientRect().left;
-};
-
-// Step between adjacent cards' horizontal shrink in the mobile stack (matches the base
-// design's 3/2.25/1.5/.75/0rem ramp: a 0.75rem step).
 const STACK_SHRINK_STEP = '0.75rem';
 
 const decorateMobileStack = (carousel) => {
@@ -345,6 +327,32 @@ const decorateMobileStack = (carousel) => {
   });
 };
 
+const getVisibleSlides = (carousel) => {
+  const raw = parseFloat(getComputedStyle(carousel).getPropertyValue('--limited-visible-slides'));
+  return Number.isFinite(raw) ? raw : 3;
+};
+
+const updateLimitedControls = (carousel, container, prevBtn, nextBtn, totalSlides) => {
+  const maxScroll = container.scrollWidth - container.clientWidth;
+  const { scrollLeft } = container;
+  if (isRtl()) {
+    prevBtn.disabled = scrollLeft >= -1;
+    nextBtn.disabled = scrollLeft <= -maxScroll + 1;
+  } else {
+    prevBtn.disabled = scrollLeft <= 1;
+    nextBtn.disabled = scrollLeft >= maxScroll - 1;
+  }
+  carousel.classList.toggle('limited-static', totalSlides <= getVisibleSlides(carousel));
+};
+
+const scrollLimitedByCard = (container, direction) => {
+  const card = container.querySelector('.elastic-carousel-item');
+  if (!card) return;
+  const gap = parseFloat(getComputedStyle(container).columnGap) || 0;
+  const amount = (card.getBoundingClientRect().width + gap) * direction * (isRtl() ? -1 : 1);
+  container.scrollBy({ left: amount, behavior: 'smooth' });
+};
+
 const decorateLimitedCarousel = (carousel) => {
   if (!carousel.classList.contains('limited')) return null;
   const container = carousel.querySelector('.elastic-carousel-container');
@@ -357,33 +365,23 @@ const decorateLimitedCarousel = (carousel) => {
 
   if (slides.length <= LIMITED_MIN_VISIBLE) return null;
 
-  let index = 0;
+  container.append(createTag('div', { class: 'elastic-carousel-limited-spacer', 'aria-hidden': 'true' }));
 
   const prevBtn = createTag('button', { class: 'elastic-carousel-limited-control prev', type: 'button', 'aria-label': 'Previous cards' }, CAROUSEL_ARROW_ICON);
   const nextBtn = createTag('button', { class: 'elastic-carousel-limited-control next', type: 'button', 'aria-label': 'Next cards' }, CAROUSEL_ARROW_ICON);
-
-  const goTo = (nextIndex) => {
-    const maxIndex = Math.max(0, slides.length - getVisibleWhole(carousel));
-    index = Math.min(maxIndex, Math.max(0, nextIndex));
-
-    const step = getLimitedStep(slides);
-    container.style.setProperty('--limited-offset', `${-1 * index * step}px`);
-    prevBtn.disabled = index <= 0;
-    nextBtn.disabled = index >= maxIndex;
-
-    carousel.classList.toggle('limited-static', maxIndex === 0);
-  };
-
-  prevBtn.addEventListener('click', () => goTo(index - 1));
-  nextBtn.addEventListener('click', () => goTo(index + 1));
-  goTo(0);
+  prevBtn.addEventListener('click', () => scrollLimitedByCard(container, -1));
+  nextBtn.addEventListener('click', () => scrollLimitedByCard(container, 1));
 
   const controls = createTag('div', { class: 'elastic-carousel-limited-controls' });
   controls.append(prevBtn, nextBtn);
   carousel.append(controls);
 
   const controller = new AbortController();
-  window.addEventListener('resize', () => goTo(index), { signal: controller.signal });
+  const update = () => updateLimitedControls(carousel, container, prevBtn, nextBtn, slides.length);
+  container.addEventListener('scroll', update, { signal: controller.signal });
+  window.addEventListener('resize', update, { signal: controller.signal });
+  requestAnimationFrame(update);
+
   return controller;
 };
 
