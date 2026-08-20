@@ -202,6 +202,15 @@
   }
 }
 
+/* classic 1200px grid alignment (desktop opt-in) */
+@media (width >= 768px) {
+  .bacom-rich-content.classic-grid-spacing {
+    --grid-content-width: 1200px;
+
+    padding-inline: max(var(--grid-margin-width), calc((100% - var(--grid-content-width)) / 2));
+  }
+}
+
 .section {
   &:has(.bacom-rich-content.hero) {
     box-sizing: border-box;
