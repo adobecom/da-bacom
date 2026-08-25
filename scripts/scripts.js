@@ -363,6 +363,25 @@ export async function loadPage() {
     });
   }
 
+  // Target's init() reassigns config.mep and drops our block overrides. Re-inject on set.
+  const targetOn = getMetadata('target') || new URLSearchParams(window.location.search).get('target');
+  if (targetOn && getMetadata('foundation') === 'c2') {
+    const config = getConfig();
+    const desiredBlocks = {
+      'global-navigation': `${LIBS}/blocks/global-navigation`,
+      'global-footer': `${LIBS}/blocks/global-footer`,
+    };
+    let mepInternal = config.mep;
+    Object.defineProperty(config, 'mep', {
+      configurable: true,
+      get() { return mepInternal; },
+      set(v) {
+        if (v && typeof v === 'object') v.blocks = { ...v.blocks, ...desiredBlocks };
+        mepInternal = v;
+      },
+    });
+  }
+
   await loadArea();
 
   if (getMetadata('iswa-typography') === 'on') applyIswaTypography();
