@@ -77,10 +77,10 @@ describe('Bento Grid', () => {
       expect(desktopView.querySelector('.grid-carousel-controls')).to.exist;
     });
 
-    it('combines the featured cell into a single swipeable row on mobile', () => {
+    it('combines the featured cell into a single swipeable row with controls on mobile', () => {
       const mobileView = document.querySelector('.grid-view.view-mobile');
       expect(mobileView.querySelector('.bento-featured')).to.not.exist;
-      expect(mobileView.querySelector('.grid-carousel-controls')).to.not.exist;
+      expect(Boolean(mobileView.querySelector('.grid-carousel-controls'))).to.equal(true);
       const cards = mobileView.querySelectorAll('.grid-carousel .grid-item');
       // all 6 cells (2 in row 1 + 4 in row 2) become carousel cards on mobile
       expect(cards.length).to.equal(6);

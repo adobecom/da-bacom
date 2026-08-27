@@ -476,7 +476,7 @@ function createViewElement(type, config, featuredCells, carouselCells) {
     const row2Config = config[2] || {};
     const allCells = [featuredCell, ...restRow1, ...carouselCells];
     const orderedCells = rotateByStartIndex(allCells, row2Config.startIndex);
-    wrapper.appendChild(buildCarouselRow(orderedCells, { showControls: false }));
+    wrapper.appendChild(buildCarouselRow(orderedCells));
     return wrapper;
   }
 

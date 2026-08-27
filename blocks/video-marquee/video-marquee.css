@@ -208,6 +208,15 @@
   }
 }
 
+@media (max-width: 769px) {
+  .video-marquee .marquee-media .milo-video iframe {
+    aspect-ratio: 9 / 16;
+    width: 100%;
+    height: unset;
+    object-fit: cover;
+  }
+}
+
 @media (min-width: 769px) {
   .video-marquee {
     --marquee-headline-size: 72px;
