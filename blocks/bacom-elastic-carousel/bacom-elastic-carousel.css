@@ -699,7 +699,7 @@ html[dir="rtl"] .elastic-carousel-footer-chevron {
 
 @media (width < 768px) {
   .bacom-elastic-carousel:is(.expand-content, .limited) {
-    margin-inline: 0;
+    margin-inline: var(--grid-margin-width);
 
     .elastic-carousel-container .elastic-carousel-item {
       color: var(--s2a-color-gray-1000);
@@ -735,8 +735,8 @@ html[dir="rtl"] .elastic-carousel-footer-chevron {
   --limited-gap: var(--s2a-spacing-8);
   --limited-content-max-width: 1200px;
   --limited-group-max-width: calc((var(--limited-card-max-width) * var(--limited-visible-slides)) + (var(--limited-gap) * (var(--limited-visible-slides) - 1)));
-  --limited-inset: max(var(--grid-margin-width), calc((100vw - var(--limited-content-max-width)) / 2));
-  --limited-bleed-space: max(0px, calc(100vw - var(--limited-inset) - var(--limited-group-max-width)));
+  --limited-inset: max(var(--grid-margin-width), calc((100% - var(--limited-content-max-width)) / 2));
+  --limited-bleed-space: max(0px, calc(100% - var(--limited-inset) - var(--limited-group-max-width)));
 
   .elastic-carousel-limited-controls {
     display: none;
