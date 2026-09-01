@@ -16,12 +16,13 @@ describe('Bento Grid', () => {
       const block = document.querySelector('.bento-grid');
       expect(block.classList.contains('con-block')).to.be.true;
       expect(block.getAttribute('role')).to.equal('region');
+      expect(block.getAttribute('aria-label')).to.equal('Featured video gallery');
     });
 
-    it('builds mobile, tablet, and desktop views', () => {
+    it('builds only mobile and desktop views (no tablet duplicate)', () => {
       expect(document.querySelector('.grid-view.view-mobile')).to.exist;
-      expect(document.querySelector('.grid-view.view-tablet')).to.exist;
       expect(document.querySelector('.grid-view.view-desktop')).to.exist;
+      expect(document.querySelector('.grid-view.view-tablet')).to.not.exist;
     });
 
     it('renders the section header from the leading heading/paragraph', () => {
@@ -40,6 +41,13 @@ describe('Bento Grid', () => {
       expect(featured.querySelector('.bento-description').textContent).to.equal('Featured description text.');
       expect(featured.querySelector('.bento-watch-link')).to.exist;
       expect(featured.querySelector('.grid-item-play')).to.exist;
+    });
+
+    it('falls back to the localized watch label and sets no aria-label when the CTA is a raw url', () => {
+      const desktopView = document.querySelector('.grid-view.view-desktop');
+      const featured = desktopView.querySelector('.bento-featured');
+      expect(featured.querySelector('.bento-watch-link').textContent).to.equal('Watch video');
+      expect(featured.hasAttribute('aria-label')).to.be.false;
     });
 
     it('does not render an eyebrow when none is authored', () => {
@@ -72,9 +80,11 @@ describe('Bento Grid', () => {
       });
     });
 
-    it('shows carousel arrow controls when there are more than 3 cards', () => {
+    it('shows carousel arrow controls with localized labels when there are more than 3 cards', () => {
       const desktopView = document.querySelector('.grid-view.view-desktop');
       expect(desktopView.querySelector('.grid-carousel-controls')).to.exist;
+      expect(desktopView.querySelector('.grid-carousel-arrow-prev').getAttribute('aria-label')).to.equal('Previous');
+      expect(desktopView.querySelector('.grid-carousel-arrow-next').getAttribute('aria-label')).to.equal('Next');
     });
 
     it('combines the featured cell into a single swipeable row with controls on mobile', () => {
@@ -163,6 +173,16 @@ describe('Bento Grid', () => {
       expect(rachel.tagName).to.equal('A');
       expect(rachel.getAttribute('href')).to.equal('#rachel');
     });
+
+    it('renders the authored CTA text and maps the pipe suffix to an aria-label', () => {
+      const featured = document.querySelector('.grid-view.view-desktop .bento-featured');
+      expect(featured.querySelector('.bento-watch-link').textContent).to.equal('Watch video');
+      expect(featured.getAttribute('aria-label')).to.equal('Featured');
+
+      const cards = [...document.querySelectorAll('.grid-view.view-desktop .grid-carousel .grid-item')];
+      const satya = cards.find((c) => c.dataset.modalPath === '/fragments/resources/videos/news-satya');
+      expect(satya.getAttribute('aria-label')).to.equal('Watch Satya');
+    });
   });
 
   describe('mp4 replaced by Milo video autoblock', () => {
@@ -192,6 +212,28 @@ describe('Bento Grid', () => {
       expect(card).to.exist;
       expect(card.tagName).to.equal('A');
       expect(card.classList.contains('has-video')).to.be.true;
+    });
+  });
+
+  describe('legacy authored config row', () => {
+    before(async () => {
+      document.body.innerHTML = await readFile({ path: './mocks/legacy-config.html' });
+      await init(document.querySelector('.bento-grid'));
+    });
+
+    it('ignores a leading config row and still builds the featured card', () => {
+      const desktopView = document.querySelector('.grid-view.view-desktop');
+      const featured = desktopView.querySelector('.bento-featured');
+      expect(featured).to.exist;
+      expect(featured.querySelector('.bento-heading').textContent).to.equal('Featured heading');
+    });
+
+    it('does not leak the config row into the carousel', () => {
+      const desktopView = document.querySelector('.grid-view.view-desktop');
+      const cards = desktopView.querySelectorAll('.grid-carousel .grid-item');
+      // only the one non-featured content card, never the config row
+      expect(cards.length).to.equal(1);
+      expect(desktopView.textContent).to.not.contain('viewport=desktop');
     });
   });
 
