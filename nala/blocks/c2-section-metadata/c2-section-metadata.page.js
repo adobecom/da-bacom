@@ -27,11 +27,12 @@ export default class C2SectionMetadata {
   async waitForReady() {
     await this.block.waitFor({ state: 'attached' });
     await this.section.waitFor({ state: 'attached' });
-    // The owning section decorates lazily (Milo defers below-the-fold sections), so
-    // nudge it into view to trigger decoration and wait for the section-metadata
-    // classes to be applied. CI runners are slow — allow a generous window so the
-    // subsequent assertions don't race the async block decoration.
-    await this.section.scrollIntoViewIfNeeded().catch(() => {});
+    // The owning section decorates lazily (Milo defers below-the-fold sections).
+    // Trigger it with an in-page, non-blocking scroll (Playwright's
+    // scrollIntoViewIfNeeded can wait the full actionTimeout on some browsers), then
+    // wait for the section-metadata classes to be applied. CI runners are slow, so
+    // allow a generous window so the assertions don't race the async decoration.
+    await this.section.evaluate((el) => el.scrollIntoView()).catch(() => {});
     await expect
       .poll(async () => (await this.sectionClassList()).length, { timeout: 20000 })
       .toBeGreaterThan(1);
