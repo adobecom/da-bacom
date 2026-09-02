@@ -473,11 +473,7 @@ class LandingPageForm extends LitElement {
       cardImage: getContentUrl(form.cardImage?.path),
       assetHeadline: assetHeadlineVisible && form.assetHeadline ? `<h2>${form.assetHeadline}</h2>` : '',
       // Templates: use {{social-share-image}} in page-metadata (og:image, etc.).
-      // Relative path so Helix resolves/rehosts it to the site's own domain at publish time,
-      // rather than baking in the DA content-authoring origin.
-      socialShareImage: form.socialShareImage?.path
-        ? getRepoRelativePath(form.socialShareImage.path)
-        : undefined,
+      socialShareImage: getContentUrl(form.socialShareImage?.path),
       pdfAsset: pdfVisible && form.pdfAsset ? getAemPageUrl(form.pdfAsset?.path) : '',
       pdfAssetName: pdfVisible && form.pdfAsset ? form.pdfAsset?.name : '',
       videoAsset: videoVisible ? form.videoAsset : '',
