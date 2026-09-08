@@ -10,6 +10,13 @@ function isLinkOnlyContent(linkContainer, aTag) {
 
 const isSvgUrl = (url) => /\.svg(\?.*)?$/i.test(url || '');
 
+function splitCtaText(text) {
+  const raw = text || '';
+  const idx = raw.indexOf('|');
+  if (idx === -1) return { visible: raw.trim(), aria: '' };
+  return { visible: raw.slice(0, idx).trim(), aria: raw.slice(idx + 1).trim() };
+}
+
 const MAX_GRID_ITEMS = 3;
 
 const isRtl = () => document.documentElement.getAttribute('dir') === 'rtl';
@@ -104,6 +111,11 @@ export default async function init(el) {
       else if (isLinkOnlyContent(content, linkEl)) {
         content.classList.add('news-item-link');
         linkEl.classList.add('standalone-link', 'label', `${el.classList.contains('quiet') ? 'quiet' : ''}`);
+        const { visible, aria } = splitCtaText(linkEl.textContent);
+        if (aria) {
+          linkEl.textContent = visible;
+          linkEl.setAttribute('aria-label', aria);
+        }
       } else content.classList.add('news-item-body');
     });
   });

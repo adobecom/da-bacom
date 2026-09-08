@@ -87,6 +87,15 @@ const MP4_RE = /https?:\/\/\S+\.mp4\S*/i;
 
 const isMp4 = (url) => /\.mp4(\?|#|$)/i.test(url || '');
 
+function ctaAriaLabel(node) {
+  if (!node) return '';
+  const authored = node.getAttribute?.('aria-label');
+  if (authored) return authored.trim();
+  const raw = node.textContent || '';
+  const idx = raw.indexOf('|');
+  return idx === -1 ? '' : raw.slice(idx + 1).trim();
+}
+
 function resolveCellVideo(after) {
   const anchors = after.flatMap((node) => [...node.querySelectorAll('a')]);
 
@@ -154,6 +163,7 @@ function extractCells(container) {
       videoSrc: videoSrc || null,
       fragmentPath,
       fragmentHash,
+      ctaLabel: ctaAriaLabel(node),
       eyebrow: eyebrowPara?.textContent.trim() || '',
       heading: heading?.textContent.trim() || '',
       description: descPara?.textContent.trim() || '',
@@ -344,6 +354,7 @@ function buildFeatured(cell) {
 
   const item = document.createElement(cell.videoSrc || cell.fragmentPath ? 'a' : 'div');
   item.className = 'bento-featured';
+  if (cell.ctaLabel) item.setAttribute('aria-label', cell.ctaLabel);
   item.append(text, media);
 
   if (cell.videoSrc) {
@@ -365,6 +376,7 @@ function buildCarouselCard(cell, loadMode) {
 
   const item = document.createElement(cell.videoSrc || cell.fragmentPath ? 'a' : 'div');
   item.className = 'grid-item';
+  if (cell.ctaLabel) item.setAttribute('aria-label', cell.ctaLabel);
   item.appendChild(media);
 
   item.appendChild(buildTextBlock({
