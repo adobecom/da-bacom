@@ -163,6 +163,33 @@ describe('Bento Grid', () => {
       expect(rachel.tagName).to.equal('A');
       expect(rachel.getAttribute('href')).to.equal('#rachel');
     });
+
+    // The click must fall through to the browser so navigating to the hash updates the URL and
+    // Milo's modal.js (its hashchange listener) opens/closes the dialog — i.e. bento must NOT
+    // preventDefault the way it used to.
+    it('lets the fragment card click drive the URL hash instead of intercepting it', () => {
+      const cards = [...document.querySelectorAll('.grid-view.view-desktop .grid-carousel .grid-item')];
+      const satya = cards.find((c) => c.dataset.modalHash === '#satya');
+      expect(satya).to.exist;
+
+      // defaultPrevented is true here only if the block called preventDefault on the click.
+      let defaultPreventedByBlock;
+      const onDocClick = (e) => {
+        defaultPreventedByBlock = e.defaultPrevented;
+        e.preventDefault(); // stop the test from actually navigating to the hash
+      };
+      document.addEventListener('click', onDocClick, { once: true });
+      satya.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+      document.removeEventListener('click', onDocClick);
+
+      expect(defaultPreventedByBlock).to.equal(false);
+    });
+
+    it('does not turn the mp4 featured card into a hash trigger', () => {
+      const featured = document.querySelector('.grid-view.view-desktop .bento-featured');
+      expect(featured.getAttribute('href')).to.contain('.mp4');
+      expect(featured.dataset.modalHash).to.equal(undefined);
+    });
   });
 
   describe('mp4 replaced by Milo video autoblock', () => {
