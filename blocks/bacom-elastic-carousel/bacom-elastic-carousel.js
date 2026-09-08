@@ -214,13 +214,11 @@ const buildSlide = ({ slide, index, slidesTotal }) => {
 
   decorateBlockText(left);
 
-  const headingHTML = heading ? `<p>${heading.innerHTML}</p>` : '';
-
   const content = `
     <div class='elastic-carousel-item-container' id='elastic-carousel-slide-${index + 1}'>
       <div class='elastic-carousel-item-header'>
         ${icon?.outerHTML || ''}
-        ${headingHTML}
+        ${heading?.outerHTML || ''}
       </div>
       <div class='elastic-carousel-item-media'>
         <div class='elastic-carousel-item-media-asset'>${asset.outerHTML}</div>
