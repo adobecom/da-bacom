@@ -231,17 +231,34 @@ async function openFragmentModal(path, hash) {
 }
 
 function attachFragmentTrigger(item, mediaEl, path, hash) {
-  item.href = hash || path;
   item.classList.add('has-video');
   item.dataset.modalPath = path;
-  if (hash) item.dataset.modalHash = hash;
-
   addPlayIcon(mediaEl || item);
 
+  if (hash) {
+    item.href = hash;
+    item.dataset.modalHash = hash;
+    return;
+  }
+
+  item.href = path;
   item.addEventListener('click', (event) => {
     event.preventDefault();
     openFragmentModal(path, hash);
   });
+}
+
+async function setupHashModals(el) {
+  const [{ loadStyle }, modal] = await Promise.all([
+    import(`${LIBS}/utils/utils.js`),
+    import(`${LIBS}/blocks/modal/modal.js`),
+  ]);
+  loadStyle(`${LIBS}/blocks/modal/modal.css`);
+
+  const { hash } = window.location;
+  if (!hash) return;
+  const trigger = el.querySelector(`a[data-modal-hash="${hash}"]`);
+  if (trigger) modal.default(trigger);
 }
 
 function buildTextBlock({ className, eyebrow, heading, description, showWatchLink }) {
@@ -531,6 +548,9 @@ export default function init(el) {
   try {
     el.classList.add('con-block');
     decorateContent(el);
+    if (el.querySelector('a[data-modal-hash]')) {
+      setupHashModals(el).catch((err) => logError('modal setup failed', err));
+    }
   } catch (err) {
     window.lana?.log(`Bento grid Init Error: ${err}`, LANA_OPTIONS);
   }

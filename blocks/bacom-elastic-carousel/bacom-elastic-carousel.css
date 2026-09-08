@@ -79,13 +79,15 @@ html[dir="rtl"] {
           height: 24px;
         }
 
-        p {
+        p, h1, h2, h3, h4, h5 {
           font-size: 18px;
           font-weight: 800;
           color: var(--s2a-color-gray-1000);
           margin: 0;
           transition: color .1s ease;
           line-height: 22px;
+          letter-spacing: normal;
+          font-family: var(--body-font-family);
         }
       }
 
