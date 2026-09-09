@@ -87,6 +87,15 @@ const MP4_RE = /https?:\/\/\S+\.mp4\S*/i;
 
 const isMp4 = (url) => /\.mp4(\?|#|$)/i.test(url || '');
 
+function ctaAriaLabel(node) {
+  if (!node) return '';
+  const authored = node.getAttribute?.('aria-label');
+  if (authored) return authored.trim();
+  const raw = node.textContent || '';
+  const idx = raw.indexOf('|');
+  return idx === -1 ? '' : raw.slice(idx + 1).trim();
+}
+
 function resolveCellVideo(after) {
   const anchors = after.flatMap((node) => [...node.querySelectorAll('a')]);
 
@@ -154,6 +163,7 @@ function extractCells(container) {
       videoSrc: videoSrc || null,
       fragmentPath,
       fragmentHash,
+      ctaLabel: ctaAriaLabel(node),
       eyebrow: eyebrowPara?.textContent.trim() || '',
       heading: heading?.textContent.trim() || '',
       description: descPara?.textContent.trim() || '',
@@ -231,17 +241,34 @@ async function openFragmentModal(path, hash) {
 }
 
 function attachFragmentTrigger(item, mediaEl, path, hash) {
-  item.href = hash || path;
   item.classList.add('has-video');
   item.dataset.modalPath = path;
-  if (hash) item.dataset.modalHash = hash;
-
   addPlayIcon(mediaEl || item);
 
+  if (hash) {
+    item.href = hash;
+    item.dataset.modalHash = hash;
+    return;
+  }
+
+  item.href = path;
   item.addEventListener('click', (event) => {
     event.preventDefault();
     openFragmentModal(path, hash);
   });
+}
+
+async function setupHashModals(el) {
+  const [{ loadStyle }, modal] = await Promise.all([
+    import(`${LIBS}/utils/utils.js`),
+    import(`${LIBS}/blocks/modal/modal.js`),
+  ]);
+  loadStyle(`${LIBS}/blocks/modal/modal.css`);
+
+  const { hash } = window.location;
+  if (!hash) return;
+  const trigger = el.querySelector(`a[data-modal-hash="${hash}"]`);
+  if (trigger) modal.default(trigger);
 }
 
 function buildTextBlock({ className, eyebrow, heading, description, showWatchLink }) {
@@ -327,6 +354,7 @@ function buildFeatured(cell) {
 
   const item = document.createElement(cell.videoSrc || cell.fragmentPath ? 'a' : 'div');
   item.className = 'bento-featured';
+  if (cell.ctaLabel) item.setAttribute('aria-label', cell.ctaLabel);
   item.append(text, media);
 
   if (cell.videoSrc) {
@@ -348,6 +376,7 @@ function buildCarouselCard(cell, loadMode) {
 
   const item = document.createElement(cell.videoSrc || cell.fragmentPath ? 'a' : 'div');
   item.className = 'grid-item';
+  if (cell.ctaLabel) item.setAttribute('aria-label', cell.ctaLabel);
   item.appendChild(media);
 
   item.appendChild(buildTextBlock({
@@ -476,7 +505,7 @@ function createViewElement(type, config, featuredCells, carouselCells) {
     const row2Config = config[2] || {};
     const allCells = [featuredCell, ...restRow1, ...carouselCells];
     const orderedCells = rotateByStartIndex(allCells, row2Config.startIndex);
-    wrapper.appendChild(buildCarouselRow(orderedCells, { showControls: false }));
+    wrapper.appendChild(buildCarouselRow(orderedCells));
     return wrapper;
   }
 
@@ -531,6 +560,9 @@ export default function init(el) {
   try {
     el.classList.add('con-block');
     decorateContent(el);
+    if (el.querySelector('a[data-modal-hash]')) {
+      setupHashModals(el).catch((err) => logError('modal setup failed', err));
+    }
   } catch (err) {
     window.lana?.log(`Bento grid Init Error: ${err}`, LANA_OPTIONS);
   }

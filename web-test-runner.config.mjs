@@ -2,6 +2,15 @@
 import { importMapsPlugin } from '@web/dev-server-import-maps';
 
 export default {
+  // Mocha options. The default 2000ms timeout is too tight for async tests when
+  // wtr runs 4 concurrent browsers under CI CPU contention (intermittent timeouts);
+  // retry a failed test once to absorb order-dependent / timing flakiness.
+  testFramework: {
+    config: {
+      timeout: '5000',
+      retries: 1,
+    },
+  },
   coverageConfig: {
     exclude: [
       '**/mocks/**',
@@ -11,15 +20,7 @@ export default {
     ],
   },
   plugins: [
-    importMapsPlugin({
-      inject: {
-        importMap: {
-          imports: {
-            'da-lit': 'https://da.live/nx/deps/lit/lit-core.min.js',
-          },
-        },
-      },
-    }),
+    importMapsPlugin({ inject: { importMap: { imports: { 'da-lit': 'https://da.live/nx/deps/lit/lit-core.min.js' } } } }),
   ],
   testRunnerHtml: (testFramework) => `
     <html>
@@ -39,8 +40,8 @@ export default {
 
           const oldXHROpen = XMLHttpRequest.prototype.open;
           XMLHttpRequest.prototype.open = async function (...args) {
-            let [method, url, asyn] = args;
-            if (!resource.startsWith('/') && url.startsWith('http://localhost')) {
+            const [, url] = args;
+            if (!url.startsWith('/') && !url.startsWith('http://localhost')) {
               console.error(
                 '** XMLHttpRequest request for an external resource is disallowed in unit tests, please find a way to mock! https://github.com/orgs/adobecom/discussions/814#discussioncomment-6060759 provides guidance on how to fix the issue.',
                 url

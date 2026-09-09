@@ -4,15 +4,12 @@
 
   position: relative;
   padding: var(--spacing-xl) var(--spacing-xs);
-  background-image:
-    radial-gradient(circle at 0% 0%, rgb(216 130 80 / 45%), transparent 45%),
-    linear-gradient(135deg, #6b5a4e 0%, #4a4846 30%, #33343a 60%, #1c1d22 100%);
   overflow: hidden;
 }
 
 .resource-showcase .resource-showcase-heading {
-  max-width: var(--resource-showcase-max-width);
-  margin: 0 auto var(--spacing-m);
+  max-width: 327px;
+  margin: 0 auto 40px;
   color: var(--color-white);
   font-size: 32px;
   line-height: 32px;
@@ -25,7 +22,7 @@
   max-width: var(--resource-showcase-max-width);
   margin: 0 auto;
   grid-template-columns: 1fr;
-  gap: var(--spacing-l);
+  gap: 56px;
 }
 
 /* CTA link, shared by featured card and secondary items */
@@ -135,7 +132,7 @@
 .resource-showcase .resource-showcase-list {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-m);
+  gap: 48px;
   margin: 0;
   padding: 0;
   min-width: 0;
@@ -177,6 +174,8 @@
   }
 
   .resource-showcase .resource-showcase-heading {
+    max-width: var(--resource-showcase-max-width);
+    margin: 0 auto 56px;
     font-size: 48px;
     line-height: 48px;
     letter-spacing: -1.44px;
