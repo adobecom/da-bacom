@@ -1,0 +1,97 @@
+<!-- npx wtr --config ./web-test-runner.config.mjs "test/blocks/bento-grid/bento-grid-modal.test.html" --node-resolve -->
+<html>
+
+<head>
+  <meta name="foundation" content="c2">
+  <script type="importmap">
+    {
+      "imports": {
+        "https://main--milo--adobecom.aem.live/libs/utils/utils.js": "./mocks/modal-utils.js",
+        "https://main--milo--adobecom.aem.live/libs/blocks/modal/modal.js": "./mocks/modal-noc2.js",
+        "https://main--milo--adobecom.aem.live/libs/c2/blocks/modal/modal.js": "./mocks/modal-c2.js"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <script type="module">
+    import { runTests } from '@web/test-runner-mocha';
+    import { expect } from '@esm-bundle/chai';
+
+    window.lana = { log: () => {} };
+
+    // A grid with an mp4 featured card and a hash-fragment carousel card (#satya).
+    const GRID_HTML = `
+      <div class="bento-grid">
+        <div>
+          <div>
+            <p>viewport=desktop</p>
+            <p>r-1--start-index=1</p>
+            <p>r-2--start-index=1</p>
+          </div>
+        </div>
+        <div>
+          <div>
+            <p><picture><img src="./media_1.png" alt=""></picture></p>
+            <h3>Featured heading</h3>
+            <p>Featured description.</p>
+            <p><a href="https://example.com/media_feat.mp4">Watch video | Featured</a></p>
+          </div>
+        </div>
+        <div>
+          <div>
+            <p><picture><img src="./media_2.png" alt=""></picture></p>
+            <h3>Raw fragment card</h3>
+            <p>Fragment description.</p>
+            <p><a href="/fragments/resources/videos/news-satya#satya">Watch video | Watch Satya</a></p>
+          </div>
+        </div>
+      </div>`;
+
+    const tick = (ms = 50) => new Promise((resolve) => { setTimeout(resolve, ms); });
+
+    runTests(() => {
+      describe('Bento Grid modal module loading', () => {
+        let init;
+
+        before(async () => {
+          ({ default: init } = await import('../../../blocks/bento-grid/bento-grid.js'));
+        });
+
+        beforeEach(() => {
+          window.__bentoLoadStyles = [];
+          window.__bentoGetModalCalls = [];
+          document.body.innerHTML = GRID_HTML;
+        });
+
+        // The block must defer hash-fragment modals entirely to Milo's page-level modal
+        // module. If it loads its own modal module at init, that second module registers a
+        // duplicate `hashchange` listener and the modal opens (and its video plays) twice.
+        it('does not load a modal module during init for hash-fragment cards', async () => {
+          await init(document.querySelector('.bento-grid'));
+          await tick();
+
+          const loadedAModal = window.__bentoLoadStyles.some((p) => p.includes('modal'));
+          expect(loadedAModal, 'init must not load a modal module; Milo owns hash-fragment modals').to.equal(false);
+        });
+
+        // The mp4 (custom) modal must use the same modal module the C2 page already loaded,
+        // never the C1 module — otherwise a second module/hashchange listener is introduced.
+        it('opens mp4 videos through the C2 modal, never the C1 modal, on a C2 page', async () => {
+          await init(document.querySelector('.bento-grid'));
+          window.__bentoGetModalCalls = [];
+
+          const featured = document.querySelector('.grid-view.view-desktop .bento-featured');
+          featured.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+          await tick();
+
+          expect(window.__bentoGetModalCalls, 'mp4 modal should open via the C2 module').to.include('c2');
+          expect(window.__bentoGetModalCalls, 'mp4 modal must not open via the C1 module').to.not.include('noc2');
+        });
+      });
+    });
+  </script>
+</body>
+
+</html>
