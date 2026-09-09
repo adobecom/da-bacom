@@ -173,10 +173,22 @@ function extractCells(container) {
   });
 }
 
+function isC2Page() {
+  return document.querySelector('meta[name="foundation"]')?.content === 'c2';
+}
+
+function modalLibPath() {
+  return isC2Page() ? `${LIBS}/c2/blocks/modal/modal.js` : `${LIBS}/blocks/modal/modal.js`;
+}
+
+function modalStylePath() {
+  return isC2Page() ? `${LIBS}/c2/blocks/modal/modal.css` : `${LIBS}/blocks/modal/modal.css`;
+}
+
 async function openVideoModal(videoSrc) {
   const { loadStyle } = await import(`${LIBS}/utils/utils.js`);
-  const { getModal } = await import(`${LIBS}/blocks/modal/modal.js`);
-  loadStyle(`${LIBS}/c2/blocks/modal/modal.css`);
+  const { getModal } = await import(modalLibPath());
+  loadStyle(modalStylePath());
 
   const wrapper = document.createElement('div');
   wrapper.className = 'grid-video-modal-inner';
@@ -234,8 +246,8 @@ function attachVideoTrigger(item, mediaEl, videoSrc) {
 
 async function openFragmentModal(path, hash) {
   const { loadStyle } = await import(`${LIBS}/utils/utils.js`);
-  const { getModal } = await import(`${LIBS}/blocks/modal/modal.js`);
-  loadStyle(`${LIBS}/blocks/modal/modal.css`);
+  const { getModal } = await import(modalLibPath());
+  loadStyle(modalStylePath());
   const id = (hash || '').replace('#', '') || 'bento-grid-video-modal';
   await getModal({ path, id });
 }
@@ -256,19 +268,6 @@ function attachFragmentTrigger(item, mediaEl, path, hash) {
     event.preventDefault();
     openFragmentModal(path, hash);
   });
-}
-
-async function setupHashModals(el) {
-  const [{ loadStyle }, modal] = await Promise.all([
-    import(`${LIBS}/utils/utils.js`),
-    import(`${LIBS}/blocks/modal/modal.js`),
-  ]);
-  loadStyle(`${LIBS}/blocks/modal/modal.css`);
-
-  const { hash } = window.location;
-  if (!hash) return;
-  const trigger = el.querySelector(`a[data-modal-hash="${hash}"]`);
-  if (trigger) modal.default(trigger);
 }
 
 function buildTextBlock({ className, eyebrow, heading, description, showWatchLink }) {
@@ -560,9 +559,6 @@ export default function init(el) {
   try {
     el.classList.add('con-block');
     decorateContent(el);
-    if (el.querySelector('a[data-modal-hash]')) {
-      setupHashModals(el).catch((err) => logError('modal setup failed', err));
-    }
   } catch (err) {
     window.lana?.log(`Bento grid Init Error: ${err}`, LANA_OPTIONS);
   }
