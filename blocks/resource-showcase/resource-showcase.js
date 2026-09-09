@@ -6,9 +6,21 @@ const CHEVRON_ICON = `<svg class="resource-showcase-chevron" xmlns="http://www.w
   <path d="M2.5 1L7.5 5L2.5 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>`;
 
+function splitCtaText(text) {
+  const raw = text || '';
+  const idx = raw.indexOf('|');
+  if (idx === -1) return { visible: raw.trim(), aria: '' };
+  return { visible: raw.slice(0, idx).trim(), aria: raw.slice(idx + 1).trim() };
+}
+
 function decorateCTA(link) {
   if (!link) return null;
   link.classList.add('resource-showcase-cta');
+  const { visible, aria } = splitCtaText(link.textContent);
+  if (aria) {
+    link.textContent = visible;
+    link.setAttribute('aria-label', aria);
+  }
   link.insertAdjacentHTML('beforeend', CHEVRON_ICON);
   return link;
 }
@@ -57,13 +69,14 @@ function buildFeatured(row) {
   featured.className = 'resource-showcase-featured';
   if (href) {
     featured.href = href;
+    const ctaAria = link.getAttribute('aria-label');
     const label = document.createElement('span');
     label.className = link.className;
     label.innerHTML = link.innerHTML;
     link.replaceWith(label);
 
     const title = body.querySelector('.resource-showcase-featured-title');
-    featured.setAttribute('aria-label', title?.textContent.trim() ?? '');
+    featured.setAttribute('aria-label', ctaAria || title?.textContent.trim() || '');
     image.setAttribute('aria-hidden', 'true');
     body.setAttribute('aria-hidden', 'true');
   }

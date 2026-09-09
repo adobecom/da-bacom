@@ -190,6 +190,19 @@ describe('Bento Grid', () => {
       expect(featured.getAttribute('href')).to.contain('.mp4');
       expect(featured.dataset.modalHash).to.equal(undefined);
     });
+
+    it('sets the card aria-label from the second part of the CTA link text', () => {
+      const featured = document.querySelector('.grid-view.view-desktop .bento-featured');
+      expect(featured.getAttribute('aria-label')).to.equal('Featured');
+
+      const cards = [...document.querySelectorAll('.grid-view.view-desktop .grid-carousel .grid-item')];
+      const satya = cards.find((c) => c.dataset.modalHash === '#satya');
+      expect(satya.getAttribute('aria-label')).to.equal('Watch Satya');
+
+      // rachel's CTA text has no pipe, so no aria-label is added
+      const rachel = cards.find((c) => c.dataset.modalPath === '/fragments/resources/videos/news-rachel');
+      expect(rachel.getAttribute('aria-label')).to.equal(null);
+    });
   });
 
   describe('mp4 replaced by Milo video autoblock', () => {
@@ -219,6 +232,28 @@ describe('Bento Grid', () => {
       expect(card).to.exist;
       expect(card.tagName).to.equal('A');
       expect(card.classList.contains('has-video')).to.be.true;
+    });
+  });
+
+  describe('CTA aria-label after Milo link decoration', () => {
+    // Milo strips " | label" from the CTA text and moves it onto the anchor's aria-label before
+    // this block runs, so bento must read that attribute rather than re-splitting the (now
+    // pipe-less) text.
+    it('copies the Milo-set anchor aria-label onto the card', async () => {
+      document.body.innerHTML = `<div class="bento-grid">
+        <div><div><p>viewport=desktop</p></div></div>
+        <div>
+          <div>
+            <p><picture><img src="./m.png" alt=""></picture></p>
+            <h3>Why brand matters more.</h3>
+            <p>Emily Ketchen, Lenovo CMO.</p>
+            <p><a href="#emily" data-modal-path="/fragments/x/emily" data-modal-hash="#emily" class="modal link-block" aria-label="Watch video of Emily Ketchen's insights">Watch video</a></p>
+          </div>
+        </div>
+      </div>`;
+      await init(document.querySelector('.bento-grid'));
+      const featured = document.querySelector('.grid-view.view-desktop .bento-featured');
+      expect(featured.getAttribute('aria-label')).to.equal("Watch video of Emily Ketchen's insights");
     });
   });
 

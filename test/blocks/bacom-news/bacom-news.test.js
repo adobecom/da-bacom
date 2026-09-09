@@ -47,6 +47,21 @@ describe('bacom-news', () => {
       expect(el.querySelector('.news-carousel-controls')).to.be.null;
       expect(el.querySelectorAll('.news-item').length).to.equal(3);
     });
+
+    it('splits CTA links: first part visible, second part as aria-label', () => {
+      const links = [...el.querySelectorAll('.news-item .standalone-link')];
+      expect(links.length).to.equal(3);
+      links.forEach((link, i) => {
+        expect(link.textContent.trim()).to.equal('Read story');
+        expect(link.getAttribute('aria-label')).to.equal(`Story ${i}`);
+      });
+    });
+
+    it('leaves the header logo link untouched (CTAs only)', () => {
+      const headerLink = el.querySelector('.news-headline a');
+      expect(headerLink).to.exist;
+      expect(headerLink.getAttribute('aria-label')).to.equal(null);
+    });
   });
 
   describe('carousel mode (> 3 items)', () => {
