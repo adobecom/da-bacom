@@ -8,7 +8,7 @@ Combined test plan for the six ISWA blocks, all retargeted to the **stage dedica
 | [#201](https://github.com/adobecom/da-bacom/pull/201) | bacom-elastic-carousel (enh.) | [MWPW-202491](https://jira.corp.adobe.com/browse/MWPW-202491) | `nala/blocks/bacom-elastic-carousel/` | ✅ 5 |
 | [#203](https://github.com/adobecom/da-bacom/pull/203) | bento-grid (enh.) | [MWPW-202490](https://jira.corp.adobe.com/browse/MWPW-202490) | `nala/blocks/bento-grid/` | 8 (7 ✅ + 1 🔴 design-lock) |
 | [#198](https://github.com/adobecom/da-bacom/pull/198) | resource-showcase (net new) | [MWPW-202483](https://jira.corp.adobe.com/browse/MWPW-202483) | `nala/blocks/resource-showcase/` | ✅ 6 |
-| [#202](https://github.com/adobecom/da-bacom/pull/202) | c2-section-metadata (net new) | [MWPW-202513](https://jira.corp.adobe.com/browse/MWPW-202513) | `nala/blocks/c2-section-metadata/` | ✅ 2 |
+| [#202](https://github.com/adobecom/da-bacom/pull/202) | c2-section-metadata (net new) | [MWPW-202513](https://jira.corp.adobe.com/browse/MWPW-202513) | — (Nala suite removed) | manual only (§3–§4) |
 | [#205](https://github.com/adobecom/da-bacom/pull/205) | bacom-carousel-c2 (enh.) | [MWPW-202488](https://jira.corp.adobe.com/browse/MWPW-202488) | `nala/blocks/bacom-carousel-c2/` | ✅ 4 |
 | — | ISWA cross-cutting (page-level) | [204904](https://jira.corp.adobe.com/browse/MWPW-204904) · [205058](https://jira.corp.adobe.com/browse/MWPW-205058) · [205025](https://jira.corp.adobe.com/browse/MWPW-205025) · [205271](https://jira.corp.adobe.com/browse/MWPW-205271) | `nala/blocks/iswa-cross-cutting/` | ✅ 4 |
 
@@ -24,7 +24,6 @@ Combined test plan for the six ISWA blocks, all retargeted to the **stage dedica
 | resource-showcase | `/drafts/nala/blocks/resource-showcase/resource-showcase` | 〃 |
 | bacom-carousel-c2 | `/drafts/nala/blocks/carousel/carousel-c2` (structure / logo / left-aligned) | 〃 |
 | carousel-c2 stat AC | `/drafts/nala/blocks/resources/it-starts-with-adobe` (the dedicated page authors no stat eyebrow) | 〃 |
-| c2-section-metadata | `/drafts/slavin/iswa/iswa-v2/c2-blocks-parity` | always (metadata is authored page content — the integration page does not author the c2 block) |
 
 Page-object adaptations make both authoring modes pass: marquee's desktop + mobile media rows (9x16 / 16x9 embeds) are filtered to the visible one; the bento section header is found in-block **or** as the text section above the block; the bento featured modal covers both the block-built mp4 modal (dedicated) and the fragment modal (`data-modal-path` → `.dialog-modal`, integration).
 
@@ -41,7 +40,7 @@ npm run test:file -- "test/blocks/bento-grid/bento-grid.test.js"
 npm run test:file -- "test/blocks/video-marquee/video-marquee.test.js"
 npm run test:file -- "test/blocks/resource-showcase/resource-showcase.test.js"
 ```
-> `bacom-elastic-carousel` and `c2-section-metadata` ship no unit tests in their PRs — they are covered by the Nala suites below.
+> `bacom-elastic-carousel` ships no unit tests in its PR — it is covered by the Nala suites below. `c2-section-metadata` has no automated coverage (Nala suite removed); verify it manually (§4).
 
 ### 1.2 Nala E2E (Playwright against the stage dedicated pages)
 
@@ -51,7 +50,7 @@ Run everything against stage:
 env LOCAL_TEST_LIVE_URL=https://stage--da-bacom--adobecom.aem.live \
 npx playwright test \
   nala/blocks/video-marquee nala/blocks/bacom-elastic-carousel \
-  nala/blocks/bento-grid nala/blocks/resource-showcase nala/blocks/c2-section-metadata \
+  nala/blocks/bento-grid nala/blocks/resource-showcase \
   nala/blocks/bacom-carousel-c2 \
   --project=da-bacom-live-chromium
 ```
@@ -70,7 +69,7 @@ Run against the combined ISWA integration page instead of the dedicated block pa
 env LOCAL_TEST_LIVE_URL=https://stage--da-bacom--adobecom.aem.live \
   'ISWA_INTEGRATION_PAGE=/drafts/nala/blocks/resources/it-starts-with-adobe?martech=off' \
 npx playwright test nala/blocks/video-marquee nala/blocks/bacom-elastic-carousel \
-  nala/blocks/bento-grid nala/blocks/resource-showcase nala/blocks/c2-section-metadata \
+  nala/blocks/bento-grid nala/blocks/resource-showcase \
   nala/blocks/bacom-carousel-c2 \
   --project=da-bacom-live-chromium
 ```
@@ -134,8 +133,6 @@ The suites target stage / draft pages. On `main` these pages still render the *o
 | | `@resource-showcase-featured-image-top` | AC: image above the body (DOM + geometry); responsive `<picture>` sources |
 | | `@resource-showcase-responsive` | AC: 2-col desktop; stacks to 1 col (featured first) below tablet |
 | | `@resource-showcase-a11y` | AC: one H2 heading; item titles H3; featured img alt; card keyboard-focusable |
-| **c2-section-metadata** | `@c2-section-metadata-style` | style classes applied to owning section (`rounded-corners-bottom` / `wide` / `spacing-md-bottom`) |
-| | `@c2-section-metadata-background` | `has-background` + `.section-background` layer created |
 | **carousel-c2** | `@carousel-c2-structure` | block renders with slides + at least one eyebrow (ingested) |
 | | `@carousel-c2-eyebrow-logo` | AC: a logo image is authored in the eyebrow (`.eyebrow` with an img) |
 | | `@carousel-c2-eyebrow-stat` | AC: a stat is authored in the eyebrow (`.eyebrow.stat` = strong number + `.stat-description`) — on the combined showcase page |
@@ -150,7 +147,7 @@ acceptance criteria. Screenshots captured at 1440px.
 
 | Block | Parity | Notes |
 |-------|:------:|-------|
-| **resource-showcase** | ✅ Strong | Heading, red featured card (image top / title-desc-CTA below), 3 secondary items with chevron CTAs, gradient background — all match the desktop spec. (Gradient is authored via section-metadata, covered by the c2-section-metadata suite on the parity page.) |
+| **resource-showcase** | ✅ Strong | Heading, red featured card (image top / title-desc-CTA below), 3 secondary items with chevron CTAs, gradient background — all match the desktop spec. (Gradient is authored via section-metadata; verify manually on the finished page.) |
 | **bento-grid** | ✅ Good | Play icon **top-right** of every image (measured), **featured video bento** (Watch + click-to-modal), **partial carousel** desktop (overflows) / **full** carousel mobile, card **radius now matches** the inner image. ⚠️ Remaining: desktop secondary-card grey background (§1.2b); verify **section-header alignment** (live centers "Leadership POV"; BASE spec shows it left-aligned). |
 | **elastic-carousel** | ✅ Good | 3-up ✅, expand icon **next to the headline** with **+/−** glyph ✅, click reveals the description **and re-crops the image** (asset `316px → 256px`) ✅, `>3` cards → carousel controls ✅. |
 | **video-marquee** | ✅ Good | Left content (eyebrow logo/headline/subcopy) + right rounded video panel; adobetv iframe player with **autoplay + captions**; full-bleed on large desktop. |
@@ -193,4 +190,4 @@ stage pages. (The detailed per-interaction template lives in
 - Card counts / `start-index` rotation are content-driven — suites assert lower bounds, not fixed counts.
 - Visual regression (pixel diffing) is out of scope; parity is by review (§3) + manual (§4).
 - `video-marquee` real-browser playback (headless capture shows black) is left to manual checks.
-- The carousel-c2 stat test and the c2-section-metadata suite target combined/parity pages rather than isolated ones — authored-content ACs have no isolated page.
+- The carousel-c2 stat test targets a combined page rather than an isolated one — authored-content ACs have no isolated page.

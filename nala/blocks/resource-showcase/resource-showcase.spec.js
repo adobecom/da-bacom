@@ -2,8 +2,8 @@
 // integration page instead with env ISWA_INTEGRATION_PAGE=<path>.
 //   LOCAL_TEST_LIVE_URL=https://stage--da-bacom--adobecom.aem.live
 // NOTE: the C2 gradient background (MWPW-204891) is applied via section-metadata,
-// which is not authored on the dedicated page — it is covered by the
-// c2-section-metadata suite / verified on the finished page.
+// which is not authored on the dedicated page — verify it manually on the
+// finished page.
 const INTEGRATION_PAGE = process.env.ISWA_INTEGRATION_PAGE;
 const pagePath = (dedicated) => INTEGRATION_PAGE || dedicated;
 
