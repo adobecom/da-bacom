@@ -27,7 +27,7 @@ export default class ElasticCarousel {
 
     this.firstItem = this.items.first();
     this.firstHeader = this.firstItem.locator('.elastic-carousel-item-header');
-    this.firstHeadline = this.firstItem.locator('.elastic-carousel-item-header p').first();
+    this.firstHeadline = this.firstItem.locator('.elastic-carousel-item-header :is(h1, h2, h3, h4, h5, h6, p)').first();
     this.firstToggle = this.firstItem.locator('.elastic-carousel-expand-toggle');
     this.firstMedia = this.firstItem.locator('.elastic-carousel-item-media');
     this.firstAsset = this.firstItem.locator('.elastic-carousel-item-media-asset');
@@ -56,7 +56,9 @@ export default class ElasticCarousel {
   /** Expand toggle position relative to the headline (AC: next to the headline). */
   async togglePlacement() {
     return this.firstItem.evaluate((item) => {
-      const headline = item.querySelector('.elastic-carousel-item-header p');
+      // The header preserves the authored heading tag (h3 on ISWA, MWPW-204509),
+      // so match any heading level (with a <p> fallback) rather than a fixed tag.
+      const headline = item.querySelector('.elastic-carousel-item-header :is(h1, h2, h3, h4, h5, h6, p)');
       const toggle = item.querySelector('.elastic-carousel-expand-toggle');
       if (!headline || !toggle) return null;
       const h = headline.getBoundingClientRect();

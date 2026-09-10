@@ -75,24 +75,31 @@ test.describe('BACOM Elastic Carousel Block Test Suite', () => {
       await carousel.waitForReady();
     });
 
-    await test.step('Carousel controls render for >3 cards; Prev disabled at start', async () => {
+    const { width } = await page.viewportSize();
+    const cardCount = await carousel.items.count();
+
+    await test.step('Controls: visible with nav for >3 cards, hidden when all cards fit', async () => {
       // Below tablet the design is swipe-based: the controls are rendered but
       // hidden, and nav is by swipe rather than arrows.
-      if ((await page.viewportSize()).width < 768) {
+      if (width < 768) {
         await expect(carousel.controls).toBeAttached();
-      } else {
+      } else if (cardCount > 3) {
         await expect(carousel.controls).toBeVisible();
         await expect(carousel.prevArrow).toBeDisabled();
         await expect(carousel.nextArrow).toBeEnabled();
+      } else {
+        // The desktop 3-up view fits <=3 cards with nothing to scroll, so the
+        // limited controls stay hidden (e.g. the ISWA integration page).
+        await expect(carousel.controls).toBeHidden();
       }
     });
 
-    if ((await page.viewportSize()).width >= 768) {
+    if (width >= 768 && cardCount > 3) {
       await test.step('Clicking Next advances the carousel and enables Prev', async () => {
         await carousel.clickNext();
         await expect(carousel.prevArrow).toBeEnabled();
       });
-    } else {
+    } else if (width < 768) {
       await test.step('Mobile: full-width stacked cards, controls hidden', async () => {
         // Current mobile build stacks the cards vertically at full width
         // (single-column grid) and hides the arrow controls. NOTE: the earlier

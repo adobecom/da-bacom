@@ -248,6 +248,7 @@ export default class BentoGrid {
       const media = view.querySelector('.grid-item .grid-item-media');
       return {
         featuredBg: bg(featured),
+        featuredBgIsGrey: isOpaqueGrey(bg(featured)),
         secondaryBg: bg(card),
         bgMatchesFeatured: !!featured && !!card && bg(card) === bg(featured),
         secondaryBgIsGrey: isOpaqueGrey(bg(card)),
