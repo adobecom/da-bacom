@@ -1,6 +1,47 @@
 import { expect } from '@esm-bundle/chai';
 import init from '../../../blocks/video-marquee/video-marquee.js';
 
+const TWO_ROW_HTML = `<div class="video-marquee">
+  <div><div><picture><img alt="" src="/logo.svg"></picture></div></div>
+  <div><div><h1>From idea to impact.</h1><p>Subcopy.</p></div></div>
+  <div><div><a href="https://video.tv.adobe.com/v/3497295">https://video.tv.adobe.com/v/3497295</a></div></div>
+  <div><div><picture><img alt="https://example.com/media_x.mp4#_autoplay1 | Play overview video" src="/poster.png"></picture></div></div>
+</div>`;
+
+// Controllable window.matchMedia so tests can pin the viewport and fire breakpoint changes.
+function installMatchMedia(initial = {}) {
+  const original = window.matchMedia;
+  const state = { ...initial };
+  const registry = new Map();
+  window.matchMedia = (query) => {
+    if (!registry.has(query)) {
+      const listeners = new Set();
+      registry.set(query, {
+        listeners,
+        mql: {
+          media: query,
+          get matches() { return Boolean(state[query]); },
+          addEventListener: (_type, cb) => listeners.add(cb),
+          removeEventListener: (_type, cb) => listeners.delete(cb),
+          addListener: (cb) => listeners.add(cb),
+          removeListener: (cb) => listeners.delete(cb),
+          dispatchEvent: () => true,
+        },
+      });
+    }
+    return registry.get(query).mql;
+  };
+  return {
+    set(query, value) {
+      state[query] = value;
+      registry.get(query)?.listeners.forEach((cb) => cb({ matches: value, media: query }));
+    },
+    restore() { window.matchMedia = original; },
+  };
+}
+
+const liveMediaCount = () => document.querySelectorAll('.video-marquee video, .video-marquee iframe').length;
+
 describe('Video Marquee', () => {
   it('decorates the heading and subcopy with no logo row (2-row model)', async () => {
     document.body.innerHTML = `<div class="video-marquee">
@@ -169,32 +210,81 @@ describe('Video Marquee', () => {
     expect(video.autoplay).to.be.false;
   });
 
-  it('splits two video rows into mobile and desktop, constructing each source', async () => {
-    document.body.innerHTML = `<div class="video-marquee">
-      <div><div><picture><img alt="" src="/logo.svg"></picture></div></div>
-      <div><div><h1>From idea to impact.</h1><p>Subcopy.</p></div></div>
-      <div><div><a href="https://video.tv.adobe.com/v/3497295">https://video.tv.adobe.com/v/3497295</a></div></div>
-      <div><div><picture><img alt="https://example.com/media_x.mp4#_autoplay1 | Play overview video" src="/poster.png"></picture></div></div>
-    </div>`;
+  it('with two video rows on desktop, builds only the desktop video and leaves the mobile row empty', async () => {
+    const mm = installMatchMedia({ '(min-width: 600px)': true });
+    try {
+      document.body.innerHTML = TWO_ROW_HTML;
+      await init(document.querySelector('.video-marquee'));
 
-    await init(document.querySelector('.video-marquee'));
+      const mobile = document.querySelector('.marquee-video-mobile');
+      const desktop = document.querySelector('.marquee-video-desktop');
 
-    const mobile = document.querySelector('.marquee-video-mobile');
-    const desktop = document.querySelector('.marquee-video-desktop');
-    expect(mobile).to.exist;
-    expect(desktop).to.exist;
+      // desktop mp4-in-alt poster -> native video with source + poster
+      const video = desktop.querySelector('video');
+      expect(Boolean(video)).to.equal(true);
+      expect(video.querySelector('source').getAttribute('src')).to.equal('https://example.com/media_x.mp4');
+      expect(video.getAttribute('poster')).to.contain('poster.png');
 
-    // mobile tv.adobe.com link -> MPC iframe (no native video)
-    const iframe = mobile.querySelector('iframe.marquee-atv');
-    expect(iframe).to.exist;
-    expect(iframe.getAttribute('src')).to.equal('https://video.tv.adobe.com/v/3497295');
-    expect(mobile.querySelector('video')).to.not.exist;
+      // mobile row holds no live media
+      expect(Boolean(mobile.querySelector('iframe'))).to.equal(false);
+      expect(Boolean(mobile.querySelector('video'))).to.equal(false);
+      expect(liveMediaCount()).to.equal(1);
+    } finally {
+      mm.restore();
+    }
+  });
 
-    // desktop mp4-in-alt poster -> native video with source + poster
-    const video = desktop.querySelector('video');
-    expect(video).to.exist;
-    expect(video.querySelector('source').getAttribute('src')).to.equal('https://example.com/media_x.mp4');
-    expect(video.getAttribute('poster')).to.contain('poster.png');
+  it('with two video rows on mobile, builds only the mobile video and leaves the desktop row empty', async () => {
+    const mm = installMatchMedia({ '(min-width: 600px)': false });
+    try {
+      document.body.innerHTML = TWO_ROW_HTML;
+      await init(document.querySelector('.video-marquee'));
+
+      const mobile = document.querySelector('.marquee-video-mobile');
+      const desktop = document.querySelector('.marquee-video-desktop');
+
+      // mobile tv.adobe.com link -> MPC iframe
+      const iframe = mobile.querySelector('iframe.marquee-atv');
+      expect(Boolean(iframe)).to.equal(true);
+      expect(iframe.getAttribute('src')).to.equal('https://video.tv.adobe.com/v/3497295');
+
+      // desktop row holds no live media
+      expect(Boolean(desktop.querySelector('video'))).to.equal(false);
+      expect(Boolean(desktop.querySelector('iframe'))).to.equal(false);
+      expect(liveMediaCount()).to.equal(1);
+    } finally {
+      mm.restore();
+    }
+  });
+
+  it('swaps the live video when the breakpoint changes, tearing down the previous one', async () => {
+    const mm = installMatchMedia({ '(min-width: 600px)': false });
+    try {
+      document.body.innerHTML = TWO_ROW_HTML;
+      await init(document.querySelector('.video-marquee'));
+
+      const mobile = document.querySelector('.marquee-video-mobile');
+      const desktop = document.querySelector('.marquee-video-desktop');
+
+      // starts on mobile
+      expect(Boolean(mobile.querySelector('iframe.marquee-atv'))).to.equal(true);
+      expect(Boolean(desktop.querySelector('video'))).to.equal(false);
+      expect(liveMediaCount()).to.equal(1);
+
+      // cross up to desktop
+      mm.set('(min-width: 600px)', true);
+      expect(Boolean(desktop.querySelector('video'))).to.equal(true);
+      expect(Boolean(mobile.querySelector('iframe'))).to.equal(false);
+      expect(liveMediaCount()).to.equal(1);
+
+      // cross back down to mobile
+      mm.set('(min-width: 600px)', false);
+      expect(Boolean(mobile.querySelector('iframe.marquee-atv'))).to.equal(true);
+      expect(Boolean(desktop.querySelector('video'))).to.equal(false);
+      expect(liveMediaCount()).to.equal(1);
+    } finally {
+      mm.restore();
+    }
   });
 
   it('does not add mobile/desktop classes for a single video (back-compat)', async () => {
