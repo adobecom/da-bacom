@@ -53,12 +53,20 @@ test.describe('BACOM Resource Showcase Block Test Suite', () => {
       await resource.waitForReady();
     });
 
-    await test.step('Featured card is a link labelled by its title', async () => {
+    await test.step('Featured card is a link with a concise accessible label', async () => {
       const tag = await resource.featured.evaluate((el) => el.tagName);
       expect(tag).toBe('A');
       await expect(resource.featured).toHaveAttribute('href', /.+/);
-      const title = (await resource.featuredTitle.textContent())?.trim();
-      await expect(resource.featured).toHaveAttribute('aria-label', title);
+      // The featured card is a whole-card link, so its accessible name comes from
+      // an aria-label. Per the aria-label fix (#232) that's the CTA's aria text when
+      // authored ("text | aria", e.g. the ISWA integration page) and falls back to
+      // the title (the dedicated page). Either way it must be a non-empty, concise
+      // label — not the whole-card content (the original QA issue).
+      const ariaLabel = await resource.featured.getAttribute('aria-label');
+      expect(ariaLabel, 'featured card has an aria-label').toBeTruthy();
+      const cardText = (await resource.featured.textContent())?.trim() || '';
+      expect(ariaLabel.length, 'aria-label is concise, not the whole-card content')
+        .toBeLessThan(cardText.length);
     });
   });
 
