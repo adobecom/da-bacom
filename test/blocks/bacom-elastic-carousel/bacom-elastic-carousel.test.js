@@ -225,9 +225,9 @@ describe('bacom-elastic-carousel', () => {
   });
 
   describe('headline tag-agnostic header', () => {
-    // Authors changed their pattern and mark the card headline up as an <h3> instead of a <p>.
-    // The header must keep its compact style regardless of the authored tag, so the block
-    // normalizes the headline to a <p> rather than letting decorateBlockText size a heading large.
+    // Authors can mark the card headline up as an <h3> instead of a <p>. The block emits the
+    // authored element as-is (it no longer normalizes it to a <p>); the block CSS keeps the
+    // compact header style across p/h1–h5, so the authored tag must survive into the header.
     const buildSimpleBlock = (count = 3, variantClasses = '') => {
       const slides = Array.from({ length: count }, (_, i) => `
         <div>
@@ -244,14 +244,15 @@ describe('bacom-elastic-carousel', () => {
       return document.querySelector('.bacom-elastic-carousel');
     };
 
-    it('renders the headline as a paragraph even when authored as a heading', async () => {
+    it('preserves the authored heading tag in the header', async () => {
       const el = buildSimpleBlock(3);
       await init(el);
       const header = el.querySelector('.elastic-carousel-item-header');
-      expect(header.querySelector('h1, h2, h3, h4, h5, h6')).to.be.null;
-      const p = header.querySelector('p');
-      expect(p).to.exist;
-      expect(p.textContent).to.contain('Headline 0');
+      const heading = header.querySelector('h3');
+      expect(heading).to.exist;
+      expect(heading.textContent).to.contain('Headline 0');
+      // the authored heading is kept as-is, not downgraded to a <p>
+      expect(Boolean(header.querySelector('p'))).to.equal(false);
     });
 
     it('appends the CTA chevron to a footer link authored as an anchor', async () => {

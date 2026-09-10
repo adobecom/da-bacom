@@ -103,4 +103,43 @@ describe('Resource Showcase', () => {
 
     expect(document.querySelector('.resource-showcase-content')).to.not.exist;
   });
+
+  it('splits secondary CTA links: first part visible, second part as aria-label', async () => {
+    document.body.innerHTML = `<div class="resource-showcase">
+      <div><div><p>Heading</p></div></div>
+      <div>
+        <div><h3>Featured</h3><p>Desc.</p></div>
+        <div><p><a href="https://example.com/a">Start assessment | Start assessment for AI maturity index</a></p></div>
+      </div>
+      <div>
+        <div><h3>Secondary</h3><p>Desc.</p></div>
+        <div><p><a href="https://example.com/b">Explore insights | Explore insights and digital trends research</a></p></div>
+      </div>
+    </div>`;
+
+    await init(document.querySelector('.resource-showcase'));
+
+    const cta = document.querySelector('.resource-showcase-item .resource-showcase-cta');
+    expect(cta.localName).to.equal('a');
+    expect(cta.getAttribute('aria-label')).to.equal('Explore insights and digital trends research');
+    expect(cta.textContent.trim()).to.equal('Explore insights');
+  });
+
+  it('uses the featured CTA second part as the card aria-label', async () => {
+    document.body.innerHTML = `<div class="resource-showcase">
+      <div><div><p>Heading</p></div></div>
+      <div>
+        <div><h3>Find your path.</h3><p>Desc.</p></div>
+        <div><p><a href="https://example.com/a">Start assessment | Start assessment for AI maturity index</a></p></div>
+      </div>
+    </div>`;
+
+    await init(document.querySelector('.resource-showcase'));
+
+    const featured = document.querySelector('.resource-showcase-featured');
+    expect(featured.localName).to.equal('a');
+    expect(featured.getAttribute('aria-label')).to.equal('Start assessment for AI maturity index');
+    const span = featured.querySelector('span.resource-showcase-cta');
+    expect(span.textContent.trim()).to.equal('Start assessment');
+  });
 });

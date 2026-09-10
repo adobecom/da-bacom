@@ -87,6 +87,15 @@ const MP4_RE = /https?:\/\/\S+\.mp4\S*/i;
 
 const isMp4 = (url) => /\.mp4(\?|#|$)/i.test(url || '');
 
+function ctaAriaLabel(node) {
+  if (!node) return '';
+  const authored = node.getAttribute?.('aria-label');
+  if (authored) return authored.trim();
+  const raw = node.textContent || '';
+  const idx = raw.indexOf('|');
+  return idx === -1 ? '' : raw.slice(idx + 1).trim();
+}
+
 function resolveCellVideo(after) {
   const anchors = after.flatMap((node) => [...node.querySelectorAll('a')]);
 
@@ -154,6 +163,7 @@ function extractCells(container) {
       videoSrc: videoSrc || null,
       fragmentPath,
       fragmentHash,
+      ctaLabel: ctaAriaLabel(node),
       eyebrow: eyebrowPara?.textContent.trim() || '',
       heading: heading?.textContent.trim() || '',
       description: descPara?.textContent.trim() || '',
@@ -163,10 +173,22 @@ function extractCells(container) {
   });
 }
 
+function isC2Page() {
+  return document.querySelector('meta[name="foundation"]')?.content === 'c2';
+}
+
+function modalLibPath() {
+  return isC2Page() ? `${LIBS}/c2/blocks/modal/modal.js` : `${LIBS}/blocks/modal/modal.js`;
+}
+
+function modalStylePath() {
+  return isC2Page() ? `${LIBS}/c2/blocks/modal/modal.css` : `${LIBS}/blocks/modal/modal.css`;
+}
+
 async function openVideoModal(videoSrc) {
   const { loadStyle } = await import(`${LIBS}/utils/utils.js`);
-  const { getModal } = await import(`${LIBS}/blocks/modal/modal.js`);
-  loadStyle(`${LIBS}/c2/blocks/modal/modal.css`);
+  const { getModal } = await import(modalLibPath());
+  loadStyle(modalStylePath());
 
   const wrapper = document.createElement('div');
   wrapper.className = 'grid-video-modal-inner';
@@ -224,20 +246,24 @@ function attachVideoTrigger(item, mediaEl, videoSrc) {
 
 async function openFragmentModal(path, hash) {
   const { loadStyle } = await import(`${LIBS}/utils/utils.js`);
-  const { getModal } = await import(`${LIBS}/blocks/modal/modal.js`);
-  loadStyle(`${LIBS}/blocks/modal/modal.css`);
+  const { getModal } = await import(modalLibPath());
+  loadStyle(modalStylePath());
   const id = (hash || '').replace('#', '') || 'bento-grid-video-modal';
   await getModal({ path, id });
 }
 
 function attachFragmentTrigger(item, mediaEl, path, hash) {
-  item.href = hash || path;
   item.classList.add('has-video');
   item.dataset.modalPath = path;
-  if (hash) item.dataset.modalHash = hash;
-
   addPlayIcon(mediaEl || item);
 
+  if (hash) {
+    item.href = hash;
+    item.dataset.modalHash = hash;
+    return;
+  }
+
+  item.href = path;
   item.addEventListener('click', (event) => {
     event.preventDefault();
     openFragmentModal(path, hash);
@@ -327,6 +353,7 @@ function buildFeatured(cell) {
 
   const item = document.createElement(cell.videoSrc || cell.fragmentPath ? 'a' : 'div');
   item.className = 'bento-featured';
+  if (cell.ctaLabel) item.setAttribute('aria-label', cell.ctaLabel);
   item.append(text, media);
 
   if (cell.videoSrc) {
@@ -348,6 +375,7 @@ function buildCarouselCard(cell, loadMode) {
 
   const item = document.createElement(cell.videoSrc || cell.fragmentPath ? 'a' : 'div');
   item.className = 'grid-item';
+  if (cell.ctaLabel) item.setAttribute('aria-label', cell.ctaLabel);
   item.appendChild(media);
 
   item.appendChild(buildTextBlock({
