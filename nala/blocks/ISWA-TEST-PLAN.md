@@ -76,12 +76,11 @@ npx playwright test nala/blocks/video-marquee nala/blocks/bacom-elastic-carousel
 
 Cross-browser spot checks: swap `--project` for `da-bacom-live-webkit` (Safari) or `da-bacom-live-firefox`.
 
-**Current status:** ✅ verified 2026-08-27 on the dedicated block pages **and** the integration page (via `ISWA_INTEGRATION_PAGE`), across three viewports:
+**Current status:** ✅ verified 2026-08-27 on the dedicated block pages **and** the integration page (via `ISWA_INTEGRATION_PAGE`), across two viewports:
 
 | Project | Result | Reds |
 |---------|--------|------|
 | `da-bacom-live-chromium` (desktop 1440) | **29/30** | bento secondary-bg (design lock, §1.2b) |
-| `da-bacom-live-tablet` (iPad Mini 768) | **29/30** | bento secondary-bg (design lock) |
 | `mobile-chrome-pixel5` (393) | **28/30** | bento secondary-bg (design lock) + **marquee logo distorted on mobile (bug, §5)** |
 
 The earlier card-radius gap is now **fixed on stage** (`@bento-grid-card-radius` green). The suites are viewport-aware: bento/elastic pick the active responsive view per breakpoint (mobile <600, tablet 600–1199, desktop ≥1200).

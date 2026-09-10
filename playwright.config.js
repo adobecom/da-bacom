@@ -66,13 +66,6 @@ const config = {
       },
     },
     {
-      name: `${PROJECT}-live-tablet`,
-      use: {
-        ...devices['iPad Mini'],
-        userAgent: USER_AGENT_DESKTOP,
-      },
-    },
-    {
       name: 'mobile-chrome-pixel5',
       use: {
         ...devices['Pixel 5'],
