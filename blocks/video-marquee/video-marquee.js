@@ -178,25 +178,30 @@ function watchViewportPlayback(video, cell, { viewportPlay, isUserPaused }) {
   }, { threshold: [0, 0.8, 1] });
 
   observer.observe(cell);
+  return observer;
 }
 
 function watchHoverPlayback(video, cell, isUserPaused) {
-  cell.addEventListener('mouseenter', () => {
-    if (!isUserPaused()) video.play();
-  });
-  cell.addEventListener('mouseleave', () => {
-    video.pause();
-  });
+  const onEnter = () => { if (!isUserPaused()) video.play(); };
+  const onLeave = () => { video.pause(); };
+  cell.addEventListener('mouseenter', onEnter);
+  cell.addEventListener('mouseleave', onLeave);
+  return () => {
+    cell.removeEventListener('mouseenter', onEnter);
+    cell.removeEventListener('mouseleave', onLeave);
+  };
 }
 
 function watchReducedMotion(video) {
-  window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', (e) => {
-    if (e.matches && !video.paused) video.pause();
-  });
+  const mql = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const onChange = (e) => { if (e.matches && !video.paused) video.pause(); };
+  mql.addEventListener('change', onChange);
+  return () => mql.removeEventListener('change', onChange);
 }
 
 const ATV_RE = /tv\.adobe\.com\/v\//i;
 const MP4_RE = /\.mp4(\?|#|$)/i;
+const DESKTOP_MQ = '(min-width: 600px)';
 
 function resolveSource(cell) {
   if (!cell) return null;
@@ -248,18 +253,18 @@ function buildAtvIframe(url) {
 }
 
 function decorateVideo(cell, labels, locale) {
-  if (!cell) return;
+  if (!cell) return null;
 
   const info = resolveSource(cell);
-  if (!info) return;
+  if (!info) return null;
 
   cell.classList.add('marquee-media');
 
-  if (info.type === 'embed') return;
+  if (info.type === 'embed') return null;
 
   if (info.type === 'atv') {
     cell.replaceChildren(buildAtvIframe(info.url));
-    return;
+    return null;
   }
 
   const captionsLink = cell.querySelector('a[href*=".vtt" i]');
@@ -295,12 +300,54 @@ function decorateVideo(cell, labels, locale) {
 
   cell.replaceChildren(video, controls);
 
-  watchReducedMotion(video);
+  const stopReducedMotion = watchReducedMotion(video);
+  let stopPlayback;
   if (hoverPlay) {
-    watchHoverPlayback(video, cell, () => userPaused);
+    stopPlayback = watchHoverPlayback(video, cell, () => userPaused);
   } else {
-    watchViewportPlayback(video, cell, { viewportPlay, isUserPaused: () => userPaused });
+    const isUserPaused = () => userPaused;
+    const observer = watchViewportPlayback(video, cell, { viewportPlay, isUserPaused });
+    stopPlayback = () => observer.disconnect();
   }
+
+  return () => {
+    stopPlayback();
+    stopReducedMotion();
+    video.pause();
+  };
+}
+
+function setupVideoRows(videoRows, cellOf, decorate) {
+  if (videoRows.length < 2) {
+    videoRows.forEach((row) => decorate(cellOf(row)));
+    return;
+  }
+
+  const [mobileRow, desktopRow] = videoRows;
+  const snapshots = new Map([
+    [mobileRow, cellOf(mobileRow).innerHTML],
+    [desktopRow, cellOf(desktopRow).innerHTML],
+  ]);
+  const mql = window.matchMedia(DESKTOP_MQ);
+  let currentRow = null;
+  let cleanup = null;
+
+  const activate = () => {
+    const nextRow = mql.matches ? desktopRow : mobileRow;
+    if (nextRow === currentRow) return;
+    const prevRow = nextRow === desktopRow ? mobileRow : desktopRow;
+
+    cleanup?.();
+    cellOf(prevRow).replaceChildren();
+
+    const cell = cellOf(nextRow);
+    cell.innerHTML = snapshots.get(nextRow);
+    cleanup = decorate(cell);
+    currentRow = nextRow;
+  };
+
+  mql.addEventListener('change', activate);
+  activate();
 }
 
 export default async function init(el) {
@@ -341,6 +388,7 @@ export default async function init(el) {
     if (p.textContent?.trim()) p.classList.add('marquee-subcopy');
   });
 
+  let decorate = null;
   if (videoRows.length) {
     const [labels, locale] = await Promise.all([loadLabels(), getLocaleInfo()]);
     videoRows.forEach((videoRow, i) => {
@@ -348,8 +396,8 @@ export default async function init(el) {
       if (videoRows.length > 1) {
         videoRow.classList.add(i === 0 ? 'marquee-video-mobile' : 'marquee-video-desktop');
       }
-      decorateVideo(cellOf(videoRow), labels, locale);
     });
+    decorate = (cell) => decorateVideo(cell, labels, locale);
   }
 
   const inner = document.createElement('div');
@@ -357,4 +405,6 @@ export default async function init(el) {
   inner.append(contentRow);
   videoRows.forEach((videoRow) => inner.append(videoRow));
   el.append(inner);
+
+  if (decorate) setupVideoRows(videoRows, cellOf, decorate);
 }
