@@ -32,7 +32,7 @@
   "homepage": "https://github.com/adobecom/college#readme",
   "devDependencies": {
     "@axe-core/playwright": "4.10.0",
-    "@babel/core": "7.17.7",
+    "@babel/core": "7.29.7",
     "@babel/eslint-parser": "7.17.0",
     "@esm-bundle/chai": "4.3.4-fix.0",
     "@playwright/test": "1.60.0",
