@@ -146,7 +146,7 @@ const scrollSelectedIntoView = (selectedLangItem, languageList) => {
 };
 
 function createDropdownElements(placeholderText) {
-  const dropdown = createTag('div', { class: 'language-dropdown', style: 'display: none;' });
+  const dropdown = createTag('div', { class: 'language-dropdown', style: 'display: none;', 'data-lenis-prevent-wheel': '' });
   const dragHandle = createTag('div', { class: 'drag-handle' });
   dropdown.appendChild(dragHandle);
   const searchContainer = createTag('div', { class: 'search-container' });
