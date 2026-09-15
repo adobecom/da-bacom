@@ -70,14 +70,14 @@ const DATA_SOURCES = {
 };
 
 const TEMPLATE_MAP = {
-  'guide-gated': '/tools/page-builder/prd-template-basic',
-  'guide-ungated': '/tools/page-builder/prd-template-basic-ungated',
-  'report-gated': '/tools/page-builder/landing-pages/one-page-gated-lp-placeholders',
-  'report-ungated': '/tools/page-builder/landing-pages/sdk-indexed-placeholders',
-  'video/demo-gated': '/tools/page-builder/prd-template-basic',
-  'video/demo-ungated': '/tools/page-builder/landing-pages/ungated-video-landing-page-placeholders',
-  'infographic-gated': '/tools/page-builder/prd-template-basic',
-  'infographic-ungated': '/tools/page-builder/prd-template-basic-ungated',
+  'guide-gated': '/tools/page-builder/landing-pages/one-page-gated-lp',
+  'guide-ungated': '/tools/page-builder/landing-pages/sdk-indexed',
+  'report-gated': '/tools/page-builder/landing-pages/one-page-gated-lp',
+  'report-ungated': '/tools/page-builder/landing-pages/sdk-indexed',
+  'video/demo-gated': '/tools/page-builder/landing-pages/one-page-gated-lp',
+  'video/demo-ungated': '/tools/page-builder/landing-pages/ungated-video-landing-page',
+  'infographic-gated': '/tools/page-builder/landing-pages/one-page-gated-lp',
+  'infographic-ungated': '/tools/page-builder/landing-pages/sdk-indexed',
 };
 
 const CORE_FIELDS = ['contentType', 'gated', 'region', 'marqueeHeadline', 'pageName'];
@@ -470,10 +470,11 @@ class LandingPageForm extends LitElement {
       cardDate: new Date().toISOString().split('T')[0],
       marqueeImage: marqueeImgVisible ? getContentUrl(form.marqueeImage?.path) : '',
       bodyImage: getContentUrl(form.bodyImage?.path),
-      cardImage: getContentUrl(form.cardImage?.path),
+      // Relative path (not getContentUrl's absolute content.da.live URL) so it resolves on business.adobe.com.
+      cardImage: getRepoRelativePath(form.cardImage?.path),
       assetHeadline: assetHeadlineVisible && form.assetHeadline ? `<h2>${form.assetHeadline}</h2>` : '',
       // Templates: use {{social-share-image}} in page-metadata (og:image, etc.).
-      socialShareImage: getContentUrl(form.socialShareImage?.path),
+      socialShareImage: getRepoRelativePath(form.socialShareImage?.path),
       pdfAsset: pdfVisible && form.pdfAsset ? getAemPageUrl(form.pdfAsset?.path) : '',
       pdfAssetName: pdfVisible && form.pdfAsset ? form.pdfAsset?.name : '',
       videoAsset: videoVisible ? form.videoAsset : '',

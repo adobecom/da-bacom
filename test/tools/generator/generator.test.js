@@ -52,12 +52,11 @@ describe('Generator', () => {
     expect(remainingFields).to.deep.equal([]);
   });
 
-  it('replaces social-share-image with a raw URL, not an img element', () => {
+  it('replaces social-share-image with an img element, like other image fields', () => {
     const tpl = '<div>{{social-share-image}}</div>';
     const url = 'https://content.da.live/adobecom/da-bacom/media/abc.png';
     const result = applyTemplateData(tpl, { socialShareImage: url });
-    expect(result).to.equal(`<div>${url}</div>`);
-    expect(result).to.not.include('<img');
+    expect(result).to.equal(`<div><img src="${url}" alt="socialShareImage" /></div>`);
   });
 
   it.skip('applies gated template fields correctly', async () => {
