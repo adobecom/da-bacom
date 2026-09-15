@@ -470,10 +470,11 @@ class LandingPageForm extends LitElement {
       cardDate: new Date().toISOString().split('T')[0],
       marqueeImage: marqueeImgVisible ? getContentUrl(form.marqueeImage?.path) : '',
       bodyImage: getContentUrl(form.bodyImage?.path),
-      cardImage: getContentUrl(form.cardImage?.path),
+      // Relative path (not getContentUrl's absolute content.da.live URL) so it resolves on business.adobe.com.
+      cardImage: getRepoRelativePath(form.cardImage?.path),
       assetHeadline: assetHeadlineVisible && form.assetHeadline ? `<h2>${form.assetHeadline}</h2>` : '',
       // Templates: use {{social-share-image}} in page-metadata (og:image, etc.).
-      socialShareImage: getContentUrl(form.socialShareImage?.path),
+      socialShareImage: getRepoRelativePath(form.socialShareImage?.path),
       pdfAsset: pdfVisible && form.pdfAsset ? getAemPageUrl(form.pdfAsset?.path) : '',
       pdfAssetName: pdfVisible && form.pdfAsset ? form.pdfAsset?.name : '',
       videoAsset: videoVisible ? form.videoAsset : '',
