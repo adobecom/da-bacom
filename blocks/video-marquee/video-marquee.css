@@ -73,6 +73,14 @@
   object-fit: cover;
 }
 
+/* Mobile embed: portrait crop driven by aspect-ratio (height must stay auto). */
+.video-marquee .marquee-video-mobile .marquee-media .milo-video iframe {
+  aspect-ratio: 9 / 16;
+  width: 100%;
+  height: unset;
+  object-fit: cover;
+}
+
 .video-marquee .marquee-scrubber {
   flex: 1 1 auto;
   height: 12px;
@@ -186,6 +194,8 @@
 
   .video-marquee .marquee-video-desktop {
     display: block;
+    position: relative;
+    bottom: -24px;
   }
 
   .video-marquee .marquee-inner {
@@ -208,15 +218,6 @@
   }
 }
 
-@media (max-width: 769px) {
-  .video-marquee .marquee-media .milo-video iframe {
-    aspect-ratio: 9 / 16;
-    width: 100%;
-    height: unset;
-    object-fit: cover;
-  }
-}
-
 @media (min-width: 769px) {
   .video-marquee {
     --marquee-headline-size: 72px;
@@ -224,6 +225,11 @@
     --marquee-headline-ls: -2.88px;
 
     padding-block: 80px;
+  }
+  
+  .video-marquee .marquee-video-desktop {
+    position: unset;
+    bottom: unset;
   }
 
   .video-marquee .marquee-eyebrow picture,
