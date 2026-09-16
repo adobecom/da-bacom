@@ -33,7 +33,18 @@ const mockPageOptions = {
       { value: 'Infographic', label: 'Infographic' },
     ],
   },
-  templateMap: { data: [] },
+  templateMap: {
+    data: [
+      { value: 'guide-gated', label: '/tools/page-builder/prd-template-basic' },
+      { value: 'guide-ungated', label: '/tools/page-builder/prd-template-basic-ungated' },
+      { value: 'report-gated', label: '/tools/page-builder/landing-pages/one-page-gated-lp-placeholders' },
+      { value: 'report-ungated', label: '/tools/page-builder/landing-pages/sdk-indexed-placeholders' },
+      { value: 'video/demo-gated', label: '/tools/page-builder/prd-template-basic' },
+      { value: 'video/demo-ungated', label: '/tools/page-builder/landing-pages/ungated-video-landing-page-placeholders' },
+      { value: 'infographic-gated', label: '/tools/page-builder/prd-template-basic' },
+      { value: 'infographic-ungated', label: '/tools/page-builder/prd-template-basic-ungated' },
+    ],
+  },
 };
 
 const mockMarketoPOI = {
