@@ -446,6 +446,7 @@
   /* Regional font variations */
   &:lang(ar) {
     --body-font-family: adobe-arabic, myriad-arabic, var(--body-font-family-base);
+    --s2a-typography-line-height-heading-1: 1.1;
 
     font-size: 125%;
   }
