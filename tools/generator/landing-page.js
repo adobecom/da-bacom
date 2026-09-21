@@ -69,17 +69,6 @@ const DATA_SOURCES = {
   PAGE_OPTIONS: 'page-options.json',
 };
 
-const TEMPLATE_MAP = {
-  'guide-gated': '/tools/page-builder/prd-template-basic',
-  'guide-ungated': '/tools/page-builder/prd-template-basic-ungated',
-  'report-gated': '/tools/page-builder/landing-pages/one-page-gated-lp-placeholders',
-  'report-ungated': '/tools/page-builder/landing-pages/sdk-indexed-placeholders',
-  'video/demo-gated': '/tools/page-builder/prd-template-basic',
-  'video/demo-ungated': '/tools/page-builder/landing-pages/ungated-video-landing-page-placeholders',
-  'infographic-gated': '/tools/page-builder/prd-template-basic',
-  'infographic-ungated': '/tools/page-builder/prd-template-basic-ungated',
-};
-
 const CORE_FIELDS = ['contentType', 'gated', 'region', 'marqueeHeadline', 'pageName'];
 const TEMPLATE_FIELDS = ['contentType', 'gated'];
 const IMAGES = ['marqueeImage', 'bodyImage', 'cardImage', 'socialShareImage'];
@@ -356,14 +345,10 @@ class LandingPageForm extends LitElement {
   }
 
   getTemplatePath(templateKey) {
-    if (this.options?.templateMap) {
-      const customTemplate = this.options.templateMap.find(
-        (template) => template.value === templateKey,
-      );
-      if (customTemplate?.label) return customTemplate.label;
-    }
-
-    return TEMPLATE_MAP[templateKey] || '';
+    const template = this.options?.templateMap?.find(
+      (t) => t.value === templateKey,
+    );
+    return template?.label || '';
   }
 
   getTemplate() {
