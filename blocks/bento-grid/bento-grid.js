@@ -30,6 +30,33 @@ const ARROW_ICON = `
     <path d="M4 10h12M11 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
   </svg>`;
 
+const DEFAULT_LABELS = {
+  previous: 'Previous',
+  next: 'Next',
+  gallery: 'Featured video gallery',
+  videoUnavailable: 'This video is currently unavailable.',
+};
+
+async function loadLabels() {
+  try {
+    const { getConfig } = await import(`${LIBS}/utils/utils.js`);
+    const { replaceKeyArray } = await import(`${LIBS}/features/placeholders.js`);
+    const config = getConfig();
+    const keys = Object.keys(DEFAULT_LABELS);
+    const placeholderKeys = ['previous', 'next', 'featured-video-gallery', 'video-unavailable'];
+    const values = await replaceKeyArray(placeholderKeys, config);
+    const labels = { ...DEFAULT_LABELS };
+    keys.forEach((key, i) => {
+      const value = values[i];
+      const notFound = value === placeholderKeys[i].replaceAll('-', ' ');
+      if (value && !notFound) labels[key] = value;
+    });
+    return labels;
+  } catch {
+    return DEFAULT_LABELS;
+  }
+}
+
 function logError(message, error) {
   window.lana?.log(`Bento grid ${message}: ${error}`, LANA_OPTIONS);
 }
@@ -94,6 +121,16 @@ function ctaAriaLabel(node) {
   const raw = node.textContent || '';
   const idx = raw.indexOf('|');
   return idx === -1 ? '' : raw.slice(idx + 1).trim();
+}
+
+function ctaWatchText(node) {
+  if (!node) return '';
+  const raw = (node.textContent || '').trim();
+  const idx = raw.indexOf('|');
+  if (idx !== -1) return raw.slice(0, idx).trim();
+  const href = node.getAttribute?.('href') || '';
+  if (raw === href || MP4_RE.test(raw)) return '';
+  return raw;
 }
 
 function resolveCellVideo(after) {
@@ -164,6 +201,7 @@ function extractCells(container) {
       fragmentPath,
       fragmentHash,
       ctaLabel: ctaAriaLabel(node),
+      watchText: ctaWatchText(node) || '',
       eyebrow: eyebrowPara?.textContent.trim() || '',
       heading: heading?.textContent.trim() || '',
       description: descPara?.textContent.trim() || '',
@@ -185,7 +223,7 @@ function modalStylePath() {
   return isC2Page() ? `${LIBS}/c2/blocks/modal/modal.css` : `${LIBS}/blocks/modal/modal.css`;
 }
 
-async function openVideoModal(videoSrc) {
+async function openVideoModal(videoSrc, labels) {
   const { loadStyle } = await import(`${LIBS}/utils/utils.js`);
   const { getModal } = await import(modalLibPath());
   loadStyle(modalStylePath());
@@ -206,7 +244,7 @@ async function openVideoModal(videoSrc) {
 
   const errorMessage = document.createElement('p');
   errorMessage.className = 'grid-video-modal-error';
-  errorMessage.textContent = 'This video is currently unavailable.';
+  errorMessage.textContent = labels.videoUnavailable;
   errorMessage.hidden = true;
 
   video.addEventListener('error', () => {
@@ -232,7 +270,7 @@ function addPlayIcon(mediaEl) {
   mediaEl.appendChild(playIcon);
 }
 
-function attachVideoTrigger(item, mediaEl, videoSrc) {
+function attachVideoTrigger(item, mediaEl, videoSrc, labels) {
   item.href = videoSrc;
   item.classList.add('has-video');
 
@@ -240,7 +278,7 @@ function attachVideoTrigger(item, mediaEl, videoSrc) {
 
   item.addEventListener('click', (event) => {
     event.preventDefault();
-    openVideoModal(videoSrc);
+    openVideoModal(videoSrc, labels);
   });
 }
 
@@ -270,7 +308,7 @@ function attachFragmentTrigger(item, mediaEl, path, hash) {
   });
 }
 
-function buildTextBlock({ className, eyebrow, heading, description, showWatchLink }) {
+function buildTextBlock({ className, eyebrow, heading, description, watchText }) {
   const wrap = document.createElement('div');
   wrap.className = className;
 
@@ -290,10 +328,10 @@ function buildTextBlock({ className, eyebrow, heading, description, showWatchLin
     descEl.textContent = description;
     wrap.appendChild(descEl);
   }
-  if (showWatchLink) {
+  if (watchText) {
     const watchEl = document.createElement('span');
     watchEl.className = 'bento-watch-link';
-    watchEl.textContent = 'Watch video';
+    watchEl.textContent = watchText;
     wrap.appendChild(watchEl);
   }
 
@@ -337,7 +375,7 @@ function buildSectionHeader(cell) {
   return header;
 }
 
-function buildFeatured(cell) {
+function buildFeatured(cell, labels) {
   if (!cell?.pictureHTML) return null;
 
   const media = buildMedia(cell, 'eager', 'bento-featured-media');
@@ -348,7 +386,7 @@ function buildFeatured(cell) {
     eyebrow: cell.eyebrow,
     heading: cell.heading,
     description: cell.description,
-    showWatchLink: true,
+    watchText: cell.watchText,
   });
 
   const item = document.createElement(cell.videoSrc || cell.fragmentPath ? 'a' : 'div');
@@ -357,7 +395,7 @@ function buildFeatured(cell) {
   item.append(text, media);
 
   if (cell.videoSrc) {
-    attachVideoTrigger(item, media, cell.videoSrc);
+    attachVideoTrigger(item, media, cell.videoSrc, labels);
   } else if (cell.fragmentPath) {
     attachFragmentTrigger(item, media, cell.fragmentPath, cell.fragmentHash);
   } else {
@@ -367,7 +405,7 @@ function buildFeatured(cell) {
   return item;
 }
 
-function buildCarouselCard(cell, loadMode) {
+function buildCarouselCard(cell, loadMode, labels) {
   if (!cell?.pictureHTML) return null;
 
   const media = buildMedia(cell, loadMode, 'grid-item-media');
@@ -382,11 +420,11 @@ function buildCarouselCard(cell, loadMode) {
     className: 'grid-item-text',
     heading: cell.heading,
     description: cell.description,
-    showWatchLink: true,
+    watchText: cell.watchText,
   }));
 
   if (cell.videoSrc) {
-    attachVideoTrigger(item, media, cell.videoSrc);
+    attachVideoTrigger(item, media, cell.videoSrc, labels);
   } else if (cell.fragmentPath) {
     attachFragmentTrigger(item, media, cell.fragmentPath, cell.fragmentHash);
   } else {
@@ -428,19 +466,19 @@ function updateEndSpacer(container, spacer, frame) {
   spacer.style.width = `${width}px`;
 }
 
-function buildCarouselControls(container) {
+function buildCarouselControls(container, labels) {
   const spacer = createTag('div', { class: 'grid-carousel-end-spacer', 'aria-hidden': 'true' }, null, { parent: container });
 
   const controls = createTag('div', { class: 'grid-carousel-controls' });
   const prevBtn = createTag('button', {
     type: 'button',
     class: 'grid-carousel-arrow grid-carousel-arrow-prev',
-    'aria-label': 'Previous',
+    'aria-label': labels.previous,
   }, ARROW_ICON);
   const nextBtn = createTag('button', {
     type: 'button',
     class: 'grid-carousel-arrow grid-carousel-arrow-next',
-    'aria-label': 'Next',
+    'aria-label': labels.next,
   }, ARROW_ICON);
 
   prevBtn.addEventListener('click', () => scrollByCard(container, -1));
@@ -466,11 +504,11 @@ function rotateByStartIndex(cells, startIndex) {
   return [...cells.slice(rotation), ...cells.slice(0, rotation)];
 }
 
-function buildCarouselRow(cells, { showControls = true } = {}) {
+function buildCarouselRow(cells, labels, { showControls = true } = {}) {
   const container = createTag('div', { class: 'grid-carousel-container' });
 
   cells.forEach((cell, index) => {
-    const card = buildCarouselCard(cell, index === 0 ? 'eager' : 'lazy');
+    const card = buildCarouselCard(cell, index === 0 ? 'eager' : 'lazy', labels);
     if (card) container.appendChild(card);
   });
 
@@ -478,7 +516,7 @@ function buildCarouselRow(cells, { showControls = true } = {}) {
   wrapper.appendChild(container);
 
   if (showControls && container.children.length > MIN_CAROUSEL_FOR_CONTROLS) {
-    wrapper.appendChild(buildCarouselControls(container));
+    wrapper.appendChild(buildCarouselControls(container, labels));
   }
 
   return wrapper;
@@ -490,7 +528,7 @@ function resolveViewData(targetType, availableDataMap) {
   return availableDataMap[foundKey] || {};
 }
 
-function createViewElement(type, config, featuredCells, carouselCells) {
+function createViewElement(type, config, featuredCells, carouselCells, labels) {
   const wrapper = createTag('div', { class: `grid-view view-${type}` });
 
   const sectionHeader = buildSectionHeader(featuredCells[0]);
@@ -504,23 +542,23 @@ function createViewElement(type, config, featuredCells, carouselCells) {
     const row2Config = config[2] || {};
     const allCells = [featuredCell, ...restRow1, ...carouselCells];
     const orderedCells = rotateByStartIndex(allCells, row2Config.startIndex);
-    wrapper.appendChild(buildCarouselRow(orderedCells));
+    wrapper.appendChild(buildCarouselRow(orderedCells, labels));
     return wrapper;
   }
 
-  const featured = buildFeatured(featuredCell);
+  const featured = buildFeatured(featuredCell, labels);
   if (featured) wrapper.appendChild(featured);
 
   const row2Config = config[2] || {};
   const remainingCells = [...restRow1, ...carouselCells];
   const orderedCarousel = rotateByStartIndex(remainingCells, row2Config.startIndex);
-  const carousel = buildCarouselRow(orderedCarousel);
+  const carousel = buildCarouselRow(orderedCarousel, labels);
   wrapper.appendChild(carousel);
 
   return wrapper;
 }
 
-function decorateContent(el) {
+function decorateContent(el, labels) {
   try {
     if (!el) return;
 
@@ -540,12 +578,12 @@ function decorateContent(el) {
     el.innerHTML = '';
     const foreground = createTag('div', { class: 'foreground' });
     el.setAttribute('role', 'region');
-    el.setAttribute('aria-label', 'Featured video gallery');
+    el.setAttribute('aria-label', labels.gallery);
 
     const fragment = document.createDocumentFragment();
     VIEW_TYPES.forEach((type) => {
       const config = resolveViewData(type, configMap);
-      const viewEl = createViewElement(type, config, featuredCells, carouselCells);
+      const viewEl = createViewElement(type, config, featuredCells, carouselCells, labels);
       fragment.appendChild(viewEl);
     });
     foreground.appendChild(fragment);
@@ -555,10 +593,11 @@ function decorateContent(el) {
   }
 }
 
-export default function init(el) {
+export default async function init(el) {
   try {
     el.classList.add('con-block');
-    decorateContent(el);
+    const labels = await loadLabels();
+    decorateContent(el, labels);
   } catch (err) {
     window.lana?.log(`Bento grid Init Error: ${err}`, LANA_OPTIONS);
   }
