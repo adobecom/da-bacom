@@ -1,4 +1,4 @@
-import { expect } from '@esm-bundle/chai';
+import { expect } from 'chai';
 import sinon from 'sinon';
 import loadArp, { getArpSessionId } from '../../scripts/arp.js';
 

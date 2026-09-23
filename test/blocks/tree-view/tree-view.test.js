@@ -1,5 +1,5 @@
 import { readFile } from '@web/test-runner-commands';
-import { expect } from '@esm-bundle/chai';
+import { expect } from 'chai';
 import sinon from 'sinon';
 
 const { default: init, isCurrentPage } = await import('../../../blocks/tree-view/tree-view.js');

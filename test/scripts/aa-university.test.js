@@ -1,5 +1,5 @@
 import { readFile } from '@web/test-runner-commands';
-import { expect } from '@esm-bundle/chai';
+import { expect } from 'chai';
 import sinon from 'sinon';
 import { mockFetch } from '../helpers/generalHelpers.js';
 import registerAAUniversity from '../../scripts/aa-university.js';
