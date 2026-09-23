@@ -1,6 +1,6 @@
 /* eslint-disable import/no-unresolved */
 /* eslint-disable no-underscore-dangle */
-import { expect } from '@esm-bundle/chai';
+import { expect } from 'chai';
 import sinon from 'sinon';
 import { constructTable } from '../../../tools/md-formatter/form.js';
 
