@@ -357,15 +357,19 @@ export async function loadPage() {
     }
   }
 
-  if (CONFIG.arp?.clientId) {
-    import('./arp.js').then(({ default: loadArp }) => loadArp({
-      clientId: CONFIG.arp.clientId,
-      prodEnv: getConfig().env?.name === 'prod',
-      loadScript,
-    })).catch((e) => {
-      window.lana?.log(`Could not load arp.js. ${e}`, { tags: 'arp', severity: 'error' });
-    });
-  }
+  const loadArpWhenReady = () => {
+    if (CONFIG.arp?.clientId) {
+      import('./arp.js').then(({ default: loadArp }) => loadArp({
+        clientId: CONFIG.arp.clientId,
+        prodEnv: getConfig().env?.name === 'prod',
+        loadScript,
+      })).catch((e) => {
+        window.lana?.log(`Could not load arp.js. ${e}`, { tags: 'arp', severity: 'error' });
+      });
+    }
+  };
+
+  window.addEventListener('bc:ready', loadArpWhenReady);
 
   // Target's init() reassigns config.mep and drops our block overrides. Re-inject on set.
   const targetOn = getMetadata('target') || new URLSearchParams(window.location.search).get('target');
