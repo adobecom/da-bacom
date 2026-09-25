@@ -23,6 +23,23 @@
     } from '../../../tools/generator/da-utils.js';
     import { daFetch } from './mocks/da-fetch.js';
 
+    const mockDaFetch = async (url, options = {}) => {
+      const method = options.method || 'GET';
+      if (method === 'POST' && String(url).includes('/source/')) {
+        return {
+          ok: true,
+          json: async () => ({
+            source: { contentUrl: '/mock' },
+            aem: {
+              liveUrl: 'https://example.hlx.live/x',
+              previewUrl: 'https://example.hlx.page/x',
+            },
+          }),
+        };
+      }
+      return { ok: false, json: async () => ({}) };
+    };
+
     runTests(() => {
       describe('sanitizeFileName — AEM EDS document naming (aem.live/docs/limits)', () => {
         it('leaves names that already use only a-z, 0-9, and hyphens unchanged', () => {
@@ -65,22 +82,7 @@
       describe('saveFile — full file path length (docs/limits: max 900 characters)', () => {
         beforeEach(() => {
           daFetch.resetHistory();
-          daFetch.callsFake(async (url, options = {}) => {
-            const method = options.method || 'GET';
-            if (method === 'POST' && String(url).includes('/source/')) {
-              return {
-                ok: true,
-                json: async () => ({
-                  source: { contentUrl: '/mock' },
-                  aem: {
-                    liveUrl: 'https://example.hlx.live/x',
-                    previewUrl: 'https://example.hlx.page/x',
-                  },
-                }),
-              };
-            }
-            return { ok: false, json: async () => ({}) };
-          });
+          daFetch.callsFake(mockDaFetch);
         });
 
         it('does not POST when the full repo path would exceed 900 characters', async () => {
