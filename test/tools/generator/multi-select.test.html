@@ -28,6 +28,11 @@
       { value: 'opt2', label: 'Option 2' },
       { value: 'opt3', label: 'Option 3' },
     ];
+    const captureEvent = (target, type) => {
+      let captured = null;
+      target.addEventListener(type, (event) => { captured = event; });
+      return () => captured;
+    };
 
     runTests(() => {
       describe('MultiSelect Component', () => {
@@ -182,15 +187,14 @@
             await element.updateComplete;
 
             const option = element.shadowRoot.querySelector('.dropdown-option');
-            let changeEvent = null;
-            element.addEventListener('change', (e) => { changeEvent = e; });
+            const getChangeEvent = captureEvent(element, 'change');
 
             option.click();
             await element.updateComplete;
 
             expect(element.value).to.deep.equal(['opt1']);
-            expect(changeEvent).to.exist;
-            expect(changeEvent.detail.value).to.deep.equal(['opt1']);
+            expect(getChangeEvent()).to.exist;
+            expect(getChangeEvent().detail.value).to.deep.equal(['opt1']);
           });
 
           it('selects multiple options', async () => {
@@ -277,16 +281,15 @@
             element.value = ['opt1', 'opt2'];
             await element.updateComplete;
 
-            let changeEvent = null;
-            element.addEventListener('change', (e) => { changeEvent = e; });
+            const getChangeEvent = captureEvent(element, 'change');
 
             const tag = element.shadowRoot.querySelector('.selected-tag');
             const removeButton = tag.querySelector('button');
             removeButton.click();
             await element.updateComplete;
 
-            expect(changeEvent).to.exist;
-            expect(changeEvent.detail.value).to.deep.equal(['opt2']);
+            expect(getChangeEvent()).to.exist;
+            expect(getChangeEvent().detail.value).to.deep.equal(['opt2']);
           });
 
           it('does not close dropdown when removing a tag', async () => {
@@ -373,8 +376,7 @@
             element.options = mockOptions;
             await element.updateComplete;
 
-            let changeEvent = null;
-            element.addEventListener('change', (e) => { changeEvent = e; });
+            const getChangeEvent = captureEvent(element, 'change');
 
             const selectedItems = element.shadowRoot.querySelector('.selected-items');
             selectedItems.click();
@@ -384,10 +386,10 @@
             option.click();
             await element.updateComplete;
 
-            expect(changeEvent).to.exist;
-            expect(changeEvent.detail).to.exist;
-            expect(changeEvent.detail.name).to.equal('test');
-            expect(changeEvent.detail.value).to.deep.equal(['opt1']);
+            expect(getChangeEvent()).to.exist;
+            expect(getChangeEvent().detail).to.exist;
+            expect(getChangeEvent().detail.name).to.equal('test');
+            expect(getChangeEvent().detail.value).to.deep.equal(['opt1']);
           });
 
           it('bubbles change events', async () => {
@@ -395,8 +397,8 @@
             element.options = mockOptions;
             await element.updateComplete;
 
-            let bubbled = false;
-            document.body.addEventListener('change', () => { bubbled = true; });
+            const bubbled = sinon.spy();
+            document.body.addEventListener('change', bubbled);
 
             const selectedItems = element.shadowRoot.querySelector('.selected-items');
             selectedItems.click();
@@ -406,7 +408,7 @@
             option.click();
             await element.updateComplete;
 
-            expect(bubbled).to.be.true;
+            expect(bubbled.called).to.be.true;
           });
         });
 
@@ -446,4 +448,3 @@
 </body>
 
 </html>
-

@@ -22,9 +22,14 @@
     import { runTests } from '@web/test-runner-mocha';
     import { expect } from '@esm-bundle/chai';
     import sinon from 'sinon';
-    import PathInput, { STATUS } from '../../../tools/generator/path-input/path-input.js';
+    import { STATUS } from '../../../tools/generator/path-input/path-input.js';
 
     const DEBOUNCE_DELAY = 800;
+    const captureDetail = (target, type) => {
+      let detail = null;
+      target.addEventListener(type, (event) => { detail = event.detail; });
+      return () => detail;
+    };
 
     runTests(() => {
       describe('Path Input', () => {
@@ -121,10 +126,10 @@
               { input: 'Test-with--double--hyphens', expected: 'test-with-double-hyphens' }
             ];
 
-            testCases.forEach(({ input, expected }) => {
+            for (const { input, expected } of testCases) {
               const result = pathInput.sanitizeInput(input);
               expect(result).to.equal(expected, `Failed for "${input}": expected "${expected}" but got "${result}"`);
-            });
+            }
           });
         });
 
@@ -139,25 +144,19 @@
           });
 
           it('dispatches input event with sanitized value', async () => {
-            let eventDetail = null;
-            pathInput.addEventListener('input', (e) => {
-              eventDetail = e.detail;
-            });
+            const getEventDetail = captureDetail(pathInput, 'input');
 
             const input = pathInput.shadowRoot.querySelector('.path-input');
             input.value = 'Test Value';
             input.dispatchEvent(new Event('input', { bubbles: true }));
 
-            expect(eventDetail).to.exist;
-            expect(eventDetail.name).to.equal('testPath');
-            expect(eventDetail.value).to.equal('test-value');
+            expect(getEventDetail()).to.exist;
+            expect(getEventDetail().name).to.equal('testPath');
+            expect(getEventDetail().value).to.equal('test-value');
           });
 
           it('changes status to empty when input is cleared', async () => {
-            let statusDetail = null;
-            pathInput.addEventListener('status-change', (e) => {
-              statusDetail = e.detail;
-            });
+            const getStatusDetail = captureDetail(pathInput, 'status-change');
 
             const input = pathInput.shadowRoot.querySelector('.path-input');
             input.value = '';
@@ -165,43 +164,37 @@
 
             await tick(0);
 
-            expect(statusDetail).to.exist;
-            expect(statusDetail.status).to.equal(STATUS.EMPTY);
+            expect(getStatusDetail()).to.exist;
+            expect(getStatusDetail().status).to.equal(STATUS.EMPTY);
           });
         });
 
         describe('validation', () => {
           it('dispatches validate request after debounce delay', async () => {
-            let validateDetail = null;
-            pathInput.addEventListener('validate-request', (e) => {
-              validateDetail = e.detail;
-            });
+            const getValidateDetail = captureDetail(pathInput, 'validate-request');
 
             const input = pathInput.shadowRoot.querySelector('.path-input');
             input.value = 'test-value';
             input.dispatchEvent(new Event('input', { bubbles: true }));
 
-            expect(validateDetail).to.be.null;
+            expect(getValidateDetail()).to.be.null;
             await tick(DEBOUNCE_DELAY);
 
-            expect(validateDetail).to.exist;
-            expect(validateDetail.value).to.equal('test-value');
-            expect(validateDetail.isSuggestion).to.be.false;
+            expect(getValidateDetail()).to.exist;
+            expect(getValidateDetail().value).to.equal('test-value');
+            expect(getValidateDetail().isSuggestion).to.be.false;
           });
 
           it('includes full path with prefix in validation request', async () => {
             pathInput.prefix = '/resources/guide/';
-            let validateDetail = null;
-            pathInput.addEventListener('validate-request', (e) => {
-              validateDetail = e.detail;
-            });
+            const getValidateDetail = captureDetail(pathInput, 'validate-request');
 
             const input = pathInput.shadowRoot.querySelector('.path-input');
             input.value = 'test-guide';
             input.dispatchEvent(new Event('input', { bubbles: true }));
             await tick(DEBOUNCE_DELAY);
 
-            expect(validateDetail.fullPath).to.equal('/resources/guide/test-guide');
+            expect(getValidateDetail().fullPath).to.equal('/resources/guide/test-guide');
           });
         });
 
@@ -258,13 +251,13 @@
             pathInput.disabled = true;
             await pathInput.updateComplete;
 
-            let validateFired = false;
-            pathInput.addEventListener('validate-request', () => { validateFired = true; });
+            const validateRequest = sinon.spy();
+            pathInput.addEventListener('validate-request', validateRequest);
 
             const button = pathInput.shadowRoot.querySelector('.validation-icon-button');
             button.click();
 
-            expect(validateFired).to.be.false;
+            expect(validateRequest.called).to.be.false;
           });
 
           it('applies suggestion on click when value is empty', async () => {
@@ -288,16 +281,13 @@
             pathInput.prefix = '/resources/guide/';
             await pathInput.updateComplete;
 
-            let validateDetail = null;
-            pathInput.addEventListener('validate-request', (e) => {
-              validateDetail = e.detail;
-            });
+            const getValidateDetail = captureDetail(pathInput, 'validate-request');
 
             const button = pathInput.shadowRoot.querySelector('.validation-icon-button');
             button.click();
 
-            expect(validateDetail).to.exist;
-            expect(validateDetail.isSuggestion).to.be.true;
+            expect(getValidateDetail()).to.exist;
+            expect(getValidateDetail().isSuggestion).to.be.true;
           });
 
           it('applies suggestion from apply-suggestion event', async () => {

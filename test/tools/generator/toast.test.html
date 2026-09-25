@@ -21,11 +21,10 @@
   <script type="module">
     import { runTests } from '@web/test-runner-mocha';
     import { expect } from '@esm-bundle/chai';
-    import { stub } from 'sinon';
     import sinon from 'sinon';
-    import ToastMessage, { createToast } from '../../../tools/generator/toast/toast.js';
+    import { createToast } from '../../../tools/generator/toast/toast.js';
 
-    const ogLana = window.lana;
+    const ogLana = globalThis.lana;
 
     runTests(() => {
       describe('Toast Message', () => {
@@ -38,12 +37,12 @@
 
         beforeEach(async () => {
           document.body.innerHTML = '';
-          window.lana = { log: sinon.spy() };
+          globalThis.lana = { log: sinon.spy() };
           clock = sinon.useFakeTimers();
         });
 
         afterEach(() => {
-          window.lana = ogLana;
+          globalThis.lana = ogLana;
           clock.restore();
         });
 
