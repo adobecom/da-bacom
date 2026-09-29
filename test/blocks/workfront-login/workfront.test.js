@@ -1,4 +1,4 @@
-import { expect } from '@esm-bundle/chai';
+import { expect } from 'chai';
 import sinon from 'sinon';
 import waitForElement from '../../helpers/waitForElement.js';
 import { createTag, replaceKey, getConfig } from './mocks/workfront-utils.js';

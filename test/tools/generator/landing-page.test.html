@@ -31,7 +31,7 @@
     import { daFetch, initIms } from './mocks/da-fetch.js';
     import { mockFetch, restoreFetch } from './mocks/fetch.js';
 
-    const ogLana = window.lana;
+    const ogLana = globalThis.lana;
 
     mockFetch();
     await import('../../../tools/generator/landing-page.js');
@@ -50,9 +50,9 @@
         };
 
         beforeEach(async () => {
-          window.lana = { log: sinon.spy() };
+          globalThis.lana = { log: sinon.spy() };
           clock = sinon.useFakeTimers();
-          openStub = sinon.stub(window, 'open');
+          openStub = sinon.stub(globalThis, 'open');
           mockFetch();
 
           generator = document.querySelector('da-generator');
@@ -62,7 +62,7 @@
         });
 
         afterEach(() => {
-          window.lana = ogLana;
+          globalThis.lana = ogLana;
           clock.restore();
           openStub.restore();
           restoreFetch();

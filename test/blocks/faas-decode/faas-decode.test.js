@@ -1,4 +1,4 @@
-import { expect } from '@esm-bundle/chai';
+import { expect } from 'chai';
 import sinon from 'sinon';
 import init from '../../../blocks/faas-decode/faas-decode.js';
 import waitForElement from '../../helpers/waitForElement.js';

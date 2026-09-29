@@ -1,4 +1,4 @@
-import { expect } from '@esm-bundle/chai';
+import { expect } from 'chai';
 import { readFile } from '@web/test-runner-commands';
 import sinon from 'sinon';
 import init, { loadQueryIndex, createTable, decodeUrl } from '../../../blocks/url-decode/url-decode.js';

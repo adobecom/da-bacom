@@ -23,6 +23,12 @@
     import sinon from 'sinon';
     import '../../../tools/generator/text-editor/text-editor.js';
 
+    const captureEvent = (target, type) => {
+      let captured = null;
+      target.addEventListener(type, (event) => { captured = event; });
+      return () => captured;
+    };
+
     runTests(() => {
       describe('Text Editor Component', () => {
         let element;
@@ -119,16 +125,15 @@
 
         describe('Content Handling', () => {
           it('updates value and dispatches input event', async () => {
-            let capturedEvent = null;
-            element.addEventListener('input', (e) => { capturedEvent = e; });
+            const getCapturedEvent = captureEvent(element, 'input');
 
             const editor = element.shadowRoot.querySelector('.editor-content');
             editor.innerHTML = 'Updated text';
             editor.dispatchEvent(new Event('input', { bubbles: true }));
 
             expect(element.value).to.equal('Updated text');
-            expect(capturedEvent.bubbles).to.be.true;
-            expect(capturedEvent.composed).to.be.true;
+            expect(getCapturedEvent().bubbles).to.be.true;
+            expect(getCapturedEvent().composed).to.be.true;
           });
 
           it('handles paste as plain text', async () => {
@@ -181,11 +186,11 @@
           it('has correct accessibility attributes', async () => {
             const buttons = element.shadowRoot.querySelectorAll('.toolbar-btn');
             
-            buttons.forEach(button => {
+            for (const button of buttons) {
               expect(button.getAttribute('type')).to.equal('button');
               expect(button.getAttribute('title')).to.exist;
               expect(button.getAttribute('aria-label')).to.exist;
-            });
+            }
           });
         });
 

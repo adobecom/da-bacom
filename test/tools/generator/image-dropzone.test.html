@@ -21,11 +21,10 @@
   <script type="module">
     import { runTests } from '@web/test-runner-mocha';
     import { expect } from '@esm-bundle/chai';
-    import { stub } from 'sinon';
     import sinon from 'sinon';
-    import ImageDropzone from '../../../tools/generator/image-dropzone/image-dropzone.js';
+    import '../../../tools/generator/image-dropzone/image-dropzone.js';
 
-    const ogLana = window.lana;
+    const ogLana = globalThis.lana;
     const ogCreateObjectURL = URL.createObjectURL;
     const ogRevokeObjectURL = URL.revokeObjectURL;
 
@@ -76,7 +75,7 @@
         beforeEach(async () => {
           clock = sinon.useFakeTimers();
           document.body.innerHTML = '<image-dropzone></image-dropzone>';
-          window.lana = { log: sinon.spy() };
+          globalThis.lana = { log: sinon.spy() };
           URL.createObjectURL = sinon.stub().returns('blob:mock-url');
           URL.revokeObjectURL = sinon.stub();
           await customElements.whenDefined('image-dropzone');
@@ -84,7 +83,7 @@
         });
 
         afterEach(() => {
-          window.lana = ogLana;
+          globalThis.lana = ogLana;
           URL.createObjectURL = ogCreateObjectURL;
           URL.revokeObjectURL = ogRevokeObjectURL;
           clock.restore();
