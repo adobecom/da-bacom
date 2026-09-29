@@ -82,7 +82,7 @@
         return {
           ok: source.ok ?? true,
           ...(source.headers ? { headers: new Headers() } : {}),
-          ...(source.html !== undefined ? { text: async () => source.html } : {}),
+          ...(source.html === undefined ? {} : { text: async () => source.html }),
           json: async () => ({}),
         };
       }
