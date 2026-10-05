@@ -336,6 +336,14 @@
   transform: scaleX(-1);
 }
 
+html[dir="rtl"] .bento-grid .grid-carousel-arrow-prev .grid-carousel-arrow-icon {
+  transform: scaleX(1);
+}
+
+html[dir="rtl"] .bento-grid .grid-carousel-arrow-next .grid-carousel-arrow-icon {
+  transform: scaleX(-1);
+}
+
 .grid-video-modal .grid-video-modal-inner {
   position: relative;
   width: min(90vw, 1024px);
