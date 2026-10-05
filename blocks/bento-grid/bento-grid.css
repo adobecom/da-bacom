@@ -360,6 +360,12 @@ html[dir="rtl"] .bento-grid .grid-carousel-arrow-next .grid-carousel-arrow-icon 
   color: #FFF;
 }
 
+@media screen and (max-width: 599px) {
+  html[dir="rtl"] .bento-grid .grid-carousel-controls {
+    padding-inline-end: 40px;
+  }
+}
+
 @media screen and (min-width: 600px) {
   .bento-grid .foreground .grid-view.view-mobile {
     display: none;
