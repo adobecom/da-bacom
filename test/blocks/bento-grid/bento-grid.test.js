@@ -1,4 +1,4 @@
-import { readFile } from '@web/test-runner-commands';
+import { readFile, setViewport } from '@web/test-runner-commands';
 import { expect } from '@esm-bundle/chai';
 
 const { default: init } = await import('../../../blocks/bento-grid/bento-grid.js');
@@ -84,6 +84,70 @@ describe('Bento Grid', () => {
       const cards = mobileView.querySelectorAll('.grid-carousel .grid-item');
       // all 6 cells (2 in row 1 + 4 in row 2) become carousel cards on mobile
       expect(cards.length).to.equal(6);
+    });
+
+    it('does not overlap the last RTL card at the viewport width for 80% zoom', async () => {
+      const originalDir = document.documentElement.getAttribute('dir');
+      const originalViewport = { width: window.innerWidth, height: window.innerHeight };
+      const style = document.createElement('style');
+      style.textContent = await readFile({ path: '../../../blocks/bento-grid/bento-grid.css' });
+      document.head.append(style);
+
+      try {
+        document.documentElement.setAttribute('dir', 'rtl');
+        await setViewport({ width: 1800, height: 900 });
+        const cards = document.querySelectorAll('.view-desktop .grid-item');
+        const previous = cards[cards.length - 2].getBoundingClientRect();
+        const last = cards[cards.length - 1].getBoundingClientRect();
+        expect(last.width).to.be.above(0);
+        expect(last.right).to.be.below(previous.left);
+      } finally {
+        style.remove();
+        if (originalDir === null) document.documentElement.removeAttribute('dir');
+        else document.documentElement.setAttribute('dir', originalDir);
+        await setViewport(originalViewport);
+      }
+    });
+  });
+
+  describe('carousel arrow direction', () => {
+    let style;
+    let originalDir;
+
+    before(async () => {
+      style = document.createElement('style');
+      style.textContent = await readFile({ path: '../../../blocks/bento-grid/bento-grid.css' });
+      document.head.append(style);
+      document.body.innerHTML = await readFile({ path: './mocks/basic.html' });
+      await init(document.querySelector('.bento-grid'));
+    });
+
+    beforeEach(() => {
+      originalDir = document.documentElement.getAttribute('dir');
+    });
+
+    afterEach(() => {
+      if (originalDir === null) document.documentElement.removeAttribute('dir');
+      else document.documentElement.setAttribute('dir', originalDir);
+    });
+
+    after(() => {
+      style.remove();
+    });
+
+    [
+      { dir: 'ltr', prevScale: -1, nextScale: 1 },
+      { dir: 'rtl', prevScale: 1, nextScale: -1 },
+    ].forEach(({ dir, prevScale, nextScale }) => {
+      it(`points Previous and Next in the correct ${dir} directions`, () => {
+        document.documentElement.setAttribute('dir', dir);
+        const controls = [...document.querySelectorAll('.grid-carousel-controls')]
+          .find((element) => element.getBoundingClientRect().width > 0);
+        const prev = controls.querySelector('.grid-carousel-arrow-prev svg');
+        const next = controls.querySelector('.grid-carousel-arrow-next svg');
+        expect(new DOMMatrix(getComputedStyle(prev).transform).a).to.equal(prevScale);
+        expect(new DOMMatrix(getComputedStyle(next).transform).a).to.equal(nextScale);
+      });
     });
   });
 
