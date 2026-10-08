@@ -236,8 +236,10 @@
   border-radius: 16px;
 }
 
-.bento-grid .grid-item:last-of-type {
-  margin-right: calc(100% - 82vw);
+@media screen and (max-width: 599px) {
+  .bento-grid .grid-item:last-of-type {
+    margin-right: calc(100% - 82vw);
+  }
 }
 
 .bento-grid .grid-item-media {

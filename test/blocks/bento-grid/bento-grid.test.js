@@ -1,4 +1,4 @@
-import { readFile } from '@web/test-runner-commands';
+import { readFile, setViewport } from '@web/test-runner-commands';
 import { expect } from '@esm-bundle/chai';
 
 const { default: init } = await import('../../../blocks/bento-grid/bento-grid.js');
@@ -84,6 +84,29 @@ describe('Bento Grid', () => {
       const cards = mobileView.querySelectorAll('.grid-carousel .grid-item');
       // all 6 cells (2 in row 1 + 4 in row 2) become carousel cards on mobile
       expect(cards.length).to.equal(6);
+    });
+
+    it('does not overlap the last RTL card at the viewport width for 80% zoom', async () => {
+      const originalDir = document.documentElement.getAttribute('dir');
+      const originalViewport = { width: window.innerWidth, height: window.innerHeight };
+      const style = document.createElement('style');
+      style.textContent = await readFile({ path: '../../../blocks/bento-grid/bento-grid.css' });
+      document.head.append(style);
+
+      try {
+        document.documentElement.setAttribute('dir', 'rtl');
+        await setViewport({ width: 1800, height: 900 });
+        const cards = document.querySelectorAll('.view-desktop .grid-item');
+        const previous = cards[cards.length - 2].getBoundingClientRect();
+        const last = cards[cards.length - 1].getBoundingClientRect();
+        expect(last.width).to.be.above(0);
+        expect(last.right).to.be.below(previous.left);
+      } finally {
+        style.remove();
+        if (originalDir === null) document.documentElement.removeAttribute('dir');
+        else document.documentElement.setAttribute('dir', originalDir);
+        await setViewport(originalViewport);
+      }
     });
   });
 
