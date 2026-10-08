@@ -87,6 +87,47 @@ describe('Bento Grid', () => {
     });
   });
 
+  describe('carousel arrow direction', () => {
+    let style;
+    let originalDir;
+
+    before(async () => {
+      style = document.createElement('style');
+      style.textContent = await readFile({ path: '../../../blocks/bento-grid/bento-grid.css' });
+      document.head.append(style);
+      document.body.innerHTML = await readFile({ path: './mocks/basic.html' });
+      await init(document.querySelector('.bento-grid'));
+    });
+
+    beforeEach(() => {
+      originalDir = document.documentElement.getAttribute('dir');
+    });
+
+    afterEach(() => {
+      if (originalDir === null) document.documentElement.removeAttribute('dir');
+      else document.documentElement.setAttribute('dir', originalDir);
+    });
+
+    after(() => {
+      style.remove();
+    });
+
+    [
+      { dir: 'ltr', prevScale: -1, nextScale: 1 },
+      { dir: 'rtl', prevScale: 1, nextScale: -1 },
+    ].forEach(({ dir, prevScale, nextScale }) => {
+      it(`points Previous and Next in the correct ${dir} directions`, () => {
+        document.documentElement.setAttribute('dir', dir);
+        const controls = [...document.querySelectorAll('.grid-carousel-controls')]
+          .find((element) => element.getBoundingClientRect().width > 0);
+        const prev = controls.querySelector('.grid-carousel-arrow-prev svg');
+        const next = controls.querySelector('.grid-carousel-arrow-next svg');
+        expect(new DOMMatrix(getComputedStyle(prev).transform).a).to.equal(prevScale);
+        expect(new DOMMatrix(getComputedStyle(next).transform).a).to.equal(nextScale);
+      });
+    });
+  });
+
   describe('authored eyebrow', () => {
     before(async () => {
       document.body.innerHTML = await readFile({ path: './mocks/eyebrow.html' });
