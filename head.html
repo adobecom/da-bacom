@@ -54,7 +54,7 @@
           const links = [...urlEl.querySelectorAll('link[rel="alternate"]')]
             .map((el) => ({ hreflang: el.getAttribute('hreflang'), href: el.getAttribute('href') }))
             .filter((l) => l.hreflang && l.href);
-          if (links.length) map[loc] = links;
+          if (links.length && !(loc in map)) map[loc] = links;
         });
         return map;
       }
@@ -110,11 +110,20 @@
           : HREFLANG_TEMPLATE.replace(/\/?{locale}/, '');
       }
 
-      function getPageUrl(pathname, localeMatch) {
-        const isLocaleRoot = localeMatch && pathname === `/${localeMatch}/`;
-        if (pathname === '/' || isLocaleRoot) return `${HREFLANG_ORIGIN}${pathname}`;
-        const normalized = pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
-        return `${HREFLANG_ORIGIN}${normalized.endsWith('.html') ? normalized : `${normalized}.html`}`;
+      // Exact pathname wins; otherwise first sitemap-order entry differing only by terminal .html / trailing slash.
+      function findHreflangLinks(map, pathname) {
+        const exactKey = `${HREFLANG_ORIGIN}${pathname}`;
+        if (map[exactKey]) return map[exactKey];
+
+        const base = pathname.replace(/\/$/, '').replace(/\.html$/, '');
+        const variants = base
+          ? [base, `${base}/`, `${base}.html`, `${base}.html/`]
+          : [''];
+        const keys = variants.map((v) => `${HREFLANG_ORIGIN}${v}`).filter((k) => k !== exactKey && map[k]);
+        if (keys.length <= 1) return keys.length ? map[keys[0]] : null;
+        // Several variants exist: map keys keep sitemap insertion order, so take the earliest.
+        const first = Object.keys(map).find((k) => keys.includes(k));
+        return map[first];
       }
 
       function injectHreflangLinks(links) {
@@ -146,8 +155,7 @@
         setCachedMap(cacheKey, map);
       }
 
-      const pageUrl = getPageUrl(pathname, localeMatch);
-      const links = map[pageUrl] ?? map[pageUrl.replace(/\/$/, '')];
+      const links = findHreflangLinks(map, pathname);
       if (links?.length) injectHreflangLinks(links);
     })();
   }
