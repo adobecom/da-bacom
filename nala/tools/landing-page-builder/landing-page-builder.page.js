@@ -164,7 +164,7 @@ export default class LandingPageBuilder {
 
   getIframeFrame() {
     if (this.lpbUrlOverride) return this.page;
-    return this.page.frames().find((f) => f.url().includes('aem.live') || f.url().includes('localhost'));
+    return this.page.frames().find((f) => f.url().includes('aem.live') || f.url().includes('preview.da.live') || f.url().includes('localhost'));
   }
 
   async reloadPage() {
@@ -376,6 +376,7 @@ export default class LandingPageBuilder {
   async uploadSocialShareImage(filePath) {
     await this.socialShareImageDropzone.scrollIntoViewIfNeeded();
     await this.socialShareImageInput.setInputFiles(filePath);
+    await this.waitForStoredField('socialShareImage');
   }
 
   async selectPrimaryProductName(value) {
@@ -457,7 +458,7 @@ export default class LandingPageBuilder {
     const selector = type
       ? `toast-message .toast.${type}`
       : 'toast-message .toast';
-    const toast = this.iframe.locator(selector).filter({ hasText: text });
+    const toast = this.iframe.locator(selector).filter({ hasText: text }).last();
     await toast.waitFor({ state: 'visible', timeout });
     return toast;
   }

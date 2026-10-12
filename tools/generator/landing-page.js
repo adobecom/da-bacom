@@ -221,9 +221,12 @@ class LandingPageForm extends LitElement {
     this.missingFields = {};
     this.authStatus = null;
     this.previewPath = '';
+    this.resetVersion = 0;
   }
 
   resetForm() {
+    this.resetVersion += 1;
+    this.confirmPending = false;
     this.form = { ...FORM_SCHEMA };
     this.confirmedUrl = '';
     this.missingFields = {};
@@ -455,10 +458,11 @@ class LandingPageForm extends LitElement {
       cardDate: new Date().toISOString().split('T')[0],
       marqueeImage: marqueeImgVisible ? getContentUrl(form.marqueeImage?.path) : '',
       bodyImage: getContentUrl(form.bodyImage?.path),
-      cardImage: getContentUrl(form.cardImage?.path),
+      // Relative path (not getContentUrl's absolute content.da.live URL) so it resolves on business.adobe.com.
+      cardImage: getRepoRelativePath(form.cardImage?.path),
       assetHeadline: assetHeadlineVisible && form.assetHeadline ? `<h2>${form.assetHeadline}</h2>` : '',
       // Templates: use {{social-share-image}} in page-metadata (og:image, etc.).
-      socialShareImage: getContentUrl(form.socialShareImage?.path),
+      socialShareImage: getRepoRelativePath(form.socialShareImage?.path),
       pdfAsset: pdfVisible && form.pdfAsset ? getAemPageUrl(form.pdfAsset?.path) : '',
       pdfAssetName: pdfVisible && form.pdfAsset ? form.pdfAsset?.name : '',
       videoAsset: videoVisible ? form.videoAsset : '',
@@ -526,10 +530,13 @@ class LandingPageForm extends LitElement {
   }
 
   handleValidateRequest = async (e) => {
+    if (!this.form.contentType || !this.form.gated || !this.form.region) return;
+    const { resetVersion } = this;
     const { fullPath, value } = e.detail;
 
     try {
       const exists = await checkPath(fullPath);
+      if (resetVersion !== this.resetVersion) return;
 
       if (exists) {
         if (this.isOwnPagePath(fullPath)) {
@@ -547,6 +554,7 @@ class LandingPageForm extends LitElement {
         this.saveFormState();
       }
     } catch {
+      if (resetVersion !== this.resetVersion) return;
       this.form = { ...this.form, pathStatus: PATH_STATUS.EMPTY, url: '' };
       this.confirmPending = false;
       showToast(MESSAGES.ADDRESS_CHECK_FAILED, TOAST_TYPES.ERROR);

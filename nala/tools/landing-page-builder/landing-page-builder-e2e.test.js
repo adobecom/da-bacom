@@ -22,18 +22,20 @@ async function reopenPreviewWithQueryParams(previewPage, queryParams) {
   await previewPage.waitForLoadState('domcontentloaded');
 }
 
-function getContentTypePath(contentType) {
-  return contentType.toLowerCase().replace('/', '-');
+function getContentTypePath(contentType, gated) {
+  if (contentType === 'Video/Demo') return 'videos';
+  if (gated === 'Ungated') return 'sdk';
+  return `${contentType.toLowerCase()}s`;
 }
 
 function getPagePath(data) {
   const regionPrefix = data.region && data.region !== 'US' ? `/${data.region.toLowerCase()}` : '';
-  return `${regionPrefix}/resources/${getContentTypePath(data.contentType)}/${data.pageSlug}`;
+  return `${regionPrefix}/resources/${getContentTypePath(data.contentType, data.gated)}/${data.pageSlug}`;
 }
 
 function getAssetDirectoryPath(data) {
   const regionPrefix = data.region && data.region !== 'US' ? `/${data.region.toLowerCase()}` : '';
-  return `${regionPrefix}/resources/${getContentTypePath(data.contentType)}/.${data.pageSlug}`;
+  return `${regionPrefix}/resources/${getContentTypePath(data.contentType, data.gated)}/.${data.pageSlug}`;
 }
 
 async function daFetch(page, url, method = 'GET') {
@@ -167,7 +169,6 @@ test.describe('Landing Page Builder - E2E Journey Tests', () => {
       await lpb.fillSeoTitle(data.seoTitle);
       await lpb.fillSeoDescription(data.seoDescription);
       await lpb.uploadSocialShareImage(data.socialShareImage);
-      await lpb.waitForToast('Image Uploaded', 'success', 15000);
     });
 
     await test.step('Part A-8: Fill Primary Product Name and Experience Fragment', async () => {
@@ -308,7 +309,6 @@ test.describe('Landing Page Builder - E2E Journey Tests', () => {
       await lpb.fillSeoTitle(data.seoTitle);
       await lpb.fillSeoDescription(data.seoDescription);
       await lpb.uploadSocialShareImage(data.socialShareImage);
-      await lpb.waitForToast('Image Uploaded', 'success', 15000);
     });
 
     await test.step('Part A-7: Fill Primary Product Name and Experience Fragment', async () => {
@@ -421,7 +421,6 @@ test.describe('Landing Page Builder - E2E Journey Tests', () => {
       await lpb.fillSeoTitle(data.seoTitle);
       await lpb.fillSeoDescription(data.seoDescription);
       await lpb.uploadSocialShareImage(data.socialShareImage);
-      await lpb.waitForToast('Image Uploaded', 'success', 15000);
     });
 
     await test.step('Part A-7: Fill Primary Product Name and Experience Fragment', async () => {
@@ -466,8 +465,8 @@ test.describe('Landing Page Builder - E2E Journey Tests', () => {
       await preview.verifyMarqueeContent(testData.headline, data.marqueeDescription);
     });
 
-    await runCollectedStep(verificationFailures, 'Part C-2: Verify marquee image', async () => {
-      await preview.verifyMarqueeImageVisible();
+    await runCollectedStep(verificationFailures, 'Part C-2: Verify video template has no marquee image', async () => {
+      await preview.verifyMarqueeImageNotVisible();
     });
 
     await test.step('Part C-3: Verify body content', async () => {
@@ -534,7 +533,6 @@ test.describe('Landing Page Builder - E2E Journey Tests', () => {
       await lpb.fillSeoTitle(data.seoTitle);
       await lpb.fillSeoDescription(data.seoDescription);
       await lpb.uploadSocialShareImage(data.socialShareImage);
-      await lpb.waitForToast('Image Uploaded', 'success', 15000);
     });
 
     await test.step('Part A-7: Fill Primary Product Name and Experience Fragment', async () => {
@@ -641,7 +639,6 @@ test.describe('Landing Page Builder - E2E Journey Tests', () => {
       await lpb.fillSeoTitle(data.seoTitle);
       await lpb.fillSeoDescription(data.seoDescription);
       await lpb.uploadSocialShareImage(data.socialShareImage);
-      await lpb.waitForToast('Image Uploaded', 'success', 15000);
     });
 
     await test.step('Part A-8: Fill Primary Product Name and Experience Fragment', async () => {

@@ -122,6 +122,7 @@ export default class LandingPagePreview {
       const ogImage = this.page.locator('meta[property="og:image"]');
       const content = await ogImage.getAttribute('content');
       expect(content).toMatch(/^https?:\/\//);
+      expect(new URL(content).hostname).toBe('business.adobe.com');
     }
   }
 

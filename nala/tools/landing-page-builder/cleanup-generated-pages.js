@@ -5,7 +5,7 @@ const { chromium } = require('playwright');
 
 const ADMIN_DA_ORIGIN = 'https://admin.da.live';
 const ADMIN_HLX_ORIGIN = 'https://admin.hlx.page';
-const DA_LIVE_URL = 'https://da.live';
+const DA_LIVE_URL = 'https://da.live/app/adobecom/da-bacom/tools/generator/landing-page';
 const ORG = 'adobecom';
 const REPO = 'da-bacom';
 const REF = 'main';
@@ -93,7 +93,7 @@ async function cleanupPage(page, folderPath, slug) {
 }
 
 async function main() {
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({ headless: false });
   const context = await browser.newContext({ storageState: AUTH_FILE });
   try {
     const page = await context.newPage();

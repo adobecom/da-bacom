@@ -243,6 +243,36 @@
           }
         });
 
+        ['success', 'failure'].forEach((result) => {
+          it(`keeps reset state when a pending path check completes with ${result}`, async () => {
+            fillCoreFields();
+            await tick(100);
+            generator.saveFormState();
+            generator.confirmPending = true;
+
+            if (result === 'failure') {
+              daFetch.onCall(daFetch.callCount).rejects(new Error('Path check failed'));
+            }
+            const request = {
+              detail: { fullPath: '/resources/sdk/reset-test', value: 'reset-test' }
+            };
+            const validation = generator.handleValidateRequest(request);
+
+            generator.resetForm();
+            const resetState = { ...generator.form };
+            await validation;
+            await generator.handleValidateRequest(request);
+            await tick(100);
+
+            expect(generator.form).to.deep.equal(resetState);
+            expect(generator.confirmPending).to.be.false;
+            expect(generator.confirmedUrl).to.equal('');
+            expect(generator.showForm).to.be.false;
+            expect(localStorage.getItem('landing-page-builder')).to.be.null;
+            expect(document.querySelector('toast-message')).to.not.exist;
+          });
+        });
+
         it('completes all fields and submits successfully', async () => {
           fillCoreFields();
           await tick(100);
