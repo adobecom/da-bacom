@@ -114,11 +114,14 @@
       // Exact pathname wins; otherwise first sitemap-order entry differing only by terminal .html / trailing slash.
       function findHreflangLinks(entries, pathname) {
         const normalizePath = (path) => path.replace(/\/$/, '').replace(/\.html$/, '');
+        const isHreflangOrigin = (loc) => {
+          try { return new URL(loc).origin === HREFLANG_ORIGIN; } catch { return false; }
+        };
         const targetPath = normalizePath(pathname);
         let normalizedMatch = null;
 
         for (const entry of entries) {
-          if (!entry.loc.startsWith(HREFLANG_ORIGIN)) continue;
+          if (!isHreflangOrigin(entry.loc)) continue;
           const locPath = entry.loc.slice(HREFLANG_ORIGIN.length) || '/';
           if (!locPath.startsWith('/')) continue;
           if (locPath === pathname) return entry.links;
