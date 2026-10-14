@@ -203,8 +203,9 @@
 }
 
 @media (width < 768px) {
-  .bacom-rich-content.hero:lang(ar) .action-area {
-    margin-block-end: var(--s2a-spacing-lg);
+  .section:lang(ar):has(> .bacom-rich-content.hero) > .section-background .video-container {
+    box-sizing: border-box;
+    padding-block-start: var(--s2a-spacing-lg);
   }
 }
 
