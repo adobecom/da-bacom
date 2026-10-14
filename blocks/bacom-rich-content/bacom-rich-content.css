@@ -202,6 +202,12 @@
   }
 }
 
+@media (width < 768px) {
+  .bacom-rich-content.hero:lang(ar) .action-area {
+    margin-block-end: var(--s2a-spacing-lg);
+  }
+}
+
 /* classic 1200px grid alignment (desktop opt-in) */
 @media (width >= 768px) {
   .bacom-rich-content.classic-grid-spacing {
