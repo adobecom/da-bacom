@@ -55,7 +55,7 @@ Lorem ipsum dolor sit amet.`;
       [320, 599, 600, 1280].forEach((width) => {
         it(`separates the avatar and text in ${direction} at ${width}px`, async () => {
           await setViewport({ width, height: 800 });
-          document.body.innerHTML = `<div class="event-speakers" dir="${direction}">
+          document.body.innerHTML = `<div class="event-speakers" dir="${direction}" lang="${direction === 'rtl' ? 'ar' : 'en'}">
             <div>
               <div><picture></picture></div>
               <div><h3>Firstname Lastname</h3></div>
@@ -67,7 +67,8 @@ Lorem ipsum dolor sit amet.`;
           const avatar = block.querySelector('.speaker > div').getBoundingClientRect();
           const text = block.querySelector('.text').getBoundingClientRect();
           const gap = direction === 'rtl' ? avatar.left - text.right : text.left - avatar.right;
-          expect(gap).to.be.closeTo(width < 600 ? 24 : 48, 0.1);
+          const [mobileGap, desktopGap] = direction === 'rtl' ? [16, 24] : [24, 48];
+          expect(gap).to.be.closeTo(width < 600 ? mobileGap : desktopGap, 0.1);
         });
       });
     });

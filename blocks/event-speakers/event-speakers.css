@@ -12,6 +12,10 @@
     margin-inline-start: 24px;
 }
 
+.event-speakers:lang(ar) .text {
+    margin-inline-start: 16px;
+}
+
 .event-speakers .name {
     margin-bottom: 14px;
 }
@@ -48,5 +52,9 @@
     .event-speakers .text {
         width: 66.667%;
         margin-inline-start: 48px;
+    }
+
+    .event-speakers:lang(ar) .text {
+        margin-inline-start: 24px;
     }
 }
