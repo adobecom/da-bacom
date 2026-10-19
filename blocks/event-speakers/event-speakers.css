@@ -9,7 +9,7 @@
 
 .event-speakers .text {
     width: 75%;
-    margin-left: 24px;
+    margin-inline-start: 24px;
 }
 
 .event-speakers .name {
@@ -47,6 +47,6 @@
     
     .event-speakers .text {
         width: 66.667%;
-        margin-left: 48px;
+        margin-inline-start: 48px;
     }
 }
