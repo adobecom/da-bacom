@@ -202,6 +202,13 @@
   }
 }
 
+@media (width < 768px) {
+  .section:lang(ar):has(> .bacom-rich-content.hero) > .section-background .video-container {
+    box-sizing: border-box;
+    padding-block-start: var(--s2a-spacing-lg);
+  }
+}
+
 /* classic 1200px grid alignment (desktop opt-in) */
 @media (width >= 768px) {
   .bacom-rich-content.classic-grid-spacing {
