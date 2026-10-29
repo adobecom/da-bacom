@@ -80,6 +80,16 @@ export default class ElasticCarousel {
     });
   }
 
+  /**
+   * Activate via keyboard: the C2 gnav overlays the top of <main>, so on pages where the
+   * carousel is the first section the toggle sits under the sticky header and a pointer
+   * click is intercepted.
+   */
+  async activateFirstToggle() {
+    await this.firstToggle.focus();
+    await this.firstToggle.press('Enter');
+  }
+
   /** X position of the first card — moves left as the carousel advances. */
   async firstItemX() {
     return this.firstItem.evaluate((el) => Math.round(el.getBoundingClientRect().x));

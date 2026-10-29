@@ -48,8 +48,8 @@ test.describe('BACOM Elastic Carousel Block Test Suite', () => {
       expect(collapsed.contentVisible).toBe(false);
     });
 
-    await test.step('Clicking the expand icon reveals the description and re-crops the image (AC)', async () => {
-      await carousel.firstToggle.click();
+    await test.step('Activating the expand icon reveals the description and re-crops the image (AC)', async () => {
+      await carousel.activateFirstToggle();
       await expect(carousel.firstToggle).toHaveAttribute('aria-expanded', 'true');
       await expect
         .poll(async () => (await carousel.expandState()).contentVisible, { timeout: 5000 })
@@ -59,8 +59,8 @@ test.describe('BACOM Elastic Carousel Block Test Suite', () => {
         .toBeLessThan(collapsed.assetHeight);
     });
 
-    await test.step('Clicking again collapses', async () => {
-      await carousel.firstToggle.click();
+    await test.step('Activating again collapses', async () => {
+      await carousel.activateFirstToggle();
       await expect(carousel.firstToggle).toHaveAttribute('aria-expanded', 'false');
     });
   });
