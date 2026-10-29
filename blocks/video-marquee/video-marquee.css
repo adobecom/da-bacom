@@ -6,6 +6,7 @@
   background-color: #000;
   padding-bottom: 56px;
   padding-inline: var(--grid-margin-width);
+  padding-top: var(--feds-nav-total-height);
   margin: 0 auto;
 }
 
