@@ -8,7 +8,7 @@ jobs:
   action:
     name: Running E2E & IT
     if: contains(github.event.pull_request.labels.*.name, 'run-nala')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout repository

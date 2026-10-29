@@ -154,12 +154,6 @@ const CONFIG = {
       window.location.reload();
     },
   },
-  mep: {
-    blocks: {
-      'global-navigation': `${LIBS}/blocks/global-navigation`,
-      'global-footer': `${LIBS}/blocks/global-footer`,
-    },
-  },
 };
 
 export const PLAY_SVG = '<svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 0 18 18" width="18" class="icon-milo icon-milo-play"><path fill="currentColor" fill-rule="evenodd" d="M4.73,2H3.5a.5.5,0,0,0-.5.5v13a.5.5,0,0,0,.5.5H4.73a1,1,0,0,0,.5035-.136l11.032-6.433a.5.5,0,0,0,0-.862L5.2335,2.136A1,1,0,0,0,4.73,2Z"/></svg>';
@@ -370,25 +364,6 @@ export async function loadPage() {
   };
 
   window.addEventListener('bc:ready', loadArpWhenReady);
-
-  // Target's init() reassigns config.mep and drops our block overrides. Re-inject on set.
-  const targetOn = getMetadata('target') || new URLSearchParams(window.location.search).get('target');
-  if (targetOn && getMetadata('foundation') === 'c2') {
-    const config = getConfig();
-    const desiredBlocks = {
-      'global-navigation': `${LIBS}/blocks/global-navigation`,
-      'global-footer': `${LIBS}/blocks/global-footer`,
-    };
-    let mepInternal = config.mep;
-    Object.defineProperty(config, 'mep', {
-      configurable: true,
-      get() { return mepInternal; },
-      set(v) {
-        if (v && typeof v === 'object') v.blocks = { ...v.blocks, ...desiredBlocks };
-        mepInternal = v;
-      },
-    });
-  }
 
   await loadArea();
 
