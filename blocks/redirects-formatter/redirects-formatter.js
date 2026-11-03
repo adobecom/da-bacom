@@ -1,3 +1,7 @@
+/**
+ * DEPRECATED: This tool is no longer in use
+ */
+
 import { LIBS } from '../../scripts/scripts.js';
 
 export const SELECT_ALL_REGIONS = 'Select All Regions';
@@ -94,8 +98,11 @@ export default async function init(el) {
   const { data } = await resp.json();
 
   const redirectsContainer = createTag('section', { class: 'redirects-container' });
+  // eslint-disable-next-line no-unused-vars
   const header = createTag('h1', null, 'Redirect Formatting Tool');
+  // eslint-disable-next-line no-unused-vars
   const instructions = createTag('p', { class: 'instructions' }, INSTRUCTIONS_TEXT);
+  // eslint-disable-next-line no-unused-vars
   const errorSection = createTag('p', { class: 'error' });
 
   // Checkboxes
@@ -166,5 +173,7 @@ export default async function init(el) {
   });
 
   redirectsContainer.append(checkBoxesArea, inputAreaContainer, outputAreaContainer);
-  el.append(header, instructions, errorSection, redirectsContainer);
+  const deprecationContainer = createTag('div', { class: 'deprecation-message' }, 'This tool has been deprecated, please reach out to GWP for redirect formatting assistance');
+  el.append(deprecationContainer);
+  // el.append(header, instructions, errorSection, redirectsContainer);
 }
