@@ -1,3 +1,5 @@
-div {
-  color: inherit;
+.semrush-widget {
+  display: block;
+  max-width: var(--grid-container-width);
+  margin: 0 auto;
 }
