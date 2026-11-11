@@ -3,7 +3,7 @@ import { features } from './article.spec.js';
 import BlogArticle from './article.page.js';
 
 const miloLibs = process.env.MILO_LIBS || '';
-const [feature, contentFeature] = features;
+const [feature, contentFeature, recommendationsFeature] = features;
 
 test.describe('BACOM Blog Article Test Suite', () => {
   test(`${feature.name} ${feature.tags}`, async ({ page, baseURL }) => {
@@ -63,4 +63,56 @@ test.describe('BACOM Blog Article Test Suite', () => {
       });
     });
   }
+
+  test(`${recommendationsFeature.name} ${recommendationsFeature.tags}`, async ({ page, baseURL }) => {
+    const article = new BlogArticle(page);
+
+    await test.step('Go to the blog article using the existing Nala base URL', async () => {
+      await article.open(`${baseURL}${recommendationsFeature.path}${miloLibs}`);
+    });
+
+    await test.step('Recommendations render cards instead of an initialization error', async () => {
+      await article.recommendations.scrollIntoViewIfNeeded();
+      await expect(article.recommendations).toHaveAttribute('data-block-status', 'loaded', { timeout: 15000 });
+      await expect(article.cards.first()).toBeVisible();
+      await expect(article.recommendations.getByRole('alert')).toHaveCount(0);
+    });
+
+    await test.step('Each card has a visible title, a loaded image and a blog article link', async () => {
+      for (const card of await article.cards.all()) {
+        await expect(card.locator('h3')).toBeVisible();
+        await expect(card.locator('h3')).toHaveText(/\S/);
+        await expect(card).toHaveAttribute('href', /^\/blog\/.+/);
+
+        const image = card.locator('.article-card-image picture img');
+        await expect(image).toHaveCount(1);
+        await image.scrollIntoViewIfNeeded();
+        await expect(image).toBeVisible();
+        await expect.poll(
+          () => image.evaluate((img) => img.complete && img.naturalWidth > 0),
+          { message: 'Recommended article images must load successfully' },
+        ).toBe(true);
+      }
+    });
+
+    await test.step('Selecting a card loads its linked article', async () => {
+      const card = article.cards.first();
+      const target = new URL(await card.getAttribute('href'), page.url()).href;
+      const [response] = await Promise.all([
+        page.waitForResponse((res) => (
+          res.request().isNavigationRequest()
+          && res.request().frame() === page.mainFrame()
+          && (res.status() < 300 || res.status() >= 400)
+        )),
+        card.locator('h3').click(),
+      ]);
+      expect(response.ok(), `The recommended article must load successfully (HTTP ${response.status()})`).toBe(true);
+
+      let request = response.request();
+      while (request.redirectedFrom()) request = request.redirectedFrom();
+      expect(request.url()).toBe(target);
+      await expect(page).toHaveURL(response.url());
+      await expect(page.locator('main h1')).toBeVisible();
+    });
+  });
 });

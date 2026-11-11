@@ -19,5 +19,12 @@ module.exports = {
         { name: 'mobile', width: 390, height: 844 },
       ],
     },
+    {
+      tcid: 'BLOG-03',
+      name: '@blog-recommendations',
+      path: '/blog/drafts/jsandlan/10-dam-good-reasons-to-attend-adobe-summit',
+      description: 'Recommended article cards render with titles, images and blog links, and selecting a card opens its article.',
+      tags: '@blog @bacom @smoke @regression',
+    },
   ],
 };

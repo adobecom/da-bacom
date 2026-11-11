@@ -11,6 +11,8 @@ export default class BlogArticle {
     this.image = this.header.locator('.article-feature-image picture img');
     this.bodyParagraphs = page.locator('main p:not(.article-header p, .recommended-articles p)')
       .filter({ hasText: /\S/ });
+    this.recommendations = page.locator('main .recommended-articles');
+    this.cards = this.recommendations.locator('.article-cards > .article-card');
   }
 
   async open(url) {
