@@ -8,6 +8,9 @@ export default class BlogArticle {
     this.author = this.header.locator('.article-author');
     this.date = this.header.locator('.article-date');
     this.category = this.header.locator('.article-category');
+    this.image = this.header.locator('.article-feature-image picture img');
+    this.bodyParagraphs = page.locator('main p:not(.article-header p, .recommended-articles p)')
+      .filter({ hasText: /\S/ });
   }
 
   async open(url) {

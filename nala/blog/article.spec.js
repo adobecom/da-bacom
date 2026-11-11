@@ -8,5 +8,16 @@ module.exports = {
       description: 'The automatic article header preserves the authored title, author and date without displaying the category.',
       tags: '@blog @bacom @smoke @regression @bacomSmoke',
     },
+    {
+      tcid: 'BLOG-02',
+      name: '@blog-article-content',
+      path: '/blog/drafts/jsandlan/10-dam-good-reasons-to-attend-adobe-summit',
+      description: 'The featured image loads and body text renders without horizontal overflow on desktop and mobile.',
+      tags: '@blog @bacom @regression',
+      viewports: [
+        { name: 'desktop', width: 1440, height: 900 },
+        { name: 'mobile', width: 390, height: 844 },
+      ],
+    },
   ],
 };
