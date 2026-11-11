@@ -13,6 +13,8 @@ export default class BlogArticle {
       .filter({ hasText: /\S/ });
     this.recommendations = page.locator('main .recommended-articles');
     this.cards = this.recommendations.locator('.article-cards > .article-card');
+    this.nav = page.locator('header.global-navigation');
+    this.footer = page.locator('footer.global-footer');
   }
 
   async open(url) {

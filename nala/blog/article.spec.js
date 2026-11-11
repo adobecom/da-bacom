@@ -26,5 +26,12 @@ module.exports = {
       description: 'Recommended article cards render with titles, images and blog links, and selecting a card opens its article.',
       tags: '@blog @bacom @smoke @regression',
     },
+    {
+      tcid: 'BLOG-04',
+      name: '@blog-navigation',
+      path: '/blog/drafts/jsandlan/10-dam-good-reasons-to-attend-adobe-summit',
+      description: 'BACOM navigation and the lazy footer contain visible, enabled links rather than empty loaded wrappers.',
+      tags: '@blog @bacom @smoke @regression @bacomSmoke',
+    },
   ],
 };

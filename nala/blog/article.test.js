@@ -3,7 +3,7 @@ import { features } from './article.spec.js';
 import BlogArticle from './article.page.js';
 
 const miloLibs = process.env.MILO_LIBS || '';
-const [feature, contentFeature, recommendationsFeature] = features;
+const [feature, contentFeature, recommendationsFeature, navigationFeature] = features;
 
 test.describe('BACOM Blog Article Test Suite', () => {
   test(`${feature.name} ${feature.tags}`, async ({ page, baseURL }) => {
@@ -114,5 +114,25 @@ test.describe('BACOM Blog Article Test Suite', () => {
       await expect(page).toHaveURL(response.url());
       await expect(page.locator('main h1')).toBeVisible();
     });
+  });
+
+  test(`${navigationFeature.name} ${navigationFeature.tags}`, async ({ page, baseURL }) => {
+    const article = new BlogArticle(page);
+
+    await test.step('Go to the blog article using the existing Nala base URL', async () => {
+      await article.open(`${baseURL}${navigationFeature.path}${miloLibs}`);
+    });
+
+    for (const [name, block] of [['navigation', article.nav], ['footer', article.footer]]) {
+      await test.step(`BACOM ${name} contains a visible, enabled destination link`, async () => {
+        await block.scrollIntoViewIfNeeded();
+        await expect(block).toBeVisible();
+        const link = block.locator('a[href]:not([href=""]):not([href^="#"]):not([href^="javascript:" i]):visible').first();
+        await expect(link).toBeVisible({ timeout: 15000 });
+        await expect(link).toBeEnabled();
+        const destination = new URL(await link.getAttribute('href'), page.url());
+        expect(['http:', 'https:']).toContain(destination.protocol);
+      });
+    }
   });
 });
