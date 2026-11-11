@@ -156,6 +156,37 @@ const CONFIG = {
   },
 };
 
+// Milo uses the first matching IETF locale for namespace paths.
+const BLOG_LOCALES = Object.fromEntries(Object.entries({
+  ...Object.fromEntries(Object.entries(CONFIG.locales).map(([key, locale]) => {
+    const blogLocale = { ...locale };
+    delete blogLocale.base;
+    return [key, blogLocale];
+  })),
+  ae_ar: { ietf: 'ar', tk: 'qxw8hzm.css', dir: 'rtl' },
+  ae_en: { ietf: 'en', tk: 'hah7vzn.css' },
+  ar: { ietf: 'es-AR', tk: 'hah7vzn.css', exl: 'es' },
+  cl: { ietf: 'es-CL', tk: 'hah7vzn.css', exl: 'es' },
+  co: { ietf: 'es-CO', tk: 'hah7vzn.css', exl: 'es' },
+  cr: { ietf: 'es-419', tk: 'hah7vzn.css' },
+  ec: { ietf: 'es-419', tk: 'hah7vzn.css' },
+  eg_ar: { ietf: 'ar', tk: 'qxw8hzm.css', dir: 'rtl' },
+  eg_en: { ietf: 'en-GB', tk: 'hah7vzn.css' },
+  gt: { ietf: 'es-419', tk: 'hah7vzn.css' },
+  kw_ar: { ietf: 'ar', tk: 'qxw8hzm.css', dir: 'rtl' },
+  kw_en: { ietf: 'en-GB', tk: 'hah7vzn.css' },
+  mx: { ietf: 'es-MX', tk: 'hah7vzn.css', exl: 'es' },
+  ng: { ietf: 'en-GB', tk: 'hah7vzn.css' },
+  pe: { ietf: 'es-PE', tk: 'hah7vzn.css', exl: 'es' },
+  pr: { ietf: 'es-419', tk: 'hah7vzn.css' },
+  qa_ar: { ietf: 'ar', tk: 'qxw8hzm.css', dir: 'rtl' },
+  qa_en: { ietf: 'en-GB', tk: 'hah7vzn.css' },
+  sa_ar: { ietf: 'ar', tk: 'qxw8hzm.css', dir: 'rtl' },
+  sa_en: { ietf: 'en', tk: 'hah7vzn.css' },
+  th_th: { ...CONFIG.locales.th_th, tk: 'qxw8hzm.css' },
+  za: { ietf: 'en-GB', tk: 'hah7vzn.css' },
+}).sort(([a], [b]) => a.localeCompare(b)));
+
 export const PLAY_SVG = '<svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 0 18 18" width="18" class="icon-milo icon-milo-play"><path fill="currentColor" fill-rule="evenodd" d="M4.73,2H3.5a.5.5,0,0,0-.5.5v13a.5.5,0,0,0,.5.5H4.73a1,1,0,0,0,.5035-.136l11.032-6.433a.5.5,0,0,0,0-.862L5.2335,2.136A1,1,0,0,0,4.73,2Z"/></svg>';
 
 const eagerLoad = (img) => {
@@ -240,6 +271,52 @@ export function transformExlLinks(locale, root = document) {
   });
 }
 
+export async function buildBlogArticleHeader() {
+  const { createTag, getMetadata, getConfig } = await import(`${LIBS}/utils/utils.js`);
+  const main = document.querySelector('main');
+  const publicationDate = getMetadata('publication-date');
+  if (!main || !publicationDate || document.querySelector('.blog-header')
+    || main.querySelector('.article-header')) return;
+
+  try {
+    const h1 = main.querySelector('h1');
+    if (!h1) return;
+    const media = h1.nextElementSibling?.querySelector('picture, a') || main.querySelector('picture');
+    if (!media) return;
+
+    let caption = media.parentElement.querySelector('em');
+    const sibling = media.parentElement.nextElementSibling;
+    if (!caption && sibling?.querySelector('picture') && sibling.firstChild?.tagName === 'EM') {
+      caption = sibling.firstChild;
+    }
+
+    const author = getMetadata('author') || 'Adobe Communications Team';
+    const authorURL = getMetadata('author-url')
+      || `${getConfig().locale.contentRoot}/authors/${author.replace(/[^0-9a-z]/gi, '-').toLowerCase()}`;
+    const authorEl = createTag('span', { 'data-author-page': authorURL });
+    authorEl.textContent = author;
+    const dateEl = createTag('p');
+    dateEl.textContent = publicationDate;
+    const mediaContainer = createTag('div', null, media);
+    if (caption) mediaContainer.append(caption);
+
+    const block = createTag('div', { class: 'article-header' });
+    [
+      [createTag('p')],
+      [h1],
+      [createTag('p', null, authorEl), dateEl],
+      [mediaContainer],
+    ].forEach((contents) => {
+      const cell = createTag('div');
+      cell.append(...contents);
+      block.append(createTag('div', null, cell));
+    });
+    main.prepend(createTag('div', null, block));
+  } catch (error) {
+    window.lana?.log(`Auto Blocking failed: ${error}`, { tags: 'autoBlock', severity: 'error' });
+  }
+}
+
 export function injectMarqueePlayIcon(MILO_EVENTS) {
   const marquee = document.querySelector('.marquee, .hero-marquee');
   const marqueePlayIcon = marquee?.querySelector('span.icon-play');
@@ -320,13 +397,42 @@ export async function loadPage() {
     };
   }
 
-  const locale = getLocale(CONFIG.locales);
+  const blogLocale = getLocale(BLOG_LOCALES);
+  const pathname = window.location.pathname.slice(blogLocale.prefix.length);
+  const contentRoot = /^\/blog(?:\/|\.html$|$)/.test(pathname) ? '/blog' : '';
+  document.documentElement.classList.toggle('blog', Boolean(contentRoot));
+  const locales = contentRoot ? BLOG_LOCALES : CONFIG.locales;
+  const locale = getLocale(locales);
+
+  // Keep site chrome at BACOM's root unless its sources are authored.
+  document.head.querySelectorAll('meta[data-blog-source-default]').forEach((meta) => {
+    if (meta.content === meta.dataset.blogSourceDefault) meta.remove();
+    else meta.removeAttribute('data-blog-source-default');
+  });
+  if (contentRoot) {
+    const siteLocale = getLocale(CONFIG.locales);
+    ['gnav', 'footer'].forEach((type) => {
+      const name = `${type}-source`;
+      if (getMetadata(name)) return;
+      const content = `${window.location.origin}${siteLocale.prefix}/${type}`;
+      document.head.prepend(createTag('meta', { name, content, 'data-blog-source-default': content }));
+    });
+  }
+
   const baseDecorateArea = eventConfigItems?.decorateArea;
   const decorateArea = (area) => {
     transformExlLinks(locale, area);
     baseDecorateArea?.(area);
   };
-  setConfig({ ...CONFIG, ...eventConfigItems, decorateArea, miloLibs: LIBS });
+  setConfig({
+    ...CONFIG,
+    ...eventConfigItems,
+    locales,
+    contentRoot,
+    decorateArea,
+    miloLibs: LIBS,
+    ...(contentRoot ? { taxonomyRoot: '/tags', links: 'on', geoRouting: 'off' } : {}),
+  });
 
   if (eventMD && eventUtils?.setEventConfig) eventUtils.setEventConfig({ cmsType: 'DA' }, CONFIG);
   if (eventMD && eventUtils?.decorateEvent) eventUtils.decorateEvent(document);
@@ -337,6 +443,7 @@ export async function loadPage() {
     endpoint: 'https://business.adobe.com/lana/ll',
     endpointStage: 'https://business.stage.adobe.com/lana/ll',
   });
+  if (contentRoot) await buildBlogArticleHeader();
   transformExlLinks(locale);
   injectMarqueePlayIcon(MILO_EVENTS);
 
