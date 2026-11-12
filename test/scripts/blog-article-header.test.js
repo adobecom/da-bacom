@@ -8,11 +8,6 @@ describe('Blog article auto-blocking', () => {
   let metadata;
   let originalLana;
 
-  before(function requireBlogInitialization() {
-    // The initialization helper arrives separately in PR #284.
-    if (typeof buildBlogArticleHeader !== 'function') this.skip();
-  });
-
   beforeEach(() => {
     originalLana = window.lana;
     window.lana = { log: sinon.spy() };
