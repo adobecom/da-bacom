@@ -1,0 +1,62 @@
+module.exports = {
+  name: 'BACOM Blog Navigation',
+  features: [
+    {
+      tcid: 'BLOG-05',
+      name: '@blog-region-menu',
+      path: '/blog/drafts/jsandlan/10-dam-good-reasons-to-attend-adobe-summit',
+      description: 'The language menu exposes the legacy language choices and updates its expanded state when opened and closed.',
+      tags: '@blog @bacom @smoke @regression @bacomSmoke',
+      languages: [
+        'English (Australia)',
+        'English (UK)',
+        'English (US)',
+        'Deutsch',
+        'Fran\u00e7ais',
+        '\u65e5\u672c\u8a9e',
+      ],
+      viewports: [
+        { name: 'desktop', width: 1440, height: 900 },
+        { name: 'mobile', width: 390, height: 844 },
+      ],
+    },
+    {
+      tcid: 'BLOG-06',
+      name: '@blog-region-navigation',
+      path: '/blog/drafts/jsandlan/10-dam-good-reasons-to-attend-adobe-summit',
+      description: 'Selecting Japanese loads a successful destination within the Japanese blog.',
+      tags: '@blog @bacom @smoke @regression',
+    },
+    {
+      tcid: 'BLOG-07',
+      name: '@blog-sign-in',
+      path: '/blog/drafts/jsandlan/10-dam-good-reasons-to-attend-adobe-summit',
+      description: 'The sign-in dropdown opens the authored Adobe CX Enterprise link and reaches Adobe authentication.',
+      tags: '@blog @bacom @smoke @regression',
+      destinationName: 'Adobe CX Enterprise',
+    },
+    {
+      tcid: 'BLOG-08',
+      name: '@blog-header-menu',
+      path: '/blog/drafts/jsandlan/10-dam-good-reasons-to-attend-adobe-summit',
+      description: 'The Industries menu opens and its Financial services link loads the authored destination.',
+      tags: '@blog @bacom @smoke @regression',
+      menuName: 'Industries',
+      destinationName: 'Financial services',
+    },
+    {
+      tcid: 'BLOG-09',
+      name: '@blog-brand-navigation',
+      path: '/blog/drafts/jsandlan/10-dam-good-reasons-to-attend-adobe-summit',
+      description: 'The Adobe for Business brand link loads its authored destination.',
+      tags: '@blog @bacom @smoke @regression @bacomSmoke',
+    },
+    {
+      tcid: 'BLOG-10',
+      name: '@blog-header-cta',
+      path: '/blog/drafts/jsandlan/10-dam-good-reasons-to-attend-adobe-summit',
+      description: 'The primary header CTA loads its authored destination.',
+      tags: '@blog @bacom @smoke @regression @bacomSmoke',
+    },
+  ],
+};
