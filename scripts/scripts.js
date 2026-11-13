@@ -241,6 +241,52 @@ export function transformExlLinks(locale, root = document) {
   });
 }
 
+export async function buildAutoBlocks() {
+  const { createTag, getMetadata, getConfig } = await import(`${LIBS}/utils/utils.js`);
+  const main = document.querySelector('main');
+  const publicationDate = getMetadata('publication-date');
+  if (!main || !publicationDate || document.querySelector('.blog-header')
+    || main.querySelector('.article-header')) return;
+
+  try {
+    const h1 = main.querySelector('h1');
+    if (!h1) return;
+    const media = h1.nextElementSibling?.querySelector('picture, a') || main.querySelector('picture');
+    if (!media) return;
+
+    let caption = media.parentElement.querySelector('em');
+    const sibling = media.parentElement.nextElementSibling;
+    if (!caption && sibling?.querySelector('picture') && sibling.firstChild?.tagName === 'EM') {
+      caption = sibling.firstChild;
+    }
+
+    const author = getMetadata('author') || 'Adobe Communications Team';
+    const authorURL = getMetadata('author-url')
+      || `${getConfig().locale.contentRoot}/blog/authors/${author.replace(/[^0-9a-z]/gi, '-').toLowerCase()}`;
+    const authorEl = createTag('span', { 'data-author-page': authorURL });
+    authorEl.textContent = author;
+    const dateEl = createTag('p');
+    dateEl.textContent = publicationDate;
+    const mediaContainer = createTag('div', null, media);
+    if (caption) mediaContainer.append(caption);
+
+    const block = createTag('div', { class: 'article-header' });
+    [
+      [createTag('p')],
+      [h1],
+      [createTag('p', null, authorEl), dateEl],
+      [mediaContainer],
+    ].forEach((contents) => {
+      const cell = createTag('div');
+      cell.append(...contents);
+      block.append(createTag('div', null, cell));
+    });
+    main.prepend(createTag('div', null, block));
+  } catch (error) {
+    window.lana?.log(`Auto Blocking failed: ${error}`, { tags: 'autoBlock', severity: 'error' });
+  }
+}
+
 export function injectMarqueePlayIcon(MILO_EVENTS) {
   const marquee = document.querySelector('.marquee, .hero-marquee');
   const marqueePlayIcon = marquee?.querySelector('span.icon-play');
@@ -322,6 +368,10 @@ export async function loadPage() {
   }
 
   const locale = getLocale(CONFIG.locales);
+  const pathname = window.location.pathname.slice(locale.prefix.length);
+  const isBlog = /^\/blog(?:\/|\.html$|$)/.test(pathname);
+  document.documentElement.classList.toggle('blog', isBlog);
+
   const baseDecorateArea = eventConfigItems?.decorateArea;
   const decorateArea = (area) => {
     transformExlLinks(locale, area);
@@ -338,6 +388,7 @@ export async function loadPage() {
     endpoint: 'https://business.adobe.com/lana/ll',
     endpointStage: 'https://business.stage.adobe.com/lana/ll',
   });
+  if (isBlog) await buildAutoBlocks();
   transformExlLinks(locale);
   injectMarqueePlayIcon(MILO_EVENTS);
 
