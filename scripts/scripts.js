@@ -261,7 +261,7 @@ export async function buildBlogArticleHeader() {
 
     const author = getMetadata('author') || 'Adobe Communications Team';
     const authorURL = getMetadata('author-url')
-      || `${getConfig().locale.contentRoot}/authors/${author.replace(/[^0-9a-z]/gi, '-').toLowerCase()}`;
+      || `${getConfig().locale.contentRoot}/blog/authors/${author.replace(/[^0-9a-z]/gi, '-').toLowerCase()}`;
     const authorEl = createTag('span', { 'data-author-page': authorURL });
     authorEl.textContent = author;
     const dateEl = createTag('p');
@@ -368,37 +368,15 @@ export async function loadPage() {
 
   const locale = getLocale(CONFIG.locales);
   const pathname = window.location.pathname.slice(locale.prefix.length);
-  const contentRoot = /^\/blog(?:\/|\.html$|$)/.test(pathname) ? '/blog' : '';
-  document.documentElement.classList.toggle('blog', Boolean(contentRoot));
-
-  // Keep site chrome at BACOM's root unless its sources are authored.
-  document.head.querySelectorAll('meta[data-blog-source-default]').forEach((meta) => {
-    if (meta.content === meta.dataset.blogSourceDefault) meta.remove();
-    else meta.removeAttribute('data-blog-source-default');
-  });
-  if (contentRoot) {
-    const siteLocale = getLocale(CONFIG.locales);
-    ['gnav', 'footer'].forEach((type) => {
-      const name = `${type}-source`;
-      if (getMetadata(name)) return;
-      const content = `${window.location.origin}${siteLocale.prefix}/${type}`;
-      document.head.prepend(createTag('meta', { name, content, 'data-blog-source-default': content }));
-    });
-  }
+  const isBlog = /^\/blog(?:\/|\.html$|$)/.test(pathname);
+  document.documentElement.classList.toggle('blog', isBlog);
 
   const baseDecorateArea = eventConfigItems?.decorateArea;
   const decorateArea = (area) => {
     transformExlLinks(locale, area);
     baseDecorateArea?.(area);
   };
-  setConfig({
-    ...CONFIG,
-    ...eventConfigItems,
-    contentRoot,
-    decorateArea,
-    miloLibs: LIBS,
-    ...(contentRoot ? { taxonomyRoot: '/tags', links: 'on', geoRouting: 'off' } : {}),
-  });
+  setConfig({ ...CONFIG, ...eventConfigItems, decorateArea, miloLibs: LIBS });
 
   if (eventMD && eventUtils?.setEventConfig) eventUtils.setEventConfig({ cmsType: 'DA' }, CONFIG);
   if (eventMD && eventUtils?.decorateEvent) eventUtils.decorateEvent(document);
@@ -409,7 +387,7 @@ export async function loadPage() {
     endpoint: 'https://business.adobe.com/lana/ll',
     endpointStage: 'https://business.stage.adobe.com/lana/ll',
   });
-  if (contentRoot) await buildBlogArticleHeader();
+  if (isBlog) await buildBlogArticleHeader();
   transformExlLinks(locale);
   injectMarqueePlayIcon(MILO_EVENTS);
 
