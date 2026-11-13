@@ -240,7 +240,7 @@ export function transformExlLinks(locale, root = document) {
   });
 }
 
-export async function buildBlogArticleHeader() {
+export async function buildAutoBlocks() {
   const { createTag, getMetadata, getConfig } = await import(`${LIBS}/utils/utils.js`);
   const main = document.querySelector('main');
   const publicationDate = getMetadata('publication-date');
@@ -387,7 +387,7 @@ export async function loadPage() {
     endpoint: 'https://business.adobe.com/lana/ll',
     endpointStage: 'https://business.stage.adobe.com/lana/ll',
   });
-  if (isBlog) await buildBlogArticleHeader();
+  if (isBlog) await buildAutoBlocks();
   transformExlLinks(locale);
   injectMarqueePlayIcon(MILO_EVENTS);
 
