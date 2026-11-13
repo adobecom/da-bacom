@@ -156,37 +156,6 @@ const CONFIG = {
   },
 };
 
-// Milo uses the first matching IETF locale for namespace paths.
-const BLOG_LOCALES = Object.fromEntries(Object.entries({
-  ...Object.fromEntries(Object.entries(CONFIG.locales).map(([key, locale]) => {
-    const blogLocale = { ...locale };
-    delete blogLocale.base;
-    return [key, blogLocale];
-  })),
-  ae_ar: { ietf: 'ar', tk: 'qxw8hzm.css', dir: 'rtl' },
-  ae_en: { ietf: 'en', tk: 'hah7vzn.css' },
-  ar: { ietf: 'es-AR', tk: 'hah7vzn.css', exl: 'es' },
-  cl: { ietf: 'es-CL', tk: 'hah7vzn.css', exl: 'es' },
-  co: { ietf: 'es-CO', tk: 'hah7vzn.css', exl: 'es' },
-  cr: { ietf: 'es-419', tk: 'hah7vzn.css' },
-  ec: { ietf: 'es-419', tk: 'hah7vzn.css' },
-  eg_ar: { ietf: 'ar', tk: 'qxw8hzm.css', dir: 'rtl' },
-  eg_en: { ietf: 'en-GB', tk: 'hah7vzn.css' },
-  gt: { ietf: 'es-419', tk: 'hah7vzn.css' },
-  kw_ar: { ietf: 'ar', tk: 'qxw8hzm.css', dir: 'rtl' },
-  kw_en: { ietf: 'en-GB', tk: 'hah7vzn.css' },
-  mx: { ietf: 'es-MX', tk: 'hah7vzn.css', exl: 'es' },
-  ng: { ietf: 'en-GB', tk: 'hah7vzn.css' },
-  pe: { ietf: 'es-PE', tk: 'hah7vzn.css', exl: 'es' },
-  pr: { ietf: 'es-419', tk: 'hah7vzn.css' },
-  qa_ar: { ietf: 'ar', tk: 'qxw8hzm.css', dir: 'rtl' },
-  qa_en: { ietf: 'en-GB', tk: 'hah7vzn.css' },
-  sa_ar: { ietf: 'ar', tk: 'qxw8hzm.css', dir: 'rtl' },
-  sa_en: { ietf: 'en', tk: 'hah7vzn.css' },
-  th_th: { ...CONFIG.locales.th_th, tk: 'qxw8hzm.css' },
-  za: { ietf: 'en-GB', tk: 'hah7vzn.css' },
-}).sort(([a], [b]) => a.localeCompare(b)));
-
 export const PLAY_SVG = '<svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 0 18 18" width="18" class="icon-milo icon-milo-play"><path fill="currentColor" fill-rule="evenodd" d="M4.73,2H3.5a.5.5,0,0,0-.5.5v13a.5.5,0,0,0,.5.5H4.73a1,1,0,0,0,.5035-.136l11.032-6.433a.5.5,0,0,0,0-.862L5.2335,2.136A1,1,0,0,0,4.73,2Z"/></svg>';
 
 const eagerLoad = (img) => {
@@ -397,12 +366,10 @@ export async function loadPage() {
     };
   }
 
-  const blogLocale = getLocale(BLOG_LOCALES);
-  const pathname = window.location.pathname.slice(blogLocale.prefix.length);
+  const locale = getLocale(CONFIG.locales);
+  const pathname = window.location.pathname.slice(locale.prefix.length);
   const contentRoot = /^\/blog(?:\/|\.html$|$)/.test(pathname) ? '/blog' : '';
   document.documentElement.classList.toggle('blog', Boolean(contentRoot));
-  const locales = contentRoot ? BLOG_LOCALES : CONFIG.locales;
-  const locale = getLocale(locales);
 
   // Keep site chrome at BACOM's root unless its sources are authored.
   document.head.querySelectorAll('meta[data-blog-source-default]').forEach((meta) => {
@@ -427,7 +394,6 @@ export async function loadPage() {
   setConfig({
     ...CONFIG,
     ...eventConfigItems,
-    locales,
     contentRoot,
     decorateArea,
     miloLibs: LIBS,
