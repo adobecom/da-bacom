@@ -1,0 +1,393 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background-color: #f6f7f8;
+  color: #242424;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.tag-manager {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.tag-manager h1 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.25;
+}
+
+.tag-manager h2 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.tag-manager header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.tag-manager header p {
+  margin: 6px 0 0;
+  color: #595959;
+}
+
+.tag-manager a {
+  color: #0d66d0;
+  text-decoration: underline;
+}
+
+.tag-manager header a {
+  flex-shrink: 0;
+  font-size: 13px;
+}
+
+.tag-manager .card {
+  margin: 16px 0;
+  padding: 16px;
+  border: 1px solid #d5d9de;
+  border-radius: 8px;
+  background-color: #fff;
+}
+
+.tag-manager .count {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: 20px;
+  background-color: #edf0f3;
+  color: #595959;
+  font-size: 12px;
+  font-weight: 400;
+  vertical-align: middle;
+}
+
+.tag-manager .toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.tag-manager .table-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.tag-manager .tag-editor form {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.tag-manager .tag-editor label {
+  display: grid;
+  flex: 1 1 220px;
+  gap: 4px;
+}
+
+.tag-manager .tag-editor input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid #959da8;
+  border-radius: 4px;
+  font: inherit;
+}
+
+.tag-manager #tag-group-label {
+  font-weight: 700;
+}
+
+.tag-manager .group-controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.tag-manager summary,
+.tag-manager button {
+  box-sizing: border-box;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #b4bac2;
+  border-radius: 4px;
+  font: inherit;
+}
+
+.tag-manager .group-picker {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.tag-manager summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #fff;
+  cursor: pointer;
+  list-style: none;
+}
+
+.tag-manager summary::-webkit-details-marker {
+  display: none;
+}
+
+.tag-manager summary::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-right: 2px solid currentcolor;
+  border-bottom: 2px solid currentcolor;
+  transform: rotate(45deg);
+  flex-shrink: 0;
+}
+
+.tag-manager summary[aria-disabled="true"] {
+  background-color: #e8ebee;
+  cursor: default;
+}
+
+.tag-manager .group-title {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.tag-manager .group-counts {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.tag-manager .group-counts .count {
+  margin-left: 0;
+  white-space: nowrap;
+}
+
+.tag-manager .browser-count {
+  background-color: #e8f1ff;
+  color: #1256a0;
+}
+
+.tag-manager .caas-count {
+  background-color: #e8f5ec;
+  color: #176b3a;
+}
+
+.tag-manager .group-options {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: min(400px, 60vh);
+  overflow-y: auto;
+  padding: 4px;
+  border: 1px solid #b4bac2;
+  border-radius: 4px;
+  background-color: #fff;
+  box-shadow: 0 4px 12px #0002;
+}
+
+.tag-manager button.group-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: 0;
+  background-color: #fff;
+  color: #242424;
+  font-weight: 400;
+  text-align: left;
+}
+
+.tag-manager button.group-option:hover,
+.tag-manager button.group-option[aria-pressed="true"] {
+  background-color: #edf0f3;
+}
+
+.tag-manager .tag-name {
+  display: block;
+  overflow-wrap: anywhere;
+  font-family: monospace;
+  font-size: 13px;
+}
+
+.tag-manager td.tag-name {
+  display: table-cell;
+}
+
+.tag-manager button {
+  border-color: #1473e6;
+  background-color: #1473e6;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tag-manager button.secondary {
+  background-color: #fff;
+  color: #0d66d0;
+}
+
+.tag-manager button.danger {
+  border-color: #b42318;
+  color: #b42318;
+}
+
+.tag-manager button:disabled {
+  border-color: #d5d9de;
+  background-color: #e8ebee;
+  color: #666;
+  cursor: default;
+}
+
+.tag-manager :focus-visible {
+  outline: 2px solid #1473e6;
+  outline-offset: 3px;
+}
+
+.tag-manager .row-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tag-manager .row-actions button {
+  min-height: 28px;
+  padding: 4px 8px;
+  font-size: 13px;
+}
+
+.tag-manager .staged-label {
+  display: block;
+  color: #176b3a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tag-manager button:hover:not(:disabled) {
+  background-color: #0d66d0;
+  color: #fff;
+}
+
+.tag-manager .table-wrap {
+  max-height: 70vh;
+  overflow: auto;
+  margin: 14px 0 0;
+}
+
+.tag-manager table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+.tag-manager th,
+.tag-manager td {
+  padding: 10px 8px;
+  border-bottom: 1px solid #d5d9de;
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.tag-manager th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background-color: #f8f9fb;
+  color: #595959;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.tag-manager .tags th:last-child {
+  width: 220px;
+}
+
+.tag-manager .tags th:nth-child(4) {
+  width: 100px;
+}
+
+.tag-manager tr[data-kind="add"],
+.tag-manager tr[data-kind="update"] {
+  background-color: #eff8f1;
+}
+
+.tag-manager tr[data-kind="remove"] {
+  background-color: #fff2f1;
+}
+
+.tag-manager .status-line {
+  margin: 12px 0 16px;
+  padding: 10px 14px;
+  border: 1px solid #d5d9de;
+  border-radius: 6px;
+}
+
+.tag-manager .status-line[data-kind="warning"] {
+  border-color: #e6d1a8;
+  background-color: #fff8eb;
+}
+
+.tag-manager .status-line[data-kind="error"] {
+  border-color: #f0c4bf;
+  background-color: #fff2f1;
+}
+
+.tag-manager tr[data-kind="remove"],
+.tag-manager [data-kind="error"] {
+  color: #b42318;
+}
+
+.tag-manager [data-kind="success"] {
+  color: #176b3a;
+}
+
+.tag-manager [data-kind="warning"] {
+  color: #795300;
+}
+
+@media (width <= 600px) {
+  .tag-manager {
+    padding: 16px;
+  }
+
+  .tag-manager .card {
+    padding: 12px;
+  }
+
+  .tag-manager .group-controls {
+    flex-direction: column;
+  }
+
+  .tag-manager header {
+    align-items: flex-start;
+  }
+
+  .tag-manager table {
+    min-width: 650px;
+  }
+
+  .tag-manager .row-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tag-manager .row-actions button {
+    min-height: 40px;
+  }
+}
