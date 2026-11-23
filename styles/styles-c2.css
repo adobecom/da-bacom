@@ -1585,3 +1585,7 @@ span.hang-opening-quote {
 .global-footer div.feds-footer-logo {
   display: none;
 }
+
+.global-footer .language-dropdown .language-link {
+  color: inherit;
+}
