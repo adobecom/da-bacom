@@ -122,7 +122,7 @@ const CONFIG = {
     /experience\.adobe\.com(\/.*)?/,
     /coworker-teams\.adobe\.com(\/.*)?/,
   ],
-  useDotHtml: true,
+  useDotHtml: false,
   dynamicNavKey: 'bacom',
   stageDomainsMap: {
     'business.stage.adobe.com': {
