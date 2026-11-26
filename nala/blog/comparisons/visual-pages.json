@@ -1,0 +1,77 @@
+{
+  "source": "https://github.com/adobecom/nala/blob/c00c5a00e4f78df8acc159fbdc7ebba41714d7f8/data/bacom-blog/visual/sot.yml",
+  "pages": [
+    {
+      "name": "homepage",
+      "path": "/blog/"
+    },
+    {
+      "name": "de-homepage",
+      "path": "/de/blog/"
+    },
+    {
+      "name": "fr-homepage",
+      "path": "/fr/blog/"
+    },
+    {
+      "name": "au-homepage",
+      "path": "/au/blog/"
+    },
+    {
+      "name": "uk-homepage",
+      "path": "/uk/blog/"
+    },
+    {
+      "name": "jp-homepage",
+      "path": "/jp/blog/"
+    },
+    {
+      "name": "blog-trends",
+      "path": "/blog/trends"
+    },
+    {
+      "name": "blog-news",
+      "path": "/blog/news"
+    },
+    {
+      "name": "jp-blog-trends",
+      "path": "/jp/blog/trends"
+    },
+    {
+      "name": "de-blog-trends",
+      "path": "/de/blog/trends"
+    },
+    {
+      "name": "fr-blog-trends",
+      "path": "/fr/blog/trends"
+    },
+    {
+      "name": "au-blog-trends",
+      "path": "/au/blog/trends"
+    },
+    {
+      "name": "uk-blog-trends",
+      "path": "/uk/blog/trends"
+    },
+    {
+      "name": "uk-blog-the-latest",
+      "path": "/uk/blog/the-latest/harness-the-power-of-generative-ai-with-adobe-genstudio"
+    },
+    {
+      "name": "blog-the-latest-deliver",
+      "path": "/blog/the-latest/deliver-winning-campaigns-at-speed-and-scale-with-adobe-genstudio-for-performance-marketing"
+    },
+    {
+      "name": "blog-the-latest-harness",
+      "path": "/blog/the-latest/harness-the-power-of-generative-ai-with-adobe-genstudio"
+    },
+    {
+      "name": "de-blog-the-latest-deliver",
+      "path": "/de/blog/the-latest/deliver-winning-campaigns-at-speed-and-scale-with-adobe-genstudio-for-performance-marketing"
+    },
+    {
+      "name": "jp-blog-the-latest-deliver",
+      "path": "/jp/blog/the-latest/deliver-winning-campaigns-at-speed-and-scale-with-adobe-genstudio-for-performance-marketing"
+    }
+  ]
+}
